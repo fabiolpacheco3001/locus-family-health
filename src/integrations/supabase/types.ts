@@ -73,6 +73,7 @@ export type Database = {
           id: string
           location: string | null
           name: string
+          result_date: string | null
           status: string
           user_id: string
         }
@@ -84,6 +85,7 @@ export type Database = {
           id?: string
           location?: string | null
           name: string
+          result_date?: string | null
           status?: string
           user_id: string
         }
@@ -95,6 +97,7 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+          result_date?: string | null
           status?: string
           user_id?: string
         }
