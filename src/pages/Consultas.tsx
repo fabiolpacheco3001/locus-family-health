@@ -105,10 +105,9 @@ const Consultas = () => {
       {!drawerOpen && (
         <button
           onClick={handleOpenNew}
-          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-primary text-primary-foreground px-6 py-3 rounded-full shadow-lg font-medium flex items-center gap-2"
+          className="fixed right-6 bottom-24 z-40 rounded-full shadow-lg h-14 w-14 flex items-center justify-center bg-primary text-primary-foreground"
         >
-          <Plus size={20} />
-          Nova Consulta
+          <Plus size={28} strokeWidth={2.5} />
         </button>
       )}
 
