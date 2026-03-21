@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import BottomNav from "./BottomNav";
-import GlobalFAB from "./GlobalFAB";
 
 const AppLayout = () => {
   return (
@@ -10,7 +9,6 @@ const AppLayout = () => {
         <Outlet />
       </div>
       <BottomNav />
-      <GlobalFAB />
     </MobileShell>
   );
 };
