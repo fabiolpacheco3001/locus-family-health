@@ -39,22 +39,21 @@ const Home = () => {
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ["upcoming-appointments", user?.id],
     queryFn: async () => {
-      const today = new Date().toISOString();
       const [consultRes, examRes] = await Promise.all([
         supabase
           .from("consultations")
-          .select("id, family_member_id, specialty, professional_name, consultation_date, family_members(name)")
+          .select("id, family_member_id, specialty, professional_name, consultation_date, status, family_members(name)")
           .eq("user_id", user!.id)
-          .gte("consultation_date", today)
+          .in("status", ["Agendada"])
           .order("consultation_date", { ascending: true })
-          .limit(2),
+          .limit(5),
         supabase
           .from("exams")
           .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
           .eq("user_id", user!.id)
           .or("status.eq.Agendado,and(status.eq.Coletado,result_date.not.is.null)")
           .order("exam_date", { ascending: true })
-          .limit(2),
+          .limit(5),
       ]);
 
       const items: Array<{
@@ -65,6 +64,7 @@ const Home = () => {
         memberName: string;
         kind: "consultation" | "exam";
         familyMemberId: string;
+        isOverdue: boolean;
       }> = [];
 
       (consultRes.data ?? []).forEach((c: any) => {
