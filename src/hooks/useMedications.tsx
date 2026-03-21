@@ -24,6 +24,7 @@ export type NewMedication = {
   frequency?: string | null;
   duration?: string | null;
   start_date?: string | null;
+  consultation_id?: string | null;
 };
 
 export type UpdateMedication = {
