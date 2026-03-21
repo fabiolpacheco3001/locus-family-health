@@ -34,10 +34,6 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     setBloodType("");
   };
 
-  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setBirthDate(applyDateMask(e.target.value));
-  };
-
   const handleSave = async () => {
     if (!name.trim() || !relationship) {
       toast.error("Preencha o nome e o parentesco.");
