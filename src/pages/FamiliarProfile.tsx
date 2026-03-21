@@ -95,9 +95,6 @@ const FamiliarProfile = () => {
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Perfil de Saúde</h1>
-        <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)}>
-          <Pen size={20} />
-        </Button>
       </div>
 
       {/* Identity Card */}
