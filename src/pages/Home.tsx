@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, ChevronRight, Plus } from "lucide-react";
+import { Sparkles, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import AddMemberDrawer from "@/components/AddMemberDrawer";
+import FixedFAB from "@/components/ui/FixedFAB";
 
 const Home = () => {
   const { user } = useAuth();
@@ -17,15 +18,7 @@ const Home = () => {
 
   return (
     <div className="px-5 pt-6 animate-fade-in">
-      {/* FAB - always rendered outside loading logic */}
-      {!drawerOpen && (
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="fixed right-6 bottom-24 z-50 w-14 h-14 rounded-full bg-[#FFB085] hover:bg-[#ff9b66] text-slate-900 shadow-md flex items-center justify-center transition-all"
-        >
-          <Plus size={24} />
-        </button>
-      )}
+      {!drawerOpen && <FixedFAB onClick={() => setDrawerOpen(true)} />}
       <AddMemberDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
 
       {/* Header */}

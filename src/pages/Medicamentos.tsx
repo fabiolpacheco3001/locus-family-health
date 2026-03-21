@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Pill, Clock, ChevronRight, Plus } from "lucide-react";
+import { ArrowLeft, Pill, Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMedications, Medication } from "@/hooks/useMedications";
 import AddMedicationDrawer from "@/components/AddMedicationDrawer";
+import FixedFAB from "@/components/ui/FixedFAB";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,15 +43,7 @@ const Medicamentos = () => {
 
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">
-      {/* FAB - always rendered outside loading logic */}
-      {!drawerOpen && (
-        <button
-          onClick={handleAdd}
-          className="fixed right-6 bottom-24 z-50 w-14 h-14 rounded-full bg-[#FFB085] hover:bg-[#ff9b66] text-slate-900 shadow-md flex items-center justify-center transition-all"
-        >
-          <Plus size={24} />
-        </button>
-      )}
+      {!drawerOpen && <FixedFAB onClick={handleAdd} />}
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">

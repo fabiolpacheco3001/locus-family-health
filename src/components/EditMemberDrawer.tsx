@@ -102,22 +102,22 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
+        <DrawerContent className="flex flex-col max-h-[90vh] bg-background">
           <DrawerHeader>
             <DrawerTitle className="text-primary">Editar Familiar</DrawerTitle>
             <DrawerDescription>Atualize os dados abaixo.</DrawerDescription>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain">
             <div className="space-y-1.5">
               <Label>Nome *</Label>
-              <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="text-[16px] scroll-m-20" />
+              <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
             </div>
 
             <div className="space-y-1.5">
               <Label>Parentesco *</Label>
               <Select value={relationship} onValueChange={setRelationship}>
-                <SelectTrigger className="text-[16px] scroll-m-20"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {relationships.map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
@@ -135,14 +135,14 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
                 maxLength={10}
                 value={birthDate}
                 onChange={handleDateChange}
-              className="text-[16px] scroll-m-20"
+                className="w-full max-w-full box-border min-w-0 text-[16px]"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label>Tipo Sanguíneo</Label>
               <Select value={bloodType} onValueChange={setBloodType}>
-                <SelectTrigger className="text-[16px] scroll-m-20"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
                 <SelectContent>
                   {bloodTypes.map((bt) => (
                     <SelectItem key={bt} value={bt}>{bt}</SelectItem>
@@ -151,7 +151,6 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
               </Select>
             </div>
 
-            {/* Danger zone */}
             <div className="pt-4 border-t border-border">
               <Button
                 variant="ghost"
