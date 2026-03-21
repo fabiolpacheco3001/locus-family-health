@@ -94,7 +94,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
           <div className="space-y-1.5">
             <Label>Parentesco *</Label>
             <Select value={relationship} onValueChange={setRelationship}>
-              <SelectTrigger className="text-base scroll-m-20"><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <SelectTrigger className="text-[16px] scroll-m-20"><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {relationships.map((r) => (
                   <SelectItem key={r} value={r}>{r}</SelectItem>
