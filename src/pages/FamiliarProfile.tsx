@@ -23,9 +23,9 @@ const calculateAge = (birthDate: string | null): number | null => {
 };
 
 const actionItems = [
-  { icon: Stethoscope, label: "Consultas", subtitle: "Histórico e agendamentos" },
-  { icon: Pill, label: "Medicamentos", subtitle: "Receitas e alarmes" },
-  { icon: FileText, label: "Exames", subtitle: "Resultados e pedidos" },
+  { icon: Stethoscope, label: "Consultas", subtitle: "Histórico e agendamentos", route: "consultas" },
+  { icon: Pill, label: "Medicamentos", subtitle: "Receitas e alarmes", route: null },
+  { icon: FileText, label: "Exames", subtitle: "Resultados e pedidos", route: null },
 ];
 
 const FamiliarProfile = () => {
