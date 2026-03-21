@@ -1,4 +1,4 @@
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,26 +26,6 @@ interface Props {
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-const applyDateMask = (value: string): string => {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
-
-const isoToMasked = (iso: string | null): string => {
-  if (!iso) return "";
-  const [yyyy, mm, dd] = iso.split("-");
-  return `${dd}/${mm}/${yyyy}`;
-};
-
-const maskedToISO = (masked: string): string | null => {
-  const parts = masked.split("/");
-  if (parts.length !== 3 || parts[2].length !== 4) return null;
-  const [dd, mm, yyyy] = parts;
-  return `${yyyy}-${mm}-${dd}`;
-};
-
 const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const { updateMember, deleteMember } = useFamilyMembers();
   const navigate = useNavigate();
@@ -59,14 +39,10 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
     if (open && member) {
       setName(member.name);
       setRelationship(member.relationship);
-      setBirthDate(isoToMasked(member.birth_date));
+      setBirthDate(member.birth_date || "");
       setBloodType(member.blood_type || "");
     }
   }, [open, member]);
-
-  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setBirthDate(applyDateMask(e.target.value));
-  };
 
   const handleSave = async () => {
     if (!name.trim() || !relationship) {
@@ -78,7 +54,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
         id: member.id,
         name: name.trim(),
         relationship,
-        birth_date: maskedToISO(birthDate),
+        birth_date: birthDate || null,
         blood_type: bloodType || null,
       });
       toast.success("Dados atualizados!");
@@ -128,14 +104,12 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
 
             <div className="space-y-1.5">
               <Label>Data de Nascimento</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                placeholder="DD/MM/AAAA"
-                maxLength={10}
+              <input
+                type="date"
+                lang="pt-BR"
                 value={birthDate}
-                onChange={handleDateChange}
-                className="w-full max-w-full box-border min-w-0 text-[16px]"
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background"
               />
             </div>
 

@@ -1,4 +1,4 @@
-import { useState, ChangeEvent } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,20 +20,6 @@ interface Props {
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-const applyDateMask = (value: string): string => {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
-
-const maskedToISO = (masked: string): string | null => {
-  const parts = masked.split("/");
-  if (parts.length !== 3 || parts[2].length !== 4) return null;
-  const [dd, mm, yyyy] = parts;
-  return `${yyyy}-${mm}-${dd}`;
-};
-
 const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const { addMember } = useFamilyMembers();
   const [name, setName] = useState("");
@@ -48,10 +34,6 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     setBloodType("");
   };
 
-  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setBirthDate(applyDateMask(e.target.value));
-  };
-
   const handleSave = async () => {
     if (!name.trim() || !relationship) {
       toast.error("Preencha o nome e o parentesco.");
@@ -61,7 +43,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     const member: NewFamilyMember = {
       name: name.trim(),
       relationship,
-      birth_date: maskedToISO(birthDate),
+      birth_date: birthDate || null,
       blood_type: bloodType || null,
     };
 
@@ -105,14 +87,12 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
 
           <div className="space-y-1.5">
             <Label>Data de Nascimento</Label>
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder="DD/MM/AAAA"
-              maxLength={10}
+            <input
+              type="date"
+              lang="pt-BR"
               value={birthDate}
-              onChange={handleDateChange}
-              className="w-full max-w-full box-border min-w-0 text-[16px]"
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background"
             />
           </div>
 
