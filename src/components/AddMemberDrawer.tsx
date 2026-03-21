@@ -30,7 +30,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const resetForm = () => {
     setName("");
     setRelationship("");
-    setBirthDate(undefined);
+    setBirthDate("");
     setBloodType("");
   };
 
