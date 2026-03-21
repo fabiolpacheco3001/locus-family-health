@@ -162,7 +162,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             <div className="space-y-1.5">
               <Label>Classificação</Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="text-base scroll-m-20">
+                <SelectTrigger className="text-[16px] scroll-m-20">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
