@@ -1,16 +1,14 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Sparkles } from "lucide-react";
+import { Sparkles, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
-import AddMemberDrawer from "@/components/AddMemberDrawer";
 
 const Home = () => {
   const { user } = useAuth();
   const { members, isLoading } = useFamilyMembers();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const navigate = useNavigate();
 
   const userName = user?.user_metadata?.full_name || "Usuário";
 
@@ -50,7 +48,7 @@ const Home = () => {
       {members.length === 0 && !isLoading && (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-            <Plus className="text-muted-foreground" size={32} />
+            <ChevronRight className="text-muted-foreground" size={32} />
           </div>
           <p className="text-muted-foreground text-sm max-w-[240px]">
             Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro da família
@@ -64,36 +62,26 @@ const Home = () => {
           <h2 className="text-lg font-semibold text-foreground mb-3">Minha Família</h2>
           <div className="flex flex-col space-y-3 w-full">
             {members.map((m) => (
-              <div
+              <button
                 key={m.id}
-                className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50"
+                onClick={() => navigate(`/familiar/${m.id}`)}
+                className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 hover:bg-muted/50 transition-colors text-left w-full"
               >
                 <Avatar className="h-12 w-12 border-2 border-secondary shrink-0">
                   <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-lg">
                     {m.name[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col ml-4 min-w-0">
+                <div className="flex flex-col ml-4 min-w-0 flex-1">
                   <p className="text-sm font-semibold text-primary truncate">{m.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
                 </div>
-              </div>
+                <ChevronRight className="text-muted-foreground ml-auto shrink-0" size={20} />
+              </button>
             ))}
           </div>
         </div>
       )}
-
-      {/* FAB - always rendered unconditionally */}
-      <Button
-        variant="fab"
-        size="icon"
-        className="fixed right-6 bottom-24 z-50 w-14 h-14 rounded-full shadow-lg"
-        onClick={() => setDrawerOpen(true)}
-      >
-        <Plus size={28} strokeWidth={2.5} />
-      </Button>
-
-      <AddMemberDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
     </div>
   );
 };

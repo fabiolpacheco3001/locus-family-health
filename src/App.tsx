@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Agenda from "./pages/Agenda";
 import Familia from "./pages/Familia";
 import Ajustes from "./pages/Ajustes";
+import FamiliarProfile from "./pages/FamiliarProfile";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
