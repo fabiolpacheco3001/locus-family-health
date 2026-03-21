@@ -26,26 +26,6 @@ interface Props {
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
-const applyDateMask = (value: string): string => {
-  const digits = value.replace(/\D/g, "").slice(0, 8);
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-};
-
-const isoToMasked = (iso: string | null): string => {
-  if (!iso) return "";
-  const [yyyy, mm, dd] = iso.split("-");
-  return `${dd}/${mm}/${yyyy}`;
-};
-
-const maskedToISO = (masked: string): string | null => {
-  const parts = masked.split("/");
-  if (parts.length !== 3 || parts[2].length !== 4) return null;
-  const [dd, mm, yyyy] = parts;
-  return `${yyyy}-${mm}-${dd}`;
-};
-
 const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const { updateMember, deleteMember } = useFamilyMembers();
   const navigate = useNavigate();
