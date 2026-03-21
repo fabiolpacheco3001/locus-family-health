@@ -100,7 +100,7 @@ const FamiliarProfile = () => {
       {/* Identity Card */}
       <button
         onClick={() => setEditOpen(true)}
-        className="w-full rounded-xl bg-secondary/10 p-5 flex items-center gap-4 mb-8 cursor-pointer hover:bg-accent/50 transition-colors text-left"
+        className="w-full rounded-xl bg-secondary/10 p-5 flex items-center gap-4 mb-8 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
       >
         <Avatar className="h-14 w-14 border-2 border-secondary shrink-0">
           <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-xl">
@@ -123,7 +123,7 @@ const FamiliarProfile = () => {
           <button
             key={label}
             onClick={() => route ? navigate(`/familiar/${id}/${route}`) : toast.info("Em breve")}
-            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 hover:bg-muted/50 transition-colors text-center"
+            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
           >
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
               <Icon className="text-primary" size={22} />

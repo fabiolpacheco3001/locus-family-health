@@ -173,7 +173,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             </div>
 
             <div className="space-y-1.5">
-              <Label>Sintomas / Motivo da Visita</Label>
+              <Label>Motivo da Visita</Label>
               <Textarea
                 placeholder="Descreva os sintomas ou motivo..."
                 rows={3}

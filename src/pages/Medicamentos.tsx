@@ -71,7 +71,7 @@ const Medicamentos = () => {
             <button
               key={m.id}
               onClick={() => handleOpenEdit(m)}
-              className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left hover:bg-accent/50 transition-colors w-full"
+              className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                 <Pill className="text-primary" size={20} />
@@ -114,11 +114,11 @@ const Medicamentos = () => {
         </div>
       )}
 
-      {/* FAB */}
+      {/* FAB - always rendered outside loading, hidden when drawer open */}
       {!drawerOpen && (
         <button
           onClick={handleOpenNew}
-          className="fixed right-6 bottom-24 z-40 rounded-full shadow-lg h-14 w-14 flex items-center justify-center bg-primary text-primary-foreground"
+          className="fixed right-6 bottom-24 z-40 rounded-full shadow-xl h-14 w-14 flex items-center justify-center bg-accent text-accent-foreground"
         >
           <Plus size={28} strokeWidth={2.5} />
         </button>
