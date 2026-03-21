@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,20 @@ interface Props {
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+const applyDateMask = (value: string): string => {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+const maskedToISO = (masked: string): string | null => {
+  const parts = masked.split("/");
+  if (parts.length !== 3 || parts[2].length !== 4) return null;
+  const [dd, mm, yyyy] = parts;
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const { addMember } = useFamilyMembers();
   const [name, setName] = useState("");
@@ -34,6 +48,10 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     setBloodType("");
   };
 
+  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setBirthDate(applyDateMask(e.target.value));
+  };
+
   const handleSave = async () => {
     if (!name.trim() || !relationship) {
       toast.error("Preencha o nome e o parentesco.");
@@ -43,7 +61,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     const member: NewFamilyMember = {
       name: name.trim(),
       relationship,
-      birth_date: birthDate || null,
+      birth_date: maskedToISO(birthDate),
       blood_type: bloodType || null,
     };
 
@@ -61,20 +79,18 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-w-[480px] mx-auto">
+      <DrawerContent>
         <DrawerHeader>
           <DrawerTitle className="text-primary">Novo Membro da Família</DrawerTitle>
           <DrawerDescription>Preencha os dados abaixo para adicionar um membro.</DrawerDescription>
         </DrawerHeader>
 
         <div className="px-4 space-y-4">
-          {/* Name */}
           <div className="space-y-1.5">
             <Label>Nome *</Label>
             <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
-          {/* Relationship */}
           <div className="space-y-1.5">
             <Label>Parentesco *</Label>
             <Select value={relationship} onValueChange={setRelationship}>
@@ -87,18 +103,18 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
             </Select>
           </div>
 
-          {/* Birth Date */}
           <div className="space-y-1.5">
             <Label>Data de Nascimento</Label>
             <Input
-              type="date"
+              type="text"
+              inputMode="numeric"
+              placeholder="DD/MM/AAAA"
+              maxLength={10}
               value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
+              onChange={handleDateChange}
             />
           </div>
 
-          {/* Blood Type */}
           <div className="space-y-1.5">
             <Label>Tipo Sanguíneo</Label>
             <Select value={bloodType} onValueChange={setBloodType}>

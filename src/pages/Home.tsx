@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Sparkles, User } from "lucide-react";
+import { Plus, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,7 +16,7 @@ const Home = () => {
   const userName = user?.user_metadata?.full_name || "Usuário";
 
   return (
-    <div className="px-5 pt-6 pb-24 animate-fade-in">
+    <div className="px-5 pt-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -30,7 +30,7 @@ const Home = () => {
         </Avatar>
       </div>
 
-      {/* Welcome Card (show only when no members) */}
+      {/* Welcome Card */}
       {members.length === 0 && !isLoading && (
         <Card className="bg-welcome border-none shadow-none mb-6">
           <CardContent className="p-5 flex gap-4 items-start">
@@ -90,7 +90,7 @@ const Home = () => {
       <Button
         variant="fab"
         size="icon"
-        className="absolute bottom-20 right-5 w-14 h-14"
+        className="fixed right-6 bottom-24 z-40 w-14 h-14 rounded-full shadow-lg"
         onClick={() => setDrawerOpen(true)}
       >
         <Plus size={28} strokeWidth={2.5} />

@@ -61,10 +61,3 @@
   }
 }
 
-@layer utilities {
-  .app-shell {
-    @apply bg-background min-h-screen mx-auto relative;
-    max-width: 480px;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.08);
-  }
-}

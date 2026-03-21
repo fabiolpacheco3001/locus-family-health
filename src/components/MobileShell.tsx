@@ -6,10 +6,8 @@ interface MobileShellProps {
 
 const MobileShell = ({ children }: MobileShellProps) => {
   return (
-    <div className="min-h-screen flex justify-center bg-muted">
-      <div className="app-shell flex flex-col relative overflow-x-hidden">
-        {children}
-      </div>
+    <div className="w-full min-h-[100dvh] flex flex-col bg-background text-foreground overflow-x-hidden">
+      {children}
     </div>
   );
 };
