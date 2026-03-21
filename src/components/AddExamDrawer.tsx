@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X, ExternalLink } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useExams, Exam, NewExam } from "@/hooks/useExams";
 
@@ -29,10 +32,12 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   const [examDate, setExamDate] = useState("");
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("Agendado");
+  const [resultDate, setResultDate] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editingExam;
@@ -43,6 +48,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
       setExamDate(editingExam.exam_date ?? "");
       setLocation(editingExam.location ?? "");
       setStatus(editingExam.status);
+      setResultDate(editingExam.result_date ?? "");
       setExistingFileUrl(editingExam.file_url);
       setFile(null);
     } else {
@@ -55,6 +61,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
     setExamDate("");
     setLocation("");
     setStatus("Agendado");
+    setResultDate("");
     setFile(null);
     setExistingFileUrl(null);
   };
@@ -80,15 +87,14 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           location: location.trim() || null,
           status,
           file_url: fileUrl,
+          result_date: status === "Coletado" && resultDate ? resultDate : null,
         });
         toast.success("Exame atualizado!");
       } else {
-        // Upload file FIRST (if any) using a temporary ID
         const tempId = crypto.randomUUID();
         if (file) {
           fileUrl = await uploadFile(file, tempId);
         }
-        // Only then insert the record with the file_url already set
         await addExam.mutateAsync({
           family_member_id: familyMemberId,
           name: name.trim(),
@@ -122,6 +128,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   };
 
   const isPending = addExam.isPending || updateExam.isPending || uploading;
+  const isPdf = existingFileUrl?.toLowerCase().endsWith(".pdf");
 
   return (
     <>
@@ -143,7 +150,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                 placeholder="Ex: Hemograma Completo"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="text-[16px] scroll-m-20"
+                className="text-[16px]"
               />
             </div>
 
@@ -164,14 +171,14 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                 placeholder="Ex: Laboratório Santa Luzia"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="text-[16px] scroll-m-20"
+                className="text-[16px]"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label>Status</Label>
               <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="text-[16px] scroll-m-20">
+                <SelectTrigger className="text-[16px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,6 +188,19 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                 </SelectContent>
               </Select>
             </div>
+
+            {status === "Coletado" && (
+              <div className="space-y-1.5">
+                <Label>Data Prevista do Resultado</Label>
+                <input
+                  type="date"
+                  lang="pt-BR"
+                  value={resultDate}
+                  onChange={(e) => setResultDate(e.target.value)}
+                  className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                />
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>Anexo (PDF ou Imagem)</Label>
@@ -219,9 +239,9 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                     variant="outline"
                     size="sm"
                     className="w-full gap-2 text-primary border-primary/30"
-                    onClick={() => window.open(existingFileUrl, '_blank')}
+                    onClick={() => setViewerOpen(true)}
                   >
-                    <ExternalLink size={16} />
+                    <Eye size={16} />
                     Visualizar Exame
                   </Button>
                 </div>
@@ -265,6 +285,24 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      {/* In-App File Viewer */}
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[90vh] p-0 gap-0">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="text-primary">Visualizar Exame</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 pb-4 flex-1 overflow-auto">
+            {existingFileUrl && (
+              isPdf ? (
+                <iframe src={existingFileUrl} className="w-full h-[70vh] rounded-md border border-border" />
+              ) : (
+                <img src={existingFileUrl} alt="Resultado do exame" className="w-full object-contain max-h-[70vh] rounded-md" />
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
