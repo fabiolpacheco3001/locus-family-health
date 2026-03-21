@@ -24,7 +24,7 @@ const calculateAge = (birthDate: string | null): number | null => {
 
 const actionItems = [
   { icon: Stethoscope, label: "Consultas", subtitle: "Histórico e agendamentos", route: "consultas" },
-  { icon: Pill, label: "Medicamentos", subtitle: "Receitas e alarmes", route: null },
+  { icon: Pill, label: "Medicamentos", subtitle: "Receitas e alarmes", route: "medicamentos" },
   { icon: FileText, label: "Exames", subtitle: "Resultados e pedidos", route: null },
 ];
 

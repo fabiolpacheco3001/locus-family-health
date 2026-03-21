@@ -11,6 +11,7 @@ import Familia from "./pages/Familia";
 import Ajustes from "./pages/Ajustes";
 import FamiliarProfile from "./pages/FamiliarProfile";
 import Consultas from "./pages/Consultas";
+import Medicamentos from "./pages/Medicamentos";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -33,6 +34,7 @@ const App = () => (
               <Route path="/ajustes" element={<Ajustes />} />
               <Route path="/familiar/:id" element={<FamiliarProfile />} />
               <Route path="/familiar/:id/consultas" element={<Consultas />} />
+              <Route path="/familiar/:id/medicamentos" element={<Medicamentos />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
