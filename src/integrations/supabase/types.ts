@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      consultations: {
+        Row: {
+          consultation_date: string | null
+          created_at: string
+          family_member_id: string
+          id: string
+          professional_name: string | null
+          questions: string | null
+          specialty: string
+          status: string
+          symptoms: string | null
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          consultation_date?: string | null
+          created_at?: string
+          family_member_id: string
+          id?: string
+          professional_name?: string | null
+          questions?: string | null
+          specialty: string
+          status?: string
+          symptoms?: string | null
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          consultation_date?: string | null
+          created_at?: string
+          family_member_id?: string
+          id?: string
+          professional_name?: string | null
+          questions?: string | null
+          specialty?: string
+          status?: string
+          symptoms?: string | null
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultations_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_members: {
         Row: {
           birth_date: string | null
