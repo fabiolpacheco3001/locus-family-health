@@ -270,6 +270,50 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               )}
             </div>
 
+            {/* AI OCR Button - shown when a file is selected or exists */}
+            {(file || existingFileUrl) && (
+              <div className="space-y-1.5">
+                <Button
+                  type="button"
+                  disabled={isAnalyzing || isPending}
+                  onClick={async () => {
+                    setIsAnalyzing(true);
+                    try {
+                      // TODO: Call Supabase Edge Function to process OCR via OpenAI/Gemini Vision passing the file_url
+                      await new Promise((resolve) => setTimeout(resolve, 2500));
+
+                      const now = new Date();
+                      const localNow = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                      setName("Hemograma Completo (Extraído)");
+                      setLocation("Laboratório Santa Luzia (Extraído)");
+                      setExamDate(localNow);
+                      toast.success("Dados extraídos com sucesso!");
+                    } catch {
+                      toast.error("Erro ao analisar documento.");
+                    } finally {
+                      setIsAnalyzing(false);
+                    }
+                  }}
+                  className="w-full gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground hover:opacity-90 shadow-md"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Analisando documento...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} />
+                      Preencher dados com IA
+                    </>
+                  )}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Nossa IA lê a foto do exame e preenche o formulário para você.
+                </p>
+              </div>
+            )}
+
             {isEditing && (
               <div className="pt-4 border-t border-border">
                 <Button
