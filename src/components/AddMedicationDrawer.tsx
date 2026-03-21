@@ -186,6 +186,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               />
             </div>
 
+            <ConsultationSelect
+              familyMemberId={familyMemberId}
+              value={consultationId}
+              onValueChange={setConsultationId}
+            />
+
             {isEditing && (
               <>
                 <div className="space-y-1.5">
