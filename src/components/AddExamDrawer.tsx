@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useExams, Exam, NewExam } from "@/hooks/useExams";
+import ConsultationSelect from "@/components/ConsultationSelect";
 
 interface Props {
   open: boolean;
@@ -33,6 +34,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("Agendado");
   const [resultDate, setResultDate] = useState("");
+  const [consultationId, setConsultationId] = useState("none");
   const [file, setFile] = useState<File | null>(null);
   const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -49,6 +51,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
       setLocation(editingExam.location ?? "");
       setStatus(editingExam.status);
       setResultDate(editingExam.result_date ?? "");
+      setConsultationId(editingExam.consultation_id ?? "none");
       setExistingFileUrl(editingExam.file_url);
       setFile(null);
     } else {
@@ -62,6 +65,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
     setLocation("");
     setStatus("Agendado");
     setResultDate("");
+    setConsultationId("none");
     setFile(null);
     setExistingFileUrl(null);
   };
