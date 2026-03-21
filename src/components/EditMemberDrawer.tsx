@@ -111,7 +111,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
           <div className="max-h-[80vh] overflow-y-auto overscroll-contain px-4 pb-32 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="space-y-1.5">
               <Label>Nome *</Label>
-              <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="text-base scroll-m-20" />
+              <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="text-[16px] scroll-m-20" />
             </div>
 
             <div className="space-y-1.5">
