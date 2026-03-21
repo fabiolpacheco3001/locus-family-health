@@ -107,6 +107,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           location: location.trim() || null,
           status,
           file_url: fileUrl,
+          consultation_id: consultationId === "none" ? null : consultationId,
         });
         toast.success("Exame adicionado!");
       }
