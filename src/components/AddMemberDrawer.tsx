@@ -24,7 +24,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const { addMember } = useFamilyMembers();
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState("");
-  const [birthDate, setBirthDate] = useState<Date>();
+  const [birthDate, setBirthDate] = useState("");
   const [bloodType, setBloodType] = useState("");
 
   const resetForm = () => {
