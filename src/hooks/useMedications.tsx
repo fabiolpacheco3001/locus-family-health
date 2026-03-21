@@ -12,7 +12,9 @@ export type Medication = {
   duration: string | null;
   start_date: string | null;
   status: string;
+  consultation_id: string | null;
   created_at: string;
+  consultations?: { professional_name: string | null; specialty: string } | null;
 };
 
 export type NewMedication = {
