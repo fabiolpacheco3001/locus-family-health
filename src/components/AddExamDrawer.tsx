@@ -227,22 +227,14 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   </button>
                 </div>
               ) : existingFileUrl ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
-                    <Paperclip size={16} className="text-muted-foreground shrink-0" />
-                    <span className="text-sm text-foreground truncate flex-1">Arquivo existente</span>
-                    <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => fileInputRef.current?.click()}>
-                      Trocar
-                    </Button>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full gap-2 text-primary border-primary/30"
-                    onClick={() => setViewerOpen(true)}
-                  >
-                    <Eye size={16} />
-                    Visualizar Exame
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                  <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                  <span className="text-sm text-foreground truncate flex-1">Arquivo existente</span>
+                  <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
+                    <Eye size={16} className="text-primary" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => fileInputRef.current?.click()}>
+                    Trocar
                   </Button>
                 </div>
               ) : (

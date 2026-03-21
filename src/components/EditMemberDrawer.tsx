@@ -104,13 +104,13 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
 
             <div className="space-y-1.5">
               <Label>Data de Nascimento</Label>
-              <input
-                type="date"
-                lang="pt-BR"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background"
-              />
+            <input
+              type="date"
+              lang="pt-BR"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+            />
             </div>
 
             <div className="space-y-1.5">

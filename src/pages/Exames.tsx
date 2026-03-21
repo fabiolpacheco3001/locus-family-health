@@ -125,7 +125,7 @@ const Exames = () => {
                 <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
               </button>
               );
-            ))}
+            })}
           </div>
         )}
       </div>
