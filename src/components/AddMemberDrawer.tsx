@@ -112,7 +112,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
               maxLength={10}
               value={birthDate}
               onChange={handleDateChange}
-              className="text-base scroll-m-20"
+              className="text-[16px] scroll-m-20"
             />
           </div>
 
