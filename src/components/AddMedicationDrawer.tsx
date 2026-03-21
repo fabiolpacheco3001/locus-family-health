@@ -165,7 +165,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 placeholder="Ex: 7 dias, Uso contínuo"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
