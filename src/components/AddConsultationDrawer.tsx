@@ -33,6 +33,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
   const [symptoms, setSymptoms] = useState("");
   const [questions, setQuestions] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [statusValue, setStatusValue] = useState("Agendada");
 
   const isEditing = !!editingConsultation;
 
