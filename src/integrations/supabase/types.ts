@@ -64,6 +64,50 @@ export type Database = {
           },
         ]
       }
+      exams: {
+        Row: {
+          created_at: string
+          exam_date: string | null
+          family_member_id: string
+          file_url: string | null
+          id: string
+          location: string | null
+          name: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date?: string | null
+          family_member_id: string
+          file_url?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string | null
+          family_member_id?: string
+          file_url?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exams_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       family_members: {
         Row: {
           birth_date: string | null
