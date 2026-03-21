@@ -83,18 +83,20 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
         });
         toast.success("Exame atualizado!");
       } else {
-        const newExam: NewExam = {
+        // Upload file FIRST (if any) using a temporary ID
+        const tempId = crypto.randomUUID();
+        if (file) {
+          fileUrl = await uploadFile(file, tempId);
+        }
+        // Only then insert the record with the file_url already set
+        await addExam.mutateAsync({
           family_member_id: familyMemberId,
           name: name.trim(),
           exam_date: examDate || null,
           location: location.trim() || null,
           status,
-        };
-        const result = await addExam.mutateAsync(newExam);
-        if (file && result) {
-          fileUrl = await uploadFile(file, result.id);
-          await updateExam.mutateAsync({ id: result.id, file_url: fileUrl });
-        }
+          file_url: fileUrl,
+        });
         toast.success("Exame adicionado!");
       }
       resetForm();
