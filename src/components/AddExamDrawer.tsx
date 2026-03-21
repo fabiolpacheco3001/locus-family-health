@@ -95,7 +95,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
         await updateExam.mutateAsync({
           id: editingExam.id,
           name: name.trim(),
-          exam_date: examDate || null,
+          exam_date: examDate ? new Date(examDate).toISOString() : null,
           location: location.trim() || null,
           status,
           file_url: fileUrl,
