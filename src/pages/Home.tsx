@@ -3,7 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import AddMemberDrawer from "@/components/AddMemberDrawer";
@@ -59,38 +58,36 @@ const Home = () => {
         </div>
       )}
 
-      {/* Family members list */}
+      {/* Family members vertical list */}
       {members.length > 0 && (
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-3">Minha Família</h2>
-          <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex gap-3 pb-2">
-              {members.map((m) => (
-                <Card key={m.id} className="min-w-[120px] max-w-[120px] shrink-0 border-border/50">
-                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                    <Avatar className="h-14 w-14 border-2 border-secondary">
-                      <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-lg">
-                        {m.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="w-full">
-                      <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+          <div className="flex flex-col space-y-3 w-full">
+            {members.map((m) => (
+              <div
+                key={m.id}
+                className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50"
+              >
+                <Avatar className="h-12 w-12 border-2 border-secondary shrink-0">
+                  <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-lg">
+                    {m.name[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col ml-4 min-w-0">
+                  <p className="text-sm font-semibold text-primary truncate">{m.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* FAB */}
+      {/* FAB - always rendered unconditionally */}
       <Button
         variant="fab"
         size="icon"
-        className="fixed right-6 bottom-24 z-40 w-14 h-14 rounded-full shadow-lg"
+        className="fixed right-6 bottom-24 z-50 w-14 h-14 rounded-full shadow-lg"
         onClick={() => setDrawerOpen(true)}
       >
         <Plus size={28} strokeWidth={2.5} />
