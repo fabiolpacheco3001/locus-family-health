@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useExams, Exam } from "@/hooks/useExams";
 import AddExamDrawer from "@/components/AddExamDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import { format } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
