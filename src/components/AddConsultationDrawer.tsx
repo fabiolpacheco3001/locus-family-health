@@ -87,7 +87,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           family_member_id: familyMemberId,
           specialty: specialty.trim(),
           professional_name: professionalName.trim() || null,
-          consultation_date: consultationDate || null,
+          consultation_date: consultationDate ? new Date(consultationDate).toISOString() : null,
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
