@@ -35,6 +35,7 @@ export type UpdateExam = {
   status?: string;
   file_url?: string | null;
   result_date?: string | null;
+  consultation_id?: string | null;
 };
 
 export const useExams = (familyMemberId: string) => {
