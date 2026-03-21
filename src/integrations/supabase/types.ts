@@ -66,6 +66,7 @@ export type Database = {
       }
       exams: {
         Row: {
+          consultation_id: string | null
           created_at: string
           exam_date: string | null
           family_member_id: string
@@ -78,6 +79,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          consultation_id?: string | null
           created_at?: string
           exam_date?: string | null
           family_member_id: string
@@ -90,6 +92,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          consultation_id?: string | null
           created_at?: string
           exam_date?: string | null
           family_member_id?: string
@@ -102,6 +105,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "exams_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "exams_family_member_id_fkey"
             columns: ["family_member_id"]
@@ -146,6 +156,7 @@ export type Database = {
       }
       medications: {
         Row: {
+          consultation_id: string | null
           created_at: string
           dosage: string | null
           duration: string | null
@@ -158,6 +169,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          consultation_id?: string | null
           created_at?: string
           dosage?: string | null
           duration?: string | null
@@ -170,6 +182,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          consultation_id?: string | null
           created_at?: string
           dosage?: string | null
           duration?: string | null
@@ -182,6 +195,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "medications_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "medications_family_member_id_fkey"
             columns: ["family_member_id"]
