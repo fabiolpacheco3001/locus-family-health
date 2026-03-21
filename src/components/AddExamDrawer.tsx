@@ -154,7 +154,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                 lang="pt-BR"
                 value={examDate}
                 onChange={(e) => setExamDate(e.target.value)}
-                className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background"
+                className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
               />
             </div>
 
