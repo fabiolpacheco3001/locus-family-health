@@ -212,14 +212,22 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Data e Hora de Início</Label>
-              <input
-                type="datetime-local"
-                value={startDateTime}
-                onChange={(e) => setStartDateTime(e.target.value)}
-                className={`${INPUT_CLASSES} appearance-none`}
-              />
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <div className="space-y-1.5">
+                <Label>Data e Hora de Início</Label>
+                <input
+                  type="datetime-local"
+                  value={startDateTime}
+                  onChange={(e) => setStartDateTime(e.target.value)}
+                  className={`${INPUT_CLASSES} appearance-none`}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Término Previsto</Label>
+                <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
+                  {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -251,14 +259,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div />
               )}
             </div>
-
-            {calculatedEndDate && (
-              <div className="bg-muted/50 rounded-lg p-3">
-                <p className="text-xs text-muted-foreground">
-                  Término previsto: <span className="font-semibold text-foreground">{format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy")}</span>
-                </p>
-              </div>
-            )}
 
             <ConsultationSelect
               familyMemberId={familyMemberId}
