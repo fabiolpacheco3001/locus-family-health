@@ -39,7 +39,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
     if (open && member) {
       setName(member.name);
       setRelationship(member.relationship);
-      setBirthDate(isoToMasked(member.birth_date));
+      setBirthDate(member.birth_date || "");
       setBloodType(member.blood_type || "");
     }
   }, [open, member]);
