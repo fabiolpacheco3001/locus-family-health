@@ -208,7 +208,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               <div className="space-y-3">
                 <div className="space-y-1.5">
                   <Label>Status</Label>
-                  <Select value={editingConsultation?.status ?? "Agendada"} onValueChange={(val) => {
+                  <Select value={statusValue} onValueChange={setStatusValue}>
                     // Status will be sent on save
                     setStatusValue(val);
                   }}>
