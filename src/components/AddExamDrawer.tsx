@@ -195,6 +195,12 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               </Select>
             </div>
 
+            <ConsultationSelect
+              familyMemberId={familyMemberId}
+              value={consultationId}
+              onValueChange={setConsultationId}
+            />
+
             {status === "Coletado" && (
               <div className="space-y-1.5">
                 <Label>Data Prevista do Resultado</Label>

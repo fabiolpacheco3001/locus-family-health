@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useMedications, Medication, NewMedication } from "@/hooks/useMedications";
+import ConsultationSelect from "@/components/ConsultationSelect";
 
 interface Props {
   open: boolean;
@@ -31,6 +32,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [duration, setDuration] = useState("");
   const [startDate, setStartDate] = useState("");
   const [status, setStatus] = useState("Ativo");
+  const [consultationId, setConsultationId] = useState("none");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   const isEditing = !!editingMedication;
@@ -43,6 +45,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setDuration(editingMedication.duration ?? "");
       setStartDate(editingMedication.start_date ? editingMedication.start_date.slice(0, 10) : "");
       setStatus(editingMedication.status);
+      setConsultationId(editingMedication.consultation_id ?? "none");
     } else {
       resetForm();
     }
@@ -55,6 +58,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setDuration("");
     setStartDate("");
     setStatus("Ativo");
+    setConsultationId("none");
   };
 
   const handleSave = async () => {
