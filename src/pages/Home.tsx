@@ -39,22 +39,21 @@ const Home = () => {
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ["upcoming-appointments", user?.id],
     queryFn: async () => {
-      const today = new Date().toISOString();
       const [consultRes, examRes] = await Promise.all([
         supabase
           .from("consultations")
-          .select("id, family_member_id, specialty, professional_name, consultation_date, family_members(name)")
+          .select("id, family_member_id, specialty, professional_name, consultation_date, status, family_members(name)")
           .eq("user_id", user!.id)
-          .gte("consultation_date", today)
+          .in("status", ["Agendada"])
           .order("consultation_date", { ascending: true })
-          .limit(2),
+          .limit(5),
         supabase
           .from("exams")
           .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
           .eq("user_id", user!.id)
           .or("status.eq.Agendado,and(status.eq.Coletado,result_date.not.is.null)")
           .order("exam_date", { ascending: true })
-          .limit(2),
+          .limit(5),
       ]);
 
       const items: Array<{
@@ -65,24 +64,28 @@ const Home = () => {
         memberName: string;
         kind: "consultation" | "exam";
         familyMemberId: string;
+        isOverdue: boolean;
       }> = [];
 
       (consultRes.data ?? []).forEach((c: any) => {
+        const dateStr = c.consultation_date;
+        const overdue = c.status === "Agendada" && dateStr ? isBefore(new Date(dateStr), new Date()) : false;
         items.push({
           id: c.id,
           title: c.specialty,
           subtitle: c.professional_name ? `com ${c.professional_name}` : "Consulta",
-          date: c.consultation_date,
+          date: dateStr,
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
           familyMemberId: c.family_member_id,
+          isOverdue: overdue,
         });
       });
 
       (examRes.data ?? []).forEach((e: any) => {
         const isColetado = e.status === "Coletado";
         const displayDate = isColetado ? e.result_date : e.exam_date;
-        if (displayDate && isBefore(new Date(displayDate + "T12:00:00"), startOfDay(new Date()))) return;
+        const overdue = e.status === "Agendado" && e.exam_date ? isBefore(new Date(e.exam_date), startOfDay(new Date())) : false;
         items.push({
           id: e.id,
           title: isColetado ? `Buscar Resultado` : e.name,
@@ -91,16 +94,20 @@ const Home = () => {
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           familyMemberId: e.family_member_id,
+          isOverdue: overdue,
         });
       });
 
+      // Sort: overdue first, then by date ascending
       items.sort((a, b) => {
+        if (a.isOverdue && !b.isOverdue) return -1;
+        if (!a.isOverdue && b.isOverdue) return 1;
         if (!a.date) return 1;
         if (!b.date) return -1;
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
 
-      return items.slice(0, 3);
+      return items.slice(0, 5);
     },
     enabled: !!user,
   });
@@ -250,8 +257,13 @@ const Home = () => {
                     <Icon className={isExam ? "text-secondary" : "text-primary"} size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
+                      {item.isOverdue && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 shrink-0">
+                          Atrasado
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
                         {isExam ? "Exame" : "Consulta"}
                       </Badge>

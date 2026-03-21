@@ -47,7 +47,15 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   useEffect(() => {
     if (editingExam) {
       setName(editingExam.name);
-      setExamDate(editingExam.exam_date ?? "");
+      // Convert ISO timestamp to datetime-local format (YYYY-MM-DDTHH:mm)
+      const ed = editingExam.exam_date;
+      if (ed) {
+        const d = new Date(ed);
+        const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        setExamDate(local);
+      } else {
+        setExamDate("");
+      }
       setLocation(editingExam.location ?? "");
       setStatus(editingExam.status);
       setResultDate(editingExam.result_date ?? "");
@@ -87,7 +95,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
         await updateExam.mutateAsync({
           id: editingExam.id,
           name: name.trim(),
-          exam_date: examDate || null,
+          exam_date: examDate ? new Date(examDate).toISOString() : null,
           location: location.trim() || null,
           status,
           file_url: fileUrl,
@@ -103,7 +111,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
         await addExam.mutateAsync({
           family_member_id: familyMemberId,
           name: name.trim(),
-          exam_date: examDate || null,
+          exam_date: examDate ? new Date(examDate).toISOString() : null,
           location: location.trim() || null,
           status,
           file_url: fileUrl,

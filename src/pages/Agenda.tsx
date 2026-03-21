@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { parseISO } from "date-fns";
 import { Calendar, Stethoscope, FileText } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +60,7 @@ const Agenda = () => {
           status: c.status,
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
-          isOverdue: dateStr ? isBefore(new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr), today) : false,
+          isOverdue: c.status === "Agendada" && dateStr ? isBefore(parseISO(dateStr), new Date()) : false,
         };
       });
 
@@ -136,7 +137,7 @@ const Agenda = () => {
                   {item.date && (
                     <p className="text-sm font-bold text-primary mb-1">
                       {format(
-                        new Date(item.date.length === 10 ? item.date + 'T12:00:00' : item.date),
+                        item.date.length === 10 ? new Date(item.date + 'T12:00:00') : parseISO(item.date),
                         item.kind === "exam" ? "dd MMM yyyy" : "dd MMM yyyy '-' HH:mm",
                         { locale: ptBR }
                       )}

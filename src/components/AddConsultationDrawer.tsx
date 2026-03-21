@@ -33,6 +33,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
   const [symptoms, setSymptoms] = useState("");
   const [questions, setQuestions] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [statusValue, setStatusValue] = useState("Agendada");
 
   const isEditing = !!editingConsultation;
 
@@ -40,14 +41,19 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     if (editingConsultation) {
       setSpecialty(editingConsultation.specialty);
       setProfessionalName(editingConsultation.professional_name ?? "");
-      setConsultationDate(
-        editingConsultation.consultation_date
-          ? editingConsultation.consultation_date.slice(0, 16)
-          : ""
-      );
+      // Convert ISO timestamp to datetime-local format
+      const cd = editingConsultation.consultation_date;
+      if (cd) {
+        const d = new Date(cd);
+        const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        setConsultationDate(local);
+      } else {
+        setConsultationDate("");
+      }
       setType(editingConsultation.type ?? "Rotina");
       setSymptoms(editingConsultation.symptoms ?? "");
       setQuestions(editingConsultation.questions ?? "");
+      setStatusValue(editingConsultation.status);
     } else {
       resetForm();
     }
@@ -60,6 +66,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setType("Rotina");
     setSymptoms("");
     setQuestions("");
+    setStatusValue("Agendada");
   };
 
   const handleSave = async () => {
@@ -74,10 +81,11 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           id: editingConsultation.id,
           specialty: specialty.trim(),
           professional_name: professionalName.trim() || null,
-          consultation_date: consultationDate || null,
+          consultation_date: consultationDate ? new Date(consultationDate).toISOString() : null,
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
+          status: statusValue,
         });
         toast.success("Consulta atualizada!");
       } else {
@@ -85,7 +93,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           family_member_id: familyMemberId,
           specialty: specialty.trim(),
           professional_name: professionalName.trim() || null,
-          consultation_date: consultationDate || null,
+          consultation_date: consultationDate ? new Date(consultationDate).toISOString() : null,
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
@@ -169,6 +177,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 <SelectContent>
                   <SelectItem value="Rotina">Rotina</SelectItem>
                   <SelectItem value="Emergência">Emergência</SelectItem>
+                  <SelectItem value="Retorno">Retorno</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -196,15 +205,30 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             </div>
 
             {isEditing && (
-              <div className="pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                  onClick={() => setShowDeleteAlert(true)}
-                >
-                  <Trash2 size={16} className="mr-2" />
-                  Excluir Consulta
-                </Button>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <Select value={statusValue} onValueChange={setStatusValue}>
+                    <SelectTrigger className="text-[16px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Agendada">Agendada</SelectItem>
+                      <SelectItem value="Realizada">Realizada</SelectItem>
+                      <SelectItem value="Cancelada">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="pt-4 border-t border-border">
+                  <Button
+                    variant="outline"
+                    className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                    onClick={() => setShowDeleteAlert(true)}
+                  >
+                    <Trash2 size={16} className="mr-2" />
+                    Excluir Consulta
+                  </Button>
+                </div>
               </div>
             )}
           </div>

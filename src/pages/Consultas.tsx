@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import { format } from "date-fns";
+import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
@@ -15,6 +15,8 @@ const statusColors: Record<string, string> = {
   Realizada: "bg-secondary/10 text-secondary border-secondary/20",
   Cancelada: "bg-destructive/10 text-destructive border-destructive/20",
 };
+
+// Add "Realizada" status option - handled in AddConsultationDrawer
 
 const Consultas = () => {
   const { id } = useParams();
@@ -91,8 +93,13 @@ const Consultas = () => {
                   <Stethoscope className="text-primary" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="text-sm font-bold text-foreground truncate">{c.specialty}</p>
+                    {c.status === "Agendada" && c.consultation_date && isBefore(parseISO(c.consultation_date), new Date()) && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        Atrasado
+                      </Badge>
+                    )}
                     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusColors[c.status] ?? ""}`}>
                       {c.status}
                     </Badge>
@@ -104,7 +111,7 @@ const Consultas = () => {
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Calendar size={12} />
                       <span>
-                        {format(new Date(c.consultation_date), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
+                        {format(parseISO(c.consultation_date), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
                       </span>
                     </div>
                   )}
