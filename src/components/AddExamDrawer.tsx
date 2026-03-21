@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -154,7 +154,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                 lang="pt-BR"
                 value={examDate}
                 onChange={(e) => setExamDate(e.target.value)}
-                className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background"
+                className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
               />
             </div>
 
@@ -207,11 +207,22 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   </button>
                 </div>
               ) : existingFileUrl ? (
-                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
-                  <Paperclip size={16} className="text-muted-foreground shrink-0" />
-                  <span className="text-sm text-foreground truncate flex-1">Arquivo existente</span>
-                  <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => fileInputRef.current?.click()}>
-                    Trocar
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                    <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                    <span className="text-sm text-foreground truncate flex-1">Arquivo existente</span>
+                    <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => fileInputRef.current?.click()}>
+                      Trocar
+                    </Button>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 text-primary border-primary/30"
+                    onClick={() => window.open(existingFileUrl, '_blank')}
+                  >
+                    <ExternalLink size={16} />
+                    Visualizar Exame
                   </Button>
                 </div>
               ) : (
