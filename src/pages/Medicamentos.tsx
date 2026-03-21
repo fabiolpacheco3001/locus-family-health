@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope } from "lucide-react";
+import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,7 +52,6 @@ const Medicamentos = () => {
       />
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft size={22} />
@@ -60,7 +59,6 @@ const Medicamentos = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Medicamentos</h1>
         </div>
 
-        {/* List */}
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -109,19 +107,23 @@ const Medicamentos = () => {
                       <span>Solicitado por {m.consultations.professional_name}</span>
                     </div>
                   )}
-                  {m.frequency && (
+                  {m.frequency_hours != null && m.frequency_hours > 0 && (
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Clock size={12} />
-                      <span>{m.frequency}</span>
+                      <span>A cada {m.frequency_hours}h{m.start_time ? ` · Início ${m.start_time.slice(0, 5)}` : ""}</span>
                     </div>
                   )}
-                  {m.duration && (
-                    <p className="text-xs text-muted-foreground mt-0.5">Duração: {m.duration}</p>
+                  {m.frequency_hours === 0 && (
+                    <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                      <Clock size={12} />
+                      <span>Uso contínuo</span>
+                    </div>
                   )}
-                  {m.start_date && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Início: {format(new Date(m.start_date), "dd MMM yyyy", { locale: ptBR })}
-                    </p>
+                  {m.end_date && (
+                    <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                      <CalendarClock size={12} />
+                      <span>Término: {format(new Date(m.end_date + "T12:00:00"), "dd/MM/yyyy")}</span>
+                    </div>
                   )}
                 </div>
                 <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />

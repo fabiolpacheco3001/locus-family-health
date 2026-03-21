@@ -9,8 +9,12 @@ export type Medication = {
   name: string;
   dosage: string | null;
   frequency: string | null;
+  frequency_hours: number | null;
   duration: string | null;
+  duration_days: number | null;
   start_date: string | null;
+  start_time: string | null;
+  end_date: string | null;
   status: string;
   consultation_id: string | null;
   created_at: string;
@@ -22,8 +26,12 @@ export type NewMedication = {
   name: string;
   dosage?: string | null;
   frequency?: string | null;
+  frequency_hours?: number | null;
   duration?: string | null;
+  duration_days?: number | null;
   start_date?: string | null;
+  start_time?: string | null;
+  end_date?: string | null;
   consultation_id?: string | null;
 };
 
@@ -32,28 +40,39 @@ export type UpdateMedication = {
   name?: string;
   dosage?: string | null;
   frequency?: string | null;
+  frequency_hours?: number | null;
   duration?: string | null;
+  duration_days?: number | null;
   start_date?: string | null;
+  start_time?: string | null;
+  end_date?: string | null;
   status?: string;
   consultation_id?: string | null;
 };
 
-export const useMedications = (familyMemberId: string) => {
+export const useMedications = (familyMemberId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["medications", familyMemberId],
+    queryKey: ["medications", familyMemberId ?? "all"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("medications")
         .select("*, consultations(professional_name, specialty)")
-        .eq("family_member_id", familyMemberId)
         .order("created_at", { ascending: false });
+
+      if (familyMemberId) {
+        q = q.eq("family_member_id", familyMemberId);
+      } else {
+        q = q.eq("user_id", user!.id);
+      }
+
+      const { data, error } = await q;
       if (error) throw error;
       return data as Medication[];
     },
-    enabled: !!user && !!familyMemberId,
+    enabled: !!user && (!!familyMemberId || true),
   });
 
   const addMedication = useMutation({
@@ -67,7 +86,7 @@ export const useMedications = (familyMemberId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medications", familyMemberId] });
+      queryClient.invalidateQueries({ queryKey: ["medications"] });
     },
   });
 
@@ -83,7 +102,7 @@ export const useMedications = (familyMemberId: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medications", familyMemberId] });
+      queryClient.invalidateQueries({ queryKey: ["medications"] });
     },
   });
 
@@ -96,7 +115,7 @@ export const useMedications = (familyMemberId: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["medications", familyMemberId] });
+      queryClient.invalidateQueries({ queryKey: ["medications"] });
     },
   });
 

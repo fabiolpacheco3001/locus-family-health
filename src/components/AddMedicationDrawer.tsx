@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { useMedications, Medication, NewMedication } from "@/hooks/useMedications";
 import ConsultationSelect from "@/components/ConsultationSelect";
+import { addDays, format } from "date-fns";
 
 interface Props {
   open: boolean;
@@ -24,12 +25,21 @@ interface Props {
   editingMedication?: Medication | null;
 }
 
+const FREQUENCY_OPTIONS = [
+  { label: "1x ao dia (24h)", value: "24" },
+  { label: "De 12 em 12 horas", value: "12" },
+  { label: "De 8 em 8 horas", value: "8" },
+  { label: "De 6 em 6 horas", value: "6" },
+  { label: "Uso contínuo", value: "0" },
+];
+
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { addMedication, updateMedication, deleteMedication } = useMedications(familyMemberId);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [duration, setDuration] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [frequencyHours, setFrequencyHours] = useState("");
+  const [durationDays, setDurationDays] = useState("");
   const [startDate, setStartDate] = useState("");
   const [status, setStatus] = useState("Ativo");
   const [consultationId, setConsultationId] = useState("none");
@@ -41,8 +51,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     if (editingMedication) {
       setName(editingMedication.name);
       setDosage(editingMedication.dosage ?? "");
-      setFrequency(editingMedication.frequency ?? "");
-      setDuration(editingMedication.duration ?? "");
+      setStartTime(editingMedication.start_time ?? "");
+      setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
+      setDurationDays(editingMedication.duration_days?.toString() ?? "");
       setStartDate(editingMedication.start_date ? editingMedication.start_date.slice(0, 10) : "");
       setStatus(editingMedication.status);
       setConsultationId(editingMedication.consultation_id ?? "none");
@@ -54,12 +65,23 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const resetForm = () => {
     setName("");
     setDosage("");
-    setFrequency("");
-    setDuration("");
+    setStartTime("");
+    setFrequencyHours("");
+    setDurationDays("");
     setStartDate("");
     setStatus("Ativo");
     setConsultationId("none");
   };
+
+  const calculatedEndDate = useMemo(() => {
+    if (!startDate || !durationDays || Number(durationDays) <= 0) return null;
+    return format(addDays(new Date(startDate + "T12:00:00"), Number(durationDays)), "yyyy-MM-dd");
+  }, [startDate, durationDays]);
+
+  const frequencyLabel = useMemo(() => {
+    const opt = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours);
+    return opt?.label ?? frequencyHours ? `A cada ${frequencyHours}h` : "";
+  }, [frequencyHours]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -67,15 +89,22 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       return;
     }
 
+    const freqNum = frequencyHours ? Number(frequencyHours) : null;
+    const durNum = durationDays ? Number(durationDays) : null;
+
     try {
       if (isEditing) {
         await updateMedication.mutateAsync({
           id: editingMedication.id,
           name: name.trim(),
           dosage: dosage.trim() || null,
-          frequency: frequency.trim() || null,
-          duration: duration.trim() || null,
+          start_time: startTime || null,
+          frequency_hours: freqNum,
+          frequency: frequencyLabel || null,
+          duration_days: durNum,
+          duration: durNum ? `${durNum} dias` : null,
           start_date: startDate || null,
+          end_date: calculatedEndDate,
           status,
           consultation_id: consultationId === "none" ? null : consultationId,
         });
@@ -85,9 +114,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           family_member_id: familyMemberId,
           name: name.trim(),
           dosage: dosage.trim() || null,
-          frequency: frequency.trim() || null,
-          duration: duration.trim() || null,
+          start_time: startTime || null,
+          frequency_hours: freqNum,
+          frequency: frequencyLabel || null,
+          duration_days: durNum,
+          duration: durNum ? `${durNum} dias` : null,
           start_date: startDate || null,
+          end_date: calculatedEndDate,
           consultation_id: consultationId === "none" ? null : consultationId,
         };
         await addMedication.mutateAsync(medication);
@@ -118,7 +151,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent>
+        <DrawerContent className="flex flex-col max-h-[90vh]">
           <DrawerHeader>
             <DrawerTitle className="text-primary">
               {isEditing ? "Editar Medicamento" : "Novo Medicamento"}
@@ -135,7 +168,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 placeholder="Ex: Amoxicilina, Dipirona"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="text-[16px] scroll-m-20"
+                className="text-[16px]"
               />
             </div>
 
@@ -145,46 +178,64 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 placeholder="Ex: 5ml, 1 comprimido"
                 value={dosage}
                 onChange={(e) => setDosage(e.target.value)}
-                className="text-[16px] scroll-m-20"
+                className="text-[16px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Hora de Início</Label>
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label>Frequência</Label>
-              <Select value={frequency} onValueChange={setFrequency}>
-                <SelectTrigger className="text-[16px] scroll-m-20">
+              <Select value={frequencyHours} onValueChange={setFrequencyHours}>
+                <SelectTrigger className="text-[16px]">
                   <SelectValue placeholder="Selecione a frequência" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1x ao dia">1x ao dia</SelectItem>
-                  <SelectItem value="De 8 em 8 horas">De 8 em 8 horas</SelectItem>
-                  <SelectItem value="De 12 em 12 horas">De 12 em 12 horas</SelectItem>
-                  <SelectItem value="De 6 em 6 horas">De 6 em 6 horas</SelectItem>
-                  <SelectItem value="Uso contínuo">Uso contínuo</SelectItem>
+                  {FREQUENCY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1.5">
-              <Label>Duração</Label>
+              <Label>Duração (dias)</Label>
               <Input
-                placeholder="Ex: 7 dias, Uso contínuo"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                className="text-[16px] scroll-m-20"
+                type="number"
+                inputMode="numeric"
+                placeholder="Ex: 7"
+                value={durationDays}
+                onChange={(e) => setDurationDays(e.target.value)}
+                className="text-[16px]"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label>Data de Início</Label>
-              <Input
+              <input
                 type="date"
                 lang="pt-BR"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background scroll-m-20"
+                className="flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border appearance-none"
               />
             </div>
+
+            {calculatedEndDate && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground">
+                  Término previsto: <span className="font-semibold text-foreground">{format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy")}</span>
+                </p>
+              </div>
+            )}
 
             <ConsultationSelect
               familyMemberId={familyMemberId}
@@ -197,7 +248,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="space-y-1.5">
                   <Label>Status</Label>
                   <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="text-[16px] scroll-m-20">
+                    <SelectTrigger className="text-[16px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
