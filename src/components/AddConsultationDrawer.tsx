@@ -155,7 +155,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 type="datetime-local"
                 value={consultationDate}
                 onChange={(e) => setConsultationDate(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
