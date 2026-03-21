@@ -13,6 +13,7 @@ import FamiliarProfile from "./pages/FamiliarProfile";
 import Consultas from "./pages/Consultas";
 import Medicamentos from "./pages/Medicamentos";
 import Exames from "./pages/Exames";
+import Notificacoes from "./pages/Notificacoes";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/familiar/:id/consultas" element={<Consultas />} />
               <Route path="/familiar/:id/medicamentos" element={<Medicamentos />} />
               <Route path="/familiar/:id/exames" element={<Exames />} />
+              <Route path="/notificacoes" element={<Notificacoes />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

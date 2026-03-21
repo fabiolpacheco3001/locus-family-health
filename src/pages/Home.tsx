@@ -134,7 +134,7 @@ const Home = () => {
           <h1 className="text-2xl font-bold text-foreground">Olá, {userName}</h1>
         </div>
         <button
-          onClick={() => navigate("/ajustes")}
+          onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
           className="relative p-2 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
         >
           <Bell size={24} className="text-foreground" />
