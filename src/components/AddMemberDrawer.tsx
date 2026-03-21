@@ -43,7 +43,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     const member: NewFamilyMember = {
       name: name.trim(),
       relationship,
-      birth_date: birthDate ? format(birthDate, "yyyy-MM-dd") : null,
+      birth_date: birthDate || null,
       blood_type: bloodType || null,
     };
 

@@ -90,8 +90,7 @@ const Home = () => {
       <Button
         variant="fab"
         size="icon"
-        className="fixed bottom-20 w-14 h-14"
-        style={{ right: "max(1.25rem, calc(50% - 240px + 1.25rem))" }}
+        className="absolute bottom-20 right-5 w-14 h-14"
         onClick={() => setDrawerOpen(true)}
       >
         <Plus size={28} strokeWidth={2.5} />
