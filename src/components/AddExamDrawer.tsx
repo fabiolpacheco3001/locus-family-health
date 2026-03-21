@@ -295,7 +295,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           <div className="px-4 pb-4 flex-1 overflow-auto">
             {existingFileUrl && (
               isPdf ? (
-                <iframe src={existingFileUrl} className="w-full h-[70vh] rounded-md border border-border" />
+                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(existingFileUrl)}&embedded=true`} className="w-full h-[70vh] rounded-md border-0" />
               ) : (
                 <img src={existingFileUrl} alt="Resultado do exame" className="w-full object-contain max-h-[70vh] rounded-md" />
               )
