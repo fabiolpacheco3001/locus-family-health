@@ -44,10 +44,6 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
     }
   }, [open, member]);
 
-  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setBirthDate(applyDateMask(e.target.value));
-  };
-
   const handleSave = async () => {
     if (!name.trim() || !relationship) {
       toast.error("Preencha o nome e o parentesco.");
