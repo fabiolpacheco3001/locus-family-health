@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useExams, Exam } from "@/hooks/useExams";
 import AddExamDrawer from "@/components/AddExamDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import { format } from "date-fns";
+import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
@@ -83,7 +83,12 @@ const Exames = () => {
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {exams.map((e) => (
+            {exams.map((e) => {
+              const today = startOfDay(new Date());
+              const isOverdue = e.status === "Agendado" && e.exam_date
+                ? isBefore(new Date(e.exam_date + 'T12:00:00'), today)
+                : false;
+              return (
               <button
                 key={e.id}
                 onClick={() => handleOpenEdit(e)}
@@ -93,8 +98,13 @@ const Exames = () => {
                   <FileText className="text-primary" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="text-sm font-bold text-foreground truncate">{e.name}</p>
+                    {isOverdue && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        Atrasado
+                      </Badge>
+                    )}
                     <Badge
                       variant="outline"
                       className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${statusColors[e.status] ?? ""}`}
@@ -108,13 +118,14 @@ const Exames = () => {
                   {e.exam_date && (
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Calendar size={12} />
-                      <span>{format(new Date(e.exam_date + "T00:00:00"), "dd MMM yyyy", { locale: ptBR })}</span>
+                      <span>{format(new Date(e.exam_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })}</span>
                     </div>
                   )}
                 </div>
                 <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
               </button>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

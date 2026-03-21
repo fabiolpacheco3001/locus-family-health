@@ -59,7 +59,7 @@ const Agenda = () => {
           status: c.status,
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
-          isOverdue: dateStr ? isBefore(new Date(dateStr), today) : false,
+          isOverdue: dateStr ? isBefore(new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr), today) : false,
         };
       });
 
@@ -79,7 +79,7 @@ const Agenda = () => {
           status: e.status,
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
-          isOverdue: displayDate ? isBefore(new Date(displayDate), today) : false,
+          isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
         };
       });
 
@@ -136,7 +136,7 @@ const Agenda = () => {
                   {item.date && (
                     <p className="text-sm font-bold text-primary mb-1">
                       {format(
-                        new Date(item.date),
+                        new Date(item.date.length === 10 ? item.date + 'T12:00:00' : item.date),
                         item.kind === "exam" ? "dd MMM yyyy" : "dd MMM yyyy '-' HH:mm",
                         { locale: ptBR }
                       )}
