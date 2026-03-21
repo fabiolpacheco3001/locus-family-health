@@ -209,9 +209,6 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 <div className="space-y-1.5">
                   <Label>Status</Label>
                   <Select value={statusValue} onValueChange={setStatusValue}>
-                    // Status will be sent on save
-                    setStatusValue(val);
-                  }}>
                     <SelectTrigger className="text-[16px]">
                       <SelectValue />
                     </SelectTrigger>
