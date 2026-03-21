@@ -146,7 +146,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             <div className="space-y-1.5">
               <Label>Frequência</Label>
               <Select value={frequency} onValueChange={setFrequency}>
-                <SelectTrigger className="text-base scroll-m-20">
+                <SelectTrigger className="text-[16px] scroll-m-20">
                   <SelectValue placeholder="Selecione a frequência" />
                 </SelectTrigger>
                 <SelectContent>
