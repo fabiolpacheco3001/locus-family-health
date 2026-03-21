@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Agenda from "./pages/Agenda";
 import Familia from "./pages/Familia";
 import Ajustes from "./pages/Ajustes";
+import FamiliarProfile from "./pages/FamiliarProfile";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
               <Route path="/agenda" element={<Agenda />} />
               <Route path="/familia" element={<Familia />} />
               <Route path="/ajustes" element={<Ajustes />} />
+              <Route path="/familiar/:id" element={<FamiliarProfile />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
