@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Stethoscope, Calendar, AlertCircle } from "lucide-react";
+import { ArrowLeft, Plus, Stethoscope, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useConsultations } from "@/hooks/useConsultations";
+import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -19,21 +19,23 @@ const Consultas = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const { consultations, isLoading } = useConsultations(id!);
 
-  if (isLoading) {
-    return (
-      <div className="px-4 pt-6 space-y-4 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-10 w-10 rounded-lg" />
-          <Skeleton className="h-6 w-32" />
-        </div>
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-24 w-full rounded-xl" />
-        ))}
-      </div>
-    );
-  }
+  const handleOpenNew = () => {
+    setEditingConsultation(null);
+    setDrawerOpen(true);
+  };
+
+  const handleOpenEdit = (c: Consultation) => {
+    setEditingConsultation(c);
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerChange = (open: boolean) => {
+    setDrawerOpen(open);
+    if (!open) setEditingConsultation(null);
+  };
 
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">
@@ -46,20 +48,27 @@ const Consultas = () => {
       </div>
 
       {/* List */}
-      {consultations.length === 0 ? (
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : consultations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Stethoscope className="text-primary" size={28} />
           </div>
           <p className="text-foreground font-semibold mb-1">Nenhuma consulta agendada</p>
-          <p className="text-muted-foreground text-sm">Toque no + para adicionar.</p>
+          <p className="text-muted-foreground text-sm">Toque no botão abaixo para adicionar.</p>
         </div>
       ) : (
         <div className="flex flex-col space-y-3">
           {consultations.map((c) => (
-            <div
+            <button
               key={c.id}
-              className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm"
+              onClick={() => handleOpenEdit(c)}
+              className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left hover:bg-accent/50 transition-colors w-full"
             >
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                 <Stethoscope className="text-primary" size={20} />
@@ -86,24 +95,29 @@ const Consultas = () => {
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-1">Sintomas: {c.symptoms}</p>
                 )}
               </div>
-            </div>
+              <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
+            </button>
           ))}
         </div>
       )}
 
-      {/* FAB */}
-      <Button
-        onClick={() => setDrawerOpen(true)}
-        className="fixed right-6 bottom-24 z-[100] w-14 h-14 rounded-full shadow-lg"
-      >
-        <Plus size={28} />
-      </Button>
+      {/* FAB - always rendered, hidden when drawer open */}
+      {!drawerOpen && (
+        <button
+          onClick={handleOpenNew}
+          className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-primary text-primary-foreground px-6 py-3 rounded-full shadow-lg font-medium flex items-center gap-2"
+        >
+          <Plus size={20} />
+          Nova Consulta
+        </button>
+      )}
 
       {/* Drawer */}
       <AddConsultationDrawer
         open={drawerOpen}
-        onOpenChange={setDrawerOpen}
+        onOpenChange={handleDrawerChange}
         familyMemberId={id!}
+        editingConsultation={editingConsultation}
       />
     </div>
   );
