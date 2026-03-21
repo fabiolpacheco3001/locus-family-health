@@ -1,19 +1,33 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Sparkles, ChevronRight } from "lucide-react";
+import { Sparkles, ChevronRight, Plus } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import AddMemberDrawer from "@/components/AddMemberDrawer";
 
 const Home = () => {
   const { user } = useAuth();
   const { members, isLoading } = useFamilyMembers();
   const navigate = useNavigate();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const userName = user?.user_metadata?.full_name || "Usuário";
 
   return (
     <div className="px-5 pt-6 animate-fade-in">
+      {/* FAB - always rendered outside loading logic */}
+      {!drawerOpen && (
+        <button
+          onClick={() => setDrawerOpen(true)}
+          className="fixed right-6 bottom-24 z-50 w-14 h-14 rounded-full bg-[#FFB085] hover:bg-[#ff9b66] text-slate-900 shadow-md flex items-center justify-center transition-all"
+        >
+          <Plus size={24} />
+        </button>
+      )}
+      <AddMemberDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
