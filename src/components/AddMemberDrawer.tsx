@@ -43,7 +43,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     const member: NewFamilyMember = {
       name: name.trim(),
       relationship,
-      birth_date: maskedToISO(birthDate),
+      birth_date: birthDate || null,
       blood_type: bloodType || null,
     };
 
