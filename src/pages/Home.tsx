@@ -65,7 +65,7 @@ const Home = () => {
               <button
                 key={m.id}
                 onClick={() => navigate(`/familiar/${m.id}`)}
-                className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 hover:bg-muted/50 transition-colors text-left w-full"
+                className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-left w-full"
               >
                 <Avatar className="h-12 w-12 border-2 border-secondary shrink-0">
                   <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-lg">

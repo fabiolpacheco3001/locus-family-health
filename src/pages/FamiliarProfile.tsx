@@ -123,7 +123,7 @@ const FamiliarProfile = () => {
           <button
             key={label}
             onClick={() => route ? navigate(`/familiar/${id}/${route}`) : toast.info("Em breve")}
-            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 hover:bg-muted/50 transition-colors text-center"
+            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
           >
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
               <Icon className="text-primary" size={22} />

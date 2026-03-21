@@ -114,11 +114,11 @@ const Medicamentos = () => {
         </div>
       )}
 
-      {/* FAB */}
+      {/* FAB - always rendered outside loading, hidden when drawer open */}
       {!drawerOpen && (
         <button
           onClick={handleOpenNew}
-          className="fixed right-6 bottom-24 z-40 rounded-full shadow-lg h-14 w-14 flex items-center justify-center bg-primary text-primary-foreground"
+          className="fixed right-6 bottom-24 z-40 rounded-full shadow-xl h-14 w-14 flex items-center justify-center bg-accent text-accent-foreground"
         >
           <Plus size={28} strokeWidth={2.5} />
         </button>
