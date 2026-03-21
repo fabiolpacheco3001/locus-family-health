@@ -26,6 +26,17 @@ export type NewConsultation = {
   questions?: string | null;
 };
 
+export type UpdateConsultation = {
+  id: string;
+  specialty?: string;
+  professional_name?: string | null;
+  consultation_date?: string | null;
+  type?: string | null;
+  symptoms?: string | null;
+  questions?: string | null;
+  status?: string;
+};
+
 export const useConsultations = (familyMemberId: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -59,10 +70,41 @@ export const useConsultations = (familyMemberId: string) => {
     },
   });
 
+  const updateConsultation = useMutation({
+    mutationFn: async ({ id, ...updates }: UpdateConsultation) => {
+      const { data, error } = await supabase
+        .from("consultations")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", familyMemberId] });
+    },
+  });
+
+  const deleteConsultation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("consultations")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["consultations", familyMemberId] });
+    },
+  });
+
   return {
     consultations: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
     addConsultation,
+    updateConsultation,
+    deleteConsultation,
   };
 };
