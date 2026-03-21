@@ -98,13 +98,16 @@ const Home = () => {
         });
       });
 
+      // Sort: overdue first, then by date ascending
       items.sort((a, b) => {
+        if (a.isOverdue && !b.isOverdue) return -1;
+        if (!a.isOverdue && b.isOverdue) return 1;
         if (!a.date) return 1;
         if (!b.date) return -1;
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
 
-      return items.slice(0, 3);
+      return items.slice(0, 5);
     },
     enabled: !!user,
   });
