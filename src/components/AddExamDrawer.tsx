@@ -92,6 +92,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           status,
           file_url: fileUrl,
           result_date: status === "Coletado" && resultDate ? resultDate : null,
+          consultation_id: consultationId === "none" ? null : consultationId,
         });
         toast.success("Exame atualizado!");
       } else {
