@@ -91,8 +91,13 @@ const Consultas = () => {
                   <Stethoscope className="text-primary" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <p className="text-sm font-bold text-foreground truncate">{c.specialty}</p>
+                    {c.status === "Agendada" && c.consultation_date && isBefore(parseISO(c.consultation_date), new Date()) && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        Atrasado
+                      </Badge>
+                    )}
                     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusColors[c.status] ?? ""}`}>
                       {c.status}
                     </Badge>
@@ -104,7 +109,7 @@ const Consultas = () => {
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Calendar size={12} />
                       <span>
-                        {format(new Date(c.consultation_date), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
+                        {format(parseISO(c.consultation_date), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
                       </span>
                     </div>
                   )}
