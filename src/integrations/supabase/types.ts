@@ -97,6 +97,53 @@ export type Database = {
         }
         Relationships: []
       }
+      medications: {
+        Row: {
+          created_at: string
+          dosage: string | null
+          duration: string | null
+          family_member_id: string
+          frequency: string | null
+          id: string
+          name: string
+          start_date: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dosage?: string | null
+          duration?: string | null
+          family_member_id: string
+          frequency?: string | null
+          id?: string
+          name: string
+          start_date?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dosage?: string | null
+          duration?: string | null
+          family_member_id?: string
+          frequency?: string | null
+          id?: string
+          name?: string
+          start_date?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medications_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
