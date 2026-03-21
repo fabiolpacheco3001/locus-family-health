@@ -128,7 +128,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="max-h-[80vh] overflow-y-auto overscroll-contain px-4 pb-32 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
             <div className="space-y-1.5">
               <Label>Especialidade *</Label>
               <Input
@@ -155,7 +155,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 type="datetime-local"
                 value={consultationDate}
                 onChange={(e) => setConsultationDate(e.target.value)}
-                className="text-[16px] scroll-m-20"
+                className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background scroll-m-20"
               />
             </div>
 

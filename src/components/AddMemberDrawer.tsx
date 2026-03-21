@@ -85,7 +85,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
           <DrawerDescription>Preencha os dados abaixo para adicionar um membro.</DrawerDescription>
         </DrawerHeader>
 
-        <div className="max-h-[80vh] overflow-y-auto overscroll-contain px-4 pb-32 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
           <div className="space-y-1.5">
             <Label>Nome *</Label>
             <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="text-[16px] scroll-m-20" />
