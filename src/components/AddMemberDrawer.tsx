@@ -119,7 +119,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
           <div className="space-y-1.5">
             <Label>Tipo Sanguíneo</Label>
             <Select value={bloodType} onValueChange={setBloodType}>
-              <SelectTrigger className="text-base scroll-m-20"><SelectValue placeholder="Opcional" /></SelectTrigger>
+              <SelectTrigger className="text-[16px] scroll-m-20"><SelectValue placeholder="Opcional" /></SelectTrigger>
               <SelectContent>
                 {bloodTypes.map((bt) => (
                   <SelectItem key={bt} value={bt}>{bt}</SelectItem>

@@ -184,7 +184,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="space-y-1.5">
                   <Label>Status</Label>
                   <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="text-base scroll-m-20">
+                    <SelectTrigger className="text-[16px] scroll-m-20">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

@@ -190,7 +190,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 rows={3}
                 value={questions}
                 onChange={(e) => setQuestions(e.target.value)}
-                className="text-base scroll-m-20 resize-none"
+                className="text-[16px] scroll-m-20 resize-none"
               />
             </div>
 
