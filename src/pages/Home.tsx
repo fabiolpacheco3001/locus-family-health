@@ -257,8 +257,13 @@ const Home = () => {
                     <Icon className={isExam ? "text-secondary" : "text-primary"} size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
+                      {item.isOverdue && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 shrink-0">
+                          Atrasado
+                        </Badge>
+                      )}
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
                         {isExam ? "Exame" : "Consulta"}
                       </Badge>
