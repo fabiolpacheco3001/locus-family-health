@@ -87,14 +87,12 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
 
           <div className="space-y-1.5">
             <Label>Data de Nascimento</Label>
-            <Input
-              type="text"
-              inputMode="numeric"
-              placeholder="DD/MM/AAAA"
-              maxLength={10}
+            <input
+              type="date"
+              lang="pt-BR"
               value={birthDate}
-              onChange={handleDateChange}
-              className="w-full max-w-full box-border min-w-0 text-[16px]"
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background"
             />
           </div>
 
