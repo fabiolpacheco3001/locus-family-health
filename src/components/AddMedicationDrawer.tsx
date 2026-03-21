@@ -33,14 +33,15 @@ const FREQUENCY_OPTIONS = [
   { label: "Uso contínuo", value: "0" },
 ];
 
+const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
+
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { addMedication, updateMedication, deleteMedication } = useMedications(familyMemberId);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
-  const [startTime, setStartTime] = useState("");
+  const [startDateTime, setStartDateTime] = useState("");
   const [frequencyHours, setFrequencyHours] = useState("");
   const [durationDays, setDurationDays] = useState("");
-  const [startDate, setStartDate] = useState("");
   const [status, setStatus] = useState("Ativo");
   const [consultationId, setConsultationId] = useState("none");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
@@ -51,10 +52,18 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     if (editingMedication) {
       setName(editingMedication.name);
       setDosage(editingMedication.dosage ?? "");
-      setStartTime(editingMedication.start_time ?? "");
+      // Combine start_date + start_time into datetime-local value
+      const date = editingMedication.start_date?.slice(0, 10) ?? "";
+      const time = editingMedication.start_time ?? "";
+      if (date && time) {
+        setStartDateTime(`${date}T${time}`);
+      } else if (date) {
+        setStartDateTime(`${date}T08:00`);
+      } else {
+        setStartDateTime("");
+      }
       setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
       setDurationDays(editingMedication.duration_days?.toString() ?? "");
-      setStartDate(editingMedication.start_date ? editingMedication.start_date.slice(0, 10) : "");
       setStatus(editingMedication.status);
       setConsultationId(editingMedication.consultation_id ?? "none");
     } else {
@@ -65,22 +74,28 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const resetForm = () => {
     setName("");
     setDosage("");
-    setStartTime("");
+    setStartDateTime("");
     setFrequencyHours("");
     setDurationDays("");
-    setStartDate("");
     setStatus("Ativo");
     setConsultationId("none");
   };
 
+  // Extract date and time from the combined datetime-local
+  const parsedDate = useMemo(() => {
+    if (!startDateTime) return { date: null, time: null };
+    const [d, t] = startDateTime.split("T");
+    return { date: d || null, time: t || null };
+  }, [startDateTime]);
+
   const calculatedEndDate = useMemo(() => {
-    if (!startDate || !durationDays || Number(durationDays) <= 0) return null;
-    return format(addDays(new Date(startDate + "T12:00:00"), Number(durationDays)), "yyyy-MM-dd");
-  }, [startDate, durationDays]);
+    if (!parsedDate.date || !durationDays || Number(durationDays) <= 0) return null;
+    return format(addDays(new Date(parsedDate.date + "T12:00:00"), Number(durationDays)), "yyyy-MM-dd");
+  }, [parsedDate.date, durationDays]);
 
   const frequencyLabel = useMemo(() => {
     const opt = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours);
-    return opt?.label ?? frequencyHours ? `A cada ${frequencyHours}h` : "";
+    return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
 
   const handleSave = async () => {
@@ -98,12 +113,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           id: editingMedication.id,
           name: name.trim(),
           dosage: dosage.trim() || null,
-          start_time: startTime || null,
+          start_time: parsedDate.time || null,
           frequency_hours: freqNum,
           frequency: frequencyLabel || null,
           duration_days: durNum,
           duration: durNum ? `${durNum} dias` : null,
-          start_date: startDate || null,
+          start_date: parsedDate.date || null,
           end_date: calculatedEndDate,
           status,
           consultation_id: consultationId === "none" ? null : consultationId,
@@ -114,12 +129,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           family_member_id: familyMemberId,
           name: name.trim(),
           dosage: dosage.trim() || null,
-          start_time: startTime || null,
+          start_time: parsedDate.time || null,
           frequency_hours: freqNum,
           frequency: frequencyLabel || null,
           duration_days: durNum,
           duration: durNum ? `${durNum} dias` : null,
-          start_date: startDate || null,
+          start_date: parsedDate.date || null,
           end_date: calculatedEndDate,
           consultation_id: consultationId === "none" ? null : consultationId,
         };
@@ -172,61 +187,69 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Dosagem</Label>
-              <Input
-                placeholder="Ex: 5ml, 1 comprimido"
-                value={dosage}
-                onChange={(e) => setDosage(e.target.value)}
-                className="text-[16px]"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Dosagem</Label>
+                <Input
+                  placeholder="Ex: 5ml"
+                  value={dosage}
+                  onChange={(e) => setDosage(e.target.value)}
+                  className="text-[16px]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Frequência</Label>
+                <Select value={frequencyHours} onValueChange={setFrequencyHours}>
+                  <SelectTrigger className="text-[16px]">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FREQUENCY_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label>Hora de Início</Label>
+              <Label>Data e Hora de Início</Label>
               <input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border"
+                type="datetime-local"
+                value={startDateTime}
+                onChange={(e) => setStartDateTime(e.target.value)}
+                className={`${INPUT_CLASSES} appearance-none`}
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Frequência</Label>
-              <Select value={frequencyHours} onValueChange={setFrequencyHours}>
-                <SelectTrigger className="text-[16px]">
-                  <SelectValue placeholder="Selecione a frequência" />
-                </SelectTrigger>
-                <SelectContent>
-                  {FREQUENCY_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Duração (dias)</Label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                placeholder="Ex: 7"
-                value={durationDays}
-                onChange={(e) => setDurationDays(e.target.value)}
-                className="text-[16px]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Data de Início</Label>
-              <input
-                type="date"
-                lang="pt-BR"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border appearance-none"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Duração (dias)</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="Ex: 7"
+                  value={durationDays}
+                  onChange={(e) => setDurationDays(e.target.value)}
+                  className="text-[16px]"
+                />
+              </div>
+              {isEditing ? (
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="text-[16px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Concluído">Concluído</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div />
+              )}
             </div>
 
             {calculatedEndDate && (
@@ -244,31 +267,16 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             />
 
             {isEditing && (
-              <>
-                <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="text-[16px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Concluído">Concluído</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="pt-4 border-t border-border">
-                  <Button
-                    variant="outline"
-                    className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                    onClick={() => setShowDeleteAlert(true)}
-                  >
-                    <Trash2 size={16} className="mr-2" />
-                    Excluir Medicamento
-                  </Button>
-                </div>
-              </>
+              <div className="pt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => setShowDeleteAlert(true)}
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Excluir Medicamento
+                </Button>
+              </div>
             )}
           </div>
 
