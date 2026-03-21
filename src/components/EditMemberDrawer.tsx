@@ -54,7 +54,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
         id: member.id,
         name: name.trim(),
         relationship,
-        birth_date: maskedToISO(birthDate),
+        birth_date: birthDate || null,
         blood_type: bloodType || null,
       });
       toast.success("Dados atualizados!");
