@@ -16,6 +16,8 @@ const statusColors: Record<string, string> = {
   Cancelada: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+// Add "Realizada" status option - handled in AddConsultationDrawer
+
 const Consultas = () => {
   const { id } = useParams();
   const navigate = useNavigate();

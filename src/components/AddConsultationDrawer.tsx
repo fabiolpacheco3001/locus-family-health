@@ -197,15 +197,33 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             </div>
 
             {isEditing && (
-              <div className="pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                  onClick={() => setShowDeleteAlert(true)}
-                >
-                  <Trash2 size={16} className="mr-2" />
-                  Excluir Consulta
-                </Button>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <Select value={editingConsultation?.status ?? "Agendada"} onValueChange={(val) => {
+                    // Status will be sent on save
+                    setStatusValue(val);
+                  }}>
+                    <SelectTrigger className="text-[16px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Agendada">Agendada</SelectItem>
+                      <SelectItem value="Realizada">Realizada</SelectItem>
+                      <SelectItem value="Cancelada">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="pt-4 border-t border-border">
+                  <Button
+                    variant="outline"
+                    className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                    onClick={() => setShowDeleteAlert(true)}
+                  >
+                    <Trash2 size={16} className="mr-2" />
+                    Excluir Consulta
+                  </Button>
+                </div>
               </div>
             )}
           </div>

@@ -137,7 +137,7 @@ const Agenda = () => {
                   {item.date && (
                     <p className="text-sm font-bold text-primary mb-1">
                       {format(
-                        new Date(item.date.length === 10 ? item.date + 'T12:00:00' : item.date),
+                        item.date.length === 10 ? new Date(item.date + 'T12:00:00') : parseISO(item.date),
                         item.kind === "exam" ? "dd MMM yyyy" : "dd MMM yyyy '-' HH:mm",
                         { locale: ptBR }
                       )}
