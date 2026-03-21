@@ -124,7 +124,7 @@ const Exames = () => {
                   {e.exam_date && (
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Calendar size={12} />
-                      <span>{format(new Date(e.exam_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })}</span>
+                      <span>{format(new Date(e.exam_date), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}</span>
                     </div>
                   )}
                 </div>
