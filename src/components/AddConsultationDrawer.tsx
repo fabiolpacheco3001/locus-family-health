@@ -128,14 +128,14 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="max-h-[60vh] overflow-y-auto px-4 pb-20 space-y-4">
+          <div className="max-h-[80vh] overflow-y-auto overscroll-contain px-4 pb-32 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="space-y-1.5">
               <Label>Especialidade *</Label>
               <Input
                 placeholder="Ex: Pediatria, Cardiologia"
                 value={specialty}
                 onChange={(e) => setSpecialty(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
@@ -145,7 +145,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 placeholder="Ex: Dr. Carlos Silva"
                 value={professionalName}
                 onChange={(e) => setProfessionalName(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
@@ -155,14 +155,14 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 type="datetime-local"
                 value={consultationDate}
                 onChange={(e) => setConsultationDate(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label>Classificação</Label>
               <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="text-base scroll-m-20">
+                <SelectTrigger className="text-[16px] scroll-m-20">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,7 +179,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 rows={3}
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
-                className="text-base scroll-m-20 resize-none"
+                className="text-[16px] scroll-m-20 resize-none"
               />
             </div>
 
@@ -190,7 +190,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 rows={3}
                 value={questions}
                 onChange={(e) => setQuestions(e.target.value)}
-                className="text-base scroll-m-20 resize-none"
+                className="text-[16px] scroll-m-20 resize-none"
               />
             </div>
 

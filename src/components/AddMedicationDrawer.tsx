@@ -122,14 +122,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="max-h-[60vh] overflow-y-auto px-4 pb-20 space-y-4">
+          <div className="max-h-[80vh] overflow-y-auto overscroll-contain px-4 pb-32 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="space-y-1.5">
               <Label>Nome do Medicamento *</Label>
               <Input
                 placeholder="Ex: Amoxicilina, Dipirona"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
@@ -139,14 +139,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 placeholder="Ex: 5ml, 1 comprimido"
                 value={dosage}
                 onChange={(e) => setDosage(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label>Frequência</Label>
               <Select value={frequency} onValueChange={setFrequency}>
-                <SelectTrigger className="text-base scroll-m-20">
+                <SelectTrigger className="text-[16px] scroll-m-20">
                   <SelectValue placeholder="Selecione a frequência" />
                 </SelectTrigger>
                 <SelectContent>
@@ -165,7 +165,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 placeholder="Ex: 7 dias, Uso contínuo"
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
@@ -175,7 +175,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
@@ -184,7 +184,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="space-y-1.5">
                   <Label>Status</Label>
                   <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="text-base scroll-m-20">
+                    <SelectTrigger className="text-[16px] scroll-m-20">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
