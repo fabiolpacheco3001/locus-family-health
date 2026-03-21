@@ -66,7 +66,7 @@ const Agenda = () => {
               <button
                 key={item.id}
                 onClick={() => navigate(`/familiar/${item.family_member_id}/consultas`, { state: { from: '/agenda' } })}
-                className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left hover:bg-accent/50 transition-colors w-full"
+                className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                   <Stethoscope className="text-primary" size={20} />

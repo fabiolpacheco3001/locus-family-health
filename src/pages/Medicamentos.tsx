@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Plus, Pill, Clock, ChevronRight } from "lucide-react";
+import { ArrowLeft, Pill, Clock, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,11 +16,6 @@ const Medicamentos = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const { medications, isLoading } = useMedications(id!);
-
-  const handleOpenNew = () => {
-    setEditingMedication(null);
-    setDrawerOpen(true);
-  };
 
   const handleOpenEdit = (m: Medication) => {
     setEditingMedication(m);
@@ -114,17 +109,7 @@ const Medicamentos = () => {
         </div>
       )}
 
-      {/* FAB - always rendered outside loading, hidden when drawer open */}
-      {!drawerOpen && (
-        <button
-          onClick={handleOpenNew}
-          className="fixed right-6 bottom-24 z-40 rounded-full shadow-xl h-14 w-14 flex items-center justify-center bg-accent text-accent-foreground"
-        >
-          <Plus size={28} strokeWidth={2.5} />
-        </button>
-      )}
-
-      {/* Drawer */}
+      {/* Drawer for editing only */}
       <AddMedicationDrawer
         open={drawerOpen}
         onOpenChange={handleDrawerChange}
