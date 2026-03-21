@@ -14,7 +14,7 @@ const BottomNav = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="sticky bottom-0 bg-card border-t border-border flex justify-around items-center h-16 shrink-0">
+    <nav className="fixed bottom-0 left-0 w-full bg-card border-t border-border flex justify-around items-center h-16 z-50">
       {navItems.map(({ icon: Icon, label, path }) => {
         const isActive = location.pathname === path;
         return (
