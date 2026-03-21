@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Trash2, Paperclip, X, Eye, Sparkles } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -279,17 +280,38 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   onClick={async () => {
                     setIsAnalyzing(true);
                     try {
-                      // TODO: Call Supabase Edge Function to process OCR via OpenAI/Gemini Vision passing the file_url
-                      await new Promise((resolve) => setTimeout(resolve, 2500));
+                      let urlToAnalyze = existingFileUrl;
+                      if (file) {
+                        const tempId = editingExam?.id ?? crypto.randomUUID();
+                        urlToAnalyze = await uploadFile(file, tempId);
+                        setExistingFileUrl(urlToAnalyze);
+                      }
 
-                      const now = new Date();
-                      const localNow = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-                      setName("Hemograma Completo (Extraído)");
-                      setLocation("Laboratório Santa Luzia (Extraído)");
-                      setExamDate(localNow);
+                      if (!urlToAnalyze) {
+                        toast.error("Nenhum arquivo disponível para análise.");
+                        return;
+                      }
+
+                      const { data, error } = await supabase.functions.invoke("analyze-exam", {
+                        body: { fileUrl: urlToAnalyze },
+                      });
+
+                      if (error) throw error;
+                      if (data?.error) throw new Error(data.error);
+
+                      if (data?.examName) setName(data.examName);
+                      if (data?.location) setLocation(data.location);
+                      if (data?.examDate) {
+                        const d = new Date(data.examDate);
+                        if (!isNaN(d.getTime())) {
+                          const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                          setExamDate(local);
+                        }
+                      }
                       toast.success("Dados extraídos com sucesso!");
-                    } catch {
-                      toast.error("Erro ao analisar documento.");
+                    } catch (err: any) {
+                      console.error("OCR error:", err);
+                      toast.error(err?.message || "Não foi possível ler o documento.");
                     } finally {
                       setIsAnalyzing(false);
                     }
