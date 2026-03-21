@@ -85,7 +85,7 @@ const Home = () => {
       (examRes.data ?? []).forEach((e: any) => {
         const isColetado = e.status === "Coletado";
         const displayDate = isColetado ? e.result_date : e.exam_date;
-        if (displayDate && isBefore(new Date(displayDate + "T12:00:00"), startOfDay(new Date()))) return;
+        const overdue = e.status === "Agendado" && e.exam_date ? isBefore(new Date(e.exam_date), startOfDay(new Date())) : false;
         items.push({
           id: e.id,
           title: isColetado ? `Buscar Resultado` : e.name,
@@ -94,6 +94,7 @@ const Home = () => {
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           familyMemberId: e.family_member_id,
+          isOverdue: overdue,
         });
       });
 
