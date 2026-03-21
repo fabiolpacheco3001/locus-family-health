@@ -160,15 +160,29 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Data do Exame</Label>
-              <input
-                type="date"
-                lang="pt-BR"
-                value={examDate}
-                onChange={(e) => setExamDate(e.target.value)}
-                className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Data e Hora</Label>
+                <input
+                  type="datetime-local"
+                  value={examDate}
+                  onChange={(e) => setExamDate(e.target.value)}
+                  className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="text-[16px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Agendado">Agendado</SelectItem>
+                    <SelectItem value="Coletado">Coletado</SelectItem>
+                    <SelectItem value="Resultado Pronto">Resultado Pronto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -179,20 +193,6 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                 onChange={(e) => setLocation(e.target.value)}
                 className="text-[16px]"
               />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger className="text-[16px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Agendado">Agendado</SelectItem>
-                  <SelectItem value="Coletado">Coletado</SelectItem>
-                  <SelectItem value="Resultado Pronto">Resultado Pronto</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <ConsultationSelect
