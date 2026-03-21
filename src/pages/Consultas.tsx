@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import { format } from "date-fns";
+import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
