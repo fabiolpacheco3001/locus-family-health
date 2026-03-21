@@ -108,7 +108,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
             <DrawerDescription>Atualize os dados abaixo.</DrawerDescription>
           </DrawerHeader>
 
-          <div className="max-h-[75vh] overflow-y-auto px-4 pb-20 space-y-4">
+          <div className="max-h-[80vh] overflow-y-auto overscroll-contain px-4 pb-32 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="space-y-1.5">
               <Label>Nome *</Label>
               <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="text-base scroll-m-20" />
