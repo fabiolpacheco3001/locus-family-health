@@ -41,14 +41,19 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     if (editingConsultation) {
       setSpecialty(editingConsultation.specialty);
       setProfessionalName(editingConsultation.professional_name ?? "");
-      setConsultationDate(
-        editingConsultation.consultation_date
-          ? editingConsultation.consultation_date.slice(0, 16)
-          : ""
-      );
+      // Convert ISO timestamp to datetime-local format
+      const cd = editingConsultation.consultation_date;
+      if (cd) {
+        const d = new Date(cd);
+        const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        setConsultationDate(local);
+      } else {
+        setConsultationDate("");
+      }
       setType(editingConsultation.type ?? "Rotina");
       setSymptoms(editingConsultation.symptoms ?? "");
       setQuestions(editingConsultation.questions ?? "");
+      setStatusValue(editingConsultation.status);
     } else {
       resetForm();
     }
@@ -61,6 +66,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setType("Rotina");
     setSymptoms("");
     setQuestions("");
+    setStatusValue("Agendada");
   };
 
   const handleSave = async () => {
