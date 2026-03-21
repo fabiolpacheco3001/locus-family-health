@@ -160,11 +160,15 @@ export type Database = {
           created_at: string
           dosage: string | null
           duration: string | null
+          duration_days: number | null
+          end_date: string | null
           family_member_id: string
           frequency: string | null
+          frequency_hours: number | null
           id: string
           name: string
           start_date: string | null
+          start_time: string | null
           status: string
           user_id: string
         }
@@ -173,11 +177,15 @@ export type Database = {
           created_at?: string
           dosage?: string | null
           duration?: string | null
+          duration_days?: number | null
+          end_date?: string | null
           family_member_id: string
           frequency?: string | null
+          frequency_hours?: number | null
           id?: string
           name: string
           start_date?: string | null
+          start_time?: string | null
           status?: string
           user_id: string
         }
@@ -186,11 +194,15 @@ export type Database = {
           created_at?: string
           dosage?: string | null
           duration?: string | null
+          duration_days?: number | null
+          end_date?: string | null
           family_member_id?: string
           frequency?: string | null
+          frequency_hours?: number | null
           id?: string
           name?: string
           start_date?: string | null
+          start_time?: string | null
           status?: string
           user_id?: string
         }
@@ -204,6 +216,53 @@ export type Database = {
           },
           {
             foreignKeyName: "medications_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          family_member_id: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          scheduled_for: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          family_member_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          scheduled_for: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          family_member_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          scheduled_for?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_family_member_id_fkey"
             columns: ["family_member_id"]
             isOneToOne: false
             referencedRelation: "family_members"
