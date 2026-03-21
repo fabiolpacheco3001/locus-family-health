@@ -103,6 +103,12 @@ const Medicamentos = () => {
                   {m.dosage && (
                     <p className="text-xs text-muted-foreground truncate">{m.dosage}</p>
                   )}
+                  {m.consultations?.professional_name && (
+                    <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                      <Stethoscope size={12} />
+                      <span>Solicitado por {m.consultations.professional_name}</span>
+                    </div>
+                  )}
                   {m.frequency && (
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Clock size={12} />
