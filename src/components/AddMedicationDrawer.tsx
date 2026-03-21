@@ -77,6 +77,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           duration: duration.trim() || null,
           start_date: startDate || null,
           status,
+          consultation_id: consultationId === "none" ? null : consultationId,
         });
         toast.success("Medicamento atualizado!");
       } else {
@@ -87,6 +88,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           frequency: frequency.trim() || null,
           duration: duration.trim() || null,
           start_date: startDate || null,
+          consultation_id: consultationId === "none" ? null : consultationId,
         };
         await addMedication.mutateAsync(medication);
         toast.success("Medicamento adicionado!");
