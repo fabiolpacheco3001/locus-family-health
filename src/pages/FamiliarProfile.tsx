@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Stethoscope, Pill, FileText, AlertCircle } from "lucide-react";
+import { ArrowLeft, Pen, Stethoscope, Pill, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import EditMemberDrawer from "@/components/EditMemberDrawer";
+import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
   if (!birthDate) return null;
@@ -28,6 +31,7 @@ const actionItems = [
 const FamiliarProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
 
   const { data: member, isLoading, error } = useQuery({
     queryKey: ["family_member", id],
@@ -38,7 +42,7 @@ const FamiliarProfile = () => {
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as FamilyMember | null;
     },
     enabled: !!id,
   });
@@ -90,7 +94,10 @@ const FamiliarProfile = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft size={22} />
         </Button>
-        <h1 className="text-lg font-bold text-foreground">Perfil de Saúde</h1>
+        <h1 className="text-lg font-bold text-foreground flex-1">Perfil de Saúde</h1>
+        <Button variant="ghost" size="icon" onClick={() => setEditOpen(true)}>
+          <Pen size={20} />
+        </Button>
       </div>
 
       {/* Identity Card */}
@@ -126,6 +133,9 @@ const FamiliarProfile = () => {
           </button>
         ))}
       </div>
+
+      {/* Edit Drawer */}
+      <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
     </div>
   );
 };

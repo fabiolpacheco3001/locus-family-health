@@ -52,5 +52,38 @@ export const useFamilyMembers = () => {
     },
   });
 
-  return { members: query.data ?? [], isLoading: query.isLoading, error: query.error, addMember };
+  const updateMember = useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<NewFamilyMember> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("family_members")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["family_members"] });
+    },
+  });
+
+  const deleteMember = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("family_members").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["family_members"] });
+    },
+  });
+
+  return {
+    members: query.data ?? [],
+    isLoading: query.isLoading,
+    error: query.error,
+    addMember,
+    updateMember,
+    deleteMember,
+  };
 };
