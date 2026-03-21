@@ -98,18 +98,21 @@ const FamiliarProfile = () => {
       </div>
 
       {/* Identity Card */}
-      <div className="rounded-xl bg-secondary/10 p-5 flex items-center gap-4 mb-8">
+      <button
+        onClick={() => setEditOpen(true)}
+        className="w-full rounded-xl bg-secondary/10 p-5 flex items-center gap-4 mb-8 cursor-pointer hover:bg-accent/50 transition-colors text-left"
+      >
         <Avatar className="h-14 w-14 border-2 border-secondary shrink-0">
           <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-xl">
             {member.name[0]}
           </AvatarFallback>
         </Avatar>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-lg font-bold text-primary truncate">{member.name}</p>
           <p className="text-sm text-muted-foreground">{member.relationship}</p>
           {infoLine && <p className="text-xs text-muted-foreground mt-0.5">{infoLine}</p>}
         </div>
-      </div>
+      </button>
 
       {/* Health Hub */}
       <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
