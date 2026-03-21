@@ -13,6 +13,7 @@ import FamiliarProfile from "./pages/FamiliarProfile";
 import Consultas from "./pages/Consultas";
 import Medicamentos from "./pages/Medicamentos";
 import Exames from "./pages/Exames";
+import Notificacoes from "./pages/Notificacoes";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
