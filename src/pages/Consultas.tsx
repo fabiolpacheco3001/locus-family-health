@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, Plus, Stethoscope, Calendar, ChevronRight } from "lucide-react";
+import { ArrowLeft, Stethoscope, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,11 +22,6 @@ const Consultas = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const { consultations, isLoading } = useConsultations(id!);
-
-  const handleOpenNew = () => {
-    setEditingConsultation(null);
-    setDrawerOpen(true);
-  };
 
   const handleOpenEdit = (c: Consultation) => {
     setEditingConsultation(c);
@@ -108,17 +103,7 @@ const Consultas = () => {
         </div>
       )}
 
-      {/* FAB - always rendered, hidden when drawer open */}
-      {!drawerOpen && (
-        <button
-          onClick={handleOpenNew}
-          className="fixed right-6 bottom-24 z-40 rounded-full shadow-xl h-14 w-14 flex items-center justify-center bg-accent text-accent-foreground"
-        >
-          <Plus size={28} strokeWidth={2.5} />
-        </button>
-      )}
-
-      {/* Drawer */}
+      {/* Drawer for editing only */}
       <AddConsultationDrawer
         open={drawerOpen}
         onOpenChange={handleDrawerChange}

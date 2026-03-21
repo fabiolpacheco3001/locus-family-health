@@ -153,6 +153,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               <Label>Data e Hora</Label>
               <Input
                 type="datetime-local"
+                lang="pt-BR"
                 value={consultationDate}
                 onChange={(e) => setConsultationDate(e.target.value)}
                 className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background scroll-m-20"
