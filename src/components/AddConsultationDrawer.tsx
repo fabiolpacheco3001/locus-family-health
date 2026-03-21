@@ -135,7 +135,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 placeholder="Ex: Pediatria, Cardiologia"
                 value={specialty}
                 onChange={(e) => setSpecialty(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
