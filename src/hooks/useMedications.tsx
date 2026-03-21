@@ -12,7 +12,9 @@ export type Medication = {
   duration: string | null;
   start_date: string | null;
   status: string;
+  consultation_id: string | null;
   created_at: string;
+  consultations?: { professional_name: string | null; specialty: string } | null;
 };
 
 export type NewMedication = {
@@ -22,6 +24,7 @@ export type NewMedication = {
   frequency?: string | null;
   duration?: string | null;
   start_date?: string | null;
+  consultation_id?: string | null;
 };
 
 export type UpdateMedication = {
@@ -32,6 +35,7 @@ export type UpdateMedication = {
   duration?: string | null;
   start_date?: string | null;
   status?: string;
+  consultation_id?: string | null;
 };
 
 export const useMedications = (familyMemberId: string) => {
@@ -43,7 +47,7 @@ export const useMedications = (familyMemberId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("medications")
-        .select("*")
+        .select("*, consultations(professional_name, specialty)")
         .eq("family_member_id", familyMemberId)
         .order("created_at", { ascending: false });
       if (error) throw error;

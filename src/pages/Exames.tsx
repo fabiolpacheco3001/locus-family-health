@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { ArrowLeft, FileText, Calendar, ChevronRight } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -114,6 +114,12 @@ const Exames = () => {
                   </div>
                   {e.location && (
                     <p className="text-xs text-muted-foreground truncate">{e.location}</p>
+                  )}
+                  {e.consultations?.professional_name && (
+                    <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                      <Stethoscope size={12} />
+                      <span>Solicitado por {e.consultations.professional_name}</span>
+                    </div>
                   )}
                   {e.exam_date && (
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">

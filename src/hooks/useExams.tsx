@@ -12,7 +12,9 @@ export type Exam = {
   status: string;
   file_url: string | null;
   result_date: string | null;
+  consultation_id: string | null;
   created_at: string;
+  consultations?: { professional_name: string | null; specialty: string } | null;
 };
 
 export type NewExam = {
@@ -22,6 +24,7 @@ export type NewExam = {
   location?: string | null;
   status?: string;
   file_url?: string | null;
+  consultation_id?: string | null;
 };
 
 export type UpdateExam = {
@@ -32,6 +35,7 @@ export type UpdateExam = {
   status?: string;
   file_url?: string | null;
   result_date?: string | null;
+  consultation_id?: string | null;
 };
 
 export const useExams = (familyMemberId: string) => {
@@ -43,7 +47,7 @@ export const useExams = (familyMemberId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("exams")
-        .select("*")
+        .select("*, consultations(professional_name, specialty)")
         .eq("family_member_id", familyMemberId)
         .order("created_at", { ascending: false });
       if (error) throw error;
