@@ -47,7 +47,7 @@ export const useExams = (familyMemberId: string) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("exams")
-        .select("*")
+        .select("*, consultations(professional_name, specialty)")
         .eq("family_member_id", familyMemberId)
         .order("created_at", { ascending: false });
       if (error) throw error;
