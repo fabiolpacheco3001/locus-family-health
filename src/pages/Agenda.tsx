@@ -59,7 +59,7 @@ const Agenda = () => {
           status: c.status,
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
-          isOverdue: dateStr ? isBefore(new Date(dateStr), today) : false,
+          isOverdue: dateStr ? isBefore(new Date(dateStr.length === 10 ? dateStr + 'T12:00:00' : dateStr), today) : false,
         };
       });
 
