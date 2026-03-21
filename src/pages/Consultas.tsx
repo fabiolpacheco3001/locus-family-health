@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Plus, Stethoscope, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ const statusColors: Record<string, string> = {
 const Consultas = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const { consultations, isLoading } = useConsultations(id!);
@@ -41,7 +42,13 @@ const Consultas = () => {
     <div className="px-4 pt-6 pb-28 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate(`/familiar/${id}`, { replace: true })}>
+        <Button variant="ghost" size="icon" onClick={() => {
+          if (location.state?.from === '/agenda') {
+            navigate('/agenda', { replace: true });
+          } else {
+            navigate(`/familiar/${id}`, { replace: true });
+          }
+        }}>
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Consultas</h1>
