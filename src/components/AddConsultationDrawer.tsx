@@ -75,10 +75,11 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           id: editingConsultation.id,
           specialty: specialty.trim(),
           professional_name: professionalName.trim() || null,
-          consultation_date: consultationDate || null,
+          consultation_date: consultationDate ? new Date(consultationDate).toISOString() : null,
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
+          status: statusValue,
         });
         toast.success("Consulta atualizada!");
       } else {
