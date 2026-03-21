@@ -35,6 +35,7 @@ export type UpdateMedication = {
   duration?: string | null;
   start_date?: string | null;
   status?: string;
+  consultation_id?: string | null;
 };
 
 export const useMedications = (familyMemberId: string) => {
