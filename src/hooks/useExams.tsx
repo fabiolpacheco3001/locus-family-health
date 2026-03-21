@@ -24,6 +24,7 @@ export type NewExam = {
   location?: string | null;
   status?: string;
   file_url?: string | null;
+  consultation_id?: string | null;
 };
 
 export type UpdateExam = {
