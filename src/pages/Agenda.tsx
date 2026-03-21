@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format } from "date-fns";
+import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type AgendaItem = {
@@ -19,11 +19,13 @@ type AgendaItem = {
   status: string;
   memberName: string;
   kind: "consultation" | "exam";
+  isOverdue: boolean;
 };
 
 const Agenda = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const today = startOfDay(new Date());
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["agenda", user?.id],
@@ -36,38 +38,50 @@ const Agenda = () => {
           .order("consultation_date", { ascending: true }),
         supabase
           .from("exams")
-          .select("id, family_member_id, name, exam_date, location, status, family_members(name)")
+          .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
           .eq("user_id", user!.id)
-          .eq("status", "Agendado")
+          .or("status.eq.Agendado,and(status.eq.Coletado,result_date.not.is.null)")
           .order("exam_date", { ascending: true }),
       ]);
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
 
-      const consultations: AgendaItem[] = (consultRes.data ?? []).map((c: any) => ({
-        id: c.id,
-        family_member_id: c.family_member_id,
-        title: c.specialty,
-        subtitle: c.professional_name ? `com ${c.professional_name}` : null,
-        date: c.consultation_date,
-        type: c.type,
-        status: c.status,
-        memberName: c.family_members?.name ?? "Familiar",
-        kind: "consultation",
-      }));
+      const consultations: AgendaItem[] = (consultRes.data ?? []).map((c: any) => {
+        const dateStr = c.consultation_date;
+        return {
+          id: c.id,
+          family_member_id: c.family_member_id,
+          title: c.specialty,
+          subtitle: c.professional_name ? `com ${c.professional_name}` : null,
+          date: dateStr,
+          type: c.type,
+          status: c.status,
+          memberName: c.family_members?.name ?? "Familiar",
+          kind: "consultation",
+          isOverdue: dateStr ? isBefore(new Date(dateStr), today) : false,
+        };
+      });
 
-      const exams: AgendaItem[] = (examRes.data ?? []).map((e: any) => ({
-        id: e.id,
-        family_member_id: e.family_member_id,
-        title: e.name,
-        subtitle: e.location ? `em ${e.location}` : "Exame Agendado",
-        date: e.exam_date,
-        type: null,
-        status: e.status,
-        memberName: e.family_members?.name ?? "Familiar",
-        kind: "exam",
-      }));
+      const exams: AgendaItem[] = (examRes.data ?? []).map((e: any) => {
+        const isColetado = e.status === "Coletado";
+        const displayDate = isColetado ? e.result_date : e.exam_date;
+        const subtitle = isColetado
+          ? `Buscar Resultado de ${e.name}`
+          : e.location ? `em ${e.location}` : "Exame Agendado";
+        return {
+          id: e.id,
+          family_member_id: e.family_member_id,
+          title: isColetado ? "Resultado Pendente" : e.name,
+          subtitle,
+          date: displayDate,
+          type: null,
+          status: e.status,
+          memberName: e.family_members?.name ?? "Familiar",
+          kind: "exam",
+          isOverdue: displayDate ? isBefore(new Date(displayDate), today) : false,
+        };
+      });
 
       const merged = [...consultations, ...exams];
       merged.sort((a, b) => {
@@ -138,9 +152,14 @@ const Agenda = () => {
                   </div>
                   <p className="text-sm text-foreground truncate">
                     {item.title}
-                    {item.subtitle ? ` ${item.subtitle}` : ""}
+                    {item.subtitle ? ` — ${item.subtitle}` : ""}
                   </p>
-                  <div className="flex items-center gap-2 mt-1.5">
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    {item.isOverdue && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                        Atrasado
+                      </Badge>
+                    )}
                     {isExam && (
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-secondary/10 text-secondary border-secondary/20">
                         Exame
@@ -163,6 +182,8 @@ const Agenda = () => {
                       className={`text-[10px] px-1.5 py-0 ${
                         item.status === "Agendada" || item.status === "Agendado"
                           ? "bg-primary/10 text-primary border-primary/20"
+                          : item.status === "Coletado"
+                          ? "bg-accent/50 text-accent-foreground border-accent/30"
                           : item.status === "Realizada" || item.status === "Resultado Pronto"
                           ? "bg-secondary/10 text-secondary border-secondary/20"
                           : "bg-destructive/10 text-destructive border-destructive/20"
