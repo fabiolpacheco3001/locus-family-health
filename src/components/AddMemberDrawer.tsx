@@ -1,18 +1,14 @@
 import { useState } from "react";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
   Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerDescription,
 } from "@/components/ui/drawer";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useFamilyMembers, NewFamilyMember } from "@/hooks/useFamilyMembers";
 
@@ -28,13 +24,13 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const { addMember } = useFamilyMembers();
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState("");
-  const [birthDate, setBirthDate] = useState<Date>();
+  const [birthDate, setBirthDate] = useState("");
   const [bloodType, setBloodType] = useState("");
 
   const resetForm = () => {
     setName("");
     setRelationship("");
-    setBirthDate(undefined);
+    setBirthDate("");
     setBloodType("");
   };
 
@@ -47,7 +43,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     const member: NewFamilyMember = {
       name: name.trim(),
       relationship,
-      birth_date: birthDate ? format(birthDate, "yyyy-MM-dd") : null,
+      birth_date: birthDate || null,
       blood_type: bloodType || null,
     };
 
@@ -94,27 +90,12 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
           {/* Birth Date */}
           <div className="space-y-1.5">
             <Label>Data de Nascimento</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn("w-full justify-start text-left font-normal", !birthDate && "text-muted-foreground")}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {birthDate ? format(birthDate, "dd/MM/yyyy") : "Selecione uma data"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={birthDate}
-                  onSelect={setBirthDate}
-                  disabled={(date) => date > new Date()}
-                  initialFocus
-                  className="p-3 pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+            <Input
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+            />
           </div>
 
           {/* Blood Type */}
