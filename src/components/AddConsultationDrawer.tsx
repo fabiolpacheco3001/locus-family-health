@@ -169,6 +169,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 <SelectContent>
                   <SelectItem value="Rotina">Rotina</SelectItem>
                   <SelectItem value="Emergência">Emergência</SelectItem>
+                  <SelectItem value="Retorno">Retorno</SelectItem>
                 </SelectContent>
               </Select>
             </div>
