@@ -139,7 +139,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 placeholder="Ex: 5ml, 1 comprimido"
                 value={dosage}
                 onChange={(e) => setDosage(e.target.value)}
-                className="text-base scroll-m-20"
+                className="text-[16px] scroll-m-20"
               />
             </div>
 
