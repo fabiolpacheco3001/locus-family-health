@@ -86,7 +86,7 @@ const Exames = () => {
             {exams.map((e) => {
               const today = startOfDay(new Date());
               const isOverdue = e.status === "Agendado" && e.exam_date
-                ? isBefore(new Date(e.exam_date + 'T12:00:00'), today)
+                ? isBefore(new Date(e.exam_date), today)
                 : false;
               return (
               <button
