@@ -68,14 +68,17 @@ const Home = () => {
       }> = [];
 
       (consultRes.data ?? []).forEach((c: any) => {
+        const dateStr = c.consultation_date;
+        const overdue = c.status === "Agendada" && dateStr ? isBefore(new Date(dateStr), new Date()) : false;
         items.push({
           id: c.id,
           title: c.specialty,
           subtitle: c.professional_name ? `com ${c.professional_name}` : "Consulta",
-          date: c.consultation_date,
+          date: dateStr,
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
           familyMemberId: c.family_member_id,
+          isOverdue: overdue,
         });
       });
 
