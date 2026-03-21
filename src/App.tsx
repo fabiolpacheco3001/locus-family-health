@@ -12,6 +12,7 @@ import Ajustes from "./pages/Ajustes";
 import FamiliarProfile from "./pages/FamiliarProfile";
 import Consultas from "./pages/Consultas";
 import Medicamentos from "./pages/Medicamentos";
+import Exames from "./pages/Exames";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
