@@ -72,9 +72,6 @@ const FamiliarProfile = () => {
   const goBack = useSmartBack();
   const [editOpen, setEditOpen] = useState(false);
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
-  }, []);
 
   const { data: member, isLoading, error } = useQuery({
     queryKey: ["family_member", id],
