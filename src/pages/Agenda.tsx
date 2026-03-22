@@ -23,9 +23,17 @@ type AgendaItem = {
   isOverdue: boolean;
 };
 
+const filterLabels: Record<string, string> = {
+  consultas: "Consultas Pendentes",
+  exames: "Exames Pendentes",
+  upcoming: "Próximos Compromissos",
+};
+
 const Agenda = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const currentFilter = searchParams.get("filter");
   const today = startOfDay(new Date());
 
   const { data: items = [], isLoading } = useQuery({
