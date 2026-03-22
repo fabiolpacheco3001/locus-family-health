@@ -33,13 +33,7 @@ const Medicamentos = () => {
     setDrawerOpen(true);
   };
 
-  const handleBack = () => {
-    if (location.state?.from === '/agenda') {
-      navigate('/agenda', { replace: true });
-    } else {
-      navigate(`/familiar/${id}`, { replace: true });
-    }
-  };
+  const handleBack = goBack;
 
   return (
     <>

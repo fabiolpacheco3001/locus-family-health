@@ -31,6 +31,7 @@ const actionItems = [
 const FamiliarProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const goBack = useSmartBack();
   const [editOpen, setEditOpen] = useState(false);
 
   const { data: member, isLoading, error } = useQuery({
