@@ -28,7 +28,7 @@ import {
   Legend,
 } from "recharts";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
-import { useSmartBack } from "@/hooks/useSmartBack";
+import useSmartBack from "@/hooks/useSmartBack";
 import { ArrowLeft } from "lucide-react";
 
 const mockData = [
