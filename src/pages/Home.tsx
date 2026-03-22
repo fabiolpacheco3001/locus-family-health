@@ -214,7 +214,10 @@ const Home = () => {
         >
           <CarouselContent className="-ml-2">
             <CarouselItem className="pl-2 basis-full">
-              <Card className="border-border/50">
+              <Card
+                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                onClick={() => document.getElementById('acoes-hoje')?.scrollIntoView({ behavior: 'smooth' })}
+              >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-primary/10">
@@ -230,7 +233,10 @@ const Home = () => {
               </Card>
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
-              <Card className="border-border/50">
+              <Card
+                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                onClick={() => navigate('/agenda')}
+              >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-secondary/10">
@@ -246,7 +252,10 @@ const Home = () => {
               </Card>
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
-              <Card className="border-border/50">
+              <Card
+                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                onClick={() => navigate('/agenda')}
+              >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-primary/10">
@@ -262,7 +271,10 @@ const Home = () => {
               </Card>
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
-              <Card className="border-border/50">
+              <Card
+                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                onClick={() => navigate('/agenda')}
+              >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-secondary/10">
@@ -293,7 +305,7 @@ const Home = () => {
       {/* Accordion Sections */}
       <Accordion type="multiple" defaultValue={["acoes-hoje"]}>
         {/* Today's Actions */}
-        <AccordionItem value="acoes-hoje" className="border-b-0">
+        <AccordionItem value="acoes-hoje" id="acoes-hoje" className="border-b-0">
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
               <Activity size={18} className="text-primary" />
