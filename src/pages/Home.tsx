@@ -105,12 +105,13 @@ const Home = () => {
   // Build list of active meds with their next dose
   const medsWithNextDose = activeMeds
     .map((med) => {
-      // Build startDate ISO from start_date + start_time
+      // Extract only YYYY-MM-DD to avoid invalid ISO from full timestamp
+      const dateOnly = med.start_date?.slice(0, 10);
       let startDateISO: string | null = null;
-      if (med.start_date && med.start_time) {
-        startDateISO = `${med.start_date}T${med.start_time}`;
-      } else if (med.start_date) {
-        startDateISO = `${med.start_date}T12:00:00`;
+      if (dateOnly && med.start_time) {
+        startDateISO = `${dateOnly}T${med.start_time}`;
+      } else if (dateOnly) {
+        startDateISO = `${dateOnly}T12:00:00`;
       }
 
       const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
