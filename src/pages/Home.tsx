@@ -200,52 +200,82 @@ const Home = () => {
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <Card className="border-border/50">
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Pill className="text-primary" size={18} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground leading-none">{activeMeds.length}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Meds Ativos</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-              <Calendar className="text-secondary" size={18} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground leading-none">{upcoming.length}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Compromissos</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Stethoscope className="text-primary" size={18} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground leading-none">{pendingConsultations}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Consultas Pendentes</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="p-3 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-              <FileText className="text-secondary" size={18} />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground leading-none">{pendingExams}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Exames Pendentes</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Visão Geral */}
+      <div className="mb-6">
+        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+          <LayoutDashboard size={18} className="text-primary" />
+          Visão Geral
+        </h2>
+        <Carousel
+          setApi={setCarouselApi}
+          opts={{ align: "start", loop: true }}
+          plugins={[Autoplay({ delay: 4000, stopOnInteraction: true })]}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-2">
+            <CarouselItem className="pl-2 basis-[85%]">
+              <Card className="border-border/50">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Pill className="text-primary" size={18} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground leading-none">{activeMeds.length}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Meds Ativos</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+            <CarouselItem className="pl-2 basis-[85%]">
+              <Card className="border-border/50">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                    <Calendar className="text-secondary" size={18} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground leading-none">{upcoming.length}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Compromissos</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+            <CarouselItem className="pl-2 basis-[85%]">
+              <Card className="border-border/50">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Stethoscope className="text-primary" size={18} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground leading-none">{pendingConsultations}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Consultas Pendentes</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+            <CarouselItem className="pl-2 basis-[85%]">
+              <Card className="border-border/50">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                    <FileText className="text-secondary" size={18} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground leading-none">{pendingExams}</p>
+                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Exames Pendentes</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
+        <div className="flex justify-center gap-1.5 mt-3">
+          {Array.from({ length: slideCount }).map((_, i) => (
+            <button
+              key={i}
+              className={`w-2 h-2 rounded-full transition-colors ${i === currentSlide ? "bg-primary" : "bg-muted-foreground/30"}`}
+              onClick={() => carouselApi?.scrollTo(i)}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Accordion Sections */}
