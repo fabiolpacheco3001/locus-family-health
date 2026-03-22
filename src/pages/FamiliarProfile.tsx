@@ -209,11 +209,14 @@ const FamiliarProfile = () => {
       {/* Group 3: Perfil de Saúde */}
       <SectionTitle icon={UserCircle} title="Perfil de Saúde" />
       <div className="grid grid-cols-3 gap-3">
-        {profileCards.map(({ icon: Icon, label, value, route }) => (
+        {profileCards.map(({ icon: Icon, label, value, route, action }) => (
           <button
             key={label}
-            onClick={() => route && navigate(`/familiar/${id}/${route}`)}
-            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
+            onClick={() => {
+              if (route) navigate(`/familiar/${id}/${route}`);
+              else if (action === "medidas") setMedidasOpen(true);
+            }}
+            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center cursor-pointer"
           >
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
               <Icon className="text-primary" size={22} />
