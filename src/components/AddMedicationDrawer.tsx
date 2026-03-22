@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Loader2, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +38,7 @@ const FREQUENCY_OPTIONS = [
 const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
 
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
+  const { user } = useAuth();
   const { addMedication, updateMedication, deleteMedication } = useMedications(familyMemberId);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
@@ -138,7 +141,19 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           end_date: calculatedEndDate,
           consultation_id: consultationId === "none" ? null : consultationId,
         };
-        await addMedication.mutateAsync(medication);
+        const result = await addMedication.mutateAsync(medication);
+        // Create notification for new medication
+        if (user) {
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            family_member_id: familyMemberId,
+            title: "Novo Tratamento Iniciado",
+            message: `Você registrou ${name.trim()}. ${parsedDate.time ? `O tratamento começa às ${parsedDate.time.slice(0, 5)}.` : ""}`,
+            type: "medication",
+            scheduled_for: new Date().toISOString(),
+            is_read: false,
+          });
+        }
         toast.success("Medicamento adicionado!");
       }
       resetForm();
