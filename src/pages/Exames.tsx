@@ -128,7 +128,18 @@ const Exames = () => {
                   {e.exam_date && (
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Calendar size={12} />
-                      <span>{format(new Date(e.exam_date), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                      <span>
+                        {(() => {
+                          const hasTime = e.exam_date!.length > 10;
+                          const parsed = hasTime ? parseISO(e.exam_date!) : new Date(e.exam_date + 'T12:00:00');
+                          const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
+                          const dayName = format(parsed, "EEEEEE", { locale: ptBR });
+                          const dayAbbr = dayName.substring(0, 3);
+                          const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
+                          const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
+                          return `${datePart} - ${dayCapitalized}${timePart}`;
+                        })()}
+                      </span>
                     </div>
                   )}
                 </div>
