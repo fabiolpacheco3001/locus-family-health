@@ -213,54 +213,54 @@ const Home = () => {
           className="w-full"
         >
           <CarouselContent className="-ml-2">
-            <CarouselItem className="pl-2 basis-[85%]">
+            <CarouselItem className="pl-2 basis-full">
               <Card className="border-border/50">
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Pill className="text-primary" size={18} />
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Pill className="text-primary" size={20} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground leading-none">{activeMeds.length}</p>
-                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Meds Ativos</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-foreground">{activeMeds.length}</span>
+                    <span className="text-lg font-semibold text-muted-foreground capitalize">Meds Ativos</span>
                   </div>
                 </CardContent>
               </Card>
             </CarouselItem>
-            <CarouselItem className="pl-2 basis-[85%]">
+            <CarouselItem className="pl-2 basis-full">
               <Card className="border-border/50">
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                    <Calendar className="text-secondary" size={18} />
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                    <Calendar className="text-secondary" size={20} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground leading-none">{upcoming.length}</p>
-                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Compromissos</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-foreground">{upcoming.length}</span>
+                    <span className="text-lg font-semibold text-muted-foreground capitalize">Compromissos</span>
                   </div>
                 </CardContent>
               </Card>
             </CarouselItem>
-            <CarouselItem className="pl-2 basis-[85%]">
+            <CarouselItem className="pl-2 basis-full">
               <Card className="border-border/50">
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Stethoscope className="text-primary" size={18} />
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Stethoscope className="text-primary" size={20} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground leading-none">{pendingConsultations}</p>
-                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Consultas Pendentes</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-foreground">{pendingConsultations}</span>
+                    <span className="text-lg font-semibold text-muted-foreground capitalize">Consultas Pendentes</span>
                   </div>
                 </CardContent>
               </Card>
             </CarouselItem>
-            <CarouselItem className="pl-2 basis-[85%]">
+            <CarouselItem className="pl-2 basis-full">
               <Card className="border-border/50">
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-                    <FileText className="text-secondary" size={18} />
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                    <FileText className="text-secondary" size={20} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground leading-none">{pendingExams}</p>
-                    <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Exames Pendentes</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-bold text-foreground">{pendingExams}</span>
+                    <span className="text-lg font-semibold text-muted-foreground capitalize">Exames Pendentes</span>
                   </div>
                 </CardContent>
               </Card>
