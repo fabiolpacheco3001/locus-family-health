@@ -15,6 +15,7 @@ import Medicamentos from "./pages/Medicamentos";
 import MedicamentosGeral from "./pages/MedicamentosGeral";
 import Exames from "./pages/Exames";
 import Notificacoes from "./pages/Notificacoes";
+import Metricas from "./pages/Metricas";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
