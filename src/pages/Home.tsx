@@ -204,7 +204,8 @@ const Home = () => {
           <div className="flex flex-col space-y-2">
             {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
               const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
-              const doseLabel = nextDose
+              const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
+              const doseLabel = isValidNextDose
                 ? `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`
                 : isContinuous
                   ? "Uso contínuo"
