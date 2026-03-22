@@ -1,11 +1,19 @@
-import { Outlet } from "react-router-dom";
+import { useRef, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import BottomNav from "./BottomNav";
 
 const AppLayout = () => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+  }, [pathname]);
+
   return (
     <MobileShell>
-      <div className="flex-1 overflow-y-auto pb-24 no-scrollbar">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
         <Outlet />
       </div>
       <BottomNav />
