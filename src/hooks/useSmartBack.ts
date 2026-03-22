@@ -16,8 +16,8 @@ const useSmartBack = (): (() => void) => {
     const path = location.pathname;
     const parts = path.split("/").filter(Boolean);
 
-    // /notificacoes, /medicamentos, /metricas → /home
-    if (path === "/notificacoes" || path === "/medicamentos" || path === "/metricas") {
+    // /notificacoes, /medicamentos → /home
+    if (path === "/notificacoes" || path === "/medicamentos") {
       navigate("/home", { replace: true });
       return;
     }

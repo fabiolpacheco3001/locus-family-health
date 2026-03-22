@@ -219,10 +219,10 @@ const Home = () => {
           <CarouselContent className="-ml-2">
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
                 onClick={() => navigate('/medicamentos')}
               >
-                <CardContent className="flex items-center justify-between w-full p-5">
+                <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-primary/10">
                       <Pill className="w-6 h-6 text-primary" />
@@ -238,10 +238,10 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
                 onClick={() => navigate('/agenda?filter=upcoming')}
               >
-                <CardContent className="flex items-center justify-between w-full p-5">
+                <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-secondary/10">
                       <Calendar className="w-6 h-6 text-secondary" />
@@ -257,10 +257,10 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
                 onClick={() => navigate('/agenda?filter=consultas')}
               >
-                <CardContent className="flex items-center justify-between w-full p-5">
+                <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-primary/10">
                       <Stethoscope className="w-6 h-6 text-primary" />
@@ -276,10 +276,10 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
                 onClick={() => navigate('/agenda?filter=exames')}
               >
-                <CardContent className="flex items-center justify-between w-full p-5">
+                <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-secondary/10">
                       <FileText className="w-6 h-6 text-secondary" />
