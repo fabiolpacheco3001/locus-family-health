@@ -3,7 +3,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const FALLBACK_URL = 'https://raw.githubusercontent.com/suissa/medicamentos/master/data/medicamentos.json';
+const FALLBACK_URL = 'https://raw.githubusercontent.com/tfrfrfr/med-api-br/main/medicamentos.json';
 const MAX_RESULTS = 15;
 
 Deno.serve(async (req) => {
