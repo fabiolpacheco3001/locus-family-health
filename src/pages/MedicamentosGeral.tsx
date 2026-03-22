@@ -1,4 +1,4 @@
-import { ArrowLeft, Pill, Clock, ChevronRight, CalendarClock } from "lucide-react";
+import { ArrowLeft, Pill, Clock, ChevronRight, CalendarClock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +22,18 @@ const MedicamentosGeral = () => {
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Medicamentos Ativos</h1>
+      </div>
+
+      <div className="flex items-center gap-2 mb-4">
+        <Badge variant="secondary" className="text-xs px-2.5 py-1">
+          Medicamentos Ativos
+        </Badge>
+        <button
+          onClick={goBack}
+          className="p-1 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
+        >
+          <X size={14} className="text-muted-foreground" />
+        </button>
       </div>
 
       {isLoading ? (
