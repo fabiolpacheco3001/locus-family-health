@@ -92,7 +92,7 @@ const FamiliarProfile = () => {
     <div className="px-4 pt-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/home', { replace: true })}>
+        <Button variant="ghost" size="icon" onClick={goBack}>
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Perfil de Saúde</h1>
