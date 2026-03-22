@@ -171,7 +171,7 @@ const Home = () => {
               return "Boa noite 👋";
             })()}
           </p>
-          <h1 className="text-2xl font-bold text-foreground">Olá, {userName}</h1>
+          <h1 className="text-2xl font-bold text-foreground">Olá, {userName}!</h1>
         </div>
         <button
           onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
