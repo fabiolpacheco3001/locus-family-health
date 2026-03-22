@@ -102,23 +102,32 @@ const Home = () => {
     enabled: !!user,
   });
 
-  // Compute next dose for active meds
-  const getNextDose = (med: typeof activeMeds[0]) => {
-    if (!med.start_time || !med.frequency_hours || med.frequency_hours === 0) return null;
-    const now = new Date();
-    const [h, m] = med.start_time.split(":").map(Number);
-    const todayStart = new Date();
-    todayStart.setHours(h, m, 0, 0);
+  // Build list of active meds with their next dose
+  const medsWithNextDose = activeMeds
+    .map((med) => {
+      // Build startDate ISO from start_date + start_time
+      let startDateISO: string | null = null;
+      if (med.start_date && med.start_time) {
+        startDateISO = `${med.start_date}T${med.start_time}`;
+      } else if (med.start_date) {
+        startDateISO = `${med.start_date}T12:00:00`;
+      }
 
-    // Find next dose time from start_time cycling by frequency_hours
-    let next = new Date(todayStart);
-    while (isBefore(next, now)) {
-      next = addHours(next, med.frequency_hours);
-    }
-    // Only show if it's today
-    if (!isToday(next)) return null;
-    return format(next, "HH:mm");
-  };
+      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
+      return { med, nextDose };
+    })
+    .filter(({ med, nextDose }) => {
+      // Keep meds that have no frequency (continuous use) or have a valid next dose
+      if (!med.frequency_hours || med.frequency_hours <= 0) return true;
+      return nextDose !== null;
+    })
+    .sort((a, b) => {
+      // Sort by nearest next dose first
+      if (!a.nextDose && !b.nextDose) return 0;
+      if (!a.nextDose) return 1;
+      if (!b.nextDose) return -1;
+      return a.nextDose.getTime() - b.nextDose.getTime();
+    });
 
   const isLoading = medsLoading || upcomingLoading;
 
