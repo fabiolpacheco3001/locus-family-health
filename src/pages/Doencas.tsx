@@ -222,7 +222,7 @@ const Doencas = () => {
                 : selectedCategory}
             </DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto p-4 overscroll-contain">
+          <div className="flex-1 overflow-y-auto p-4 overscroll-contain no-scrollbar">
             {step === 1 ? (
               <div className="grid grid-cols-2 gap-3">
                 {Object.keys(diseaseGroups).map((cat) => (
