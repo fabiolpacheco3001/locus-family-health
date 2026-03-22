@@ -1,7 +1,9 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText, X } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import useSmartBack from "@/hooks/useSmartBack";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +35,7 @@ const filterLabels: Record<string, string> = {
 const Agenda = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const goBack = useSmartBack();
   const [searchParams] = useSearchParams();
   const currentFilter = searchParams.get("filter");
   const today = startOfDay(new Date());
@@ -108,13 +111,22 @@ const Agenda = () => {
     if (!currentFilter) return items;
     if (currentFilter === "consultas") return items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
     if (currentFilter === "exames") return items.filter((i) => i.kind === "exam");
-    if (currentFilter === "upcoming") return items.filter((i) => !i.isOverdue);
+    if (currentFilter === "upcoming") return items.filter((i) =>
+      i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Resultado Pronto" && !i.isOverdue
+    );
     return items;
   }, [items, currentFilter]);
 
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Agenda</h1>
+      <div className="flex items-center gap-3 mb-6">
+        {currentFilter && (
+          <Button variant="ghost" size="icon" onClick={goBack}>
+            <ArrowLeft size={22} />
+          </Button>
+        )}
+        <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+      </div>
 
       {currentFilter && filterLabels[currentFilter] && (
         <div className="flex items-center gap-2 mb-4">

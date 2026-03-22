@@ -1,10 +1,13 @@
-import { ArrowLeft, Pill, Clock, ChevronRight } from "lucide-react";
+import { ArrowLeft, Pill, Clock, ChevronRight, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMedications } from "@/hooks/useMedications";
 import useSmartBack from "@/hooks/useSmartBack";
 import { useNavigate } from "react-router-dom";
+import { calculateNextDose } from "@/lib/calculateNextDose";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const MedicamentosGeral = () => {
   const goBack = useSmartBack();
@@ -39,13 +42,24 @@ const MedicamentosGeral = () => {
         <div className="flex flex-col space-y-3">
           {activeMeds.map((m) => {
             const firstName = m.family_members?.name?.split(" ")[0];
+
+            // Calculate next dose
+            const dateOnly = m.start_date?.slice(0, 10);
+            let startDateISO: string | null = null;
+            if (dateOnly && m.start_time) {
+              startDateISO = `${dateOnly}T${m.start_time}`;
+            } else if (dateOnly) {
+              startDateISO = `${dateOnly}T12:00:00`;
+            }
+            const nextDose = calculateNextDose(startDateISO, m.frequency_hours, m.end_date);
+
             return (
               <button
                 key={m.id}
                 onClick={() => navigate(`/familiar/${m.family_member_id}/medicamentos`, { state: { from: "/medicamentos" } })}
-                className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
               >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                   <Pill className="text-primary" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -54,6 +68,9 @@ const MedicamentosGeral = () => {
                     {firstName && (
                       <span className="text-xs text-muted-foreground">· {firstName}</span>
                     )}
+                    <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 bg-secondary/10 text-secondary border-secondary/20 shrink-0">
+                      Ativo
+                    </Badge>
                   </div>
                   {m.dosage && (
                     <p className="text-xs text-muted-foreground truncate">{m.dosage}</p>
@@ -70,8 +87,14 @@ const MedicamentosGeral = () => {
                       <span>Uso contínuo</span>
                     </div>
                   )}
+                  {nextDose && (
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-primary">
+                      <CalendarClock size={12} className="shrink-0" />
+                      <span>Próxima dose: {format(nextDose, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                    </div>
+                  )}
                 </div>
-                <ChevronRight size={18} className="text-muted-foreground shrink-0" />
+                <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
               </button>
             );
           })}
