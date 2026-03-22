@@ -21,8 +21,7 @@ const statusColors: Record<string, string> = {
 
 const Consultas = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const { consultations, isLoading } = useConsultations(id!);
