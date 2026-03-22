@@ -136,19 +136,19 @@ const Agenda = () => {
             <Skeleton key={i} className="h-28 w-full rounded-xl" />
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Calendar className="text-primary" size={28} />
           </div>
           <p className="text-foreground font-semibold mb-1">Nenhum compromisso</p>
           <p className="text-muted-foreground text-sm">
-            Sua família não tem compromissos agendados no momento.
+            {currentFilter ? "Nenhum item encontrado para este filtro." : "Sua família não tem compromissos agendados no momento."}
           </p>
         </div>
       ) : (
         <div className="flex flex-col space-y-3">
-          {items.map((item) => {
+          {filteredItems.map((item) => {
             const isExam = item.kind === "exam";
             const Icon = isExam ? FileText : Stethoscope;
             const route = isExam
