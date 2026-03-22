@@ -302,6 +302,34 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Acesso Rápido */}
+      <div className="mb-6">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Acesso Rápido
+        </h2>
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { icon: Stethoscope, label: "Consultas", route: "/consultas" },
+            { icon: FileText, label: "Exames", route: "/exames" },
+            { icon: Pill, label: "Medicamentos", route: "/medicamentos" },
+            { icon: Users, label: "Família", route: "/familia" },
+          ].map(({ icon: Icon, label, route }) => (
+            <button
+              key={route}
+              onClick={() => navigate(route)}
+              className="flex flex-col items-center"
+            >
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-2 active:scale-95 transition-transform">
+                <Icon className="w-6 h-6" />
+              </div>
+              <span className="text-[11px] font-medium text-center leading-tight text-foreground">
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Accordion Sections */}
       <Accordion type="multiple" defaultValue={["acoes-hoje"]}>
         {/* Today's Actions */}
