@@ -184,7 +184,7 @@ const FamiliarProfile = () => {
       {/* Identity Card */}
       <button
         onClick={() => setEditOpen(true)}
-        className="w-full rounded-xl bg-secondary/10 p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
+        className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
       >
         <Avatar className="h-14 w-14 border-2 border-secondary shrink-0">
           <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-xl">

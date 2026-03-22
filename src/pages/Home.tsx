@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap } from "lucide-react";
+import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -183,12 +183,17 @@ const Home = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
             {(() => {
               const h = new Date().getHours();
-              if (h < 12) return "Bom dia 👋";
-              if (h < 18) return "Boa tarde 👋";
-              return "Boa noite 👋";
+              const isDay = h >= 6 && h < 18;
+              const greeting = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+              return (
+                <>
+                  {greeting}
+                  {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-indigo-400 inline-block" />}
+                </>
+              );
             })()}
           </p>
           <h1 className="text-2xl font-bold text-foreground">Olá, {userName}!</h1>
