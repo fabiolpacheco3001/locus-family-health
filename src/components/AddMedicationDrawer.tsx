@@ -181,8 +181,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
   return (
     <>
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="flex flex-col max-h-[90vh]">
+      <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
           <DrawerHeader>
             <DrawerTitle className="text-primary">
               {isEditing ? "Editar Medicamento" : "Novo Medicamento"}

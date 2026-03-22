@@ -208,11 +208,11 @@ const Alergias = () => {
               </Button>
             )}
           </div>
-          <DrawerFooter>
+          <div className="p-4 border-t mt-auto bg-background">
             <Button onClick={handleSubmit} disabled={isPending} className="w-full">
               {isPending ? "Salvando..." : "Salvar"}
             </Button>
-          </DrawerFooter>
+          </div>
         </DrawerContent>
       </Drawer>
 

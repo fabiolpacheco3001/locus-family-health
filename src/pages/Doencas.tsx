@@ -285,7 +285,7 @@ const Doencas = () => {
             )}
           </div>
           {step === 2 && (
-            <DrawerFooter>
+            <div className="p-4 border-t mt-auto bg-background">
               <Button
                 onClick={handleConfirm}
                 disabled={getConfirmDisabled()}
@@ -293,7 +293,7 @@ const Doencas = () => {
               >
                 {isPending ? "Salvando..." : "Confirmar"}
               </Button>
-            </DrawerFooter>
+            </div>
           )}
         </DrawerContent>
       </Drawer>
