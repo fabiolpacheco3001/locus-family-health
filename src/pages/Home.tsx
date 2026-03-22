@@ -161,6 +161,19 @@ const Home = () => {
 
   const isLoading = medsLoading || upcomingLoading;
 
+  const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+  const [slideCount, setSlideCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!carouselApi) return;
+    setSlideCount(carouselApi.scrollSnapList().length);
+    setCurrentSlide(carouselApi.selectedScrollSnap());
+    carouselApi.on("select", () => {
+      setCurrentSlide(carouselApi.selectedScrollSnap());
+    });
+  }, [carouselApi]);
+
   return (
     <div className="px-5 pt-6 pb-28 animate-fade-in">
       {/* Header */}
