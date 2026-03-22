@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users } from "lucide-react";
+import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -10,8 +10,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { useMedications } from "@/hooks/useMedications";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
@@ -20,6 +22,8 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
+  const { members } = useFamilyMembers();
+  const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
 
   // All active medications across family
   const { medications, isLoading: medsLoading } = useMedications();
@@ -304,19 +308,20 @@ const Home = () => {
 
       {/* Acesso Rápido */}
       <div className="mb-6">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+          <Zap size={18} className="text-primary" />
           Acesso Rápido
         </h2>
         <div className="grid grid-cols-4 gap-4">
           {[
-            { icon: Stethoscope, label: "Consultas", route: "/consultas" },
-            { icon: FileText, label: "Exames", route: "/exames" },
-            { icon: Pill, label: "Medicamentos", route: "/medicamentos" },
-            { icon: Users, label: "Família", route: "/familia" },
-          ].map(({ icon: Icon, label, route }) => (
+            { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
+            { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
+            { icon: Pill, label: "Medicamentos", action: () => setQuickAction('medicamentos') },
+            { icon: Users, label: "Família", action: () => navigate('/familia') },
+          ].map(({ icon: Icon, label, action }) => (
             <button
-              key={route}
-              onClick={() => navigate(route)}
+              key={label}
+              onClick={action}
               className="flex flex-col items-center"
             >
               <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-2 active:scale-95 transition-transform">
@@ -462,6 +467,47 @@ const Home = () => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      {/* Drawer de seleção de familiar */}
+      <Drawer open={!!quickAction} onOpenChange={(open) => !open && setQuickAction(null)}>
+        <DrawerContent className="flex flex-col max-h-[90vh]">
+          <DrawerHeader>
+            <DrawerTitle>
+              {quickAction === 'consultas' && 'Para quem é a consulta?'}
+              {quickAction === 'exames' && 'Para quem é o exame?'}
+              {quickAction === 'medicamentos' && 'Para quem é o medicamento?'}
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2">
+            {members.map((member) => (
+              <button
+                key={member.id}
+                onClick={() => {
+                  setQuickAction(null);
+                  navigate(`/familiar/${member.id}/${quickAction}`, { state: { from: '/home' } });
+                }}
+                className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">
+                    {member.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{member.name}</p>
+                  <p className="text-xs text-muted-foreground">{member.relationship}</p>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+              </button>
+            ))}
+            {members.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nenhum familiar cadastrado.
+              </p>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
