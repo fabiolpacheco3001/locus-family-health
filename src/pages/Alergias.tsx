@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Hand, AlertTriangle, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Hand, AlertTriangle, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +41,7 @@ const Alergias = () => {
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingAllergy, setEditingAllergy] = useState<Allergy | null>(null);
   const [form, setForm] = useState({ substance: "", type: "Medicamento", severity: "Leve" });
 
   const { data: allergies = [], isLoading } = useQuery({
@@ -57,6 +58,23 @@ const Alergias = () => {
     enabled: !!id,
   });
 
+  const openAdd = () => {
+    setEditingAllergy(null);
+    setForm({ substance: "", type: "Medicamento", severity: "Leve" });
+    setDrawerOpen(true);
+  };
+
+  const openEdit = (allergy: Allergy) => {
+    setEditingAllergy(allergy);
+    setForm({ substance: allergy.substance, type: allergy.type, severity: allergy.severity });
+    setDrawerOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setEditingAllergy(null);
+  };
+
   const addMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("allergies").insert({
@@ -70,11 +88,46 @@ const Alergias = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["allergies", id] });
-      setDrawerOpen(false);
-      setForm({ substance: "", type: "Medicamento", severity: "Leve" });
+      closeDrawer();
       toast.success("Alergia registrada com sucesso");
     },
     onError: () => toast.error("Erro ao registrar alergia"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("allergies")
+        .update({
+          substance: form.substance.trim(),
+          type: form.type,
+          severity: form.severity,
+        })
+        .eq("id", editingAllergy!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allergies", id] });
+      closeDrawer();
+      toast.success("Alergia atualizada com sucesso");
+    },
+    onError: () => toast.error("Erro ao atualizar alergia"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("allergies")
+        .delete()
+        .eq("id", editingAllergy!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allergies", id] });
+      closeDrawer();
+      toast.success("Alergia excluída com sucesso");
+    },
+    onError: () => toast.error("Erro ao excluir alergia"),
   });
 
   const handleSubmit = () => {
@@ -82,17 +135,29 @@ const Alergias = () => {
       toast.error("Informe a substância/alérgeno");
       return;
     }
-    addMutation.mutate();
+    if (editingAllergy) {
+      updateMutation.mutate();
+    } else {
+      addMutation.mutate();
+    }
   };
+
+  const handleDelete = () => {
+    if (window.confirm("Tem certeza que deseja excluir esta alergia?")) {
+      deleteMutation.mutate();
+    }
+  };
+
+  const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return (
     <>
-      {!drawerOpen && <FixedFAB onClick={() => setDrawerOpen(true)} />}
+      {!drawerOpen && <FixedFAB onClick={openAdd} />}
 
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <Drawer open={drawerOpen} onOpenChange={(open) => !open && closeDrawer()}>
         <DrawerContent className="flex flex-col max-h-[90vh]">
           <DrawerHeader>
-            <DrawerTitle>Nova Alergia</DrawerTitle>
+            <DrawerTitle>{editingAllergy ? "Editar Alergia" : "Nova Alergia"}</DrawerTitle>
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain">
             <div>
@@ -131,17 +196,27 @@ const Alergias = () => {
                 </select>
               </div>
             </div>
+
+            {editingAllergy && (
+              <Button
+                variant="outline"
+                className="w-full text-destructive border-destructive/20 hover:bg-destructive/5 mt-4"
+                onClick={handleDelete}
+                disabled={isPending}
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Excluir Registro
+              </Button>
+            )}
           </div>
           <DrawerFooter>
-            <Button onClick={handleSubmit} disabled={addMutation.isPending} className="w-full">
-              {addMutation.isPending ? "Salvando..." : "Salvar"}
+            <Button onClick={handleSubmit} disabled={isPending} className="w-full">
+              {isPending ? "Salvando..." : "Salvar"}
             </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft size={22} />
@@ -166,9 +241,10 @@ const Alergias = () => {
         ) : (
           <div className="space-y-3">
             {allergies.map((a) => (
-              <div
+              <button
                 key={a.id}
-                className="bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3"
+                onClick={() => openEdit(a)}
+                className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
               >
                 <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center shrink-0 mt-0.5">
                   <AlertTriangle className="text-destructive" size={20} />
@@ -177,13 +253,16 @@ const Alergias = () => {
                   <p className="font-semibold text-foreground text-sm">{a.substance}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{a.type}</p>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`shrink-0 text-[10px] ${severityColors[a.severity] || ""}`}
-                >
-                  {a.severity}
-                </Badge>
-              </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] ${severityColors[a.severity] || ""}`}
+                  >
+                    {a.severity}
+                  </Badge>
+                  <ChevronRight size={16} className="text-muted-foreground" />
+                </div>
+              </button>
             ))}
           </div>
         )}
