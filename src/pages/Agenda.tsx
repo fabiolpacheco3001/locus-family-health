@@ -119,7 +119,14 @@ const Agenda = () => {
 
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">
-      <h1 className="text-2xl font-bold text-foreground mb-6">Agenda</h1>
+      <div className="flex items-center gap-3 mb-6">
+        {currentFilter && (
+          <Button variant="ghost" size="icon" onClick={goBack}>
+            <ArrowLeft size={22} />
+          </Button>
+        )}
+        <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+      </div>
 
       {currentFilter && filterLabels[currentFilter] && (
         <div className="flex items-center gap-2 mb-4">
