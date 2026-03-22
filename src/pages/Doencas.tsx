@@ -211,8 +211,8 @@ const Doencas = () => {
     <>
       {!drawerOpen && <FixedFAB onClick={openAdd} />}
 
-      <Drawer open={drawerOpen} onOpenChange={(open) => !open && closeDrawer()}>
-        <DrawerContent className="flex flex-col max-h-[90vh]">
+      <Drawer open={drawerOpen} onOpenChange={(open) => !open && closeDrawer()} repositionInputs={false}>
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
           <DrawerHeader>
             <DrawerTitle>
               {drawerMode === "edit"
@@ -222,7 +222,7 @@ const Doencas = () => {
                 : selectedCategory}
             </DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto p-4 overscroll-contain">
+          <div className="flex-1 overflow-y-auto p-4 overscroll-contain no-scrollbar">
             {step === 1 ? (
               <div className="grid grid-cols-2 gap-3">
                 {Object.keys(diseaseGroups).map((cat) => (
@@ -285,7 +285,7 @@ const Doencas = () => {
             )}
           </div>
           {step === 2 && (
-            <DrawerFooter>
+            <div className="p-4 border-t mt-auto bg-background">
               <Button
                 onClick={handleConfirm}
                 disabled={getConfirmDisabled()}
@@ -293,7 +293,7 @@ const Doencas = () => {
               >
                 {isPending ? "Salvando..." : "Confirmar"}
               </Button>
-            </DrawerFooter>
+            </div>
           )}
         </DrawerContent>
       </Drawer>

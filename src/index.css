@@ -58,6 +58,7 @@
   html, body {
     -ms-overflow-style: none;
     scrollbar-width: none;
+    overscroll-behavior-y: none;
   }
   html::-webkit-scrollbar,
   body::-webkit-scrollbar {
