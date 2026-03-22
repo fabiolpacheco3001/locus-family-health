@@ -65,6 +65,7 @@ type ProfileCard = {
   label: string;
   value: string;
   route?: string;
+  action?: string;
 };
 
 const FamiliarProfile = () => {
