@@ -1,42 +1,45 @@
-// TODO: Substituir este Mock pelo fetch na API da Anvisa/Memed usando a Server Key guardada no Deno.env.
+// Edge Function: search-meds
+// Busca medicamentos via API externa (MED_API_URL) ou fallback local.
+// TODO: Configurar MED_API_URL com a URL da API da Memed quando disponível.
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const MEDICATIONS = [
-  { id: "1", name: "Amoxicilina" },
-  { id: "2", name: "Dipirona" },
-  { id: "3", name: "Ibuprofeno" },
-  { id: "4", name: "Losartana" },
-  { id: "5", name: "Paracetamol" },
-  { id: "6", name: "Azitromicina" },
-  { id: "7", name: "Omeprazol" },
-  { id: "8", name: "Simeticona" },
-  { id: "9", name: "Loratadina" },
-  { id: "10", name: "Cefalexina" },
-  { id: "11", name: "Dexametasona" },
-  { id: "12", name: "Metformina" },
-  { id: "13", name: "Prednisona" },
-  { id: "14", name: "Rivotril (Clonazepam)" },
-  { id: "15", name: "Fluoxetina" },
-  { id: "16", name: "Captopril" },
-  { id: "17", name: "Enalapril" },
-  { id: "18", name: "Hidroclorotiazida" },
-  { id: "19", name: "Sinvastatina" },
-  { id: "20", name: "Atorvastatina" },
-  { id: "21", name: "Levotiroxina" },
-  { id: "22", name: "Bromoprida" },
-  { id: "23", name: "Ranitidina" },
-  { id: "24", name: "Nimesulida" },
-  { id: "25", name: "Diclofenaco" },
-  { id: "26", name: "Cetoprofeno" },
-  { id: "27", name: "Ambroxol" },
-  { id: "28", name: "Salbutamol" },
-  { id: "29", name: "Budesonida" },
-  { id: "30", name: "Dorflex" },
+const MAX_RESULTS = 15;
+
+// Fallback local para quando MED_API_URL não estiver configurada ou a API externa falhar
+const LOCAL_MEDS = [
+  "Amoxicilina","Dipirona","Ibuprofeno","Losartana","Paracetamol",
+  "Azitromicina","Omeprazol","Simeticona","Loratadina","Cefalexina",
+  "Dexametasona","Metformina","Prednisona","Rivotril (Clonazepam)",
+  "Fluoxetina","Captopril","Enalapril","Hidroclorotiazida",
+  "Sinvastatina","Atorvastatina","Levotiroxina","Bromoprida",
+  "Ranitidina","Nimesulida","Diclofenaco","Cetoprofeno",
+  "Ambroxol","Salbutamol","Budesonida","Dorflex",
 ];
+
+async function fetchExternalMeds(apiUrl: string): Promise<string[]> {
+  const res = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`API responded ${res.status}`);
+  const rawData: unknown = await res.json();
+
+  const items: string[] = [];
+  if (Array.isArray(rawData)) {
+    for (const entry of rawData) {
+      if (typeof entry === 'string') {
+        items.push(entry);
+      } else if (entry && typeof entry === 'object') {
+        const name = (entry as Record<string, unknown>).nome
+          ?? (entry as Record<string, unknown>).name
+          ?? (entry as Record<string, unknown>).medicamento;
+        if (typeof name === 'string') items.push(name);
+      }
+    }
+  }
+  return items;
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -52,10 +55,25 @@ Deno.serve(async (req) => {
       });
     }
 
+    const apiUrl = Deno.env.get('MED_API_URL');
+    let items: string[];
+
+    if (apiUrl) {
+      try {
+        items = await fetchExternalMeds(apiUrl);
+      } catch (fetchErr) {
+        console.error('Fetch externo falhou, usando fallback local:', fetchErr);
+        items = LOCAL_MEDS;
+      }
+    } else {
+      items = LOCAL_MEDS;
+    }
+
     const normalized = query.toLowerCase().trim();
-    const results = MEDICATIONS.filter((med) =>
-      med.name.toLowerCase().includes(normalized)
-    );
+    const results = items
+      .filter((name) => name.toLowerCase().includes(normalized))
+      .slice(0, MAX_RESULTS)
+      .map((name, i) => ({ id: String(i + 1), name }));
 
     return new Response(JSON.stringify({ data: results }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
