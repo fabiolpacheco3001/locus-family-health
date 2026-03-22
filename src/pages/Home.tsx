@@ -233,7 +233,10 @@ const Home = () => {
               </Card>
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
-              <Card className="border-border/50">
+              <Card
+                className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                onClick={() => navigate('/agenda')}
+              >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-full bg-secondary/10">
