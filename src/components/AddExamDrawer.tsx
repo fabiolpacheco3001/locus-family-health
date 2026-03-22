@@ -159,7 +159,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
             <div className="space-y-1.5">
               <Label>Nome do Exame *</Label>
               <Input
