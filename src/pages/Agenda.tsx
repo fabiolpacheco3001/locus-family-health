@@ -1,6 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import * as React from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,9 +24,17 @@ type AgendaItem = {
   isOverdue: boolean;
 };
 
+const filterLabels: Record<string, string> = {
+  consultas: "Consultas Pendentes",
+  exames: "Exames Pendentes",
+  upcoming: "Próximos Compromissos",
+};
+
 const Agenda = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const currentFilter = searchParams.get("filter");
   const today = startOfDay(new Date());
 
   const { data: items = [], isLoading } = useQuery({
@@ -95,9 +104,31 @@ const Agenda = () => {
     enabled: !!user,
   });
 
+  const filteredItems = React.useMemo(() => {
+    if (!currentFilter) return items;
+    if (currentFilter === "consultas") return items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
+    if (currentFilter === "exames") return items.filter((i) => i.kind === "exam");
+    if (currentFilter === "upcoming") return items.filter((i) => !i.isOverdue);
+    return items;
+  }, [items, currentFilter]);
+
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">
       <h1 className="text-2xl font-bold text-foreground mb-6">Agenda</h1>
+
+      {currentFilter && filterLabels[currentFilter] && (
+        <div className="flex items-center gap-2 mb-4">
+          <Badge variant="secondary" className="text-xs px-2.5 py-1">
+            {filterLabels[currentFilter]}
+          </Badge>
+          <button
+            onClick={() => navigate("/agenda", { replace: true })}
+            className="p-1 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
+          >
+            <X size={14} className="text-muted-foreground" />
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">
@@ -105,19 +136,19 @@ const Agenda = () => {
             <Skeleton key={i} className="h-28 w-full rounded-xl" />
           ))}
         </div>
-      ) : items.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Calendar className="text-primary" size={28} />
           </div>
           <p className="text-foreground font-semibold mb-1">Nenhum compromisso</p>
           <p className="text-muted-foreground text-sm">
-            Sua família não tem compromissos agendados no momento.
+            {currentFilter ? "Nenhum item encontrado para este filtro." : "Sua família não tem compromissos agendados no momento."}
           </p>
         </div>
       ) : (
         <div className="flex flex-col space-y-3">
-          {items.map((item) => {
+          {filteredItems.map((item) => {
             const isExam = item.kind === "exam";
             const Icon = isExam ? FileText : Stethoscope;
             const route = isExam

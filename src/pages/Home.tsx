@@ -216,7 +216,7 @@ const Home = () => {
             <CarouselItem className="pl-2 basis-full">
               <Card
                 className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
-                onClick={() => document.getElementById('acoes-hoje')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => navigate('/medicamentos')}
               >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
@@ -235,7 +235,7 @@ const Home = () => {
             <CarouselItem className="pl-2 basis-full">
               <Card
                 className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
-                onClick={() => navigate('/agenda')}
+                onClick={() => navigate('/agenda?filter=upcoming')}
               >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
@@ -254,7 +254,7 @@ const Home = () => {
             <CarouselItem className="pl-2 basis-full">
               <Card
                 className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
-                onClick={() => navigate('/agenda')}
+                onClick={() => navigate('/agenda?filter=consultas')}
               >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
@@ -273,7 +273,7 @@ const Home = () => {
             <CarouselItem className="pl-2 basis-full">
               <Card
                 className="border-border/50 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
-                onClick={() => navigate('/agenda')}
+                onClick={() => navigate('/agenda?filter=exames')}
               >
                 <CardContent className="flex items-center justify-between w-full p-5">
                   <div className="flex items-center gap-4">
