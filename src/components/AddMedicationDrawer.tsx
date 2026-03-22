@@ -141,7 +141,19 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           end_date: calculatedEndDate,
           consultation_id: consultationId === "none" ? null : consultationId,
         };
-        await addMedication.mutateAsync(medication);
+        const result = await addMedication.mutateAsync(medication);
+        // Create notification for new medication
+        if (user) {
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            family_member_id: familyMemberId,
+            title: "Novo Tratamento Iniciado",
+            message: `Você registrou ${name.trim()}. ${parsedDate.time ? `O tratamento começa às ${parsedDate.time.slice(0, 5)}.` : ""}`,
+            type: "medication",
+            scheduled_for: new Date().toISOString(),
+            is_read: false,
+          });
+        }
         toast.success("Medicamento adicionado!");
       }
       resetForm();
