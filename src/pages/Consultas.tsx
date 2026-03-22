@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ArrowLeft, Stethoscope, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
+import useSmartBack from "@/hooks/useSmartBack";
 import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
