@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import MedicationAutocomplete from "@/components/MedicationAutocomplete";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -194,11 +195,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
             <div className="space-y-1.5">
               <Label>Nome do Medicamento *</Label>
-              <Input
-                placeholder="Ex: Amoxicilina, Dipirona"
+              <MedicationAutocomplete
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="text-[16px]"
+                onChange={setName}
               />
             </div>
 
