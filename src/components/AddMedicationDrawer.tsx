@@ -237,15 +237,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Término Previsto</Label>
-                <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
-                  {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
                 <Label>Duração (dias)</Label>
                 <Input
                   type="number"
@@ -255,6 +246,15 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   onChange={(e) => setDurationDays(e.target.value)}
                   className="text-[16px]"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Término Previsto</Label>
+                <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
+                  {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
+                </div>
               </div>
               {isEditing ? (
                 <div className="space-y-1.5">
