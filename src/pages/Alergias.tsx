@@ -159,7 +159,7 @@ const Alergias = () => {
           <DrawerHeader>
             <DrawerTitle>{editingAllergy ? "Editar Alergia" : "Nova Alergia"}</DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Substância / Alérgeno</label>
               <input
