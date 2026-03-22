@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
 import { Calendar, Stethoscope, FileText, X } from "lucide-react";
