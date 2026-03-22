@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard } from "lucide-react";
+import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -298,6 +298,34 @@ const Home = () => {
               className={`w-2 h-2 rounded-full transition-colors ${i === currentSlide ? "bg-primary" : "bg-muted-foreground/30"}`}
               onClick={() => carouselApi?.scrollTo(i)}
             />
+          ))}
+        </div>
+      </div>
+
+      {/* Acesso Rápido */}
+      <div className="mb-6">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Acesso Rápido
+        </h2>
+        <div className="grid grid-cols-4 gap-4">
+          {[
+            { icon: Stethoscope, label: "Consultas", route: "/consultas" },
+            { icon: FileText, label: "Exames", route: "/exames" },
+            { icon: Pill, label: "Medicamentos", route: "/medicamentos" },
+            { icon: Users, label: "Família", route: "/familia" },
+          ].map(({ icon: Icon, label, route }) => (
+            <button
+              key={route}
+              onClick={() => navigate(route)}
+              className="flex flex-col items-center"
+            >
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-2 active:scale-95 transition-transform">
+                <Icon className="w-6 h-6" />
+              </div>
+              <span className="text-[11px] font-medium text-center leading-tight text-foreground">
+                {label}
+              </span>
+            </button>
           ))}
         </div>
       </div>
