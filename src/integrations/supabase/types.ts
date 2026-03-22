@@ -206,32 +206,82 @@ export type Database = {
           blood_type: string | null
           created_at: string
           gender: string | null
+          height: number | null
           id: string
           name: string
+          physical_activity: string | null
           relationship: string
           user_id: string
+          weight: number | null
         }
         Insert: {
           birth_date?: string | null
           blood_type?: string | null
           created_at?: string
           gender?: string | null
+          height?: number | null
           id?: string
           name: string
+          physical_activity?: string | null
           relationship: string
           user_id: string
+          weight?: number | null
         }
         Update: {
           birth_date?: string | null
           blood_type?: string | null
           created_at?: string
           gender?: string | null
+          height?: number | null
           id?: string
           name?: string
+          physical_activity?: string | null
           relationship?: string
           user_id?: string
+          weight?: number | null
         }
         Relationships: []
+      }
+      health_measurements: {
+        Row: {
+          bmi: number | null
+          created_at: string
+          family_member_id: string
+          height: number | null
+          id: string
+          recorded_at: string
+          user_id: string
+          weight: number | null
+        }
+        Insert: {
+          bmi?: number | null
+          created_at?: string
+          family_member_id: string
+          height?: number | null
+          id?: string
+          recorded_at?: string
+          user_id: string
+          weight?: number | null
+        }
+        Update: {
+          bmi?: number | null
+          created_at?: string
+          family_member_id?: string
+          height?: number | null
+          id?: string
+          recorded_at?: string
+          user_id?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "health_measurements_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medications: {
         Row: {
