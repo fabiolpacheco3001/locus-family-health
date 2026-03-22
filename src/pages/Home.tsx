@@ -126,7 +126,14 @@ const Home = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-sm text-muted-foreground">Bom dia 👋</p>
+          <p className="text-sm text-muted-foreground">
+            {(() => {
+              const h = new Date().getHours();
+              if (h < 12) return "Bom dia 👋";
+              if (h < 18) return "Boa tarde 👋";
+              return "Boa noite 👋";
+            })()}
+          </p>
           <h1 className="text-2xl font-bold text-foreground">Olá, {userName}</h1>
         </div>
         <button
