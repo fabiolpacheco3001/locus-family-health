@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
+import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -64,6 +65,7 @@ type ProfileCard = {
   label: string;
   value: string;
   route?: string;
+  action?: string;
 };
 
 const FamiliarProfile = () => {
@@ -71,6 +73,7 @@ const FamiliarProfile = () => {
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const [editOpen, setEditOpen] = useState(false);
+  const [medidasOpen, setMedidasOpen] = useState(false);
 
 
   const { data: member, isLoading, error } = useQuery({
@@ -127,12 +130,19 @@ const FamiliarProfile = () => {
   if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
+  const memberWeight = (member as any).weight as number | null;
+  const memberHeight = (member as any).height as number | null;
+  const memberActivity = (member as any).physical_activity as string | null;
+  const calculatedBMI = memberWeight && memberHeight && memberHeight > 0
+    ? (memberWeight / (memberHeight * memberHeight)).toFixed(1)
+    : null;
+
   const profileCards: ProfileCard[] = [
-    { icon: Droplet, label: "Tipo Sanguíneo", value: member.blood_type || "—" },
-    { icon: Weight, label: "Peso", value: "— kg" },
-    { icon: Ruler, label: "Altura", value: "— m" },
-    { icon: Calculator, label: "IMC", value: "—" },
-    { icon: Dumbbell, label: "Atividade Física", value: "—" },
+    { icon: Droplet, label: "Tipo Sanguíneo", value: member.blood_type || "—", action: "medidas" },
+    { icon: Weight, label: "Peso", value: memberWeight ? `${memberWeight} kg` : "— kg", action: "medidas" },
+    { icon: Ruler, label: "Altura", value: memberHeight ? `${memberHeight} m` : "— m", action: "medidas" },
+    { icon: Calculator, label: "IMC", value: calculatedBMI || "—", action: "medidas" },
+    { icon: Dumbbell, label: "Atividade Física", value: memberActivity || "—", action: "medidas" },
     { icon: LineChart, label: "Evolução Corporal", value: "Histórico", route: "saude" },
   ];
 
@@ -199,11 +209,14 @@ const FamiliarProfile = () => {
       {/* Group 3: Perfil de Saúde */}
       <SectionTitle icon={UserCircle} title="Perfil de Saúde" />
       <div className="grid grid-cols-3 gap-3">
-        {profileCards.map(({ icon: Icon, label, value, route }) => (
+        {profileCards.map(({ icon: Icon, label, value, route, action }) => (
           <button
             key={label}
-            onClick={() => route && navigate(`/familiar/${id}/${route}`)}
-            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
+            onClick={() => {
+              if (route) navigate(`/familiar/${id}/${route}`);
+              else if (action === "medidas") setMedidasOpen(true);
+            }}
+            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center cursor-pointer"
           >
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
               <Icon className="text-primary" size={22} />
@@ -216,6 +229,17 @@ const FamiliarProfile = () => {
 
       {/* Edit Drawer */}
       <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
+      <AtualizarMedidasDrawer
+        open={medidasOpen}
+        onOpenChange={setMedidasOpen}
+        memberId={member.id}
+        currentData={{
+          blood_type: member.blood_type,
+          weight: memberWeight,
+          height: memberHeight,
+          physical_activity: memberActivity,
+        }}
+      />
     </div>
   );
 };
