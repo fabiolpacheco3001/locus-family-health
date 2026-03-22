@@ -55,7 +55,7 @@ const gestaoItems: CardItem[] = [
 ];
 
 const infoItems: CardItem[] = [
-  { icon: Hand, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
+  { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
   { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
   { icon: Activity, label: "Doenças", subtitle: "Histórico clínico", route: "doencas" },
 ];
