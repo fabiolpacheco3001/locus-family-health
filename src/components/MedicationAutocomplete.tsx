@@ -96,13 +96,13 @@ const MedicationAutocomplete = ({ value, onChange, placeholder = "Ex: Amoxicilin
       </div>
 
       {showDropdown && results.length > 0 && (
-        <ul className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-md border border-border bg-popover shadow-md no-scrollbar">
+        <ul className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto no-scrollbar">
           {results.map((med) => (
             <li
               key={med.id}
               onClick={() => handleSelect(med.name)}
               className={cn(
-                "cursor-pointer px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                "px-3 py-2 text-sm cursor-pointer hover:bg-accent transition-colors",
                 med.name === value && "bg-accent/50"
               )}
             >
