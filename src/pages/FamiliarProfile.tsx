@@ -10,7 +10,7 @@ import {
   HeartPulse,
   ShieldAlert,
   UserCircle,
-  Hand,
+  Ban,
   Syringe,
   Activity,
   Droplet,
