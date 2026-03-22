@@ -26,6 +26,36 @@ const Home = () => {
   const { unreadCount } = useNotifications();
 
   // Upcoming appointments (2 nearest consultations + exams)
+  // Pending consultations count
+  const { data: pendingConsultations = 0 } = useQuery({
+    queryKey: ["pending-consultations-count", user?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("consultations")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .eq("status", "Agendada");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  // Pending exams count
+  const { data: pendingExams = 0 } = useQuery({
+    queryKey: ["pending-exams-count", user?.id],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("exams")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .or("status.eq.Agendado,status.eq.Coletado");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ["upcoming-appointments", user?.id],
     queryFn: async () => {
