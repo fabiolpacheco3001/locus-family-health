@@ -129,12 +129,19 @@ const FamiliarProfile = () => {
   if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
+  const memberWeight = (member as any).weight as number | null;
+  const memberHeight = (member as any).height as number | null;
+  const memberActivity = (member as any).physical_activity as string | null;
+  const calculatedBMI = memberWeight && memberHeight && memberHeight > 0
+    ? (memberWeight / (memberHeight * memberHeight)).toFixed(1)
+    : null;
+
   const profileCards: ProfileCard[] = [
-    { icon: Droplet, label: "Tipo Sanguíneo", value: member.blood_type || "—" },
-    { icon: Weight, label: "Peso", value: "— kg" },
-    { icon: Ruler, label: "Altura", value: "— m" },
-    { icon: Calculator, label: "IMC", value: "—" },
-    { icon: Dumbbell, label: "Atividade Física", value: "—" },
+    { icon: Droplet, label: "Tipo Sanguíneo", value: member.blood_type || "—", action: "medidas" },
+    { icon: Weight, label: "Peso", value: memberWeight ? `${memberWeight} kg` : "— kg", action: "medidas" },
+    { icon: Ruler, label: "Altura", value: memberHeight ? `${memberHeight} m` : "— m", action: "medidas" },
+    { icon: Calculator, label: "IMC", value: calculatedBMI || "—", action: "medidas" },
+    { icon: Dumbbell, label: "Atividade Física", value: memberActivity || "—", action: "medidas" },
     { icon: LineChart, label: "Evolução Corporal", value: "Histórico", route: "saude" },
   ];
 
