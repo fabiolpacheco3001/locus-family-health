@@ -10,16 +10,6 @@ import FixedFAB from "@/components/ui/FixedFAB";
 import useSmartBack from "@/hooks/useSmartBack";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useExams, Exam } from "@/hooks/useExams";
-import AddExamDrawer from "@/components/AddExamDrawer";
-import FixedFAB from "@/components/ui/FixedFAB";
-import useSmartBack from "@/hooks/useSmartBack";
-import { format, isBefore, startOfDay } from "date-fns";
-import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
   Agendado: "bg-primary/10 text-primary border-primary/20",
