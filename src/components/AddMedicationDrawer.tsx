@@ -195,11 +195,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
             <div className="space-y-1.5">
               <Label>Nome do Medicamento *</Label>
-              <Input
-                placeholder="Ex: Amoxicilina, Dipirona"
+              <MedicationAutocomplete
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="text-[16px]"
+                onChange={setName}
               />
             </div>
 
