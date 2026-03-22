@@ -19,6 +19,7 @@ export type Medication = {
   consultation_id: string | null;
   created_at: string;
   consultations?: { professional_name: string | null; specialty: string } | null;
+  family_members?: { name: string } | null;
 };
 
 export type NewMedication = {
@@ -59,7 +60,7 @@ export const useMedications = (familyMemberId?: string) => {
     queryFn: async () => {
       let q = supabase
         .from("medications")
-        .select("*, consultations(professional_name, specialty)")
+        .select("*, consultations(professional_name, specialty), family_members(name)")
         .order("created_at", { ascending: false });
 
       if (familyMemberId) {

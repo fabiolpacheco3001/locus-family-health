@@ -275,7 +275,13 @@ const Home = () => {
                         <Pill className="text-primary" size={16} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{med.name}</p>
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {med.name}
+                          {(() => {
+                            const firstName = med.family_members?.name?.split(' ')[0];
+                            return firstName ? <span className="font-normal text-muted-foreground"> · {firstName}</span> : null;
+                          })()}
+                        </p>
                         <p className="text-xs text-muted-foreground truncate">
                           {med.dosage ?? ""}{doseLabel ? ` · ${doseLabel}` : ""}
                         </p>
