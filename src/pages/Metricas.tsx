@@ -42,7 +42,7 @@ const mockData = [
 
 const Metricas = () => {
   const { members } = useFamilyMembers();
-  const { goBack } = useSmartBack();
+  const goBack = useSmartBack();
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
