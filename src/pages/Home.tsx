@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
