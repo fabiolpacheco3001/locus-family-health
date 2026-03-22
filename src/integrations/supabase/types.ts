@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      allergies: {
+        Row: {
+          created_at: string
+          family_member_id: string
+          id: string
+          severity: string
+          substance: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          family_member_id: string
+          id?: string
+          severity?: string
+          substance: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          family_member_id?: string
+          id?: string
+          severity?: string
+          substance?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "allergies_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultations: {
         Row: {
           consultation_date: string | null
@@ -57,6 +95,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "consultations_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diseases: {
+        Row: {
+          category: string
+          created_at: string
+          diagnosed_at: string | null
+          family_member_id: string
+          id: string
+          name: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          diagnosed_at?: string | null
+          family_member_id: string
+          id?: string
+          name: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          diagnosed_at?: string | null
+          family_member_id?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diseases_family_member_id_fkey"
             columns: ["family_member_id"]
             isOneToOne: false
             referencedRelation: "family_members"

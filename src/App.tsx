@@ -16,6 +16,8 @@ import MedicamentosGeral from "./pages/MedicamentosGeral";
 import Exames from "./pages/Exames";
 import Notificacoes from "./pages/Notificacoes";
 import MinhaSaude from "./pages/MinhaSaude";
+import Alergias from "./pages/Alergias";
+import Doencas from "./pages/Doencas";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -42,6 +44,8 @@ const App = () => (
               <Route path="/familiar/:id/medicamentos" element={<Medicamentos />} />
               <Route path="/medicamentos" element={<MedicamentosGeral />} />
               <Route path="/familiar/:id/exames" element={<Exames />} />
+              <Route path="/familiar/:id/alergias" element={<Alergias />} />
+              <Route path="/familiar/:id/doencas" element={<Doencas />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
             </Route>
             <Route path="*" element={<NotFound />} />
