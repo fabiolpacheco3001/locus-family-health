@@ -308,19 +308,20 @@ const Home = () => {
 
       {/* Acesso Rápido */}
       <div className="mb-6">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
+          <Zap size={18} className="text-primary" />
           Acesso Rápido
         </h2>
         <div className="grid grid-cols-4 gap-4">
           {[
-            { icon: Stethoscope, label: "Consultas", route: "/consultas" },
-            { icon: FileText, label: "Exames", route: "/exames" },
-            { icon: Pill, label: "Medicamentos", route: "/medicamentos" },
-            { icon: Users, label: "Família", route: "/familia" },
-          ].map(({ icon: Icon, label, route }) => (
+            { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
+            { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
+            { icon: Pill, label: "Medicamentos", action: () => setQuickAction('medicamentos') },
+            { icon: Users, label: "Família", action: () => navigate('/familia') },
+          ].map(({ icon: Icon, label, action }) => (
             <button
-              key={route}
-              onClick={() => navigate(route)}
+              key={label}
+              onClick={action}
               className="flex flex-col items-center"
             >
               <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-2 active:scale-95 transition-transform">
