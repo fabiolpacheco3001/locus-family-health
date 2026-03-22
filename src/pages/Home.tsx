@@ -9,8 +9,9 @@ import { useMedications } from "@/hooks/useMedications";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addHours, startOfDay, isToday, isBefore } from "date-fns";
+import { format, addHours, startOfDay, isToday, isBefore, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { calculateNextDose } from "@/lib/calculateNextDose";
 
 const Home = () => {
   const { user } = useAuth();
@@ -101,23 +102,32 @@ const Home = () => {
     enabled: !!user,
   });
 
-  // Compute next dose for active meds
-  const getNextDose = (med: typeof activeMeds[0]) => {
-    if (!med.start_time || !med.frequency_hours || med.frequency_hours === 0) return null;
-    const now = new Date();
-    const [h, m] = med.start_time.split(":").map(Number);
-    const todayStart = new Date();
-    todayStart.setHours(h, m, 0, 0);
+  // Build list of active meds with their next dose
+  const medsWithNextDose = activeMeds
+    .map((med) => {
+      // Build startDate ISO from start_date + start_time
+      let startDateISO: string | null = null;
+      if (med.start_date && med.start_time) {
+        startDateISO = `${med.start_date}T${med.start_time}`;
+      } else if (med.start_date) {
+        startDateISO = `${med.start_date}T12:00:00`;
+      }
 
-    // Find next dose time from start_time cycling by frequency_hours
-    let next = new Date(todayStart);
-    while (isBefore(next, now)) {
-      next = addHours(next, med.frequency_hours);
-    }
-    // Only show if it's today
-    if (!isToday(next)) return null;
-    return format(next, "HH:mm");
-  };
+      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
+      return { med, nextDose };
+    })
+    .filter(({ med, nextDose }) => {
+      // Keep meds that have no frequency (continuous use) or have a valid next dose
+      if (!med.frequency_hours || med.frequency_hours <= 0) return true;
+      return nextDose !== null;
+    })
+    .sort((a, b) => {
+      // Sort by nearest next dose first
+      if (!a.nextDose && !b.nextDose) return 0;
+      if (!a.nextDose) return 1;
+      if (!b.nextDose) return -1;
+      return a.nextDose.getTime() - b.nextDose.getTime();
+    });
 
   const isLoading = medsLoading || upcomingLoading;
 
@@ -184,7 +194,7 @@ const Home = () => {
             <Skeleton className="h-16 w-full rounded-xl" />
             <Skeleton className="h-16 w-full rounded-xl" />
           </div>
-        ) : activeMeds.length === 0 ? (
+        ) : medsWithNextDose.length === 0 ? (
           <Card className="border-border/50 bg-muted/30">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-muted-foreground">Nenhum medicamento ativo no momento.</p>
@@ -192,8 +202,14 @@ const Home = () => {
           </Card>
         ) : (
           <div className="flex flex-col space-y-2">
-            {activeMeds.slice(0, 5).map((med) => {
-              const nextDose = getNextDose(med);
+            {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
+              const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
+              const doseLabel = nextDose
+                ? `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`
+                : isContinuous
+                  ? "Uso contínuo"
+                  : "";
+
               return (
                 <button
                   key={med.id}
@@ -206,8 +222,7 @@ const Home = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{med.name}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {med.dosage ?? ""}
-                      {nextDose ? ` · Próxima dose: ${nextDose}` : med.frequency_hours === 0 ? " · Uso contínuo" : ""}
+                      {med.dosage ?? ""}{doseLabel ? ` · ${doseLabel}` : ""}
                     </p>
                   </div>
                   <ChevronRight size={16} className="text-muted-foreground shrink-0" />
