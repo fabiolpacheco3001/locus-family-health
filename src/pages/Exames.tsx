@@ -19,8 +19,7 @@ const statusColors: Record<string, string> = {
 
 const Exames = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const { exams, isLoading } = useExams(id!);
