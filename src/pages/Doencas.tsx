@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Activity, ChevronRight } from "lucide-react";
+import { ArrowLeft, Activity, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -55,15 +55,20 @@ const categoryColors: Record<string, string> = {
   Outras: "bg-muted text-muted-foreground",
 };
 
+type DrawerMode = "add" | "edit";
+
 const Doencas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState<DrawerMode>("add");
   const [step, setStep] = useState<1 | 2>(1);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedDisease, setSelectedDisease] = useState("");
+  const [customDiseaseName, setCustomDiseaseName] = useState("");
+  const [editingDisease, setEditingDisease] = useState<Disease | null>(null);
 
   const { data: diseases = [], isLoading } = useQuery({
     queryKey: ["diseases", id],
@@ -97,10 +102,63 @@ const Doencas = () => {
     onError: () => toast.error("Erro ao registrar doença"),
   });
 
-  const openDrawer = () => {
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const name = selectedDisease === "Outra (especificar)" ? customDiseaseName.trim() : selectedDisease;
+      const { error } = await supabase
+        .from("diseases")
+        .update({ name, category: selectedCategory })
+        .eq("id", editingDisease!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["diseases", id] });
+      closeDrawer();
+      toast.success("Doença atualizada com sucesso");
+    },
+    onError: () => toast.error("Erro ao atualizar doença"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("diseases")
+        .delete()
+        .eq("id", editingDisease!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["diseases", id] });
+      closeDrawer();
+      toast.success("Doença excluída com sucesso");
+    },
+    onError: () => toast.error("Erro ao excluir doença"),
+  });
+
+  const openAdd = () => {
+    setDrawerMode("add");
     setStep(1);
     setSelectedCategory("");
     setSelectedDisease("");
+    setCustomDiseaseName("");
+    setEditingDisease(null);
+    setDrawerOpen(true);
+  };
+
+  const openEdit = (disease: Disease) => {
+    setDrawerMode("edit");
+    setEditingDisease(disease);
+    setSelectedCategory(disease.category);
+    // Check if disease name is in the standard list
+    const standardNames = diseaseGroups[disease.category] || [];
+    if (standardNames.includes(disease.name)) {
+      setSelectedDisease(disease.name);
+      setCustomDiseaseName("");
+    } else {
+      setSelectedDisease("Outra (especificar)");
+      setCustomDiseaseName(disease.name);
+    }
+    setStep(2);
     setDrawerOpen(true);
   };
 
@@ -109,30 +167,59 @@ const Doencas = () => {
     setStep(1);
     setSelectedCategory("");
     setSelectedDisease("");
+    setCustomDiseaseName("");
+    setEditingDisease(null);
   };
 
   const handleCategorySelect = (cat: string) => {
     setSelectedCategory(cat);
+    setSelectedDisease("");
+    setCustomDiseaseName("");
     setStep(2);
   };
 
+  const isCustom = selectedDisease === "Outra (especificar)";
+
+  const getConfirmDisabled = () => {
+    if (!selectedDisease) return true;
+    if (isCustom && !customDiseaseName.trim()) return true;
+    return addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+  };
+
   const handleConfirm = () => {
-    if (!selectedDisease) {
-      toast.error("Selecione uma doença");
+    const name = isCustom ? customDiseaseName.trim() : selectedDisease;
+    if (!name) {
+      toast.error("Selecione ou digite uma doença");
       return;
     }
-    addMutation.mutate(selectedDisease);
+    if (drawerMode === "edit") {
+      updateMutation.mutate();
+    } else {
+      addMutation.mutate(name);
+    }
   };
+
+  const handleDelete = () => {
+    if (window.confirm("Tem certeza que deseja excluir esta doença?")) {
+      deleteMutation.mutate();
+    }
+  };
+
+  const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return (
     <>
-      {!drawerOpen && <FixedFAB onClick={openDrawer} />}
+      {!drawerOpen && <FixedFAB onClick={openAdd} />}
 
       <Drawer open={drawerOpen} onOpenChange={(open) => !open && closeDrawer()}>
         <DrawerContent className="flex flex-col max-h-[90vh]">
           <DrawerHeader>
             <DrawerTitle>
-              {step === 1 ? "Selecione o Grupo" : selectedCategory}
+              {drawerMode === "edit"
+                ? "Editar Doença"
+                : step === 1
+                ? "Selecione o Grupo"
+                : selectedCategory}
             </DrawerTitle>
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto p-4 overscroll-contain">
@@ -151,18 +238,19 @@ const Doencas = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {step === 2 && (
-                  <button
-                    onClick={() => setStep(1)}
-                    className="text-sm text-primary font-medium mb-3 flex items-center gap-1"
-                  >
-                    <ArrowLeft size={14} /> Voltar aos grupos
-                  </button>
-                )}
+                <button
+                  onClick={() => { setStep(1); setSelectedDisease(""); setCustomDiseaseName(""); }}
+                  className="text-sm text-primary font-medium mb-3 flex items-center gap-1"
+                >
+                  <ArrowLeft size={14} /> Voltar aos grupos
+                </button>
                 {diseaseGroups[selectedCategory]?.map((disease) => (
                   <button
                     key={disease}
-                    onClick={() => setSelectedDisease(disease)}
+                    onClick={() => {
+                      setSelectedDisease(disease);
+                      if (disease !== "Outra (especificar)") setCustomDiseaseName("");
+                    }}
                     className={`w-full p-3.5 rounded-xl border text-left text-sm font-medium transition-colors ${
                       selectedDisease === disease
                         ? "bg-primary/10 border-primary/30 text-primary"
@@ -172,6 +260,27 @@ const Doencas = () => {
                     {disease}
                   </button>
                 ))}
+
+                {isCustom && (
+                  <input
+                    type="text"
+                    placeholder="Digite o nome da doença..."
+                    value={customDiseaseName}
+                    onChange={(e) => setCustomDiseaseName(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none mt-4"
+                  />
+                )}
+
+                {drawerMode === "edit" && (
+                  <Button
+                    variant="outline"
+                    className="w-full text-destructive border-destructive/20 hover:bg-destructive/5 mt-4"
+                    onClick={handleDelete}
+                    disabled={isPending}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" /> Excluir Registro
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -179,10 +288,10 @@ const Doencas = () => {
             <DrawerFooter>
               <Button
                 onClick={handleConfirm}
-                disabled={!selectedDisease || addMutation.isPending}
+                disabled={getConfirmDisabled()}
                 className="w-full"
               >
-                {addMutation.isPending ? "Salvando..." : "Confirmar"}
+                {isPending ? "Salvando..." : "Confirmar"}
               </Button>
             </DrawerFooter>
           )}
@@ -190,7 +299,6 @@ const Doencas = () => {
       </Drawer>
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft size={22} />
@@ -215,9 +323,10 @@ const Doencas = () => {
         ) : (
           <div className="space-y-3">
             {diseases.map((d) => (
-              <div
+              <button
                 key={d.id}
-                className="bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3"
+                onClick={() => openEdit(d)}
+                className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                   <Activity className="text-primary" size={20} />
@@ -231,7 +340,8 @@ const Doencas = () => {
                     {d.category}
                   </Badge>
                 </div>
-              </div>
+                <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
+              </button>
             ))}
           </div>
         )}
