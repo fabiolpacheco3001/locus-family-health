@@ -24,6 +24,18 @@ const MedicamentosGeral = () => {
         <h1 className="text-lg font-bold text-foreground flex-1">Medicamentos Ativos</h1>
       </div>
 
+      <div className="flex items-center gap-2 mb-4">
+        <Badge variant="secondary" className="text-xs px-2.5 py-1">
+          Medicamentos Ativos
+        </Badge>
+        <button
+          onClick={goBack}
+          className="p-1 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
+        >
+          <X size={14} className="text-muted-foreground" />
+        </button>
+      </div>
+
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
