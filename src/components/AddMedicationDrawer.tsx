@@ -38,6 +38,7 @@ const FREQUENCY_OPTIONS = [
 const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
 
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
+  const { user } = useAuth();
   const { addMedication, updateMedication, deleteMedication } = useMedications(familyMemberId);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
