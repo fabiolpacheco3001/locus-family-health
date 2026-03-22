@@ -13,8 +13,7 @@ import { ptBR } from "date-fns/locale";
 
 const Medicamentos = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const { medications, isLoading } = useMedications(id!);
