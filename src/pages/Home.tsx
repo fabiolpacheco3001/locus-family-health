@@ -16,7 +16,7 @@ import { calculateNextDose } from "@/lib/calculateNextDose";
 const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const userName = user?.user_metadata?.full_name || "Usuário";
+  const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
 
   // All active medications across family
   const { medications, isLoading: medsLoading } = useMedications();
