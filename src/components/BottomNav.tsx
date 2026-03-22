@@ -63,7 +63,7 @@ const BottomNav = () => {
                 key={member.id}
                 onClick={() => {
                   setDrawerOpen(false);
-                  navigate(`/familiar/${member.id}/saude`, { state: { from: location.pathname } });
+                  navigate(`/familiar/${member.id}`, { state: { from: location.pathname } });
                 }}
                 className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
               >

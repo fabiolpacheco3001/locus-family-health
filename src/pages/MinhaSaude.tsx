@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ArrowLeft, Activity, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,10 @@ const MinhaSaude = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
+
   const member = members.find((m) => m.id === id);
 
   const handleSubmit = () => {
@@ -55,7 +59,7 @@ const MinhaSaude = () => {
         </button>
         <div className="flex items-center gap-2">
           <Activity className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-semibold text-foreground">Minha Saúde</h1>
+          <h1 className="text-lg font-semibold text-foreground">Evolução Corporal</h1>
         </div>
         {member && (
           <Badge variant="secondary" className="ml-auto text-xs">

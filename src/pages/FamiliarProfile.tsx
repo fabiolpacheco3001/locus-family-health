@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useSmartBack from "@/hooks/useSmartBack";
 import {
@@ -71,6 +71,10 @@ const FamiliarProfile = () => {
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const [editOpen, setEditOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
 
   const { data: member, isLoading, error } = useQuery({
     queryKey: ["family_member", id],
