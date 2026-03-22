@@ -22,6 +22,8 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
+  const { members } = useFamilyMembers();
+  const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
 
   // All active medications across family
   const { medications, isLoading: medsLoading } = useMedications();
