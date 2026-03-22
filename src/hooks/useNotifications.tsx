@@ -64,11 +64,41 @@ export const useNotifications = () => {
     },
   });
 
+  const deleteNotification = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
+    },
+  });
+
+  const clearAllNotifications = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
+    },
+  });
+
   return {
     notifications: query.data ?? [],
     unreadCount,
     isLoading: query.isLoading,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    clearAllNotifications,
   };
 };
