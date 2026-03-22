@@ -18,6 +18,7 @@ import Notificacoes from "./pages/Notificacoes";
 import MinhaSaude from "./pages/MinhaSaude";
 import Alergias from "./pages/Alergias";
 import Doencas from "./pages/Doencas";
+import Vacinas from "./pages/Vacinas";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/familiar/:id/exames" element={<Exames />} />
               <Route path="/familiar/:id/alergias" element={<Alergias />} />
               <Route path="/familiar/:id/doencas" element={<Doencas />} />
+              <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
             </Route>
             <Route path="*" element={<NotFound />} />

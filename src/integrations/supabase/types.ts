@@ -349,6 +349,50 @@ export type Database = {
           },
         ]
       }
+      vaccines: {
+        Row: {
+          applied_date: string | null
+          batch: string | null
+          booster_date: string | null
+          created_at: string
+          family_member_id: string
+          id: string
+          name: string
+          side_effects: string | null
+          user_id: string
+        }
+        Insert: {
+          applied_date?: string | null
+          batch?: string | null
+          booster_date?: string | null
+          created_at?: string
+          family_member_id: string
+          id?: string
+          name: string
+          side_effects?: string | null
+          user_id: string
+        }
+        Update: {
+          applied_date?: string | null
+          batch?: string | null
+          booster_date?: string | null
+          created_at?: string
+          family_member_id?: string
+          id?: string
+          name?: string
+          side_effects?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vaccines_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
