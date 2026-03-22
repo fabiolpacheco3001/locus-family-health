@@ -467,6 +467,47 @@ const Home = () => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      {/* Drawer de seleção de familiar */}
+      <Drawer open={!!quickAction} onOpenChange={(open) => !open && setQuickAction(null)}>
+        <DrawerContent className="flex flex-col max-h-[90vh]">
+          <DrawerHeader>
+            <DrawerTitle>
+              {quickAction === 'consultas' && 'Para quem é a consulta?'}
+              {quickAction === 'exames' && 'Para quem é o exame?'}
+              {quickAction === 'medicamentos' && 'Para quem é o medicamento?'}
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2">
+            {members.map((member) => (
+              <button
+                key={member.id}
+                onClick={() => {
+                  setQuickAction(null);
+                  navigate(`/familiar/${member.id}/${quickAction}`, { state: { from: '/home' } });
+                }}
+                className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">
+                    {member.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{member.name}</p>
+                  <p className="text-xs text-muted-foreground">{member.relationship}</p>
+                </div>
+                <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+              </button>
+            ))}
+            {members.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Nenhum familiar cadastrado.
+              </p>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 };
