@@ -143,7 +143,7 @@ const Agenda = () => {
                         const dayName = format(parsed, "EEEEEE", { locale: ptBR });
                         const dayAbbr = dayName.substring(0, 3);
                         const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
-                        const timePart = hasTime ? ` - ${format(parsed, "HH:mm")}` : "";
+                        const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
                         return `${datePart} - ${dayCapitalized}${timePart}`;
                       })()}
                     </p>

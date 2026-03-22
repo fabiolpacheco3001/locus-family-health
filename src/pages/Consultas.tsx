@@ -105,7 +105,16 @@ const Consultas = () => {
                     <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                       <Calendar size={12} />
                       <span>
-                        {format(parseISO(c.consultation_date), "dd MMM yyyy 'às' HH:mm", { locale: ptBR })}
+                        {(() => {
+                          const hasTime = c.consultation_date!.length > 10;
+                          const parsed = hasTime ? parseISO(c.consultation_date!) : new Date(c.consultation_date + 'T12:00:00');
+                          const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
+                          const dayName = format(parsed, "EEEEEE", { locale: ptBR });
+                          const dayAbbr = dayName.substring(0, 3);
+                          const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
+                          const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
+                          return `${datePart} - ${dayCapitalized}${timePart}`;
+                        })()}
                       </span>
                     </div>
                   )}
