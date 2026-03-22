@@ -1,4 +1,5 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import useSmartBack from "@/hooks/useSmartBack";
 import { ArrowLeft, BellOff, Pill, Stethoscope, FileText, CheckCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
