@@ -135,12 +135,15 @@ const Agenda = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   {item.date && (
-                    <p className="text-sm font-bold text-primary mb-1">
-                      {format(
-                        item.date.length === 10 ? new Date(item.date + 'T12:00:00') : parseISO(item.date),
-                        item.kind === "exam" ? "dd MMM yyyy" : "dd MMM yyyy '-' HH:mm",
-                        { locale: ptBR }
-                      )}
+                    <p className="text-sm font-bold text-primary mb-1 capitalize">
+                      {(() => {
+                        const hasTime = item.date!.length > 10;
+                        const parsed = hasTime ? parseISO(item.date!) : new Date(item.date + 'T12:00:00');
+                        const fmt = hasTime
+                          ? "dd MMM yyyy '-' EEE '-' HH:mm"
+                          : "dd MMM yyyy '-' EEE";
+                        return format(parsed, fmt, { locale: ptBR });
+                      })()}
                     </p>
                   )}
                   <div className="flex items-center gap-2 mb-1">
