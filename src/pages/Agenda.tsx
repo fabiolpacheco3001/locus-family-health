@@ -103,9 +103,31 @@ const Agenda = () => {
     enabled: !!user,
   });
 
+  const filteredItems = React.useMemo(() => {
+    if (!currentFilter) return items;
+    if (currentFilter === "consultas") return items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
+    if (currentFilter === "exames") return items.filter((i) => i.kind === "exam");
+    if (currentFilter === "upcoming") return items.filter((i) => !i.isOverdue);
+    return items;
+  }, [items, currentFilter]);
+
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">
       <h1 className="text-2xl font-bold text-foreground mb-6">Agenda</h1>
+
+      {currentFilter && filterLabels[currentFilter] && (
+        <div className="flex items-center gap-2 mb-4">
+          <Badge variant="secondary" className="text-xs px-2.5 py-1">
+            {filterLabels[currentFilter]}
+          </Badge>
+          <button
+            onClick={() => navigate("/agenda", { replace: true })}
+            className="p-1 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
+          >
+            <X size={14} className="text-muted-foreground" />
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-3">
