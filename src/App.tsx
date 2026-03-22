@@ -18,6 +18,7 @@ import Notificacoes from "./pages/Notificacoes";
 import MinhaSaude from "./pages/MinhaSaude";
 import Alergias from "./pages/Alergias";
 import Doencas from "./pages/Doencas";
+import Vacinas from "./pages/Vacinas";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
