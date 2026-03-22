@@ -194,7 +194,7 @@ const Home = () => {
             <Skeleton className="h-16 w-full rounded-xl" />
             <Skeleton className="h-16 w-full rounded-xl" />
           </div>
-        ) : activeMeds.length === 0 ? (
+        ) : medsWithNextDose.length === 0 ? (
           <Card className="border-border/50 bg-muted/30">
             <CardContent className="p-4 text-center">
               <p className="text-sm text-muted-foreground">Nenhum medicamento ativo no momento.</p>
@@ -202,8 +202,14 @@ const Home = () => {
           </Card>
         ) : (
           <div className="flex flex-col space-y-2">
-            {activeMeds.slice(0, 5).map((med) => {
-              const nextDose = getNextDose(med);
+            {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
+              const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
+              const doseLabel = nextDose
+                ? `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`
+                : isContinuous
+                  ? "Uso contínuo"
+                  : "";
+
               return (
                 <button
                   key={med.id}
@@ -216,8 +222,7 @@ const Home = () => {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{med.name}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {med.dosage ?? ""}
-                      {nextDose ? ` · Próxima dose: ${nextDose}` : med.frequency_hours === 0 ? " · Uso contínuo" : ""}
+                      {med.dosage ?? ""}{doseLabel ? ` · ${doseLabel}` : ""}
                     </p>
                   </div>
                   <ChevronRight size={16} className="text-muted-foreground shrink-0" />
