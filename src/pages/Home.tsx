@@ -305,7 +305,7 @@ const Home = () => {
       {/* Accordion Sections */}
       <Accordion type="multiple" defaultValue={["acoes-hoje"]}>
         {/* Today's Actions */}
-        <AccordionItem value="acoes-hoje" className="border-b-0">
+        <AccordionItem value="acoes-hoje" id="acoes-hoje" className="border-b-0">
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
               <Activity size={18} className="text-primary" />
