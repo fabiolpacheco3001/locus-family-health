@@ -187,24 +187,46 @@ const Home = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <Card className="border-border/50">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-              <Pill className="text-primary" size={20} />
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Pill className="text-primary" size={18} />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{activeMeds.length}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight">Medicamentos Ativos</p>
+              <p className="text-2xl font-bold text-foreground leading-none">{activeMeds.length}</p>
+              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Meds Ativos</p>
             </div>
           </CardContent>
         </Card>
         <Card className="border-border/50">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
-              <Calendar className="text-secondary" size={20} />
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+              <Calendar className="text-secondary" size={18} />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{upcoming.length}</p>
-              <p className="text-[11px] text-muted-foreground leading-tight">Próximos Compromissos</p>
+              <p className="text-2xl font-bold text-foreground leading-none">{upcoming.length}</p>
+              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Compromissos</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Stethoscope className="text-primary" size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground leading-none">{pendingConsultations}</p>
+              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Consultas Pendentes</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+              <FileText className="text-secondary" size={18} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground leading-none">{pendingExams}</p>
+              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">Exames Pendentes</p>
             </div>
           </CardContent>
         </Card>
