@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +9,7 @@ import { useMedications } from "@/hooks/useMedications";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addHours, startOfDay, isToday, isBefore, parseISO } from "date-fns";
+import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
 
@@ -88,7 +88,6 @@ const Home = () => {
         });
       });
 
-      // Sort: overdue first, then by date ascending
       items.sort((a, b) => {
         if (a.isOverdue && !b.isOverdue) return -1;
         if (!a.isOverdue && b.isOverdue) return 1;
@@ -105,7 +104,6 @@ const Home = () => {
   // Build list of active meds with their next dose
   const medsWithNextDose = activeMeds
     .map((med) => {
-      // Extract only YYYY-MM-DD to avoid invalid ISO from full timestamp
       const dateOnly = med.start_date?.slice(0, 10);
       let startDateISO: string | null = null;
       if (dateOnly && med.start_time) {
@@ -118,12 +116,10 @@ const Home = () => {
       return { med, nextDose };
     })
     .filter(({ med, nextDose }) => {
-      // Keep meds that have no frequency (continuous use) or have a valid next dose
       if (!med.frequency_hours || med.frequency_hours <= 0) return true;
       return nextDose !== null;
     })
     .sort((a, b) => {
-      // Sort by nearest next dose first
       if (!a.nextDose && !b.nextDose) return 0;
       if (!a.nextDose) return 1;
       if (!b.nextDose) return -1;
@@ -184,121 +180,132 @@ const Home = () => {
         </Card>
       </div>
 
-      {/* Today's Actions */}
-      <section className="mb-6">
-        <h2 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Activity size={18} className="text-primary" />
-          Ações de Hoje
-        </h2>
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-16 w-full rounded-xl" />
-            <Skeleton className="h-16 w-full rounded-xl" />
-          </div>
-        ) : medsWithNextDose.length === 0 ? (
-          <Card className="border-border/50 bg-muted/30">
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-muted-foreground">Nenhum medicamento ativo no momento.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-col space-y-2">
-            {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
-              const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
-              const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
-              const doseLabel = isValidNextDose
-                ? `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`
-                : isContinuous
-                  ? "Uso contínuo"
-                  : "";
+      {/* Accordion Sections */}
+      <Accordion type="multiple" defaultValue={["acoes-hoje"]}>
+        {/* Today's Actions */}
+        <AccordionItem value="acoes-hoje" className="border-b-0">
+          <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
+            <span className="flex items-center gap-2">
+              <Activity size={18} className="text-primary" />
+              Ações de Hoje
+            </span>
+          </AccordionTrigger>
+          <AccordionContent>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
+              </div>
+            ) : medsWithNextDose.length === 0 ? (
+              <Card className="border-border/50 bg-muted/30">
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-muted-foreground">Nenhum medicamento ativo no momento.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="flex flex-col space-y-2">
+                {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
+                  const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
+                  const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
+                  const doseLabel = isValidNextDose
+                    ? `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`
+                    : isContinuous
+                      ? "Uso contínuo"
+                      : "";
 
-              return (
-                <button
-                  key={med.id}
-                  onClick={() => navigate(`/familiar/${med.family_member_id}/medicamentos`)}
-                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
-                >
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Pill className="text-primary" size={16} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{med.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {med.dosage ?? ""}{doseLabel ? ` · ${doseLabel}` : ""}
-                    </p>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                  return (
+                    <button
+                      key={med.id}
+                      onClick={() => navigate(`/familiar/${med.family_member_id}/medicamentos`)}
+                      className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Pill className="text-primary" size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{med.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {med.dosage ?? ""}{doseLabel ? ` · ${doseLabel}` : ""}
+                        </p>
+                      </div>
+                      <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
 
-      {/* Upcoming Appointments */}
-      <section>
-        <h2 className="text-base font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Calendar size={18} className="text-secondary" />
-          Próximos Compromissos
-        </h2>
-        {isLoading ? (
-          <div className="space-y-2">
-            <Skeleton className="h-20 w-full rounded-xl" />
-          </div>
-        ) : upcoming.length === 0 ? (
-          <Card className="border-border/50 bg-muted/30">
-            <CardContent className="p-4 text-center">
-              <p className="text-sm text-muted-foreground">Nenhum compromisso próximo.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-col space-y-2">
-            {upcoming.map((item) => {
-              const isExam = item.kind === "exam";
-              const Icon = isExam ? FileText : Stethoscope;
-              const route = isExam
-                ? `/familiar/${item.familyMemberId}/exames`
-                : `/familiar/${item.familyMemberId}/consultas`;
+        {/* Upcoming Appointments */}
+        <AccordionItem value="proximos-compromissos" className="border-b-0">
+          <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
+            <span className="flex items-center gap-2">
+              <Calendar size={18} className="text-secondary" />
+              Próximos Compromissos
+            </span>
+          </AccordionTrigger>
+          <AccordionContent>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-20 w-full rounded-xl" />
+              </div>
+            ) : upcoming.length === 0 ? (
+              <Card className="border-border/50 bg-muted/30">
+                <CardContent className="p-4 text-center">
+                  <p className="text-sm text-muted-foreground">Nenhum compromisso próximo.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="flex flex-col space-y-2">
+                {upcoming.map((item) => {
+                  const isExam = item.kind === "exam";
+                  const Icon = isExam ? FileText : Stethoscope;
+                  const route = isExam
+                    ? `/familiar/${item.familyMemberId}/exames`
+                    : `/familiar/${item.familyMemberId}/consultas`;
 
-              return (
-                <button
-                  key={`${item.kind}-${item.id}`}
-                  onClick={() => navigate(route, { state: { from: "/home" } })}
-                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
-                >
-                  <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isExam ? "bg-secondary/10" : "bg-primary/10"}`}>
-                    <Icon className={isExam ? "text-secondary" : "text-primary"} size={16} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
-                      {item.isOverdue && (
-                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0 shrink-0">
-                          Atrasado
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
-                        {isExam ? "Exame" : "Consulta"}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {item.date
-                        ? format(
-                            new Date(item.date.length === 10 ? item.date + "T12:00:00" : item.date),
-                            "dd MMM · HH:mm",
-                            { locale: ptBR }
-                          )
-                        : "Sem data"}{" "}
-                      — {item.memberName}
-                    </p>
-                  </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                  return (
+                    <button
+                      key={`${item.kind}-${item.id}`}
+                      onClick={() => navigate(route, { state: { from: "/home" } })}
+                      className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                    >
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isExam ? "bg-secondary/10" : "bg-primary/10"}`}>
+                        <Icon className={isExam ? "text-secondary" : "text-primary"} size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-semibold text-foreground truncate">{item.title}</p>
+                          {item.isOverdue && (
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0 shrink-0">
+                              Atrasado
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                            {isExam ? "Exame" : "Consulta"}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {item.date
+                            ? format(
+                                new Date(item.date.length === 10 ? item.date + "T12:00:00" : item.date),
+                                "dd MMM · HH:mm",
+                                { locale: ptBR }
+                              )
+                            : "Sem data"}{" "}
+                          — {item.memberName}
+                        </p>
+                      </div>
+                      <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   );
 };
