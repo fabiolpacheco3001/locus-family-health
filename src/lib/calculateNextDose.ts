@@ -17,11 +17,13 @@ export function calculateNextDose(
   // 1. Se o tratamento ainda nem começou, a próxima dose É a data de início.
   if (start > now) return start;
 
-  // 2. Calcula a próxima dose usando matemática de intervalos (sem loop).
-  const elapsedMs = now.getTime() - start.getTime();
-  const intervalMs = frequencyHours * 60 * 60 * 1000;
-  const intervals = Math.ceil(elapsedMs / intervalMs);
-  const next = new Date(start.getTime() + intervals * intervalMs);
+  // 2. Calcula a próxima dose iterando com a frequência (while loop blindado).
+  const next = new Date(start.getTime());
+  let maxIterations = 10000;
+  while (next <= now && maxIterations > 0) {
+    next.setTime(next.getTime() + frequencyHours * 60 * 60 * 1000);
+    maxIterations--;
+  }
 
   if (isNaN(next.getTime())) return null;
 
