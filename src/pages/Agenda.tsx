@@ -33,6 +33,7 @@ const filterLabels: Record<string, string> = {
 const Agenda = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const goBack = useSmartBack();
   const [searchParams] = useSearchParams();
   const currentFilter = searchParams.get("filter");
   const today = startOfDay(new Date());
