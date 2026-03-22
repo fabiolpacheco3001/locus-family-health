@@ -98,5 +98,7 @@ export const useNotifications = () => {
     isLoading: query.isLoading,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    clearAllNotifications,
   };
 };
