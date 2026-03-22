@@ -9,8 +9,9 @@ import { useMedications } from "@/hooks/useMedications";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, addHours, startOfDay, isToday, isBefore } from "date-fns";
+import { format, addHours, startOfDay, isToday, isBefore, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { calculateNextDose } from "@/lib/calculateNextDose";
 
 const Home = () => {
   const { user } = useAuth();
