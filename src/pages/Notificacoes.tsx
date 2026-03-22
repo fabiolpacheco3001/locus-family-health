@@ -1,4 +1,5 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import useSmartBack from "@/hooks/useSmartBack";
 import { ArrowLeft, BellOff, Pill, Stethoscope, FileText, CheckCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,13 +86,10 @@ const NotificationCard = ({
 
 const Notificacoes = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const goBack = useSmartBack();
   const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useNotifications();
 
-  const handleBack = () => {
-    const from = (location.state as any)?.from;
-    navigate(from || "/home", { replace: true });
-  };
+  const handleBack = goBack;
 
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">

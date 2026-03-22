@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import useSmartBack from "@/hooks/useSmartBack";
 import { ArrowLeft, Stethoscope, Pill, FileText, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -30,6 +31,7 @@ const actionItems = [
 const FamiliarProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const goBack = useSmartBack();
   const [editOpen, setEditOpen] = useState(false);
 
   const { data: member, isLoading, error } = useQuery({
@@ -63,7 +65,7 @@ const FamiliarProfile = () => {
     return (
       <div className="px-4 pt-6 animate-fade-in">
         <div className="flex items-center gap-3 mb-8">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/home', { replace: true })}>
+          <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft size={22} />
           </Button>
           <h1 className="text-xl font-bold text-foreground">Perfil de Saúde</h1>
@@ -90,7 +92,7 @@ const FamiliarProfile = () => {
     <div className="px-4 pt-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/home', { replace: true })}>
+        <Button variant="ghost" size="icon" onClick={goBack}>
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Perfil de Saúde</h1>

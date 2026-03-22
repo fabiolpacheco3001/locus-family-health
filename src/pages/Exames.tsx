@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useExams, Exam } from "@/hooks/useExams";
 import AddExamDrawer from "@/components/AddExamDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
+import useSmartBack from "@/hooks/useSmartBack";
 import { format, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -18,8 +19,7 @@ const statusColors: Record<string, string> = {
 
 const Exames = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const { exams, isLoading } = useExams(id!);
@@ -39,13 +39,7 @@ const Exames = () => {
     setDrawerOpen(true);
   };
 
-  const handleBack = () => {
-    if (location.state?.from === "/agenda") {
-      navigate("/agenda", { replace: true });
-    } else {
-      navigate(`/familiar/${id}`, { replace: true });
-    }
-  };
+  const handleBack = goBack;
 
   return (
     <>
