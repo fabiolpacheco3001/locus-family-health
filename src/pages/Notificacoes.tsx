@@ -76,7 +76,7 @@ const NotificationCard = ({
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
-        className="shrink-0 p-1.5 rounded-lg text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
+        className="shrink-0 p-1.5 rounded-lg text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
       >
         <Trash2 size={15} />
       </button>
