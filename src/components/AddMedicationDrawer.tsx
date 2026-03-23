@@ -34,7 +34,6 @@ const FREQUENCY_OPTIONS = [
   { label: "De 12 em 12 horas", value: "12" },
   { label: "De 8 em 8 horas", value: "8" },
   { label: "De 6 em 6 horas", value: "6" },
-  { label: "Uso contínuo", value: "0" },
 ];
 
 const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
