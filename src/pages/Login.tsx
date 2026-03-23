@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Heart, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
-import MobileShell from "@/components/MobileShell";
+
 import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
@@ -40,7 +40,7 @@ const Login = () => {
   };
 
   return (
-    <MobileShell>
+    <div className="min-h-[100dvh] flex flex-col bg-background">
       <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
         {/* Logo */}
         <div className="flex flex-col items-center mb-12">
@@ -95,7 +95,7 @@ const Login = () => {
           {isSignUp ? "Já tem uma conta? Entrar" : "Criar nova conta familiar"}
         </button>
       </div>
-    </MobileShell>
+    </div>
   );
 };
 

@@ -95,15 +95,17 @@ const NotificationCard = ({
             )}
           </div>
           <div className="flex-1 w-full flex flex-col">
-            {/* Título Centralizado */}
-            <h4 className={`text-center text-sm md:text-base mb-1 ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
-              {notification.title}
+            {/* Título Centralizado - extrai primeiro nome */}
+            <h4 className={`text-center text-sm md:text-base mb-2 ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
+              {notification.title.includes(" de ")
+                ? notification.title.split(" de ").slice(0, -1).join(" de ") + " de " + notification.title.split(" de ").pop()!.split(" ")[0]
+                : notification.title}
             </h4>
 
             {/* Corpo Justificado e Separado em Linhas */}
             <div className="text-justify text-xs text-muted-foreground flex flex-col gap-1">
               {notification.message.split("\n").map((line, i) => (
-                <span key={i}>{line}</span>
+                <p key={i} className="m-0">{line}</p>
               ))}
             </div>
 

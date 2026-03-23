@@ -172,14 +172,17 @@ const FamiliarProfile = () => {
   );
 
   return (
-    <div className="px-4 pt-6 pb-28 animate-fade-in">
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex-none px-4 pt-6 pb-2 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={goBack}>
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Minha Saúde</h1>
       </div>
+
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="px-4 pb-4 space-y-0 min-h-[calc(100%+1px)]">
 
       {/* Identity Card */}
       <button
@@ -221,6 +224,9 @@ const FamiliarProfile = () => {
             <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{value}</p>
           </button>
         ))}
+      </div>
+
+        </div>
       </div>
 
       {/* Edit Drawer */}
