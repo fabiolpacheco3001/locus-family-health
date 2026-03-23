@@ -39,7 +39,7 @@ const Ajustes = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-4 space-y-4">
         {/* Profile Card */}
         <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
           <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />

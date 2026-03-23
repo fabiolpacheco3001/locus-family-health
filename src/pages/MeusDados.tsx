@@ -96,7 +96,7 @@ const MeusDados = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 space-y-3">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-3">
         {/* Avatar */}
         <button className="flex justify-center mb-4 w-full" onClick={() => setAvatarOpen(true)}>
           <div className="relative">

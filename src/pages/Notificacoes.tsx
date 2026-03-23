@@ -178,7 +178,7 @@ const Notificacoes = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 pb-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-4">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (

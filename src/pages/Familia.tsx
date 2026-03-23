@@ -15,7 +15,7 @@ const Familia = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-5 pb-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-5 pb-4">
         {members.length === 0 && !isLoading && (
           <p className="text-muted-foreground text-sm">
             Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.

@@ -510,7 +510,7 @@ const Home = () => {
               {quickAction === 'medicamentos' && 'Para quem é o medicamento?'}
             </DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2">
+          <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-6 space-y-2">
             {(() => {
               const ordemParentesco: Record<string, number> = {
                 "Titular": 1, "Cônjuge": 2, "Filho(a)": 3, "Pai/Mãe": 4, "Irmão(ã)": 5, "Outro": 6,
