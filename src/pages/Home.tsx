@@ -238,7 +238,7 @@ const Home = () => {
                       <span className="text-sm font-medium text-black mt-1">Meds Ativos</span>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
+                  <ChevronRight className="w-5 h-5 text-black" />
                 </CardContent>
               </Card>
             </CarouselItem>
@@ -257,7 +257,7 @@ const Home = () => {
                       <span className="text-sm font-medium text-black mt-1">Compromissos</span>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
+                  <ChevronRight className="w-5 h-5 text-black" />
                 </CardContent>
               </Card>
             </CarouselItem>
@@ -276,7 +276,7 @@ const Home = () => {
                       <span className="text-sm font-medium text-black mt-1">Consultas Pendentes</span>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
+                  <ChevronRight className="w-5 h-5 text-black" />
                 </CardContent>
               </Card>
             </CarouselItem>
@@ -295,7 +295,7 @@ const Home = () => {
                       <span className="text-sm font-medium text-black mt-1">Exames Pendentes</span>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
+                  <ChevronRight className="w-5 h-5 text-black" />
                 </CardContent>
               </Card>
             </CarouselItem>
@@ -408,7 +408,7 @@ const Home = () => {
                           {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
                         </p>
                       </div>
-                      <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                      <ChevronRight size={16} className="text-black shrink-0" />
                     </button>
                   );
                 })}
@@ -477,7 +477,7 @@ const Home = () => {
                           — {item.memberName}
                         </p>
                       </div>
-                      <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                      <ChevronRight size={16} className="text-black shrink-0" />
                     </button>
                   );
                 })}
@@ -524,7 +524,7 @@ const Home = () => {
                     <p className="text-sm font-semibold text-black truncate">{member.name}</p>
                     <p className="text-xs text-muted-foreground">{member.relationship}</p>
                   </div>
-                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                  <ChevronRight size={16} className="text-black shrink-0" />
                 </button>
               ));
             })()}
