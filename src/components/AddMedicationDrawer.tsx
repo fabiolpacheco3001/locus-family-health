@@ -239,6 +239,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               />
             </div>
 
+            <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5">
+              <Label htmlFor="uso-continuo" className="cursor-pointer">Tratamento de Uso Contínuo</Label>
+              <Switch id="uso-continuo" checked={usoContinuo} onCheckedChange={setUsoContinuo} />
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Dosagem</Label>
@@ -276,42 +281,71 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   className={`${INPUT_CLASSES} appearance-none`}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label>Duração (dias)</Label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="Ex: 7"
-                  value={durationDays}
-                  onChange={(e) => setDurationDays(e.target.value)}
-                  className="text-[16px]"
-                />
-              </div>
+              {!usoContinuo && (
+                <div className="space-y-1.5">
+                  <Label>Duração (dias)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ex: 7"
+                    value={durationDays}
+                    onChange={(e) => setDurationDays(e.target.value)}
+                    className="text-[16px]"
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Término Previsto</Label>
-                <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
-                  {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
-                </div>
-              </div>
-              {isEditing ? (
+            {!usoContinuo && (
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="text-[16px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Concluído">Concluído</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Término Previsto</Label>
+                  <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
+                    {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
+                  </div>
                 </div>
-              ) : (
-                <div />
-              )}
+                {isEditing ? (
+                  <div className="space-y-1.5">
+                    <Label>Status</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger className="text-[16px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ativo">Ativo</SelectItem>
+                        <SelectItem value="Concluído">Concluído</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </div>
+            )}
+
+            {usoContinuo && isEditing && (
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="text-[16px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Concluído">Concluído</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label>Médico Prescritor (Opcional)</Label>
+              <Input
+                placeholder="Ex: Dr. Drauzio Varella"
+                value={medicoPrescritor}
+                onChange={(e) => setMedicoPrescritor(e.target.value)}
+                className="text-[16px]"
+              />
             </div>
 
             <ConsultationSelect
