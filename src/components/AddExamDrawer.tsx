@@ -256,8 +256,8 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
                     <Eye size={16} className="text-primary" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-auto p-1 text-xs" onClick={() => fileInputRef.current?.click()}>
-                    Trocar
+                  <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8 ml-auto" onClick={() => { setExistingFileUrl(null); setFile(null); }}>
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               ) : (
