@@ -77,19 +77,21 @@ const Agenda = () => {
       });
 
       const exams: AgendaItem[] = (examRes.data ?? []).map((e: any) => {
-        const isColetado = e.status === "Coletado";
-        const displayDate = isColetado ? e.result_date : e.exam_date;
-        const subtitle = isColetado
+        const isRealizado = e.status === "Realizado" || e.status === "Coletado";
+        const displayDate = isRealizado ? e.result_date : e.exam_date;
+        const subtitle = isRealizado
           ? `Buscar Resultado de ${e.name}`
           : e.location ? `em ${e.location}` : "Exame Agendado";
+        // Normalize old status names to new ones
+        const normalizedStatus = e.status === "Coletado" ? "Realizado" : e.status === "Resultado Pronto" ? "Pronto" : e.status;
         return {
           id: e.id,
           family_member_id: e.family_member_id,
-          title: isColetado ? "Resultado Pendente" : e.name,
+          title: isRealizado ? "Resultado Pendente" : e.name,
           subtitle,
           date: displayDate,
           type: null,
-          status: e.status,
+          status: normalizedStatus,
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
