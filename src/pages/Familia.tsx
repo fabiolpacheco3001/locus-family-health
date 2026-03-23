@@ -8,10 +8,14 @@ const Familia = () => {
   const navigate = useNavigate();
 
   return (
-    <>
-      <div className="px-5 pt-6 animate-fade-in">
-        <h1 className="text-2xl font-bold text-foreground mb-4">Família</h1>
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
+      {/* Header */}
+      <div className="flex-none px-5 pt-6 pb-2">
+        <h1 className="text-2xl font-bold text-foreground">Família</h1>
+      </div>
 
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-5 pb-4">
         {members.length === 0 && !isLoading && (
           <p className="text-muted-foreground text-sm">
             Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.
@@ -55,7 +59,7 @@ const Familia = () => {
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

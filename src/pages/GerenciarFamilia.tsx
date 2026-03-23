@@ -38,9 +38,9 @@ const GerenciarFamilia = () => {
         />
       )}
 
-      <div className="flex flex-col h-[calc(100dvh-80px)]">
+      <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
         {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border">
+        <div className="flex-none flex items-center gap-3 px-4 py-3 bg-card border-b border-border">
           <button onClick={() => navigate("/ajustes")} className="p-1">
             <ArrowLeft size={22} className="text-foreground" />
           </button>
@@ -48,7 +48,7 @@ const GerenciarFamilia = () => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 overscroll-contain no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {members.length === 0 && !isLoading && (
             <p className="text-muted-foreground text-sm">
               Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.
