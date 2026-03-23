@@ -87,8 +87,8 @@ const NotificationCard = ({
           className="flex items-start gap-3 flex-1 min-w-0"
         >
           <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-              <Icon className="text-primary" size={20} />
+            <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center">
+              <Icon className="text-black" size={20} />
             </div>
             {isUnread && (
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
@@ -187,8 +187,8 @@ const Notificacoes = () => {
           </div>
         ) : notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-              <BellOff className="text-muted-foreground" size={28} />
+            <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+              <BellOff className="text-black" size={28} />
             </div>
             <p className="text-foreground font-semibold mb-1">Nenhuma notificação</p>
             <p className="text-muted-foreground text-sm">Você não tem novas notificações.</p>
