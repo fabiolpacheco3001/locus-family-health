@@ -49,6 +49,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
       setBirthDate(member.birth_date || "");
       setBloodType(member.blood_type || "");
       setGender(member.gender || "");
+      setAvatarUrl(member.avatar_url || "");
     }
   }, [open, member]);
 
