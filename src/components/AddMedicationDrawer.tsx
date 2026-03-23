@@ -302,7 +302,31 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </div>
               </div>
 
-              {/* Linha 4: Status (apenas edição) */}
+              {/* Linha 4: Vincular Consulta */}
+              <div className="space-y-1.5">
+                <Label>Vincular a uma Consulta (Opcional)</Label>
+                <Select value={consultationId} onValueChange={handleConsultationChange}>
+                  <SelectTrigger className="text-[16px]">
+                    <SelectValue placeholder="Nenhuma consulta selecionada" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    {consultations.map((c) => {
+                      const dateLabel = c.consultation_date
+                        ? format(new Date(c.consultation_date), "dd/MM/yyyy")
+                        : "Sem data";
+                      const profLabel = c.professional_name || c.specialty;
+                      return (
+                        <SelectItem key={c.id} value={c.id}>
+                          {dateLabel} - {profLabel}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Linha 5: Status (apenas edição) */}
               {isEditing && (
                 <div className="flex flex-col gap-2">
                   <Label>Status do Tratamento</Label>
@@ -332,30 +356,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   </div>
                 </div>
               )}
-
-              {/* Linha 5: Vincular Consulta */}
-              <div className="space-y-1.5">
-                <Label>Vincular a uma Consulta (Opcional)</Label>
-                <Select value={consultationId} onValueChange={handleConsultationChange}>
-                  <SelectTrigger className="text-[16px]">
-                    <SelectValue placeholder="Nenhuma consulta selecionada" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {consultations.map((c) => {
-                      const dateLabel = c.consultation_date
-                        ? format(new Date(c.consultation_date), "dd/MM/yyyy")
-                        : "Sem data";
-                      const profLabel = c.professional_name || c.specialty;
-                      return (
-                        <SelectItem key={c.id} value={c.id}>
-                          {dateLabel} - {profLabel}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
 
               {/* Moldura Expansível: Uso Contínuo & Avançado */}
               <div className="p-4 bg-muted/40 border border-border rounded-xl flex flex-col gap-4 transition-all">
