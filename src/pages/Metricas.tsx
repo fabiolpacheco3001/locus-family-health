@@ -29,28 +29,70 @@ import {
 } from "recharts";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import useSmartBack from "@/hooks/useSmartBack";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
-
-const mockData = [
-  { mes: "Jan", peso: 14.2, altura: 98 },
-  { mes: "Fev", peso: 14.5, altura: 100 },
-  { mes: "Mar", peso: 14.8, altura: 101 },
-  { mes: "Abr", peso: 15.1, altura: 102 },
-  { mes: "Mai", peso: 15.3, altura: 103 },
-  { mes: "Jun", peso: 15.6, altura: 104 },
-];
 
 const Metricas = () => {
   const { members } = useFamilyMembers();
+  const { user } = useAuth();
   const goBack = useSmartBack();
+  const queryClient = useQueryClient();
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
 
   const selectedMember = members.find((m) => m.id === selectedMemberId);
 
-  const handleSubmit = () => {
-    // TODO: persist to Supabase when table is created
+  const { data: measurements = [] } = useQuery({
+    queryKey: ["health_measurements", selectedMemberId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("health_measurements")
+        .select("*")
+        .eq("family_member_id", selectedMemberId)
+        .order("recorded_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!selectedMemberId && !!user,
+  });
+
+  const chartData = measurements
+    .filter((m) => m.weight || m.height)
+    .map((m) => ({
+      label: format(parseISO(m.recorded_at), "dd/MM", { locale: ptBR }),
+      peso: m.weight ? Number(m.weight) : null,
+      altura: m.height ? Number(m.height) * 100 : null,
+    }));
+
+  const handleSubmit = async () => {
+    if (!user || !selectedMemberId) return;
+    const w = formData.peso ? Number(formData.peso) : null;
+    const hCm = formData.altura ? Number(formData.altura) : null;
+    const hM = hCm ? hCm / 100 : null;
+    const bmi = w && hM && hM > 0 ? w / (hM * hM) : null;
+
+    const { error } = await supabase.from("health_measurements").insert({
+      user_id: user.id,
+      family_member_id: selectedMemberId,
+      weight: w,
+      height: hM,
+      bmi: bmi ? Number(bmi.toFixed(1)) : null,
+      recorded_at: formData.date ? `${formData.date}T12:00:00` : new Date().toISOString(),
+    });
+
+    if (error) {
+      toast.error("Erro ao salvar medida.");
+      return;
+    }
+
+    toast.success("Medida registrada!");
+    queryClient.invalidateQueries({ queryKey: ["health_measurements", selectedMemberId] });
     setDialogOpen(false);
     setFormData({ date: "", peso: "", altura: "" });
   };
@@ -94,73 +136,83 @@ const Metricas = () => {
 
         {/* Chart card */}
         {selectedMemberId ? (
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Crescimento</CardTitle>
-                {selectedMember && (
-                  <Badge variant="secondary" className="text-xs">
-                    {selectedMember.name}
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pl-0 pr-2">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={mockData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis
-                    dataKey="mes"
-                    tick={{ fontSize: 12 }}
-                    className="fill-muted-foreground"
-                  />
-                  <YAxis
-                    yAxisId="peso"
-                    orientation="left"
-                    tick={{ fontSize: 11 }}
-                    className="fill-muted-foreground"
-                    label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11 }}
-                  />
-                  <YAxis
-                    yAxisId="altura"
-                    orientation="right"
-                    tick={{ fontSize: 11 }}
-                    className="fill-muted-foreground"
-                    label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "1px solid hsl(var(--border))",
-                      backgroundColor: "hsl(var(--background))",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: "12px" }} />
-                  <Line
-                    yAxisId="peso"
-                    type="monotone"
-                    dataKey="peso"
-                    name="Peso (kg)"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    yAxisId="altura"
-                    type="monotone"
-                    dataKey="altura"
-                    name="Altura (cm)"
-                    stroke="hsl(var(--accent))"
-                    strokeWidth={2}
-                    dot={{ r: 4, fill: "hsl(var(--accent))" }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          chartData.length > 0 ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Crescimento</CardTitle>
+                  {selectedMember && (
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedMember.name}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pl-0 pr-2">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 12 }}
+                      className="fill-muted-foreground"
+                    />
+                    <YAxis
+                      yAxisId="peso"
+                      orientation="left"
+                      tick={{ fontSize: 11 }}
+                      className="fill-muted-foreground"
+                      label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11 }}
+                    />
+                    <YAxis
+                      yAxisId="altura"
+                      orientation="right"
+                      tick={{ fontSize: 11 }}
+                      className="fill-muted-foreground"
+                      label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "1px solid hsl(var(--border))",
+                        backgroundColor: "hsl(var(--background))",
+                        fontSize: "12px",
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: "12px" }} />
+                    <Line
+                      yAxisId="peso"
+                      type="monotone"
+                      dataKey="peso"
+                      name="Peso (kg)"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: "hsl(var(--primary))" }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="altura"
+                      type="monotone"
+                      dataKey="altura"
+                      name="Altura (cm)"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: "hsl(var(--accent))" }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground text-sm">
+                Registre medidas para acompanhar a evolução ao longo do tempo.
+              </CardContent>
+            </Card>
+          )
         ) : (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground text-sm">
