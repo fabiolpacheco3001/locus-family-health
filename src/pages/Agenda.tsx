@@ -150,9 +150,9 @@ const Agenda = () => {
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Calendar className="text-primary" size={28} />
-          </div>
+           <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+             <Calendar className="text-black" size={28} />
+           </div>
           <p className="text-foreground font-semibold mb-1">Nenhum compromisso</p>
           <p className="text-muted-foreground text-sm">
             {currentFilter ? "Nenhum item encontrado para este filtro." : "Sua família não tem compromissos agendados no momento."}
@@ -173,8 +173,8 @@ const Agenda = () => {
                 onClick={() => navigate(route, { state: { from: '/agenda' } })}
                 className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${isExam ? "bg-secondary/10" : "bg-primary/10"}`}>
-                  <Icon className={isExam ? "text-secondary" : "text-primary"} size={20} />
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-[#A7D3CB]">
+                  <Icon className="text-black" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
                   {item.date && (

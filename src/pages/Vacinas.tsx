@@ -319,8 +319,8 @@ const Vacinas = () => {
           </div>
         ) : vaccines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Syringe className="text-muted-foreground" size={28} />
+            <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+              <Syringe className="text-black" size={28} />
             </div>
             <p className="text-foreground font-semibold mb-1">Nenhuma vacina registrada</p>
             <p className="text-muted-foreground text-sm">Toque no botão + para adicionar.</p>
@@ -333,8 +333,8 @@ const Vacinas = () => {
                 onClick={() => openEdit(v)}
                 className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
               >
-                <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Syringe className="text-secondary" size={20} />
+                <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
+                  <Syringe className="text-black" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm">{v.name}</p>

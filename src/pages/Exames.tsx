@@ -69,8 +69,8 @@ const Exames = () => {
           </div>
         ) : exams.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <FileText className="text-primary" size={28} />
+            <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+              <FileText className="text-black" size={28} />
             </div>
             <p className="text-foreground font-semibold mb-1">Nenhum exame registrado</p>
             <p className="text-muted-foreground text-sm">Toque no botão abaixo para adicionar.</p>
@@ -88,8 +88,8 @@ const Exames = () => {
                 onClick={() => handleOpenEdit(e)}
                 className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
               >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText className="text-primary" size={20} />
+                <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
+                  <FileText className="text-black" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
