@@ -82,11 +82,10 @@ const Medicamentos = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <p className="text-sm font-bold text-foreground truncate">{m.name}</p>
                     <Badge
-                      variant="outline"
-                      className={`text-[10px] px-1.5 py-0 ${
+                      className={`text-[10px] px-1.5 py-0 border-none ${
                         m.status === "Ativo"
-                          ? "bg-secondary/10 text-secondary border-secondary/20"
-                          : "bg-muted/50 text-muted-foreground border-border"
+                          ? "bg-[#F2A97F] text-black"
+                          : "bg-[#A7D3CB] text-black"
                       }`}
                     >
                       {m.status}
