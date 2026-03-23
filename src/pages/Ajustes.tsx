@@ -13,10 +13,10 @@ const Ajustes = () => {
   };
 
   return (
-    <div className="px-5 pt-6 animate-fade-in flex flex-col min-h-[calc(100dvh-160px)]">
+    <div className="px-5 pt-6 animate-fade-in">
       <h1 className="text-2xl font-bold text-foreground mb-8">Ajustes</h1>
 
-      <div className="mt-auto px-4 w-full pb-6">
+      <div className="fixed bottom-24 left-4 right-4">
         <Button
           onClick={handleLogout}
           className="w-full max-w-md mx-auto bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-12 rounded-xl"
