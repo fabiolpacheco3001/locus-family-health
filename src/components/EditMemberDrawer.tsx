@@ -129,11 +129,11 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
 
             <div className="pt-4 border-t border-border">
               <Button
-                variant="ghost"
-                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                variant="outline"
+                className="w-full text-red-500 border-red-200 hover:bg-red-50 flex items-center justify-center gap-2"
                 onClick={() => setShowDeleteAlert(true)}
               >
-                <Trash2 size={16} className="mr-2" />
+                <Trash2 className="w-4 h-4" />
                 Excluir Familiar
               </Button>
             </div>
