@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ArrowLeft, Activity, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -18,19 +18,15 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import useSmartBack from "@/hooks/useSmartBack";
-
-const mockData = [
-  { mes: "Jan", peso: 14.2, altura: 98 },
-  { mes: "Fev", peso: 14.5, altura: 100 },
-  { mes: "Mar", peso: 14.8, altura: 101 },
-  { mes: "Abr", peso: 15.1, altura: 102 },
-  { mes: "Mai", peso: 15.3, altura: 103 },
-  { mes: "Jun", peso: 15.6, altura: 104 },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 const MinhaSaude = () => {
   const { id } = useParams<{ id: string }>();
