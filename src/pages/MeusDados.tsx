@@ -41,6 +41,7 @@ const MeusDados = () => {
       setGender(titular.gender || "");
       setPhone(titular.phone || "");
       setCpf(titular.cpf || "");
+      setAvatarUrl(titular.avatar_url || "");
     }
   }, [titular]);
 
