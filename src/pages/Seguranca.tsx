@@ -9,7 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Seguranca = () => {
   const navigate = useNavigate();
-  const [biometria, setBiometria] = useState(false);
+  const [biometria, setBiometria] = useState(() => localStorage.getItem("biometria") === "true");
+
+  const handleBiometria = (checked: boolean) => {
+    setBiometria(checked);
+    localStorage.setItem("biometria", String(checked));
+    toast.success(checked ? "Biometria ativada!" : "Biometria desativada.");
+  };
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -23,8 +29,9 @@ const Seguranca = () => {
       toast.error("Preencha todos os campos.");
       return;
     }
-    if (novaSenha.length < 6) {
-      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(novaSenha)) {
+      toast.error("A senha deve ter no mínimo 8 caracteres, contendo letra maiúscula, número e caractere especial.");
       return;
     }
     if (novaSenha !== confirmarSenha) {
@@ -36,7 +43,7 @@ const Seguranca = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
       if (error) throw error;
-      toast.success("Senha atualizada com sucesso!");
+      toast.success("Senha atualizada com segurança!");
       setSenhaAtual("");
       setNovaSenha("");
       setConfirmarSenha("");
@@ -70,7 +77,7 @@ const Seguranca = () => {
               <Fingerprint size={20} className="text-black" />
             </div>
             <span className="flex-1 text-sm text-foreground">Usar Biometria / Face ID</span>
-            <Switch checked={biometria} onCheckedChange={setBiometria} />
+            <Switch checked={biometria} onCheckedChange={handleBiometria} />
           </div>
         </div>
 
@@ -105,7 +112,7 @@ const Seguranca = () => {
                 type={showNova ? "text" : "password"}
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mín. 8 car., 1 Maiúsc., 1 Núm., 1 Especial"
                 className={inputClass}
               />
               <button
