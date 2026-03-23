@@ -3,6 +3,7 @@ import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight } from "luc
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import MemberAvatar from "@/components/MemberAvatar";
 
 const menuItems = [
   { icon: User, label: "Meus Dados", path: "/meus-dados" },
