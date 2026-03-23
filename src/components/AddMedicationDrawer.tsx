@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useMedications, Medication, NewMedication } from "@/hooks/useMedications";
-import ConsultationSelect from "@/components/ConsultationSelect";
+import { useConsultations } from "@/hooks/useConsultations";
 import { addDays, format } from "date-fns";
 
 interface Props {
@@ -41,6 +41,7 @@ const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border bor
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { user } = useAuth();
   const { addMedication, updateMedication, deleteMedication } = useMedications(familyMemberId);
+  const { consultations } = useConsultations(familyMemberId);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [startDateTime, setStartDateTime] = useState("");
@@ -96,7 +97,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setEstoqueMinimo("");
   };
 
-  // Extract date and time from the combined datetime-local
   const parsedDate = useMemo(() => {
     if (!startDateTime) return { date: null, time: null };
     const [d, t] = startDateTime.split("T");
@@ -108,10 +108,26 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     return format(addDays(new Date(parsedDate.date + "T12:00:00"), Number(durationDays)), "yyyy-MM-dd");
   }, [parsedDate.date, durationDays]);
 
+  const calculatedEndDateLabel = useMemo(() => {
+    if (!calculatedEndDate) return null;
+    return format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy");
+  }, [calculatedEndDate]);
+
   const frequencyLabel = useMemo(() => {
     const opt = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours);
     return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
+
+  // Auto-fill doctor from selected consultation
+  const handleConsultationChange = (value: string) => {
+    setConsultationId(value);
+    if (value !== "none") {
+      const selected = consultations.find((c) => c.id === value);
+      if (selected?.professional_name && !medicoPrescritor.trim()) {
+        setMedicoPrescritor(selected.professional_name);
+      }
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -156,9 +172,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           ...commonFields,
         };
         const result = await addMedication.mutateAsync(medication);
-        // Create notification for new medication
         if (user) {
-          // Fetch family member name
           const { data: member } = await supabase
             .from("family_members")
             .select("name")
@@ -229,127 +243,148 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
-            {/* Bloco 1: Identificação */}
-            <div className="space-y-1.5">
-              <Label>Nome do Medicamento *</Label>
-              <MedicationAutocomplete value={name} onChange={setName} />
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5">
-              <Label htmlFor="uso-continuo" className="cursor-pointer text-sm">Tratamento de Uso Contínuo</Label>
-              <Switch id="uso-continuo" checked={usoContinuo} onCheckedChange={setUsoContinuo} />
-            </div>
-
-            {/* Bloco 2: Posologia */}
-            <div className="grid grid-cols-2 gap-3">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 no-scrollbar">
+            <div className="flex flex-col gap-4">
+              {/* Linha 1: Nome */}
               <div className="space-y-1.5">
-                <Label>Dosagem</Label>
-                <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className="text-[16px]" />
+                <Label>Nome do Medicamento *</Label>
+                <MedicationAutocomplete value={name} onChange={setName} />
               </div>
+
+              {/* Linha 2: Dosagem | Frequência */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Dosagem</Label>
+                  <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className="text-[16px]" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Frequência</Label>
+                  <Select value={frequencyHours} onValueChange={setFrequencyHours}>
+                    <SelectTrigger className="text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {FREQUENCY_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Linha 3: Início | Duração */}
+              <div className="grid grid-cols-2 gap-3 items-start">
+                <div className="space-y-1.5">
+                  <Label>Data e Hora de Início</Label>
+                  <input
+                    type="datetime-local"
+                    value={startDateTime}
+                    onChange={(e) => setStartDateTime(e.target.value)}
+                    min="1900-01-01T00:00"
+                    max="2099-12-31T23:59"
+                    className={`${INPUT_CLASSES} appearance-none`}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className={usoContinuo ? "text-muted-foreground" : ""}>Duração (dias)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ex: 7"
+                    value={usoContinuo ? "" : durationDays}
+                    onChange={(e) => setDurationDays(e.target.value)}
+                    disabled={usoContinuo}
+                    className="text-[16px]"
+                  />
+                  {!usoContinuo && calculatedEndDateLabel && (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Término previsto: {calculatedEndDateLabel}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Linha 4: Status (apenas edição) */}
+              {isEditing && (
+                <div className="space-y-1.5">
+                  <Label>Status</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger className="text-[16px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Concluído">Concluído</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Linha 5: Vincular Consulta */}
               <div className="space-y-1.5">
-                <Label>Frequência</Label>
-                <Select value={frequencyHours} onValueChange={setFrequencyHours}>
-                  <SelectTrigger className="text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <Label>Vincular a uma Consulta (Opcional)</Label>
+                <Select value={consultationId} onValueChange={handleConsultationChange}>
+                  <SelectTrigger className="text-[16px]">
+                    <SelectValue placeholder="Nenhuma consulta selecionada" />
+                  </SelectTrigger>
                   <SelectContent>
-                    {FREQUENCY_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
+                    <SelectItem value="none">Nenhuma</SelectItem>
+                    {consultations.map((c) => {
+                      const dateLabel = c.consultation_date
+                        ? format(new Date(c.consultation_date), "dd/MM/yyyy")
+                        : "Sem data";
+                      const profLabel = c.professional_name || c.specialty;
+                      return (
+                        <SelectItem key={c.id} value={c.id}>
+                          {dateLabel} - {profLabel}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            {/* Bloco 3: Duração */}
-            <div className="grid grid-cols-2 gap-3 items-end">
-              <div className={`space-y-1.5 ${usoContinuo ? "col-span-2" : ""}`}>
-                <Label>Data e Hora de Início</Label>
-                <input
-                  type="datetime-local"
-                  value={startDateTime}
-                  onChange={(e) => setStartDateTime(e.target.value)}
-                  min="1900-01-01T00:00"
-                  max="2099-12-31T23:59"
-                  className={`${INPUT_CLASSES} appearance-none`}
-                />
+              {/* Moldura Expansível: Uso Contínuo & Avançado */}
+              <div className="p-4 bg-muted/40 border border-border rounded-xl flex flex-col gap-4 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-foreground">Uso Contínuo</span>
+                  <Switch checked={usoContinuo} onCheckedChange={setUsoContinuo} />
+                </div>
+
+                {usoContinuo && (
+                  <>
+                    <div className="space-y-1.5">
+                      <Label>Médico Prescritor</Label>
+                      <Input
+                        placeholder="Ex: Dr. Varella"
+                        value={medicoPrescritor}
+                        onChange={(e) => setMedicoPrescritor(e.target.value)}
+                        className="text-[16px]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Controle de Estoque</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Qtd. Comprimidos</Label>
+                          <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Alertar Faltando</Label>
+                          <Input type="number" inputMode="numeric" placeholder="Ex: 5" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-[16px]" />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              {!usoContinuo && (
-                <div className="space-y-1.5">
-                  <Label>Duração (dias)</Label>
-                  <Input type="number" inputMode="numeric" placeholder="Ex: 7" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} className="text-[16px]" />
+
+              {/* Botão Excluir (apenas edição) */}
+              {isEditing && (
+                <div className="pt-2 border-t border-border">
+                  <Button variant="outline" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setShowDeleteAlert(true)}>
+                    <Trash2 size={16} className="mr-2" />
+                    Excluir Medicamento
+                  </Button>
                 </div>
               )}
             </div>
-
-            {!usoContinuo && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Término Previsto</Label>
-                  <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
-                    {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
-                  </div>
-                </div>
-                {isEditing && (
-                  <div className="space-y-1.5">
-                    <Label>Status</Label>
-                    <Select value={status} onValueChange={setStatus}>
-                      <SelectTrigger className="text-[16px]"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Ativo">Ativo</SelectItem>
-                        <SelectItem value="Concluído">Concluído</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {usoContinuo && isEditing && (
-              <div className="space-y-1.5">
-                <Label>Status</Label>
-                <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="text-[16px]"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Concluído">Concluído</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Bloco 4: Acompanhamento & Estoque */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Médico Prescritor</Label>
-                <Input placeholder="Ex: Dr. Varella" value={medicoPrescritor} onChange={(e) => setMedicoPrescritor(e.target.value)} className="text-[16px]" />
-              </div>
-              <div className="space-y-1.5">
-                <ConsultationSelect familyMemberId={familyMemberId} value={consultationId} onValueChange={setConsultationId} />
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Controle de Estoque (Opcional)</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Qtd. Total</Label>
-                  <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Alerta mínimo</Label>
-                  <Input type="number" inputMode="numeric" placeholder="Ex: 5" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-[16px]" />
-                </div>
-              </div>
-            </div>
-
-            {isEditing && (
-              <div className="pt-4 border-t border-border">
-                <Button variant="outline" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setShowDeleteAlert(true)}>
-                  <Trash2 size={16} className="mr-2" />
-                  Excluir Medicamento
-                </Button>
-              </div>
-            )}
           </div>
 
           <DrawerFooter className="flex-row gap-3">
