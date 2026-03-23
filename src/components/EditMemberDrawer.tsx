@@ -218,7 +218,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} />
+      <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} onSelect={setAvatarUrl} />
     </>
   );
 };
