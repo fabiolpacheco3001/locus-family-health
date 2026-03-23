@@ -96,10 +96,16 @@ const MeusDados = () => {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-4 space-y-3">
         {/* Avatar */}
-        <button className="flex justify-center mb-4" onClick={() => setAvatarOpen(true)}>
+        <button className="flex justify-center mb-4 w-full" onClick={() => setAvatarOpen(true)}>
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center">
-              <span className="text-2xl font-bold text-secondary">{initials}</span>
+            <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
+              {avatarUrl && avatarUrl.startsWith("data:") ? (
+                <img src={avatarUrl} className="w-full h-full object-cover rounded-full" alt="Avatar" />
+              ) : avatarUrl && avatarUrl.length <= 2 ? (
+                <span className="text-4xl">{avatarUrl}</span>
+              ) : (
+                <span className="text-2xl font-bold text-secondary">{initials}</span>
+              )}
             </div>
             <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center">
               <Camera className="w-3.5 h-3.5 text-muted-foreground" />
