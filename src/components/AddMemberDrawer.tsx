@@ -60,8 +60,8 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex flex-col max-h-[90vh] bg-background">
+    <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
+      <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
         <DrawerHeader>
           <DrawerTitle className="text-primary">Novo Membro da Família</DrawerTitle>
           <DrawerDescription>Preencha os dados abaixo para adicionar um membro.</DrawerDescription>
