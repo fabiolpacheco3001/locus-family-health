@@ -89,7 +89,7 @@ const Notificacoes = () => {
   const goBack = useSmartBack();
   const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useNotifications();
 
-  const handleBack = () => navigate('/ajustes');
+  const handleBack = () => navigate(-1);
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
