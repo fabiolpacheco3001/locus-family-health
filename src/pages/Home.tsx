@@ -224,7 +224,7 @@ const Home = () => {
           <CarouselContent className="-ml-2">
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
+                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
                 onClick={() => navigate('/medicamentos')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
@@ -243,7 +243,7 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
+                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
                 onClick={() => navigate('/agenda?filter=upcoming')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
@@ -262,7 +262,7 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
+                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
                 onClick={() => navigate('/agenda?filter=consultas')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
@@ -281,7 +281,7 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
+                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
                 onClick={() => navigate('/agenda?filter=exames')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
