@@ -113,89 +113,91 @@ const MinhaSaude = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Chart card - Premium design */}
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-foreground">Crescimento</h2>
-            <div className="flex gap-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full bg-foreground inline-block" />
-                Peso
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1.5 rounded-full bg-[#F2A97F] inline-block" />
-                Altura
-              </span>
+        {chartData.length > 0 ? (
+          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-foreground">Crescimento</h2>
+              <div className="flex gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-1.5 rounded-full bg-foreground inline-block" />
+                  Peso
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-3 h-1.5 rounded-full bg-[#F2A97F] inline-block" />
+                  Altura
+                </span>
+              </div>
             </div>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={chartData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="#f1f5f9"
+                  strokeDasharray=""
+                />
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 12, fill: "#64748b" }}
+                />
+                <YAxis
+                  yAxisId="peso"
+                  orientation="left"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11, fill: "#94a3b8" }}
+                />
+                <YAxis
+                  yAxisId="altura"
+                  orientation="right"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 11, fill: "#64748b" }}
+                  label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11, fill: "#94a3b8" }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "1px solid #e2e8f0",
+                    backgroundColor: "#ffffff",
+                    fontSize: "12px",
+                    boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                  }}
+                />
+                <Line
+                  yAxisId="peso"
+                  type="monotone"
+                  dataKey="peso"
+                  name="Peso (kg)"
+                  stroke="#0f172a"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: "#0f172a", strokeWidth: 0 }}
+                  activeDot={{ r: 6, fill: "#0f172a", strokeWidth: 0 }}
+                  connectNulls
+                />
+                <Line
+                  yAxisId="altura"
+                  type="monotone"
+                  dataKey="altura"
+                  name="Altura (cm)"
+                  stroke="#F2A97F"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: "#F2A97F", strokeWidth: 0 }}
+                  activeDot={{ r: 6, fill: "#F2A97F", strokeWidth: 0 }}
+                  connectNulls
+                />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={mockData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
-              <CartesianGrid
-                vertical={false}
-                stroke="#f1f5f9"
-                strokeDasharray=""
-              />
-              <XAxis
-                dataKey="mes"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: "#64748b" }}
-              />
-              <YAxis
-                yAxisId="peso"
-                orientation="left"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: "#64748b" }}
-                label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11, fill: "#94a3b8" }}
-              />
-              <YAxis
-                yAxisId="altura"
-                orientation="right"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: "#64748b" }}
-                label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11, fill: "#94a3b8" }}
-              />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "12px",
-                  border: "1px solid #e2e8f0",
-                  backgroundColor: "#ffffff",
-                  fontSize: "12px",
-                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                }}
-              />
-              <Line
-                yAxisId="peso"
-                type="monotone"
-                dataKey="peso"
-                name="Peso (kg)"
-                stroke="#0f172a"
-                strokeWidth={3}
-                dot={{ r: 4, fill: "#0f172a", strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: "#0f172a", strokeWidth: 0 }}
-              />
-              <Line
-                yAxisId="altura"
-                type="monotone"
-                dataKey="altura"
-                name="Altura (cm)"
-                stroke="#F2A97F"
-                strokeWidth={3}
-                dot={{ r: 4, fill: "#F2A97F", strokeWidth: 0 }}
-                activeDot={{ r: 6, fill: "#F2A97F", strokeWidth: 0 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Empty state when no data */}
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
-          <p className="text-sm text-muted-foreground text-center">
-            Registre medidas para acompanhar a evolução ao longo do tempo.
-          </p>
-        </div>
+        ) : (
+          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+            <p className="text-sm text-muted-foreground text-center">
+              Registre medidas para acompanhar a evolução ao longo do tempo.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* FAB */}
