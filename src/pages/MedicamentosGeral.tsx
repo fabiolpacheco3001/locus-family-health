@@ -80,7 +80,7 @@ const MedicamentosGeral = () => {
                     {firstName && (
                       <span className="text-xs text-muted-foreground">· {firstName}</span>
                     )}
-                    <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 bg-secondary/10 text-secondary border-secondary/20 shrink-0">
+                    <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-[#F2A97F] text-black border-none shrink-0">
                       Ativo
                     </Badge>
                   </div>
