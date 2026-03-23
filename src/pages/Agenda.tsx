@@ -212,18 +212,14 @@ const Agenda = () => {
                       </Badge>
                     )}
                     {isExam && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-secondary/10 text-secondary border-secondary/20">
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#A7D3CB] text-black border-none">
                         Exame
                       </Badge>
                     )}
                     {item.type && (
                       <Badge
                         variant="outline"
-                        className={`text-[10px] px-1.5 py-0 ${
-                          item.type === "Emergência"
-                            ? "bg-destructive/10 text-destructive border-destructive/20"
-                            : "bg-secondary/10 text-secondary border-secondary/20"
-                        }`}
+                        className="text-[10px] px-1.5 py-0 bg-[#A7D3CB] text-black border-none"
                       >
                         {item.type}
                       </Badge>
