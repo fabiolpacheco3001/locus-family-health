@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Heart, Loader2 } from "lucide-react";
+import { Heart, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import MobileShell from "@/components/MobileShell";
 import { useAuth } from "@/hooks/useAuth";
