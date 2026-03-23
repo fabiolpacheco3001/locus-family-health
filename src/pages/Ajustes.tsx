@@ -42,9 +42,7 @@ const Ajustes = () => {
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
         {/* Profile Card */}
         <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
-          <div className="w-14 h-14 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center shrink-0">
-            <span className="text-lg font-bold text-secondary">{initials}</span>
-          </div>
+          <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />
           <div>
             <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
             <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
