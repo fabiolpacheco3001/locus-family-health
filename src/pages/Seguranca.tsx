@@ -29,8 +29,9 @@ const Seguranca = () => {
       toast.error("Preencha todos os campos.");
       return;
     }
-    if (novaSenha.length < 6) {
-      toast.error("A nova senha deve ter pelo menos 6 caracteres.");
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(novaSenha)) {
+      toast.error("A senha deve ter no mínimo 8 caracteres, contendo letra maiúscula, número e caractere especial.");
       return;
     }
     if (novaSenha !== confirmarSenha) {
