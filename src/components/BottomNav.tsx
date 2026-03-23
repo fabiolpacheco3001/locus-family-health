@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Calendar, Activity, Users, Settings, ChevronRight } from "lucide-react";
+import MemberAvatar from "@/components/MemberAvatar";
 import { cn } from "@/lib/utils";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -75,11 +76,7 @@ const BottomNav = () => {
                   }}
                   className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center shrink-0">
-                    <span className="text-sm font-bold text-secondary">
-                      {member.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                  <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="sm" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-black truncate">{member.name}</p>
                     <p className="text-xs text-muted-foreground">{member.relationship}</p>
