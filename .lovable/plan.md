@@ -1,44 +1,27 @@
 
 
-## Diagnosis
+## Plan: Sincronizar Avatares dos Drawers com o Padrão da Aba Família
 
-The error occurs because the `exam-files` storage bucket has no RLS policies on `storage.objects`. The bucket exists and is public (allowing reads), but authenticated users cannot upload files because there's no INSERT/UPDATE/DELETE policy granting them access.
+### O que muda
 
-The flow in `AddExamDrawer.tsx` is:
-1. Insert exam record (succeeds - exam appears in list)
-2. Upload file to storage (FAILS - no RLS policy)
-3. Update exam with file URL (never reached)
-4. Catches error, shows "Erro ao salvar"
+Os avatares nos Drawers de seleção de familiar (Acesso Rápido e "Minha Saúde") devem adotar o estilo da aba Família:
 
-The exam record is created but the file never uploads, and the user sees a duplicate entry because the error doesn't roll back the insert.
+- **De:** `bg-[#A7D3CB] border-2 border-[#A7D3CB]` + `text-white font-medium`
+- **Para:** `bg-secondary/20 border-2 border-secondary` + `text-secondary font-bold`
 
-## Fix
+### Arquivos afetados
 
-**Single database migration** to add RLS policies on `storage.objects` for the `exam-files` bucket:
+1. **`src/pages/Home.tsx`** — Drawer de Acesso Rápido (Consultas, Exames, Medicamentos)
+   - Trocar a `div` circular do avatar para usar `bg-secondary/20 border-2 border-secondary`
+   - Trocar o `span` das iniciais para `text-secondary font-bold`
 
-```sql
--- Allow authenticated users to upload files to exam-files bucket
-CREATE POLICY "Users can upload exam files"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'exam-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+2. **`src/components/BottomNav.tsx`** — Drawer "De quem você deseja ver?" (Minha Saúde)
+   - Mesma substituição de classes no avatar e iniciais
 
--- Allow authenticated users to update their own exam files
-CREATE POLICY "Users can update own exam files"
-ON storage.objects FOR UPDATE TO authenticated
-USING (bucket_id = 'exam-files' AND (storage.foldername(name))[1] = auth.uid()::text);
+### O que NÃO muda
 
--- Allow authenticated users to delete their own exam files
-CREATE POLICY "Users can delete own exam files"
-ON storage.objects FOR DELETE TO authenticated
-USING (bucket_id = 'exam-files' AND (storage.foldername(name))[1] = auth.uid()::text);
-
--- Allow public read access (bucket is already public)
-CREATE POLICY "Public read access for exam files"
-ON storage.objects FOR SELECT TO public
-USING (bucket_id = 'exam-files');
-```
-
-The policies use `storage.foldername(name)[1] = auth.uid()::text` because the upload path in `useExams.tsx` is `${user.id}/${examId}.${ext}`, meaning the first folder is the user's ID. This ensures users can only manage their own files.
-
-No code changes needed -- only this migration.
+- Nome em `text-black font-semibold`
+- Parentesco em `text-muted-foreground`
+- Ordenação hierárquica (Titular, Cônjuge, Filho(a)...)
+- Avatar da própria aba Família (`src/pages/Familia.tsx`)
 
