@@ -127,6 +127,7 @@ const Seguranca = () => {
                 {showNova ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">Mínimo de 8 caracteres. Deve conter letra maiúscula, número e caractere especial.</p>
           </div>
 
           <div className="space-y-1.5">
