@@ -157,14 +157,21 @@ const MeusDados = () => {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="p-4 bg-card border-t border-border mt-auto">
+      {/* Footer fixo acima do BottomNav */}
+      <div className="fixed bottom-[80px] left-0 right-0 p-4 bg-card border-t border-border flex gap-4 z-10">
         <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => navigate('/ajustes')}
+        >
+          Cancelar
+        </Button>
+        <Button
+          className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none"
           onClick={handleSave}
           disabled={updateMember.isPending}
-          className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
         >
-          {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar Alterações"}
+          {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
         </Button>
       </div>
     </div>
