@@ -43,7 +43,7 @@ const Seguranca = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password: novaSenha });
       if (error) throw error;
-      toast.success("Senha atualizada com sucesso!");
+      toast.success("Senha atualizada com segurança!");
       setSenhaAtual("");
       setNovaSenha("");
       setConfirmarSenha("");
