@@ -79,9 +79,9 @@ const MeusDados = () => {
   };
 
   return (
-    <div className="px-4 pt-6 pb-32 animate-fade-in">
+    <div className="flex flex-col h-[calc(100dvh-72px)] bg-background animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex-none flex items-center gap-3 px-4 pt-6 mb-4">
         <button onClick={() => navigate("/ajustes")} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
@@ -90,19 +90,19 @@ const MeusDados = () => {
         </h1>
       </div>
 
-      {/* Avatar */}
-      <div className="flex justify-center mb-4">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center">
-            <span className="text-2xl font-bold text-secondary">{initials}</span>
-          </div>
-          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-            <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 space-y-3">
+        {/* Avatar */}
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center">
+              <span className="text-2xl font-bold text-secondary">{initials}</span>
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+              <Camera className="w-3.5 h-3.5 text-muted-foreground" />
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="space-y-3">
         <div className="space-y-1">
           <Label>Nome Completo *</Label>
           <Input
@@ -181,8 +181,8 @@ const MeusDados = () => {
         </div>
       </div>
 
-      {/* Fixed Footer */}
-      <div className="fixed bottom-[72px] left-0 right-0 p-4 bg-card border-t border-border z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex gap-4">
+      {/* Footer */}
+      <div className="mt-auto flex-none py-2 px-4 bg-card border-t border-border flex gap-4">
         <Button
           variant="outline"
           className="flex-1"
