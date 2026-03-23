@@ -105,7 +105,6 @@ const MeusDados = () => {
             </div>
           </div>
         </button>
-        </div>
         <div className="space-y-1">
           <Label>Nome Completo *</Label>
           <Input
