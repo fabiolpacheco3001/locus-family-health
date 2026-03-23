@@ -84,7 +84,7 @@ const MeusDados = () => {
       </div>
 
       {/* Miolo Rolável */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32 overscroll-contain no-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-8 overscroll-contain no-scrollbar">
         <div className="space-y-1.5">
           <Label>Nome Completo *</Label>
           <Input
@@ -157,8 +157,8 @@ const MeusDados = () => {
         </div>
       </div>
 
-      {/* Footer fixo acima do BottomNav */}
-      <div className="fixed bottom-[80px] left-0 right-0 p-4 bg-card border-t border-border flex gap-4 z-10">
+      {/* Footer Flex */}
+      <div className="flex-none p-4 bg-card border-t border-border flex gap-4">
         <Button
           variant="outline"
           className="w-full"
