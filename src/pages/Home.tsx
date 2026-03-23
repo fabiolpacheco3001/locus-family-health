@@ -461,7 +461,7 @@ const Home = () => {
                               Atrasado
                             </Badge>
                           )}
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 shrink-0">
+                          <Badge className={`text-[10px] px-1.5 py-0 shrink-0 border-none ${isExam ? "bg-[#FFF4A3] text-black" : "bg-[#BEA7D3] text-black"}`}>
                             {isExam ? "Exame" : "Consulta"}
                           </Badge>
                         </div>
