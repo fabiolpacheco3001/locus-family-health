@@ -401,8 +401,10 @@ const Home = () => {
                             return firstName ? <span className="font-normal text-muted-foreground"> · {firstName}</span> : null;
                           })()}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {med.dosage ?? ""}{doseLabel ? ` · ${doseLabel}` : ""}
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-0">
+                          <span>{med.dosage ?? ""}</span>
+                          {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
+                          {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
                         </p>
                       </div>
                       <ChevronRight size={16} className="text-muted-foreground shrink-0" />
