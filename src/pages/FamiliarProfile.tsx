@@ -182,7 +182,7 @@ const FamiliarProfile = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="px-4 pb-4 space-y-0 min-h-[calc(100%+1px)]">
+        <div className="p-4 pb-8 space-y-6 min-h-[calc(100%+1px)]">
 
       {/* Identity Card */}
       <button
