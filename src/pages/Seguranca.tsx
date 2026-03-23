@@ -14,7 +14,11 @@ const Seguranca = () => {
   const handleBiometria = (checked: boolean) => {
     setBiometria(checked);
     localStorage.setItem("biometria", String(checked));
-    toast.success(checked ? "Biometria ativada!" : "Biometria desativada.");
+    if (checked) {
+      toast.info("A ativação do Face ID / Touch ID (WebAuthn) será concluída quando o aplicativo estiver conectado ao servidor de segurança final.", { duration: 5000 });
+    } else {
+      toast("Biometria desativada. Você acessará o aplicativo apenas com sua senha.");
+    }
   };
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
@@ -112,7 +116,7 @@ const Seguranca = () => {
                 type={showNova ? "text" : "password"}
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="Mín. 8 car., 1 Maiúsc., 1 Núm., 1 Especial"
+                placeholder="Digite a nova senha"
                 className={inputClass}
               />
               <button
@@ -123,6 +127,7 @@ const Seguranca = () => {
                 {showNova ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">Mínimo de 8 caracteres. Deve conter letra maiúscula, número e caractere especial.</p>
           </div>
 
           <div className="space-y-1.5">
