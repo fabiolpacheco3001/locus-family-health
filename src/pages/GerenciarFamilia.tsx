@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronRight } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useFamilyMembers, FamilyMember } from "@/hooks/useFamilyMembers";
 import AddMemberDrawer from "@/components/AddMemberDrawer";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
+import MemberAvatar from "@/components/MemberAvatar";
 
 const ordemParentesco: Record<string, number> = {
   "Titular": 1,
