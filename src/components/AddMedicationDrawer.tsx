@@ -230,35 +230,27 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
+            {/* Bloco 1: Identificação */}
             <div className="space-y-1.5">
               <Label>Nome do Medicamento *</Label>
-              <MedicationAutocomplete
-                value={name}
-                onChange={setName}
-              />
+              <MedicationAutocomplete value={name} onChange={setName} />
             </div>
 
-            <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5">
-              <Label htmlFor="uso-continuo" className="cursor-pointer">Tratamento de Uso Contínuo</Label>
+            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+              <Label htmlFor="uso-continuo" className="cursor-pointer text-sm">Tratamento de Uso Contínuo</Label>
               <Switch id="uso-continuo" checked={usoContinuo} onCheckedChange={setUsoContinuo} />
             </div>
 
+            {/* Bloco 2: Posologia */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Dosagem</Label>
-                <Input
-                  placeholder="Ex: 5ml"
-                  value={dosage}
-                  onChange={(e) => setDosage(e.target.value)}
-                  className="text-[16px]"
-                />
+                <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className="text-[16px]" />
               </div>
               <div className="space-y-1.5">
                 <Label>Frequência</Label>
                 <Select value={frequencyHours} onValueChange={setFrequencyHours}>
-                  <SelectTrigger className="text-[16px]">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
+                  <SelectTrigger className="text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
                     {FREQUENCY_OPTIONS.map((o) => (
                       <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
@@ -268,8 +260,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               </div>
             </div>
 
+            {/* Bloco 3: Duração */}
             <div className="grid grid-cols-2 gap-3 items-end">
-              <div className="space-y-1.5">
+              <div className={`space-y-1.5 ${usoContinuo ? "col-span-2" : ""}`}>
                 <Label>Data e Hora de Início</Label>
                 <input
                   type="datetime-local"
@@ -283,14 +276,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               {!usoContinuo && (
                 <div className="space-y-1.5">
                   <Label>Duração (dias)</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="Ex: 7"
-                    value={durationDays}
-                    onChange={(e) => setDurationDays(e.target.value)}
-                    className="text-[16px]"
-                  />
+                  <Input type="number" inputMode="numeric" placeholder="Ex: 7" value={durationDays} onChange={(e) => setDurationDays(e.target.value)} className="text-[16px]" />
                 </div>
               )}
             </div>
@@ -303,21 +289,17 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
                   </div>
                 </div>
-                {isEditing ? (
+                {isEditing && (
                   <div className="space-y-1.5">
                     <Label>Status</Label>
                     <Select value={status} onValueChange={setStatus}>
-                      <SelectTrigger className="text-[16px]">
-                        <SelectValue />
-                      </SelectTrigger>
+                      <SelectTrigger className="text-[16px]"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Ativo">Ativo</SelectItem>
                         <SelectItem value="Concluído">Concluído</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                ) : (
-                  <div />
                 )}
               </div>
             )}
@@ -326,9 +308,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               <div className="space-y-1.5">
                 <Label>Status</Label>
                 <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger className="text-[16px]">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="text-[16px]"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Ativo">Ativo</SelectItem>
                     <SelectItem value="Concluído">Concluído</SelectItem>
@@ -337,57 +317,34 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <Label>Médico Prescritor (Opcional)</Label>
-              <Input
-                placeholder="Ex: Dr. Drauzio Varella"
-                value={medicoPrescritor}
-                onChange={(e) => setMedicoPrescritor(e.target.value)}
-                className="text-[16px]"
-              />
+            {/* Bloco 4: Acompanhamento & Estoque */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Médico Prescritor</Label>
+                <Input placeholder="Ex: Dr. Varella" value={medicoPrescritor} onChange={(e) => setMedicoPrescritor(e.target.value)} className="text-[16px]" />
+              </div>
+              <div className="space-y-1.5">
+                <ConsultationSelect familyMemberId={familyMemberId} value={consultationId} onValueChange={setConsultationId} />
+              </div>
             </div>
 
-            <ConsultationSelect
-              familyMemberId={familyMemberId}
-              value={consultationId}
-              onValueChange={setConsultationId}
-            />
-
-            <div className="space-y-2">
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
               <p className="text-xs font-medium text-muted-foreground">Controle de Estoque (Opcional)</p>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Qtd. Total na Caixa</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="Ex: 30"
-                    value={estoqueTotal}
-                    onChange={(e) => setEstoqueTotal(e.target.value)}
-                    className="text-[16px]"
-                  />
+                  <Label>Qtd. Total</Label>
+                  <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Avisar quando chegar a</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="Ex: 5"
-                    value={estoqueMinimo}
-                    onChange={(e) => setEstoqueMinimo(e.target.value)}
-                    className="text-[16px]"
-                  />
+                  <Label>Alerta mínimo</Label>
+                  <Input type="number" inputMode="numeric" placeholder="Ex: 5" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-[16px]" />
                 </div>
               </div>
             </div>
 
             {isEditing && (
               <div className="pt-4 border-t border-border">
-                <Button
-                  variant="outline"
-                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                  onClick={() => setShowDeleteAlert(true)}
-                >
+                <Button variant="outline" className="w-full text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => setShowDeleteAlert(true)}>
                   <Trash2 size={16} className="mr-2" />
                   Excluir Medicamento
                 </Button>
