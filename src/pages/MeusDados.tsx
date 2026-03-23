@@ -181,8 +181,8 @@ const MeusDados = () => {
         </div>
       </div>
 
-      {/* Fixed Footer */}
-      <div className="fixed bottom-[72px] left-0 right-0 p-4 bg-card border-t border-border z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] flex gap-4">
+      {/* Footer */}
+      <div className="mt-auto flex-none py-2 px-4 bg-card border-t border-border flex gap-4">
         <Button
           variant="outline"
           className="flex-1"
