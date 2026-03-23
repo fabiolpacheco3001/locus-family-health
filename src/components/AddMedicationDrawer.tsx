@@ -121,38 +121,40 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
 
     const freqNum = frequencyHours ? Number(frequencyHours) : null;
-    const durNum = durationDays ? Number(durationDays) : null;
+    const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
+    const finalEndDate = usoContinuo ? null : calculatedEndDate;
+    const estTotalNum = estoqueTotal ? Number(estoqueTotal) : null;
+    const estMinNum = estoqueMinimo ? Number(estoqueMinimo) : null;
+
+    const commonFields = {
+      name: name.trim(),
+      dosage: dosage.trim() || null,
+      start_time: parsedDate.time || null,
+      frequency_hours: freqNum,
+      frequency: frequencyLabel || null,
+      duration_days: durNum,
+      duration: durNum ? `${durNum} dias` : null,
+      start_date: parsedDate.date || null,
+      end_date: finalEndDate,
+      consultation_id: consultationId === "none" ? null : consultationId,
+      uso_continuo: usoContinuo,
+      medico_prescritor: medicoPrescritor.trim() || null,
+      estoque_total: estTotalNum,
+      estoque_minimo: estMinNum,
+    };
 
     try {
       if (isEditing) {
         await updateMedication.mutateAsync({
           id: editingMedication.id,
-          name: name.trim(),
-          dosage: dosage.trim() || null,
-          start_time: parsedDate.time || null,
-          frequency_hours: freqNum,
-          frequency: frequencyLabel || null,
-          duration_days: durNum,
-          duration: durNum ? `${durNum} dias` : null,
-          start_date: parsedDate.date || null,
-          end_date: calculatedEndDate,
+          ...commonFields,
           status,
-          consultation_id: consultationId === "none" ? null : consultationId,
         });
         toast.success("Medicamento atualizado!");
       } else {
         const medication: NewMedication = {
           family_member_id: familyMemberId,
-          name: name.trim(),
-          dosage: dosage.trim() || null,
-          start_time: parsedDate.time || null,
-          frequency_hours: freqNum,
-          frequency: frequencyLabel || null,
-          duration_days: durNum,
-          duration: durNum ? `${durNum} dias` : null,
-          start_date: parsedDate.date || null,
-          end_date: calculatedEndDate,
-          consultation_id: consultationId === "none" ? null : consultationId,
+          ...commonFields,
         };
         const result = await addMedication.mutateAsync(medication);
         // Create notification for new medication
