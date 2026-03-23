@@ -1,32 +1,24 @@
 
 
-## Plano: Ajuste de Copy das Notificações de Tratamento
+## Plano: Trocar ordem de "Status do Tratamento" e "Vincular Consulta"
 
-### Problema
-O formato atual da mensagem é:
-> "Registro de tratamento com Amoxicilina realizado.\nInício: 21/03/2026 às 23:30 | Término: 28/03/2026 às 23:30"
+### O que muda
 
-O formato desejado é:
-> "Medicamento: Amoxicilina\nInício: 21/03/2026 às 23:30\nTérmino: 28/03/2026 às 23:30"
+No formulário de edição de medicamentos, a ordem atual é:
+1. Início | Duração
+2. **Status do Tratamento** (linha 305-334)
+3. **Vincular Consulta** (linha 336-358)
+4. Moldura Uso Contínuo
 
-### Alterações
+A nova ordem será:
+1. Início | Duração
+2. **Vincular Consulta** (sobe)
+3. **Status do Tratamento** (desce, continua só em edição)
+4. Moldura Uso Contínuo
 
-#### 1. `src/components/AddMedicationDrawer.tsx` (linhas 162-168)
-Alterar a construção da mensagem para o novo formato:
-```tsx
-let msgParts = `Medicamento: ${name.trim()}`;
-if (startStr) {
-  msgParts += `\nInício: ${startStr}${timeStr ? ` às ${timeStr}` : ""}`;
-}
-if (endStr) {
-  msgParts += `\nTérmino: ${endStr}${timeStr ? ` às ${timeStr}` : ""}`;
-}
-```
+### Alteração
 
-#### 2. Atualizar notificações existentes no banco
-Executar UPDATE via insert tool para corrigir as notificações já gravadas, reformatando a mensagem de "Registro de tratamento com X realizado.\nInício: ... | Término: ..." para "Medicamento: X\nInício: ...\nTérmino: ...".
+Arquivo: `src/components/AddMedicationDrawer.tsx`
 
-### Sem alteração
-- Layout do card em `Notificacoes.tsx` — já faz `split("\n")` e renderiza cada linha como `<p>`, funciona perfeitamente com o novo formato.
-- Timestamp — sem alteração.
+Mover o bloco "Vincular Consulta" (linhas 336-358) para **antes** do bloco "Status do Tratamento" (linhas 305-334). Apenas troca de posição dos dois blocos, sem alteração de código ou estilo.
 
