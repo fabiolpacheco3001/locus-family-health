@@ -77,7 +77,7 @@ const Seguranca = () => {
               <Fingerprint size={20} className="text-black" />
             </div>
             <span className="flex-1 text-sm text-foreground">Usar Biometria / Face ID</span>
-            <Switch checked={biometria} onCheckedChange={setBiometria} />
+            <Switch checked={biometria} onCheckedChange={handleBiometria} />
           </div>
         </div>
 
