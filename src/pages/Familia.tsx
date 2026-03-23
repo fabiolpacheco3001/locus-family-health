@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import MemberAvatar from "@/components/MemberAvatar";
 
 const Familia = () => {
   const { members, isLoading } = useFamilyMembers();
