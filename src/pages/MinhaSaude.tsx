@@ -31,7 +31,9 @@ import { toast } from "sonner";
 const MinhaSaude = () => {
   const { id } = useParams<{ id: string }>();
   const { members } = useFamilyMembers();
+  const { user } = useAuth();
   const goBack = useSmartBack();
+  const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
 
@@ -41,10 +43,53 @@ const MinhaSaude = () => {
     if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, []);
 
-
   const member = members.find((m) => m.id === id);
 
-  const handleSubmit = () => {
+  const { data: measurements = [] } = useQuery({
+    queryKey: ["health_measurements", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("health_measurements")
+        .select("*")
+        .eq("family_member_id", id!)
+        .order("recorded_at", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!id && !!user,
+  });
+
+  const chartData = measurements
+    .filter((m) => m.weight || m.height)
+    .map((m) => ({
+      label: format(parseISO(m.recorded_at), "dd/MM", { locale: ptBR }),
+      peso: m.weight ? Number(m.weight) : null,
+      altura: m.height ? Number(m.height) * 100 : null, // m -> cm
+    }));
+
+  const handleSubmit = async () => {
+    if (!user || !id) return;
+    const w = formData.peso ? Number(formData.peso) : null;
+    const hCm = formData.altura ? Number(formData.altura) : null;
+    const hM = hCm ? hCm / 100 : null;
+    const bmi = w && hM && hM > 0 ? w / (hM * hM) : null;
+
+    const { error } = await supabase.from("health_measurements").insert({
+      user_id: user.id,
+      family_member_id: id,
+      weight: w,
+      height: hM,
+      bmi: bmi ? Number(bmi.toFixed(1)) : null,
+      recorded_at: formData.date ? `${formData.date}T12:00:00` : new Date().toISOString(),
+    });
+
+    if (error) {
+      toast.error("Erro ao salvar medida.");
+      return;
+    }
+
+    toast.success("Medida registrada!");
+    queryClient.invalidateQueries({ queryKey: ["health_measurements", id] });
     setDialogOpen(false);
     setFormData({ date: "", peso: "", altura: "" });
   };
