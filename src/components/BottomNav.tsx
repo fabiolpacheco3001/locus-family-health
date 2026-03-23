@@ -58,27 +58,36 @@ const BottomNav = () => {
             <DrawerTitle>De quem você deseja ver?</DrawerTitle>
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2">
-            {members.map((member) => (
-              <button
-                key={member.id}
-                onClick={() => {
-                  setDrawerOpen(false);
-                  navigate(`/familiar/${member.id}`, { state: { from: location.pathname } });
-                }}
-                className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-sm font-bold text-primary">
-                    {member.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">{member.name}</p>
-                  <p className="text-xs text-muted-foreground">{member.relationship}</p>
-                </div>
-                <ChevronRight size={16} className="text-muted-foreground shrink-0" />
-              </button>
-            ))}
+            {(() => {
+              const ordemParentesco: Record<string, number> = {
+                "Titular": 1, "Cônjuge": 2, "Filho(a)": 3, "Pai/Mãe": 4, "Irmão(ã)": 5, "Outro": 6,
+              };
+              return [...members].sort((a, b) => {
+                const pesoA = ordemParentesco[a.relationship] || 99;
+                const pesoB = ordemParentesco[b.relationship] || 99;
+                return pesoA - pesoB;
+              }).map((member) => (
+                <button
+                  key={member.id}
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    navigate(`/familiar/${member.id}`, { state: { from: location.pathname } });
+                  }}
+                  className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+                >
+                  <div className="w-10 h-10 rounded-full bg-transparent border-2 border-[#A7D3CB] flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-[#A7D3CB]">
+                      {member.name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-black truncate">{member.name}</p>
+                    <p className="text-xs text-muted-foreground">{member.relationship}</p>
+                  </div>
+                  <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+                </button>
+              ));
+            })()}
             {members.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Nenhum familiar cadastrado.
