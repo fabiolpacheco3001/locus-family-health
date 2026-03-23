@@ -314,8 +314,8 @@ const Doencas = () => {
           </div>
         ) : diseases.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Activity className="text-muted-foreground" size={28} />
+            <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+              <Activity className="text-black" size={28} />
             </div>
             <p className="text-foreground font-semibold mb-1">Nenhuma doença registrada</p>
             <p className="text-muted-foreground text-sm">Toque no botão + para adicionar.</p>
