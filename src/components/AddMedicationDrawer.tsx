@@ -61,7 +61,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     if (editingMedication) {
       setName(editingMedication.name);
       setDosage(editingMedication.dosage ?? "");
-      // Combine start_date + start_time into datetime-local value
       const date = editingMedication.start_date?.slice(0, 10) ?? "";
       const time = editingMedication.start_time ?? "";
       if (date && time) {
@@ -75,6 +74,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setDurationDays(editingMedication.duration_days?.toString() ?? "");
       setStatus(editingMedication.status);
       setConsultationId(editingMedication.consultation_id ?? "none");
+      setUsoContinuo(editingMedication.uso_continuo ?? false);
+      setMedicoPrescritor(editingMedication.medico_prescritor ?? "");
+      setEstoqueTotal(editingMedication.estoque_total?.toString() ?? "");
+      setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
     } else {
       resetForm();
     }
