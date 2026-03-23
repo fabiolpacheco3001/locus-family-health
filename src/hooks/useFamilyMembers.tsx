@@ -9,6 +9,8 @@ export type FamilyMember = {
   birth_date: string | null;
   gender: string | null;
   blood_type: string | null;
+  phone: string | null;
+  cpf: string | null;
   created_at: string;
 };
 
