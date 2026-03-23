@@ -5,11 +5,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 
 const menuItems = [
-  { icon: User, label: "Meus Dados" },
-  { icon: Users, label: "Gerenciar Família" },
-  { icon: Bell, label: "Notificações" },
-  { icon: Shield, label: "Segurança e Senha" },
-  { icon: HelpCircle, label: "Ajuda e Suporte" },
+  { icon: User, label: "Meus Dados", path: "/meus-dados" },
+  { icon: Users, label: "Gerenciar Família", path: "/familia" },
+  { icon: Bell, label: "Notificações", path: "/notificacoes" },
+  { icon: Shield, label: "Segurança e Senha", path: null },
+  { icon: HelpCircle, label: "Ajuda e Suporte", path: null },
 ];
 
 const Ajustes = () => {
@@ -50,9 +50,10 @@ const Ajustes = () => {
 
         {/* Menu Items */}
         <div className="space-y-3">
-          {menuItems.map(({ icon: Icon, label }) => (
+          {menuItems.map(({ icon: Icon, label, path }) => (
             <button
               key={label}
+              onClick={() => path && navigate(path)}
               className="w-full flex items-center gap-3 p-4 bg-white rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
