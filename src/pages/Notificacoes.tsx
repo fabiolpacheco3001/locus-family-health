@@ -94,13 +94,13 @@ const NotificationCard = ({
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
             )}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-sm truncate ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
+          <div className="flex-1 min-w-0 flex flex-col gap-1">
+            <p className={`text-sm text-center ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
               {notification.title}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
+            <p className="text-xs text-muted-foreground text-justify whitespace-pre-line">{notification.message}</p>
             {notification.created_at && (
-              <p className="text-[11px] text-muted-foreground/70 mt-1">
+              <p className="text-[11px] text-muted-foreground/70 text-right mt-2">
                 {format(new Date(notification.created_at), "dd MMM · HH:mm", { locale: ptBR })}
               </p>
             )}

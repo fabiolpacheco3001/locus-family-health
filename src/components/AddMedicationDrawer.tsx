@@ -145,11 +145,32 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         const result = await addMedication.mutateAsync(medication);
         // Create notification for new medication
         if (user) {
+          // Fetch family member name
+          const { data: member } = await supabase
+            .from("family_members")
+            .select("name")
+            .eq("id", familyMemberId)
+            .single();
+          const memberName = member?.name ?? "Familiar";
+          const startStr = parsedDate.date
+            ? format(new Date(parsedDate.date + "T12:00:00"), "dd/MM/yyyy")
+            : "";
+          const timeStr = parsedDate.time ? parsedDate.time.slice(0, 5) : "";
+          const endStr = calculatedEndDate
+            ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy")
+            : "";
+          let msgParts = `Registro de tratamento com ${name.trim()} realizado.`;
+          if (startStr) {
+            msgParts += `\nInício: ${startStr}${timeStr ? ` às ${timeStr}` : ""}`;
+          }
+          if (endStr) {
+            msgParts += ` | Término: ${endStr}${timeStr ? ` às ${timeStr}` : ""}`;
+          }
           await supabase.from("notifications").insert({
             user_id: user.id,
             family_member_id: familyMemberId,
-            title: "Novo Tratamento Iniciado",
-            message: `Você registrou ${name.trim()}. ${parsedDate.time ? `O tratamento começa às ${parsedDate.time.slice(0, 5)}.` : ""}`,
+            title: `Novo Tratamento de ${memberName}`,
+            message: msgParts,
             type: "medication",
             scheduled_for: new Date().toISOString(),
             is_read: false,
