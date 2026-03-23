@@ -16,6 +16,7 @@ import MedicamentosGeral from "./pages/MedicamentosGeral";
 import Exames from "./pages/Exames";
 import Notificacoes from "./pages/Notificacoes";
 import MinhaSaude from "./pages/MinhaSaude";
+import MeusDados from "./pages/MeusDados";
 import Alergias from "./pages/Alergias";
 import Doencas from "./pages/Doencas";
 import Vacinas from "./pages/Vacinas";
