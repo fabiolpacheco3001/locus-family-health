@@ -91,7 +91,7 @@ const MeusDados = () => {
       </div>
 
       {/* Avatar */}
-      <div className="flex justify-center mb-6">
+      <div className="flex justify-center mb-4">
         <div className="relative">
           <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center">
             <span className="text-2xl font-bold text-secondary">{initials}</span>
