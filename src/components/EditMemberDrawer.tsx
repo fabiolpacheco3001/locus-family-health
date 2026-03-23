@@ -38,6 +38,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const [gender, setGender] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const initials = member?.name?.[0]?.toUpperCase() ?? "?";
 
