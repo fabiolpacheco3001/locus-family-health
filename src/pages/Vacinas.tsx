@@ -256,6 +256,8 @@ const Vacinas = () => {
                   type="date"
                   value={form.booster_date}
                   onChange={(e) => setForm({ ...form, booster_date: e.target.value })}
+                  min="1900-01-01"
+                  max="2099-12-31"
                   className={INPUT_CLASSES}
                 />
               </div>

@@ -233,6 +233,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   type="datetime-local"
                   value={startDateTime}
                   onChange={(e) => setStartDateTime(e.target.value)}
+                  min="1900-01-01T00:00"
+                  max="2099-12-31T23:59"
                   className={`${INPUT_CLASSES} appearance-none`}
                 />
               </div>
