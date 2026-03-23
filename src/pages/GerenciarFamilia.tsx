@@ -48,7 +48,8 @@ const GerenciarFamilia = () => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto no-scrollbar">
+          <div className="p-4 space-y-3 min-h-[calc(100%+1px)]">
           {members.length === 0 && !isLoading && (
             <p className="text-muted-foreground text-sm">
               Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.
@@ -69,6 +70,7 @@ const GerenciarFamilia = () => {
               <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
             </div>
           ))}
+          </div>
         </div>
       </div>
 

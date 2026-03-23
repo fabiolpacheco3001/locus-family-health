@@ -136,7 +136,7 @@ const MinhaSaude = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="p-4 space-y-4 min-h-[calc(100%+1px)]">
+        <div className="p-4 space-y-6 min-h-[calc(100%+1px)]">
         {/* Toggle Peso / Altura */}
         <div className="flex rounded-lg border border-border overflow-hidden">
           <button

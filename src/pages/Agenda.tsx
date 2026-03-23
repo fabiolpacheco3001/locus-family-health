@@ -134,7 +134,8 @@ const Agenda = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="px-4 pb-4 min-h-[calc(100%+1px)]">
         {currentFilter && filterLabels[currentFilter] && (
           <div className="flex items-center gap-2 mb-4">
             <Badge variant="secondary" className="text-xs px-2.5 py-1">
@@ -252,6 +253,7 @@ const Agenda = () => {
             })}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
