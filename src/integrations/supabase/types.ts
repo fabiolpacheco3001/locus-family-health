@@ -204,11 +204,13 @@ export type Database = {
         Row: {
           birth_date: string | null
           blood_type: string | null
+          cpf: string | null
           created_at: string
           gender: string | null
           height: number | null
           id: string
           name: string
+          phone: string | null
           physical_activity: string | null
           relationship: string
           user_id: string
@@ -217,11 +219,13 @@ export type Database = {
         Insert: {
           birth_date?: string | null
           blood_type?: string | null
+          cpf?: string | null
           created_at?: string
           gender?: string | null
           height?: number | null
           id?: string
           name: string
+          phone?: string | null
           physical_activity?: string | null
           relationship: string
           user_id: string
@@ -230,11 +234,13 @@ export type Database = {
         Update: {
           birth_date?: string | null
           blood_type?: string | null
+          cpf?: string | null
           created_at?: string
           gender?: string | null
           height?: number | null
           id?: string
           name?: string
+          phone?: string | null
           physical_activity?: string | null
           relationship?: string
           user_id?: string
