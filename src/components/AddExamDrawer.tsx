@@ -101,7 +101,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           location: location.trim() || null,
           status,
           file_url: fileUrl,
-          result_date: status === "Coletado" && resultDate ? resultDate : null,
+          result_date: status === "Realizado" && resultDate ? resultDate : null,
           consultation_id: consultationId === "none" ? null : consultationId,
         });
         toast.success("Exame atualizado!");
