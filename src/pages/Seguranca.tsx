@@ -112,7 +112,7 @@ const Seguranca = () => {
                 type={showNova ? "text" : "password"}
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mín. 8 car., 1 Maiúsc., 1 Núm., 1 Especial"
                 className={inputClass}
               />
               <button
