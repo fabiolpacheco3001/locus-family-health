@@ -184,21 +184,33 @@ const Home = () => {
       <div className="flex-1 overflow-y-auto px-5 pt-6 pb-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            {(() => {
-              const h = new Date().getHours();
-              const isDay = h >= 6 && h < 18;
-              const greeting = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-              return (
-                <>
-                  {greeting}
-                  {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-[#DCC5F1] inline-block" />}
-                </>
-              );
-            })()}
-          </p>
-          <h1 className="text-2xl font-bold text-foreground">Olá, {userName}!</h1>
+        <div className="flex items-center gap-3">
+          <div
+            onClick={() => navigate('/meus-dados', { state: { from: '/home' } })}
+            className="cursor-pointer transition-transform active:scale-95"
+          >
+            <MemberAvatar
+              avatarUrl={members.find(m => m.relationship === 'Titular')?.avatar_url}
+              name={userName}
+              size="md"
+            />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              {(() => {
+                const h = new Date().getHours();
+                const isDay = h >= 6 && h < 18;
+                const greeting = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+                return (
+                  <>
+                    {greeting}
+                    {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-[#DCC5F1] inline-block" />}
+                  </>
+                );
+              })()}
+            </p>
+            <h1 className="text-2xl font-bold text-foreground">Olá, {userName}!</h1>
+          </div>
         </div>
         <button
           onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
