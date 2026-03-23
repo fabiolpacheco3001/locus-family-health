@@ -211,7 +211,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               onValueChange={setConsultationId}
             />
 
-            {status === "Coletado" && (
+            {status === "Realizado" && (
               <div className="space-y-1.5">
                 <Label>Data Prevista do Resultado</Label>
                 <input

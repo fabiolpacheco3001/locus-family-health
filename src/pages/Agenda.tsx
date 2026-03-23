@@ -230,14 +230,16 @@ const Agenda = () => {
                     )}
                     <Badge
                       variant="outline"
-                      className={`text-[10px] px-1.5 py-0 ${
+                      className={`text-[10px] px-1.5 py-0 border-none ${
                         item.status === "Agendada" || item.status === "Agendado"
-                          ? "bg-primary/10 text-primary border-primary/20"
-                          : item.status === "Coletado"
-                          ? "bg-accent/50 text-accent-foreground border-accent/30"
-                          : item.status === "Realizada" || item.status === "Resultado Pronto"
-                          ? "bg-secondary/10 text-secondary border-secondary/20"
-                          : "bg-destructive/10 text-destructive border-destructive/20"
+                          ? "bg-[#A0C4D7] text-slate-900"
+                          : item.status === "Realizada" || item.status === "Realizado"
+                          ? "bg-[#F2A97F] text-slate-900"
+                          : item.status === "Pronto"
+                          ? "bg-[#A7D3CB] text-slate-900"
+                          : item.status === "Cancelada" || item.status === "Cancelado"
+                          ? "bg-[#F87171] text-white"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {item.status}
