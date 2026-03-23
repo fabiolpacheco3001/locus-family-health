@@ -191,7 +191,7 @@ const Home = () => {
               return (
                 <>
                   {greeting}
-                  {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-indigo-400 inline-block" />}
+                  {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-[#BEA7D3] inline-block" />}
                 </>
               );
             })()}
