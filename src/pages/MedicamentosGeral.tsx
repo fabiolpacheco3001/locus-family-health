@@ -44,8 +44,8 @@ const MedicamentosGeral = () => {
         </div>
       ) : activeMeds.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Pill className="text-primary" size={28} />
+            <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+             <Pill className="text-black" size={28} />
           </div>
           <p className="text-foreground font-semibold mb-1">Nenhum medicamento ativo</p>
           <p className="text-muted-foreground text-sm">Seus familiares não possuem medicamentos ativos.</p>
@@ -71,8 +71,8 @@ const MedicamentosGeral = () => {
                 onClick={() => navigate(`/familiar/${m.family_member_id}/medicamentos`, { state: { from: "/medicamentos" } })}
                 className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
               >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <Pill className="text-primary" size={20} />
+                <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
+                   <Pill className="text-black" size={20} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
@@ -80,7 +80,7 @@ const MedicamentosGeral = () => {
                     {firstName && (
                       <span className="text-xs text-muted-foreground">· {firstName}</span>
                     )}
-                    <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 bg-secondary/10 text-secondary border-secondary/20 shrink-0">
+                    <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-[#F2A97F] text-black border-none shrink-0">
                       Ativo
                     </Badge>
                   </div>
@@ -106,7 +106,7 @@ const MedicamentosGeral = () => {
                     </div>
                   )}
                 </div>
-                <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
+                <ChevronRight size={18} className="text-black shrink-0 mt-3" />
               </button>
             );
           })}
