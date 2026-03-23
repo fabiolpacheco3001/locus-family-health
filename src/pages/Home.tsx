@@ -56,7 +56,7 @@ const Home = () => {
         .from("exams")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user!.id)
-        .or("status.eq.Agendado,status.eq.Coletado");
+        .or("status.eq.Agendado,status.eq.Realizado,status.eq.Coletado");
       if (error) throw error;
       return count ?? 0;
     },
