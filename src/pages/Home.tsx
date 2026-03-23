@@ -179,7 +179,8 @@ const Home = () => {
   }, [carouselApi]);
 
   return (
-    <div className="px-5 pt-6 pb-28 animate-fade-in">
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
+      <div className="flex-1 overflow-y-auto px-5 pt-6 pb-4">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
