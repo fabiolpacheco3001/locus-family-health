@@ -1,17 +1,33 @@
 
 
-## Plan: Corrigir ícones na lista de Medicamentos Ativos (`MedicamentosGeral.tsx`)
+## Plan: Persistir Avatar no Banco de Dados
 
 ### Problema
-Os ícones circulares do `<Pill>` nos cards estão usando `bg-primary/10` e `text-primary` (verde translúcido), quando deveriam seguir o Design System: fundo Verde Menta sólido (`bg-[#A7D3CB]`) com ícone preto (`text-black`). O mesmo se aplica ao estado vazio e ao ChevronRight.
+O avatar selecionado (emoji ou imagem Base64) existe apenas em memória (React state). Ao recarregar a página ou navegar, ele volta para as iniciais porque nunca é salvo no banco.
 
-### Alterações em `src/pages/MedicamentosGeral.tsx`
+### Solução
 
-1. **Ícone nos cards da lista (linha 74):** Trocar `bg-primary/10` → `bg-[#A7D3CB]` e `text-primary` → `text-black`
+**1. Migration: adicionar coluna `avatar_url` na tabela `family_members`**
 
-2. **Ícone do estado vazio (linha 47-48):** Trocar `bg-primary/10` → `bg-[#A7D3CB]` e `text-primary` → `text-black`
+```sql
+ALTER TABLE public.family_members ADD COLUMN avatar_url text;
+```
 
-3. **Badge "Ativo" (linha 83):** Trocar classes de outline/secondary para `bg-[#F2A97F] text-black border-none` (padrão Pêssego para status Ativo, conforme Design System)
+**2. Atualizar `useFamilyMembers.tsx`**
+- Adicionar `avatar_url` ao tipo `FamilyMember`
+- Adicionar `avatar_url` ao tipo `NewFamilyMember`
 
-4. **ChevronRight (linha 109):** Trocar `text-muted-foreground` → `text-black`
+**3. Atualizar `MeusDados.tsx`**
+- No `useEffect`, carregar `avatarUrl` do `titular.avatar_url`
+- No `handleSave`, incluir `avatar_url: avatarUrl || null` no payload de update
+
+**4. Atualizar `EditMemberDrawer.tsx`**
+- No `useEffect`, carregar `avatarUrl` do `member.avatar_url`
+- No `handleSave`, incluir `avatar_url: avatarUrl || null`
+
+**5. Exibição global do avatar**
+- Nos locais que renderizam membros da família (Home, GerenciarFamilia, FamiliarProfile, seletores), usar `member.avatar_url` para renderizar emoji/imagem ao invés de apenas iniciais
+
+### Nota sobre imagens Base64
+Strings Base64 de fotos podem ser muito grandes para uma coluna `text` no banco. Para o MVP isso funciona, mas no futuro deve-se migrar para Storage (bucket) com URL pública.
 
