@@ -246,6 +246,7 @@ const MinhaSaude = () => {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* FAB */}
