@@ -94,15 +94,24 @@ const NotificationCard = ({
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
             )}
           </div>
-          <div className="flex-1 min-w-0 flex flex-col gap-1">
-            <p className={`text-sm text-center ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
+          <div className="flex-1 w-full flex flex-col">
+            {/* Título Centralizado */}
+            <h4 className={`text-center text-sm md:text-base mb-1 ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
               {notification.title}
-            </p>
-            <p className="text-xs text-muted-foreground text-justify whitespace-pre-line">{notification.message}</p>
+            </h4>
+
+            {/* Corpo Justificado e Separado em Linhas */}
+            <div className="text-justify text-xs text-muted-foreground flex flex-col gap-1">
+              {notification.message.split("\n").map((line, i) => (
+                <span key={i}>{line}</span>
+              ))}
+            </div>
+
+            {/* Data/Hora da Notificação à Direita */}
             {notification.created_at && (
-              <p className="text-[11px] text-muted-foreground/70 text-right mt-2">
+              <span className="text-right text-[11px] text-muted-foreground/70 mt-2 font-medium">
                 {format(new Date(notification.created_at), "dd MMM · HH:mm", { locale: ptBR })}
-              </p>
+              </span>
             )}
           </div>
         </button>
