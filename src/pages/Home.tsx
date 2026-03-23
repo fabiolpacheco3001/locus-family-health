@@ -78,7 +78,7 @@ const Home = () => {
           .from("exams")
           .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
           .eq("user_id", user!.id)
-          .or("status.eq.Agendado,and(status.eq.Coletado,result_date.not.is.null)")
+          .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
           .order("exam_date", { ascending: true })
           .limit(5),
       ]);
