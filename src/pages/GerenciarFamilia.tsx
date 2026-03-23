@@ -6,12 +6,6 @@ import { useFamilyMembers, FamilyMember } from "@/hooks/useFamilyMembers";
 import AddMemberDrawer from "@/components/AddMemberDrawer";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 const ordemParentesco: Record<string, number> = {
   "Titular": 1,
