@@ -136,73 +136,83 @@ const Metricas = () => {
 
         {/* Chart card */}
         {selectedMemberId ? (
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Crescimento</CardTitle>
-                {selectedMember && (
-                  <Badge variant="secondary" className="text-xs">
-                    {selectedMember.name}
-                  </Badge>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="pl-0 pr-2">
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={mockData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis
-                    dataKey="mes"
-                    tick={{ fontSize: 12 }}
-                    className="fill-muted-foreground"
-                  />
-                  <YAxis
-                    yAxisId="peso"
-                    orientation="left"
-                    tick={{ fontSize: 11 }}
-                    className="fill-muted-foreground"
-                    label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11 }}
-                  />
-                  <YAxis
-                    yAxisId="altura"
-                    orientation="right"
-                    tick={{ fontSize: 11 }}
-                    className="fill-muted-foreground"
-                    label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11 }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "8px",
-                      border: "1px solid hsl(var(--border))",
-                      backgroundColor: "hsl(var(--background))",
-                      fontSize: "12px",
-                    }}
-                  />
-                  <Legend wrapperStyle={{ fontSize: "12px" }} />
-                  <Line
-                    yAxisId="peso"
-                    type="monotone"
-                    dataKey="peso"
-                    name="Peso (kg)"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    yAxisId="altura"
-                    type="monotone"
-                    dataKey="altura"
-                    name="Altura (cm)"
-                    stroke="hsl(var(--accent))"
-                    strokeWidth={2}
-                    dot={{ r: 4, fill: "hsl(var(--accent))" }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          chartData.length > 0 ? (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Crescimento</CardTitle>
+                  {selectedMember && (
+                    <Badge variant="secondary" className="text-xs">
+                      {selectedMember.name}
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pl-0 pr-2">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fontSize: 12 }}
+                      className="fill-muted-foreground"
+                    />
+                    <YAxis
+                      yAxisId="peso"
+                      orientation="left"
+                      tick={{ fontSize: 11 }}
+                      className="fill-muted-foreground"
+                      label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11 }}
+                    />
+                    <YAxis
+                      yAxisId="altura"
+                      orientation="right"
+                      tick={{ fontSize: 11 }}
+                      className="fill-muted-foreground"
+                      label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "1px solid hsl(var(--border))",
+                        backgroundColor: "hsl(var(--background))",
+                        fontSize: "12px",
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: "12px" }} />
+                    <Line
+                      yAxisId="peso"
+                      type="monotone"
+                      dataKey="peso"
+                      name="Peso (kg)"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: "hsl(var(--primary))" }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                    <Line
+                      yAxisId="altura"
+                      type="monotone"
+                      dataKey="altura"
+                      name="Altura (cm)"
+                      stroke="hsl(var(--accent))"
+                      strokeWidth={2}
+                      dot={{ r: 4, fill: "hsl(var(--accent))" }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground text-sm">
+                Registre medidas para acompanhar a evolução ao longo do tempo.
+              </CardContent>
+            </Card>
+          )
         ) : (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground text-sm">
