@@ -57,6 +57,10 @@ export type UpdateMedication = {
   end_date?: string | null;
   status?: string;
   consultation_id?: string | null;
+  uso_continuo?: boolean;
+  medico_prescritor?: string | null;
+  estoque_total?: number | null;
+  estoque_minimo?: number | null;
 };
 
 export const useMedications = (familyMemberId?: string) => {
