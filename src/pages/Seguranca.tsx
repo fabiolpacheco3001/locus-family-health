@@ -62,7 +62,7 @@ const Seguranca = () => {
     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none ring-offset-background pr-10";
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-slate-50">
+    <div className="flex flex-col h-[100dvh] bg-background">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border">
         <button onClick={() => navigate("/ajustes")} className="p-1">

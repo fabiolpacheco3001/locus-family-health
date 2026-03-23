@@ -66,12 +66,12 @@ const Ajustes = () => {
         </div>
       </div>
 
-      <div className="p-4 bg-background border-t mt-auto">
+      <div className="p-3 bg-card border-t mt-auto">
         <Button
           onClick={handleLogout}
-          className="w-full max-w-md mx-auto bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-12 rounded-xl"
+          className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
         >
-          <LogOut size={20} />
+          <LogOut size={18} />
           Sair da conta
         </Button>
       </div>

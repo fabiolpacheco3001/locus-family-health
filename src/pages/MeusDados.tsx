@@ -157,8 +157,8 @@ const MeusDados = () => {
         </div>
       </div>
 
-      {/* Footer fixo acima do BottomNav */}
-      <div className="fixed bottom-[80px] left-0 right-0 p-4 bg-card border-t border-border flex gap-4 z-10">
+      {/* Footer Flex */}
+      <div className="flex-none p-4 bg-card border-t border-border flex gap-4">
         <Button
           variant="outline"
           className="w-full"
