@@ -89,7 +89,7 @@ const Notificacoes = () => {
   const goBack = useSmartBack();
   const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useNotifications();
 
-  const handleBack = goBack;
+  const handleBack = () => navigate('/ajustes');
 
   return (
     <div className="px-4 pt-6 pb-28 animate-fade-in">
