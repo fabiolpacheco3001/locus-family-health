@@ -21,6 +21,7 @@ import GerenciarFamilia from "./pages/GerenciarFamilia";
 import Alergias from "./pages/Alergias";
 import Doencas from "./pages/Doencas";
 import Vacinas from "./pages/Vacinas";
+import Seguranca from "./pages/Seguranca";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
@@ -53,6 +54,7 @@ const App = () => (
               <Route path="/familiar/:id/doencas" element={<Doencas />} />
               <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
+              <Route path="/seguranca" element={<Seguranca />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
