@@ -49,6 +49,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [durationDays, setDurationDays] = useState("");
   const [status, setStatus] = useState("Ativo");
   const [consultationId, setConsultationId] = useState("none");
+  const [usoContinuo, setUsoContinuo] = useState(false);
+  const [medicoPrescritor, setMedicoPrescritor] = useState("");
+  const [estoqueTotal, setEstoqueTotal] = useState("");
+  const [estoqueMinimo, setEstoqueMinimo] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   const isEditing = !!editingMedication;
