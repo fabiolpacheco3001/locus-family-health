@@ -19,6 +19,7 @@ interface Props {
 
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const genders = ["Masculino", "Feminino", "Outro", "Prefiro não informar"];
 
 const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const { addMember } = useFamilyMembers();
@@ -26,12 +27,14 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const [relationship, setRelationship] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [bloodType, setBloodType] = useState("");
+  const [gender, setGender] = useState("");
 
   const resetForm = () => {
     setName("");
     setRelationship("");
     setBirthDate("");
     setBloodType("");
+    setGender("");
   };
 
   const handleSave = async () => {
@@ -69,45 +72,63 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
           <div className="space-y-1.5">
-            <Label>Nome *</Label>
+            <Label>Nome Completo *</Label>
             <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Parentesco *</Label>
-            <Select value={relationship} onValueChange={setRelationship}>
-              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
-              <SelectContent>
-                {relationships.map((r) => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Grid: Parentesco + Nascimento */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Parentesco *</Label>
+              <Select value={relationship} onValueChange={setRelationship}>
+                <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  {relationships.map((r) => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Nascimento</Label>
+              <input
+                type="date"
+                lang="pt-BR"
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                min="1900-01-01"
+                max={new Date().toISOString().split('T')[0]}
+                className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+              />
+            </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label>Data de Nascimento</Label>
-            <input
-              type="date"
-              lang="pt-BR"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              min="1900-01-01"
-              max={new Date().toISOString().split('T')[0]}
-              className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
-            />
-          </div>
+          {/* Grid: Gênero + Tipo Sanguíneo */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label>Gênero</Label>
+              <Select value={gender} onValueChange={setGender}>
+                <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                <SelectContent>
+                  {genders.map((g) => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-1.5">
-            <Label>Tipo Sanguíneo</Label>
-            <Select value={bloodType} onValueChange={setBloodType}>
-              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
-              <SelectContent>
-                {bloodTypes.map((bt) => (
-                  <SelectItem key={bt} value={bt}>{bt}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-1.5">
+              <Label>Tipo Sanguíneo</Label>
+              <Select value={bloodType} onValueChange={setBloodType}>
+                <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                <SelectContent>
+                  {bloodTypes.map((bt) => (
+                    <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 

@@ -20,6 +20,7 @@ const Seguranca = () => {
       toast("Biometria desativada. Você acessará o aplicativo apenas com sua senha.");
     }
   };
+
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
@@ -62,17 +63,16 @@ const Seguranca = () => {
     "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none ring-offset-background pr-10";
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-background">
+    <div className="px-4 pt-6 pb-32 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-card border-b border-border">
+      <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate("/ajustes")} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
         <h1 className="text-lg font-bold text-foreground">Segurança</h1>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 overscroll-contain no-scrollbar">
+      <div className="space-y-6">
         {/* Biometria */}
         <div className="bg-card rounded-xl p-4 shadow-sm border border-border/40 space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Acesso Rápido</h2>
