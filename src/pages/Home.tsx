@@ -191,7 +191,7 @@ const Home = () => {
               return (
                 <>
                   {greeting}
-                  {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-[#BEA7D3] inline-block" />}
+                  {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-[#DCC5F1] inline-block" />}
                 </>
               );
             })()}
@@ -461,7 +461,7 @@ const Home = () => {
                               Atrasado
                             </Badge>
                           )}
-                          <Badge className={`text-[10px] px-1.5 py-0 shrink-0 border-none ${isExam ? "bg-[#FFF4A3] text-black" : "bg-[#BEA7D3] text-black"}`}>
+                          <Badge className={`text-[10px] px-1.5 py-0 shrink-0 border-none ${isExam ? "bg-[#FFF4A3] text-black" : "bg-[#DCC5F1] text-black"}`}>
                             {isExam ? "Exame" : "Consulta"}
                           </Badge>
                         </div>
