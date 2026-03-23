@@ -329,7 +329,7 @@ const Home = () => {
               onClick={action}
               className="flex flex-col items-center"
             >
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary mx-auto mb-2 active:scale-95 transition-transform">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-2 bg-[#A7D3CB] text-black active:scale-95 transition-transform">
                 <Icon className="w-6 h-6" />
               </div>
               <span className="text-[11px] font-medium text-center leading-tight text-foreground">
