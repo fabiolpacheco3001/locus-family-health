@@ -437,8 +437,8 @@ const Home = () => {
                       onClick={() => navigate(route, { state: { from: "/home" } })}
                       className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
                     >
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isExam ? "bg-secondary/10" : "bg-primary/10"}`}>
-                        <Icon className={isExam ? "text-secondary" : "text-primary"} size={16} />
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#A7D3CB]">
+                        <Icon className="text-black" size={16} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
