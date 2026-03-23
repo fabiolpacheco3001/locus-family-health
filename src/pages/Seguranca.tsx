@@ -9,7 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Seguranca = () => {
   const navigate = useNavigate();
-  const [biometria, setBiometria] = useState(false);
+  const [biometria, setBiometria] = useState(() => localStorage.getItem("biometria") === "true");
+
+  const handleBiometria = (checked: boolean) => {
+    setBiometria(checked);
+    localStorage.setItem("biometria", String(checked));
+    toast.success(checked ? "Biometria ativada!" : "Biometria desativada.");
+  };
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
