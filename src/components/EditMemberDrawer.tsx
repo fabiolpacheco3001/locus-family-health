@@ -98,10 +98,10 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
             <button className="flex justify-center mb-2 w-full" onClick={() => setAvatarOpen(true)}>
               <div className="relative">
                 <div className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
-                  {avatarUrl && avatarUrl.startsWith("data:") ? (
+                  {avatarUrl && (avatarUrl.startsWith("data:image") || avatarUrl.startsWith("http")) ? (
                     <img src={avatarUrl} className="w-full h-full object-cover rounded-full" alt="Avatar" />
                   ) : avatarUrl && avatarUrl.length <= 2 ? (
-                    <span className="text-3xl">{avatarUrl}</span>
+                    <span className="text-4xl flex items-center justify-center w-full h-full">{avatarUrl}</span>
                   ) : (
                     <span className="text-xl font-bold text-secondary">{initials}</span>
                   )}
