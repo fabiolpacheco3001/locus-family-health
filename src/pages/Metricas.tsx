@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity } from "lucide-react";
+import { Activity, ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import useSmartBack from "@/hooks/useSmartBack";
@@ -35,7 +34,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
 
 const Metricas = () => {
   const { members } = useFamilyMembers();
@@ -45,6 +43,7 @@ const Metricas = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<string>("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
+  const [graficoAtivo, setGraficoAtivo] = useState<"peso" | "altura">("peso");
 
   const selectedMember = members.find((m) => m.id === selectedMemberId);
 
@@ -63,12 +62,17 @@ const Metricas = () => {
   });
 
   const chartData = measurements
-    .filter((m) => m.weight || m.height)
+    .filter((m) => (graficoAtivo === "peso" ? m.weight : m.height))
     .map((m) => ({
       label: format(parseISO(m.recorded_at), "dd/MM", { locale: ptBR }),
-      peso: m.weight ? Number(m.weight) : null,
-      altura: m.height ? Number(m.height) * 100 : null,
+      valor: graficoAtivo === "peso"
+        ? Number(m.weight)
+        : Number(m.height) * 100,
     }));
+
+  const historyData = [...measurements].sort(
+    (a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()
+  );
 
   const handleSubmit = async () => {
     if (!user || !selectedMemberId) return;
@@ -96,6 +100,23 @@ const Metricas = () => {
     setDialogOpen(false);
     setFormData({ date: "", peso: "", altura: "" });
   };
+
+  const handleDelete = async (measurementId: string) => {
+    if (!window.confirm("Deseja excluir este registro?")) return;
+    const { error } = await supabase
+      .from("health_measurements")
+      .delete()
+      .eq("id", measurementId);
+    if (error) {
+      toast.error("Erro ao excluir registro.");
+      return;
+    }
+    toast.success("Registro excluído!");
+    queryClient.invalidateQueries({ queryKey: ["health_measurements", selectedMemberId] });
+  };
+
+  const lineColor = graficoAtivo === "peso" ? "#0f172a" : "#F2A97F";
+  const unitLabel = graficoAtivo === "peso" ? "kg" : "cm";
 
   return (
     <div className="flex flex-col min-h-screen bg-background pb-24">
@@ -134,86 +155,127 @@ const Metricas = () => {
           Registrar Medida
         </Button>
 
-        {/* Chart card */}
-        {selectedMemberId ? (
-          chartData.length > 0 ? (
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Crescimento</CardTitle>
-                  {selectedMember && (
-                    <Badge variant="secondary" className="text-xs">
-                      {selectedMember.name}
-                    </Badge>
-                  )}
+        {selectedMemberId && (
+          <>
+            {/* Toggle Peso / Altura */}
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => setGraficoAtivo("peso")}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+                  graficoAtivo === "peso"
+                    ? "bg-foreground text-background"
+                    : "bg-card text-muted-foreground"
+                }`}
+              >
+                Peso (kg)
+              </button>
+              <button
+                onClick={() => setGraficoAtivo("altura")}
+                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+                  graficoAtivo === "altura"
+                    ? "bg-[#F2A97F] text-slate-900"
+                    : "bg-card text-muted-foreground"
+                }`}
+              >
+                Altura (cm)
+              </button>
+            </div>
+
+            {/* Chart */}
+            {chartData.length > 0 ? (
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">
+                      {graficoAtivo === "peso" ? "Evolução do Peso" : "Evolução da Altura"}
+                    </CardTitle>
+                    {selectedMember && (
+                      <Badge variant="secondary" className="text-xs">
+                        {selectedMember.name.split(" ")[0]}
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pl-0 pr-2">
+                  <ResponsiveContainer width="100%" height={260}>
+                    <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                      <CartesianGrid vertical={false} stroke="#f1f5f9" />
+                      <XAxis
+                        dataKey="label"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#64748b" }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: "#64748b" }}
+                        label={{ value: unitLabel, angle: -90, position: "insideLeft", fontSize: 11, fill: "#94a3b8" }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "1px solid #e2e8f0",
+                          backgroundColor: "#ffffff",
+                          fontSize: "12px",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                        formatter={(value: number) => [`${value} ${unitLabel}`, graficoAtivo === "peso" ? "Peso" : "Altura"]}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="valor"
+                        name={graficoAtivo === "peso" ? "Peso" : "Altura"}
+                        stroke={lineColor}
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
+                        activeDot={{ r: 6, fill: lineColor, strokeWidth: 0 }}
+                        connectNulls
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground text-sm">
+                  Registre medidas para acompanhar a evolução ao longo do tempo.
+                </CardContent>
+              </Card>
+            )}
+
+            {/* History */}
+            {historyData.length > 0 && (
+              <div>
+                <h2 className="text-base font-semibold text-foreground mb-3">Histórico de Medidas</h2>
+                <div className="space-y-2">
+                  {historyData.map((m) => {
+                    const dateStr = format(parseISO(m.recorded_at), "dd MMM yyyy", { locale: ptBR });
+                    return (
+                      <div
+                        key={m.id}
+                        className="bg-card rounded-xl border border-border/50 px-4 py-3 flex items-center justify-between"
+                      >
+                        <div className="space-y-0.5">
+                          <p className="text-sm font-medium text-foreground capitalize">{dateStr}</p>
+                          <div className="flex gap-3 text-xs text-muted-foreground">
+                            {m.weight && <span>Peso: {Number(m.weight)} kg</span>}
+                            {m.height && <span>Altura: {(Number(m.height) * 100).toFixed(0)} cm</span>}
+                          </div>
+                        </div>
+                        <button onClick={() => handleDelete(m.id)} className="p-2 -mr-1">
+                          <Trash2 size={18} className="text-red-500" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
-              </CardHeader>
-              <CardContent className="pl-0 pr-2">
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 12 }}
-                      className="fill-muted-foreground"
-                    />
-                    <YAxis
-                      yAxisId="peso"
-                      orientation="left"
-                      tick={{ fontSize: 11 }}
-                      className="fill-muted-foreground"
-                      label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11 }}
-                    />
-                    <YAxis
-                      yAxisId="altura"
-                      orientation="right"
-                      tick={{ fontSize: 11 }}
-                      className="fill-muted-foreground"
-                      label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11 }}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid hsl(var(--border))",
-                        backgroundColor: "hsl(var(--background))",
-                        fontSize: "12px",
-                      }}
-                    />
-                    <Legend wrapperStyle={{ fontSize: "12px" }} />
-                    <Line
-                      yAxisId="peso"
-                      type="monotone"
-                      dataKey="peso"
-                      name="Peso (kg)"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                      activeDot={{ r: 6 }}
-                      connectNulls
-                    />
-                    <Line
-                      yAxisId="altura"
-                      type="monotone"
-                      dataKey="altura"
-                      name="Altura (cm)"
-                      stroke="hsl(var(--accent))"
-                      strokeWidth={2}
-                      dot={{ r: 4, fill: "hsl(var(--accent))" }}
-                      activeDot={{ r: 6 }}
-                      connectNulls
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground text-sm">
-                Registre medidas para acompanhar a evolução ao longo do tempo.
-              </CardContent>
-            </Card>
-          )
-        ) : (
+              </div>
+            )}
+          </>
+        )}
+
+        {!selectedMemberId && (
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground text-sm">
               Selecione um familiar para visualizar os gráficos de evolução.
@@ -244,7 +306,7 @@ const Metricas = () => {
                 <input
                   type="number"
                   step="0.1"
-                  placeholder="Ex: 15.2"
+                  placeholder="Ex: 72.5"
                   value={formData.peso}
                   onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
@@ -254,8 +316,8 @@ const Metricas = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Altura (cm)</label>
                 <input
                   type="number"
-                  step="0.1"
-                  placeholder="Ex: 104"
+                  step="1"
+                  placeholder="Ex: 180"
                   value={formData.altura}
                   onChange={(e) => setFormData({ ...formData, altura: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
