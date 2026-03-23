@@ -55,6 +55,7 @@ const Familia = () => {
             })()}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

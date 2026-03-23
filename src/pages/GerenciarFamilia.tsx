@@ -70,6 +70,7 @@ const GerenciarFamilia = () => {
               <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
             </div>
           ))}
+          </div>
         </div>
       </div>
 

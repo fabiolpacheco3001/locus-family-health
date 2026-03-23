@@ -66,6 +66,7 @@ const Ajustes = () => {
             </button>
           ))}
         </div>
+        </div>
       </div>
 
       {/* Footer - Logout */}

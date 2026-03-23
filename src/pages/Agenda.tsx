@@ -253,6 +253,7 @@ const Agenda = () => {
             })}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
