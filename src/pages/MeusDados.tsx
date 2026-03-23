@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import AvatarSelector from "@/components/AvatarSelector";
 
 const MeusDados = () => {
   const navigate = useNavigate();
