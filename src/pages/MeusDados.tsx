@@ -84,7 +84,7 @@ const MeusDados = () => {
       </div>
 
       {/* Miolo Rolável */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32 overscroll-contain no-scrollbar">
         <div className="space-y-1.5">
           <Label>Nome Completo *</Label>
           <Input
