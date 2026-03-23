@@ -95,7 +95,7 @@ const MeusDados = () => {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-4 space-y-3">
         {/* Avatar */}
-        <div className="flex justify-center mb-4">
+        <button className="flex justify-center mb-4" onClick={() => setAvatarOpen(true)}>
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center">
               <span className="text-2xl font-bold text-secondary">{initials}</span>
@@ -104,6 +104,7 @@ const MeusDados = () => {
               <Camera className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
           </div>
+        </button>
         </div>
         <div className="space-y-1">
           <Label>Nome Completo *</Label>
