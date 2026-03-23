@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import AvatarSelector from "@/components/AvatarSelector";
 
 const MeusDados = () => {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ const MeusDados = () => {
   const [gender, setGender] = useState("");
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   useEffect(() => {
     if (titular) {
@@ -93,7 +95,7 @@ const MeusDados = () => {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-4 space-y-3">
         {/* Avatar */}
-        <div className="flex justify-center mb-4">
+        <button className="flex justify-center mb-4" onClick={() => setAvatarOpen(true)}>
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center">
               <span className="text-2xl font-bold text-secondary">{initials}</span>
@@ -102,7 +104,7 @@ const MeusDados = () => {
               <Camera className="w-3.5 h-3.5 text-muted-foreground" />
             </div>
           </div>
-        </div>
+        </button>
         <div className="space-y-1">
           <Label>Nome Completo *</Label>
           <Input
@@ -198,6 +200,7 @@ const MeusDados = () => {
           {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
         </Button>
       </div>
+      <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} />
     </div>
   );
 };

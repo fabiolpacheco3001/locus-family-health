@@ -76,7 +76,7 @@ const NotificationCard = ({
       </button>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
-        className="shrink-0 p-1.5 rounded-lg text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
+        className="shrink-0 p-1.5 rounded-lg text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
       >
         <Trash2 size={15} />
       </button>
@@ -89,7 +89,7 @@ const Notificacoes = () => {
   const goBack = useSmartBack();
   const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useNotifications();
 
-  const handleBack = () => navigate('/ajustes');
+  const handleBack = () => navigate(-1);
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
