@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Loader2, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
