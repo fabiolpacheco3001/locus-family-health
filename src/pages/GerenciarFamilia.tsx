@@ -1,17 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useFamilyMembers, FamilyMember } from "@/hooks/useFamilyMembers";
 import AddMemberDrawer from "@/components/AddMemberDrawer";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 
 const ordemParentesco: Record<string, number> = {
   "Titular": 1,
@@ -23,26 +17,14 @@ const ordemParentesco: Record<string, number> = {
 };
 
 const GerenciarFamilia = () => {
-  const { members, isLoading, deleteMember } = useFamilyMembers();
+  const { members, isLoading } = useFamilyMembers();
   const navigate = useNavigate();
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [editMember, setEditMember] = useState<FamilyMember | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<FamilyMember | null>(null);
 
   const sorted = [...members].sort(
     (a, b) => (ordemParentesco[a.relationship] || 99) - (ordemParentesco[b.relationship] || 99)
   );
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      await deleteMember.mutateAsync(deleteTarget.id);
-      toast.success("Familiar removido.");
-      setDeleteTarget(null);
-    } catch {
-      toast.error("Erro ao excluir. Tente novamente.");
-    }
-  };
 
   return (
     <>
@@ -76,7 +58,8 @@ const GerenciarFamilia = () => {
           {sorted.map((m) => (
             <div
               key={m.id}
-              className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50"
+              onClick={() => setEditMember(m)}
+              className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
             >
               <Avatar className="h-12 w-12 border-2 border-secondary shrink-0">
                 <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-lg">
@@ -87,39 +70,12 @@ const GerenciarFamilia = () => {
                 <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
               </div>
-              <div className="flex items-center gap-3 ml-2 shrink-0">
-                <button onClick={() => setEditMember(m)} className="p-2 rounded-full hover:bg-muted/50">
-                  <Pencil className="w-4 h-4 text-muted-foreground" />
-                </button>
-                <button onClick={() => setDeleteTarget(m)} className="p-2 rounded-full hover:bg-destructive/10">
-                  <Trash2 className="w-4 h-4 text-destructive" />
-                </button>
-              </div>
+              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Delete confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir {deleteTarget?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza? Esta ação não pode ser desfeita e apagará todo o histórico de saúde.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deleteMember.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, excluir"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
