@@ -120,133 +120,139 @@ const Agenda = () => {
   }, [items, currentFilter]);
 
   return (
-    <div className="px-4 pt-6 pb-28 animate-fade-in">
-      <div className="flex items-center gap-3 mb-6">
-        {currentFilter && (
-          <Button variant="ghost" size="icon" onClick={goBack}>
-            <ArrowLeft size={22} />
-          </Button>
-        )}
-        <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
+      {/* Header */}
+      <div className="flex-none px-4 pt-6 pb-2">
+        <div className="flex items-center gap-3">
+          {currentFilter && (
+            <Button variant="ghost" size="icon" onClick={goBack}>
+              <ArrowLeft size={22} />
+            </Button>
+          )}
+          <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+        </div>
       </div>
 
-      {currentFilter && filterLabels[currentFilter] && (
-        <div className="flex items-center gap-2 mb-4">
-          <Badge variant="secondary" className="text-xs px-2.5 py-1">
-            {filterLabels[currentFilter]}
-          </Badge>
-          <button
-            onClick={() => navigate("/agenda", { replace: true })}
-            className="p-1 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
-          >
-            <X size={14} className="text-muted-foreground" />
-          </button>
-        </div>
-      )}
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        {currentFilter && filterLabels[currentFilter] && (
+          <div className="flex items-center gap-2 mb-4">
+            <Badge variant="secondary" className="text-xs px-2.5 py-1">
+              {filterLabels[currentFilter]}
+            </Badge>
+            <button
+              onClick={() => navigate("/agenda", { replace: true })}
+              className="p-1 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
+            >
+              <X size={14} className="text-muted-foreground" />
+            </button>
+          </div>
+        )}
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-xl" />
-          ))}
-        </div>
-      ) : filteredItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-           <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
-             <Calendar className="text-black" size={28} />
-           </div>
-          <p className="text-foreground font-semibold mb-1">Nenhum compromisso</p>
-          <p className="text-muted-foreground text-sm">
-            {currentFilter ? "Nenhum item encontrado para este filtro." : "Sua família não tem compromissos agendados no momento."}
-          </p>
-        </div>
-      ) : (
-        <div className="flex flex-col space-y-3">
-          {filteredItems.map((item) => {
-            const isExam = item.kind === "exam";
-            const Icon = isExam ? FileText : Stethoscope;
-            const route = isExam
-              ? `/familiar/${item.family_member_id}/exames`
-              : `/familiar/${item.family_member_id}/consultas`;
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-28 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : filteredItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+             <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+               <Calendar className="text-black" size={28} />
+             </div>
+            <p className="text-foreground font-semibold mb-1">Nenhum compromisso</p>
+            <p className="text-muted-foreground text-sm">
+              {currentFilter ? "Nenhum item encontrado para este filtro." : "Sua família não tem compromissos agendados no momento."}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col space-y-3">
+            {filteredItems.map((item) => {
+              const isExam = item.kind === "exam";
+              const Icon = isExam ? FileText : Stethoscope;
+              const route = isExam
+                ? `/familiar/${item.family_member_id}/exames`
+                : `/familiar/${item.family_member_id}/consultas`;
 
-            return (
-              <button
-                key={`${item.kind}-${item.id}`}
-                onClick={() => navigate(route, { state: { from: '/agenda' } })}
-                className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
-              >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-[#A7D3CB]">
-                  <Icon className="text-black" size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  {item.date && (
-                    <p className="text-sm font-bold text-black mb-1">
-                      {(() => {
-                        const hasTime = item.date!.length > 10;
-                        const parsed = hasTime ? parseISO(item.date!) : new Date(item.date + 'T12:00:00');
-                        const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
-                        const dayName = format(parsed, "EEEEEE", { locale: ptBR });
-                        const dayAbbr = dayName.substring(0, 3);
-                        const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
-                        const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
-                        return `${datePart} - ${dayCapitalized}${timePart}`;
-                      })()}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2 mb-1">
-                    <Avatar className="h-5 w-5">
-                      <AvatarFallback className="bg-secondary/20 text-secondary text-[10px] font-bold">
-                        {item.memberName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground truncate">{item.memberName}</span>
+              return (
+                <button
+                  key={`${item.kind}-${item.id}`}
+                  onClick={() => navigate(route, { state: { from: '/agenda' } })}
+                  className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                >
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-[#A7D3CB]">
+                    <Icon className="text-black" size={20} />
                   </div>
-                  <p className="text-sm text-foreground truncate">
-                    {item.title}
-                    {item.subtitle ? ` — ${item.subtitle}` : ""}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    {item.isOverdue && (
-                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                        Atrasado
-                      </Badge>
+                  <div className="flex-1 min-w-0">
+                    {item.date && (
+                      <p className="text-sm font-bold text-black mb-1">
+                        {(() => {
+                          const hasTime = item.date!.length > 10;
+                          const parsed = hasTime ? parseISO(item.date!) : new Date(item.date + 'T12:00:00');
+                          const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
+                          const dayName = format(parsed, "EEEEEE", { locale: ptBR });
+                          const dayAbbr = dayName.substring(0, 3);
+                          const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
+                          const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
+                          return `${datePart} - ${dayCapitalized}${timePart}`;
+                        })()}
+                      </p>
                     )}
-                    {isExam && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#A7D3CB] text-black border-none">
-                        Exame
-                      </Badge>
-                    )}
-                    {item.type && (
+                    <div className="flex items-center gap-2 mb-1">
+                      <Avatar className="h-5 w-5">
+                        <AvatarFallback className="bg-secondary/20 text-secondary text-[10px] font-bold">
+                          {item.memberName[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs text-muted-foreground truncate">{item.memberName}</span>
+                    </div>
+                    <p className="text-sm text-foreground truncate">
+                      {item.title}
+                      {item.subtitle ? ` — ${item.subtitle}` : ""}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      {item.isOverdue && (
+                        <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                          Atrasado
+                        </Badge>
+                      )}
+                      {isExam && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#A7D3CB] text-black border-none">
+                          Exame
+                        </Badge>
+                      )}
+                      {item.type && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1.5 py-0 bg-[#A7D3CB] text-black border-none"
+                        >
+                          {item.type}
+                        </Badge>
+                      )}
                       <Badge
                         variant="outline"
-                        className="text-[10px] px-1.5 py-0 bg-[#A7D3CB] text-black border-none"
+                        className={`text-[10px] px-1.5 py-0 border-none ${
+                          item.status === "Agendada" || item.status === "Agendado"
+                            ? "bg-[#A0C4D7] text-slate-900"
+                            : item.status === "Realizada" || item.status === "Realizado"
+                            ? "bg-[#F2A97F] text-slate-900"
+                            : item.status === "Pronto"
+                            ? "bg-[#A7D3CB] text-slate-900"
+                            : item.status === "Cancelada" || item.status === "Cancelado"
+                            ? "bg-[#F87171] text-white"
+                            : "bg-muted text-muted-foreground"
+                        }`}
                       >
-                        {item.type}
+                        {item.status}
                       </Badge>
-                    )}
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] px-1.5 py-0 border-none ${
-                        item.status === "Agendada" || item.status === "Agendado"
-                          ? "bg-[#A0C4D7] text-slate-900"
-                          : item.status === "Realizada" || item.status === "Realizado"
-                          ? "bg-[#F2A97F] text-slate-900"
-                          : item.status === "Pronto"
-                          ? "bg-[#A7D3CB] text-slate-900"
-                          : item.status === "Cancelada" || item.status === "Cancelado"
-                          ? "bg-[#F87171] text-white"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {item.status}
-                    </Badge>
+                    </div>
                   </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

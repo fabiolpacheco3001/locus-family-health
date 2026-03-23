@@ -536,6 +536,7 @@ const Home = () => {
           </div>
         </DrawerContent>
       </Drawer>
+      </div>
     </div>
   );
 };

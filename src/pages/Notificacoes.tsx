@@ -92,8 +92,9 @@ const Notificacoes = () => {
   const handleBack = () => navigate('/ajustes');
 
   return (
-    <div className="px-4 pt-6 pb-28 animate-fade-in">
-      <div className="flex items-center gap-3 mb-4">
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
+      {/* Header */}
+      <div className="flex-none px-4 pt-6 pb-2 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={handleBack}>
           <ArrowLeft size={22} />
         </Button>
@@ -149,32 +150,35 @@ const Notificacoes = () => {
         )}
       </div>
 
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
-          ))}
-        </div>
-      ) : notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-            <BellOff className="text-muted-foreground" size={28} />
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 w-full rounded-xl" />
+            ))}
           </div>
-          <p className="text-foreground font-semibold mb-1">Nenhuma notificação</p>
-          <p className="text-muted-foreground text-sm">Você não tem novas notificações.</p>
-        </div>
-      ) : (
-        <div className="flex flex-col space-y-2">
-          {notifications.map((n) => (
-            <NotificationCard
-              key={n.id}
-              notification={n}
-              onRead={(id) => markAsRead.mutate(id)}
-              onDelete={(id) => deleteNotification.mutate(id)}
-            />
-          ))}
-        </div>
-      )}
+        ) : notifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+              <BellOff className="text-muted-foreground" size={28} />
+            </div>
+            <p className="text-foreground font-semibold mb-1">Nenhuma notificação</p>
+            <p className="text-muted-foreground text-sm">Você não tem novas notificações.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col space-y-2">
+            {notifications.map((n) => (
+              <NotificationCard
+                key={n.id}
+                notification={n}
+                onRead={(id) => markAsRead.mutate(id)}
+                onDelete={(id) => deleteNotification.mutate(id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

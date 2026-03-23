@@ -31,45 +31,53 @@ const Ajustes = () => {
   };
 
   return (
-    <div className="px-4 pt-6 pb-24 animate-fade-in">
-      <h1 className="text-2xl font-bold text-foreground mb-4 px-1">Ajustes</h1>
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
+      {/* Header */}
+      <div className="flex-none px-4 pt-6 pb-2">
+        <h1 className="text-2xl font-bold text-foreground px-1">Ajustes</h1>
+      </div>
 
-      {/* Profile Card */}
-      <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40 mb-6">
-        <div className="w-14 h-14 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center shrink-0">
-          <span className="text-lg font-bold text-secondary">{initials}</span>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
+        {/* Profile Card */}
+        <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
+          <div className="w-14 h-14 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center shrink-0">
+            <span className="text-lg font-bold text-secondary">{initials}</span>
+          </div>
+          <div>
+            <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
+            <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
+          </div>
         </div>
-        <div>
-          <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
-          <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
+
+        {/* Menu Items */}
+        <div className="space-y-3">
+          {menuItems.map(({ icon: Icon, label, path }) => (
+            <button
+              key={label}
+              onClick={() => path && navigate(path)}
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                <Icon size={20} className="text-black" />
+              </div>
+              <span className="flex-1 text-left text-sm font-medium text-foreground">{label}</span>
+              <ChevronRight size={18} className="text-muted-foreground" />
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Menu Items */}
-      <div className="space-y-3 mb-6">
-        {menuItems.map(({ icon: Icon, label, path }) => (
-          <button
-            key={label}
-            onClick={() => path && navigate(path)}
-            className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
-          >
-            <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
-              <Icon size={20} className="text-black" />
-            </div>
-            <span className="flex-1 text-left text-sm font-medium text-foreground">{label}</span>
-            <ChevronRight size={18} className="text-muted-foreground" />
-          </button>
-        ))}
+      {/* Footer - Logout */}
+      <div className="flex-none py-2 px-4 bg-card border-t">
+        <Button
+          onClick={handleLogout}
+          className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
+        >
+          <LogOut size={18} />
+          Sair da conta
+        </Button>
       </div>
-
-      {/* Logout */}
-      <Button
-        onClick={handleLogout}
-        className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
-      >
-        <LogOut size={18} />
-        Sair da conta
-      </Button>
     </div>
   );
 };
