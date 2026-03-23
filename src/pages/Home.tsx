@@ -234,7 +234,7 @@ const Home = () => {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{activeMeds.length}</span>
-                      <span className="text-sm font-medium text-muted-foreground mt-1">Meds Ativos</span>
+                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Meds Ativos</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
@@ -253,7 +253,7 @@ const Home = () => {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{upcoming.length}</span>
-                      <span className="text-sm font-medium text-muted-foreground mt-1">Compromissos</span>
+                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Compromissos</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
@@ -272,7 +272,7 @@ const Home = () => {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{pendingConsultations}</span>
-                      <span className="text-sm font-medium text-muted-foreground mt-1">Consultas Pendentes</span>
+                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Consultas Pendentes</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
@@ -291,7 +291,7 @@ const Home = () => {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{pendingExams}</span>
-                      <span className="text-sm font-medium text-muted-foreground mt-1">Exames Pendentes</span>
+                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Exames Pendentes</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
