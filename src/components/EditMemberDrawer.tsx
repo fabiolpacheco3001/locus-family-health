@@ -109,6 +109,8 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
               lang="pt-BR"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
+              min="1900-01-01"
+              max={new Date().toISOString().split('T')[0]}
               className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
             />
             </div>
