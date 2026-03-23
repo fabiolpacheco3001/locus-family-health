@@ -99,10 +99,10 @@ const MeusDados = () => {
         <button className="flex justify-center mb-4 w-full" onClick={() => setAvatarOpen(true)}>
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
-              {avatarUrl && avatarUrl.startsWith("data:") ? (
+              {avatarUrl && (avatarUrl.startsWith("data:image") || avatarUrl.startsWith("http")) ? (
                 <img src={avatarUrl} className="w-full h-full object-cover rounded-full" alt="Avatar" />
               ) : avatarUrl && avatarUrl.length <= 2 ? (
-                <span className="text-4xl">{avatarUrl}</span>
+                <span className="text-5xl flex items-center justify-center w-full h-full">{avatarUrl}</span>
               ) : (
                 <span className="text-2xl font-bold text-secondary">{initials}</span>
               )}
