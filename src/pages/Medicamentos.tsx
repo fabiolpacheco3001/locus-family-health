@@ -61,8 +61,8 @@ const Medicamentos = () => {
           </div>
         ) : medications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Pill className="text-primary" size={28} />
+            <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+              <Pill className="text-black" size={28} />
             </div>
             <p className="text-foreground font-semibold mb-1">Nenhum medicamento ativo</p>
             <p className="text-muted-foreground text-sm">Toque no botão abaixo para adicionar.</p>
