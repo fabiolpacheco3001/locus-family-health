@@ -19,7 +19,7 @@ const BottomNav = () => {
   const { members } = useFamilyMembers();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isSaudeActive = location.pathname.includes("/saude");
+  const isSaudeActive = location.pathname.startsWith("/familiar/");
 
   const handleClick = (path: string) => {
     if (path === "__drawer_saude__") {
