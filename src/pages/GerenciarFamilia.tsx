@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronRight } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useFamilyMembers, FamilyMember } from "@/hooks/useFamilyMembers";
 import AddMemberDrawer from "@/components/AddMemberDrawer";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
+import MemberAvatar from "@/components/MemberAvatar";
 
 const ordemParentesco: Record<string, number> = {
   "Titular": 1,
@@ -61,11 +61,7 @@ const GerenciarFamilia = () => {
               onClick={() => setEditMember(m)}
               className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
             >
-              <Avatar className="h-12 w-12 border-2 border-secondary shrink-0">
-                <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-lg">
-                  {m.name[0]}
-                </AvatarFallback>
-              </Avatar>
+              <MemberAvatar avatarUrl={m.avatar_url} name={m.name} />
               <div className="flex flex-col ml-4 min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>

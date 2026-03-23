@@ -21,7 +21,7 @@ import {
   LineChart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -186,11 +186,7 @@ const FamiliarProfile = () => {
         onClick={() => setEditOpen(true)}
         className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
       >
-        <Avatar className="h-14 w-14 border-2 border-secondary shrink-0">
-          <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-xl">
-            {member.name[0]}
-          </AvatarFallback>
-        </Avatar>
+        <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
         <div className="min-w-0 flex-1">
           <p className="text-lg font-bold text-primary truncate">{member.name}</p>
           <p className="text-sm text-muted-foreground">{member.relationship}</p>

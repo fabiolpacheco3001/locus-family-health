@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import MemberAvatar from "@/components/MemberAvatar";
 
 const Familia = () => {
   const { members, isLoading } = useFamilyMembers();
@@ -43,11 +43,7 @@ const Familia = () => {
                   onClick={() => navigate(`/familiar/${m.id}`)}
                   className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 hover:bg-muted/50 transition-colors text-left w-full"
                 >
-                  <Avatar className="h-12 w-12 border-2 border-secondary shrink-0">
-                    <AvatarFallback className="bg-secondary/20 text-secondary font-bold text-lg">
-                      {m.name[0]}
-                    </AvatarFallback>
-                  </Avatar>
+                  <MemberAvatar avatarUrl={m.avatar_url} name={m.name} />
                   <div className="flex flex-col ml-4 min-w-0 flex-1">
                     <p className="text-sm font-semibold text-black truncate">{m.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
