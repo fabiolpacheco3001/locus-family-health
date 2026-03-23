@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Activity, Plus } from "lucide-react";
+import { ArrowLeft, Activity, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,6 +36,7 @@ const MinhaSaude = () => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
+  const [graficoAtivo, setGraficoAtivo] = useState<"peso" | "altura">("peso");
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
@@ -60,12 +61,17 @@ const MinhaSaude = () => {
   });
 
   const chartData = measurements
-    .filter((m) => m.weight || m.height)
+    .filter((m) => (graficoAtivo === "peso" ? m.weight : m.height))
     .map((m) => ({
       label: format(parseISO(m.recorded_at), "dd/MM", { locale: ptBR }),
-      peso: m.weight ? Number(m.weight) : null,
-      altura: m.height ? Number(m.height) * 100 : null, // m -> cm
+      valor: graficoAtivo === "peso"
+        ? Number(m.weight)
+        : Number(m.height) * 100,
     }));
+
+  const historyData = [...measurements].sort(
+    (a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime()
+  );
 
   const handleSubmit = async () => {
     if (!user || !id) return;
@@ -94,6 +100,23 @@ const MinhaSaude = () => {
     setFormData({ date: "", peso: "", altura: "" });
   };
 
+  const handleDelete = async (measurementId: string) => {
+    if (!window.confirm("Deseja excluir este registro?")) return;
+    const { error } = await supabase
+      .from("health_measurements")
+      .delete()
+      .eq("id", measurementId);
+    if (error) {
+      toast.error("Erro ao excluir registro.");
+      return;
+    }
+    toast.success("Registro excluído!");
+    queryClient.invalidateQueries({ queryKey: ["health_measurements", id] });
+  };
+
+  const lineColor = graficoAtivo === "peso" ? "#0f172a" : "#F2A97F";
+  const unitLabel = graficoAtivo === "peso" ? "kg" : "cm";
+
   return (
     <div className="flex flex-col min-h-screen bg-background pb-24">
       {/* Header */}
@@ -113,28 +136,39 @@ const MinhaSaude = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {/* Toggle Peso / Altura */}
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          <button
+            onClick={() => setGraficoAtivo("peso")}
+            className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+              graficoAtivo === "peso"
+                ? "bg-foreground text-background"
+                : "bg-card text-muted-foreground"
+            }`}
+          >
+            Peso (kg)
+          </button>
+          <button
+            onClick={() => setGraficoAtivo("altura")}
+            className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
+              graficoAtivo === "altura"
+                ? "bg-[#F2A97F] text-slate-900"
+                : "bg-card text-muted-foreground"
+            }`}
+          >
+            Altura (cm)
+          </button>
+        </div>
+
+        {/* Chart */}
         {chartData.length > 0 ? (
           <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-foreground">Crescimento</h2>
-              <div className="flex gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-1.5 rounded-full bg-foreground inline-block" />
-                  Peso
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-1.5 rounded-full bg-[#F2A97F] inline-block" />
-                  Altura
-                </span>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height={280}>
+            <h2 className="text-base font-semibold text-foreground mb-4">
+              {graficoAtivo === "peso" ? "Evolução do Peso" : "Evolução da Altura"}
+            </h2>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={chartData} margin={{ top: 5, right: 10, left: -15, bottom: 5 }}>
-                <CartesianGrid
-                  vertical={false}
-                  stroke="#f1f5f9"
-                  strokeDasharray=""
-                />
+                <CartesianGrid vertical={false} stroke="#f1f5f9" />
                 <XAxis
                   dataKey="label"
                   axisLine={false}
@@ -142,20 +176,10 @@ const MinhaSaude = () => {
                   tick={{ fontSize: 12, fill: "#64748b" }}
                 />
                 <YAxis
-                  yAxisId="peso"
-                  orientation="left"
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 11, fill: "#64748b" }}
-                  label={{ value: "kg", angle: -90, position: "insideLeft", fontSize: 11, fill: "#94a3b8" }}
-                />
-                <YAxis
-                  yAxisId="altura"
-                  orientation="right"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "#64748b" }}
-                  label={{ value: "cm", angle: 90, position: "insideRight", fontSize: 11, fill: "#94a3b8" }}
+                  label={{ value: unitLabel, angle: -90, position: "insideLeft", fontSize: 11, fill: "#94a3b8" }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -165,27 +189,16 @@ const MinhaSaude = () => {
                     fontSize: "12px",
                     boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                   }}
+                  formatter={(value: number) => [`${value} ${unitLabel}`, graficoAtivo === "peso" ? "Peso" : "Altura"]}
                 />
                 <Line
-                  yAxisId="peso"
                   type="monotone"
-                  dataKey="peso"
-                  name="Peso (kg)"
-                  stroke="#0f172a"
+                  dataKey="valor"
+                  name={graficoAtivo === "peso" ? "Peso" : "Altura"}
+                  stroke={lineColor}
                   strokeWidth={3}
-                  dot={{ r: 4, fill: "#0f172a", strokeWidth: 0 }}
-                  activeDot={{ r: 6, fill: "#0f172a", strokeWidth: 0 }}
-                  connectNulls
-                />
-                <Line
-                  yAxisId="altura"
-                  type="monotone"
-                  dataKey="altura"
-                  name="Altura (cm)"
-                  stroke="#F2A97F"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: "#F2A97F", strokeWidth: 0 }}
-                  activeDot={{ r: 6, fill: "#F2A97F", strokeWidth: 0 }}
+                  dot={{ r: 4, fill: lineColor, strokeWidth: 0 }}
+                  activeDot={{ r: 6, fill: lineColor, strokeWidth: 0 }}
                   connectNulls
                 />
               </LineChart>
@@ -198,12 +211,46 @@ const MinhaSaude = () => {
             </p>
           </div>
         )}
+
+        {/* History */}
+        {historyData.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-base font-semibold text-foreground">Histórico de Medidas</h2>
+            </div>
+            <div className="space-y-2">
+              {historyData.map((m) => {
+                const dateStr = format(parseISO(m.recorded_at), "dd MMM yyyy", { locale: ptBR });
+                return (
+                  <div
+                    key={m.id}
+                    className="bg-card rounded-xl border border-border/50 px-4 py-3 flex items-center justify-between"
+                  >
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium text-foreground capitalize">{dateStr}</p>
+                      <div className="flex gap-3 text-xs text-muted-foreground">
+                        {m.weight && <span>Peso: {Number(m.weight)} kg</span>}
+                        {m.height && <span>Altura: {(Number(m.height) * 100).toFixed(0)} cm</span>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleDelete(m.id)}
+                      className="p-2 -mr-1"
+                    >
+                      <Trash2 size={18} className="text-red-500" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* FAB */}
       <button
         onClick={() => setDialogOpen(true)}
-        className="fixed right-6 bottom-24 z-40 w-14 h-14 rounded-full bg-[#FFB085] hover:bg-[#ff9b66] text-slate-900 shadow-lg flex items-center justify-center transition-none"
+        className="fixed right-6 bottom-24 z-40 w-14 h-14 rounded-full bg-[#F2A97F] hover:bg-[#ff9b66] text-slate-900 shadow-lg flex items-center justify-center transition-none"
       >
         <Plus size={24} />
       </button>
@@ -230,7 +277,7 @@ const MinhaSaude = () => {
                 <input
                   type="number"
                   step="0.1"
-                  placeholder="Ex: 15.2"
+                  placeholder="Ex: 72.5"
                   value={formData.peso}
                   onChange={(e) => setFormData({ ...formData, peso: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
@@ -240,8 +287,8 @@ const MinhaSaude = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Altura (cm)</label>
                 <input
                   type="number"
-                  step="0.1"
-                  placeholder="Ex: 104"
+                  step="1"
+                  placeholder="Ex: 180"
                   value={formData.altura}
                   onChange={(e) => setFormData({ ...formData, altura: e.target.value })}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
