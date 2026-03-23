@@ -224,13 +224,13 @@ const Home = () => {
           <CarouselContent className="-ml-2">
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
+                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
                 onClick={() => navigate('/medicamentos')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Pill className="w-6 h-6 text-primary" />
+                    <div className="p-3 rounded-full bg-[#A7D3CB]">
+                      <Pill className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{activeMeds.length}</span>
@@ -243,13 +243,13 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
+                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
                 onClick={() => navigate('/agenda?filter=upcoming')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-secondary/10">
-                      <Calendar className="w-6 h-6 text-secondary" />
+                    <div className="p-3 rounded-full bg-[#A7D3CB]">
+                      <Calendar className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{upcoming.length}</span>
@@ -262,13 +262,13 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
+                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
                 onClick={() => navigate('/agenda?filter=consultas')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Stethoscope className="w-6 h-6 text-primary" />
+                    <div className="p-3 rounded-full bg-[#A7D3CB]">
+                      <Stethoscope className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{pendingConsultations}</span>
@@ -281,13 +281,13 @@ const Home = () => {
             </CarouselItem>
             <CarouselItem className="pl-2 basis-full">
               <Card
-                className="border-border/50 bg-[#A0C4D7]/15 cursor-pointer active:bg-[#A0C4D7]/25 sm:hover:bg-[#A0C4D7]/25 transition-colors"
+                className="border-border/50 bg-[#A0C4D7] cursor-pointer active:bg-[#A0C4D7]/90 sm:hover:bg-[#A0C4D7]/90 transition-colors"
                 onClick={() => navigate('/agenda?filter=exames')}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">
                   <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-secondary/10">
-                      <FileText className="w-6 h-6 text-secondary" />
+                    <div className="p-3 rounded-full bg-[#A7D3CB]">
+                      <FileText className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-3xl font-bold text-foreground leading-none">{pendingExams}</span>
