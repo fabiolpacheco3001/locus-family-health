@@ -382,7 +382,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               </div>
             </div>
 
-
+            {isEditing && (
               <div className="pt-4 border-t border-border">
                 <Button
                   variant="outline"
