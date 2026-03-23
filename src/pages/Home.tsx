@@ -367,11 +367,25 @@ const Home = () => {
                 {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
                   const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
                   const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
-                  const doseLabel = isValidNextDose
-                    ? `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`
-                    : isContinuous
-                      ? "Uso contínuo"
-                      : "";
+
+                  let doseLabel = "";
+                  if (isContinuous) {
+                    // For continuous meds, calculate daily dose from start_time
+                    let continuousDoseStr = "";
+                    if (med.start_date && med.start_time) {
+                      const now = new Date();
+                      const todayStr = format(now, "yyyy-MM-dd");
+                      const todayDose = new Date(`${todayStr}T${med.start_time}`);
+                      const tomorrowDose = new Date(`${format(new Date(now.getTime() + 86400000), "yyyy-MM-dd")}T${med.start_time}`);
+                      const targetDose = todayDose > now ? todayDose : tomorrowDose;
+                      if (!isNaN(targetDose.getTime())) {
+                        continuousDoseStr = ` · Próxima dose: ${format(targetDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                      }
+                    }
+                    doseLabel = `Uso contínuo${continuousDoseStr}`;
+                  } else if (isValidNextDose) {
+                    doseLabel = `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                  }
 
                   return (
                     <button
