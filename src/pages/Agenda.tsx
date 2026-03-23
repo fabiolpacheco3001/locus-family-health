@@ -178,7 +178,7 @@ const Agenda = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   {item.date && (
-                    <p className="text-sm font-bold text-primary mb-1">
+                    <p className="text-sm font-bold text-black mb-1">
                       {(() => {
                         const hasTime = item.date!.length > 10;
                         const parsed = hasTime ? parseISO(item.date!) : new Date(item.date + 'T12:00:00');
