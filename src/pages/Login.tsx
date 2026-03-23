@@ -46,7 +46,7 @@ const Login = () => {
           <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-4">
             <Heart className="text-primary-foreground" size={32} />
           </div>
-          <h1 className="text-3xl font-bold text-primary tracking-tight">Locus Health</h1>
+          <h1 className="text-3xl font-bold text-primary tracking-tight">Locus Vita</h1>
           <p className="text-muted-foreground text-sm mt-1">Saúde familiar simplificada</p>
         </div>
 
