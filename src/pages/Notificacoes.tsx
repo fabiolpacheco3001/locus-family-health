@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +31,8 @@ const iconMap: Record<string, React.ElementType> = {
   exam: FileText,
 };
 
+const SWIPE_THRESHOLD = -80;
+
 const NotificationCard = ({
   notification,
   onRead,
@@ -41,45 +44,66 @@ const NotificationCard = ({
 }) => {
   const Icon = iconMap[notification.type] || FileText;
   const isUnread = !notification.is_read;
+  const x = useMotionValue(0);
+  const trashOpacity = useTransform(x, [-100, -40, 0], [1, 0.5, 0]);
+
+  const handleDragEnd = () => {
+    if (x.get() < SWIPE_THRESHOLD) {
+      animate(x, -400, { type: "spring", duration: 0.3 });
+      setTimeout(() => onDelete(notification.id), 200);
+    } else {
+      animate(x, 0, { type: "spring", stiffness: 500, damping: 30 });
+    }
+  };
 
   return (
-    <div
-      className={`flex items-start gap-3 p-4 rounded-xl border text-left w-full transition-colors ${
-        isUnread
-          ? "bg-accent/30 border-primary/20"
-          : "bg-card border-border/50"
-      }`}
-    >
-      <button
-        onClick={() => { if (isUnread) onRead(notification.id); }}
-        className="flex items-start gap-3 flex-1 min-w-0 active:bg-accent/50 sm:hover:bg-accent/50 rounded-lg transition-colors"
+    <div className="relative overflow-hidden rounded-xl mb-2">
+      {/* Red background with trash icon */}
+      <motion.div
+        className="absolute inset-0 bg-destructive flex items-center justify-end px-6"
+        style={{ opacity: trashOpacity }}
       >
-        <div className="relative shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Icon className="text-primary" size={20} />
+        <Trash2 className="w-6 h-6 text-white" />
+      </motion.div>
+
+      {/* Draggable card */}
+      <motion.div
+        style={{ x }}
+        drag="x"
+        dragConstraints={{ left: -150, right: 0 }}
+        dragElastic={{ left: 0.3, right: 0 }}
+        onDragEnd={handleDragEnd}
+        className={`relative flex items-start gap-3 p-4 rounded-xl border text-left w-full transition-colors cursor-grab active:cursor-grabbing ${
+          isUnread
+            ? "bg-accent/30 border-primary/20"
+            : "bg-card border-border/50"
+        }`}
+      >
+        <button
+          onClick={() => { if (isUnread) onRead(notification.id); }}
+          className="flex items-start gap-3 flex-1 min-w-0"
+        >
+          <div className="relative shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Icon className="text-primary" size={20} />
+            </div>
+            {isUnread && (
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
+            )}
           </div>
-          {isUnread && (
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className={`text-sm truncate ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
-            {notification.title}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
-          {notification.created_at && (
-            <p className="text-[11px] text-muted-foreground/70 mt-1">
-              {format(new Date(notification.created_at), "dd MMM · HH:mm", { locale: ptBR })}
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm truncate ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
+              {notification.title}
             </p>
-          )}
-        </div>
-      </button>
-      <button
-        onClick={(e) => { e.stopPropagation(); onDelete(notification.id); }}
-        className="shrink-0 p-1.5 rounded-lg text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
-      >
-        <Trash2 size={15} />
-      </button>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{notification.message}</p>
+            {notification.created_at && (
+              <p className="text-[11px] text-muted-foreground/70 mt-1">
+                {format(new Date(notification.created_at), "dd MMM · HH:mm", { locale: ptBR })}
+              </p>
+            )}
+          </div>
+        </button>
+      </motion.div>
     </div>
   );
 };
