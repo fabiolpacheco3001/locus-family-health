@@ -154,8 +154,8 @@ const FamiliarProfile = () => {
           onClick={() => navigate(`/familiar/${id}/${route}`)}
           className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
         >
-          <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-            <Icon className="text-primary" size={22} />
+          <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
+            <Icon className="text-black" size={22} />
           </div>
           <p className="text-xs font-semibold text-foreground">{label}</p>
           <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{subtitle}</p>
