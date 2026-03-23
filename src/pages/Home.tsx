@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon } from "lucide-react";
+import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon, Infinity } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -370,8 +370,6 @@ const Home = () => {
 
                   let doseLabel = "";
                   if (isContinuous) {
-                    // For continuous meds, calculate daily dose from start_time
-                    let continuousDoseStr = "";
                     if (med.start_date && med.start_time) {
                       const now = new Date();
                       const todayStr = format(now, "yyyy-MM-dd");
@@ -379,10 +377,9 @@ const Home = () => {
                       const tomorrowDose = new Date(`${format(new Date(now.getTime() + 86400000), "yyyy-MM-dd")}T${med.start_time}`);
                       const targetDose = todayDose > now ? todayDose : tomorrowDose;
                       if (!isNaN(targetDose.getTime())) {
-                        continuousDoseStr = ` · Próxima dose: ${format(targetDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                        doseLabel = `Próxima dose: ${format(targetDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
                       }
                     }
-                    doseLabel = `Uso contínuo${continuousDoseStr}`;
                   } else if (isValidNextDose) {
                     doseLabel = `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
                   }
@@ -404,8 +401,10 @@ const Home = () => {
                             return firstName ? <span className="font-normal text-muted-foreground"> · {firstName}</span> : null;
                           })()}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {med.dosage ?? ""}{doseLabel ? ` · ${doseLabel}` : ""}
+                        <p className="text-xs text-muted-foreground truncate flex items-center gap-0">
+                          <span>{med.dosage ?? ""}</span>
+                          {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
+                          {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
                         </p>
                       </div>
                       <ChevronRight size={16} className="text-muted-foreground shrink-0" />
