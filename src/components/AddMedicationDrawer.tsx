@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Loader2, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [durationDays, setDurationDays] = useState("");
   const [status, setStatus] = useState("Ativo");
   const [consultationId, setConsultationId] = useState("none");
+  const [usoContinuo, setUsoContinuo] = useState(false);
+  const [medicoPrescritor, setMedicoPrescritor] = useState("");
+  const [estoqueTotal, setEstoqueTotal] = useState("");
+  const [estoqueMinimo, setEstoqueMinimo] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   const isEditing = !!editingMedication;
@@ -56,7 +61,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     if (editingMedication) {
       setName(editingMedication.name);
       setDosage(editingMedication.dosage ?? "");
-      // Combine start_date + start_time into datetime-local value
       const date = editingMedication.start_date?.slice(0, 10) ?? "";
       const time = editingMedication.start_time ?? "";
       if (date && time) {
@@ -70,6 +74,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setDurationDays(editingMedication.duration_days?.toString() ?? "");
       setStatus(editingMedication.status);
       setConsultationId(editingMedication.consultation_id ?? "none");
+      setUsoContinuo(editingMedication.uso_continuo ?? false);
+      setMedicoPrescritor(editingMedication.medico_prescritor ?? "");
+      setEstoqueTotal(editingMedication.estoque_total?.toString() ?? "");
+      setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
     } else {
       resetForm();
     }
@@ -83,6 +91,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setDurationDays("");
     setStatus("Ativo");
     setConsultationId("none");
+    setUsoContinuo(false);
+    setMedicoPrescritor("");
+    setEstoqueTotal("");
+    setEstoqueMinimo("");
   };
 
   // Extract date and time from the combined datetime-local
@@ -109,38 +121,40 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
 
     const freqNum = frequencyHours ? Number(frequencyHours) : null;
-    const durNum = durationDays ? Number(durationDays) : null;
+    const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
+    const finalEndDate = usoContinuo ? null : calculatedEndDate;
+    const estTotalNum = estoqueTotal ? Number(estoqueTotal) : null;
+    const estMinNum = estoqueMinimo ? Number(estoqueMinimo) : null;
+
+    const commonFields = {
+      name: name.trim(),
+      dosage: dosage.trim() || null,
+      start_time: parsedDate.time || null,
+      frequency_hours: freqNum,
+      frequency: frequencyLabel || null,
+      duration_days: durNum,
+      duration: durNum ? `${durNum} dias` : null,
+      start_date: parsedDate.date || null,
+      end_date: finalEndDate,
+      consultation_id: consultationId === "none" ? null : consultationId,
+      uso_continuo: usoContinuo,
+      medico_prescritor: medicoPrescritor.trim() || null,
+      estoque_total: estTotalNum,
+      estoque_minimo: estMinNum,
+    };
 
     try {
       if (isEditing) {
         await updateMedication.mutateAsync({
           id: editingMedication.id,
-          name: name.trim(),
-          dosage: dosage.trim() || null,
-          start_time: parsedDate.time || null,
-          frequency_hours: freqNum,
-          frequency: frequencyLabel || null,
-          duration_days: durNum,
-          duration: durNum ? `${durNum} dias` : null,
-          start_date: parsedDate.date || null,
-          end_date: calculatedEndDate,
+          ...commonFields,
           status,
-          consultation_id: consultationId === "none" ? null : consultationId,
         });
         toast.success("Medicamento atualizado!");
       } else {
         const medication: NewMedication = {
           family_member_id: familyMemberId,
-          name: name.trim(),
-          dosage: dosage.trim() || null,
-          start_time: parsedDate.time || null,
-          frequency_hours: freqNum,
-          frequency: frequencyLabel || null,
-          duration_days: durNum,
-          duration: durNum ? `${durNum} dias` : null,
-          start_date: parsedDate.date || null,
-          end_date: calculatedEndDate,
-          consultation_id: consultationId === "none" ? null : consultationId,
+          ...commonFields,
         };
         const result = await addMedication.mutateAsync(medication);
         // Create notification for new medication
@@ -156,10 +170,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             ? format(new Date(parsedDate.date + "T12:00:00"), "dd/MM/yyyy")
             : "";
           const timeStr = parsedDate.time ? parsedDate.time.slice(0, 5) : "";
-          const endStr = calculatedEndDate
-            ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy")
+          const endStr = finalEndDate
+            ? format(new Date(finalEndDate + "T12:00:00"), "dd/MM/yyyy")
             : "";
           let msgParts = `Medicamento: ${name.trim()}`;
+          if (usoContinuo) {
+            msgParts += `\nUso Contínuo`;
+          }
           if (startStr) {
             msgParts += `\nInício: ${startStr}${timeStr ? ` às ${timeStr}` : ""}`;
           }
@@ -222,6 +239,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               />
             </div>
 
+            <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2.5">
+              <Label htmlFor="uso-continuo" className="cursor-pointer">Tratamento de Uso Contínuo</Label>
+              <Switch id="uso-continuo" checked={usoContinuo} onCheckedChange={setUsoContinuo} />
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Dosagem</Label>
@@ -259,42 +281,71 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   className={`${INPUT_CLASSES} appearance-none`}
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label>Duração (dias)</Label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="Ex: 7"
-                  value={durationDays}
-                  onChange={(e) => setDurationDays(e.target.value)}
-                  className="text-[16px]"
-                />
-              </div>
+              {!usoContinuo && (
+                <div className="space-y-1.5">
+                  <Label>Duração (dias)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ex: 7"
+                    value={durationDays}
+                    onChange={(e) => setDurationDays(e.target.value)}
+                    className="text-[16px]"
+                  />
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Término Previsto</Label>
-                <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
-                  {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
-                </div>
-              </div>
-              {isEditing ? (
+            {!usoContinuo && (
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="text-[16px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Concluído">Concluído</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Término Previsto</Label>
+                  <div className="flex h-10 w-full items-center rounded-md bg-muted/50 border border-border px-3 text-sm text-muted-foreground font-medium">
+                    {calculatedEndDate ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy") : "—"}
+                  </div>
                 </div>
-              ) : (
-                <div />
-              )}
+                {isEditing ? (
+                  <div className="space-y-1.5">
+                    <Label>Status</Label>
+                    <Select value={status} onValueChange={setStatus}>
+                      <SelectTrigger className="text-[16px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ativo">Ativo</SelectItem>
+                        <SelectItem value="Concluído">Concluído</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : (
+                  <div />
+                )}
+              </div>
+            )}
+
+            {usoContinuo && isEditing && (
+              <div className="space-y-1.5">
+                <Label>Status</Label>
+                <Select value={status} onValueChange={setStatus}>
+                  <SelectTrigger className="text-[16px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Concluído">Concluído</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label>Médico Prescritor (Opcional)</Label>
+              <Input
+                placeholder="Ex: Dr. Drauzio Varella"
+                value={medicoPrescritor}
+                onChange={(e) => setMedicoPrescritor(e.target.value)}
+                className="text-[16px]"
+              />
             </div>
 
             <ConsultationSelect
@@ -302,6 +353,34 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               value={consultationId}
               onValueChange={setConsultationId}
             />
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Controle de Estoque (Opcional)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Qtd. Total na Caixa</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ex: 30"
+                    value={estoqueTotal}
+                    onChange={(e) => setEstoqueTotal(e.target.value)}
+                    className="text-[16px]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Avisar quando chegar a</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ex: 5"
+                    value={estoqueMinimo}
+                    onChange={(e) => setEstoqueMinimo(e.target.value)}
+                    className="text-[16px]"
+                  />
+                </div>
+              </div>
+            </div>
 
             {isEditing && (
               <div className="pt-4 border-t border-border">

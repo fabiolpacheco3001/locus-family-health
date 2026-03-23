@@ -300,15 +300,19 @@ export type Database = {
           duration: string | null
           duration_days: number | null
           end_date: string | null
+          estoque_minimo: number | null
+          estoque_total: number | null
           family_member_id: string
           frequency: string | null
           frequency_hours: number | null
           id: string
+          medico_prescritor: string | null
           name: string
           start_date: string | null
           start_time: string | null
           status: string
           user_id: string
+          uso_continuo: boolean
         }
         Insert: {
           consultation_id?: string | null
@@ -317,15 +321,19 @@ export type Database = {
           duration?: string | null
           duration_days?: number | null
           end_date?: string | null
+          estoque_minimo?: number | null
+          estoque_total?: number | null
           family_member_id: string
           frequency?: string | null
           frequency_hours?: number | null
           id?: string
+          medico_prescritor?: string | null
           name: string
           start_date?: string | null
           start_time?: string | null
           status?: string
           user_id: string
+          uso_continuo?: boolean
         }
         Update: {
           consultation_id?: string | null
@@ -334,15 +342,19 @@ export type Database = {
           duration?: string | null
           duration_days?: number | null
           end_date?: string | null
+          estoque_minimo?: number | null
+          estoque_total?: number | null
           family_member_id?: string
           frequency?: string | null
           frequency_hours?: number | null
           id?: string
+          medico_prescritor?: string | null
           name?: string
           start_date?: string | null
           start_time?: string | null
           status?: string
           user_id?: string
+          uso_continuo?: boolean
         }
         Relationships: [
           {

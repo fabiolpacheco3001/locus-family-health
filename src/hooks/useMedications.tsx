@@ -17,6 +17,10 @@ export type Medication = {
   end_date: string | null;
   status: string;
   consultation_id: string | null;
+  uso_continuo: boolean;
+  medico_prescritor: string | null;
+  estoque_total: number | null;
+  estoque_minimo: number | null;
   created_at: string;
   consultations?: { professional_name: string | null; specialty: string } | null;
   family_members?: { name: string } | null;
@@ -34,6 +38,10 @@ export type NewMedication = {
   start_time?: string | null;
   end_date?: string | null;
   consultation_id?: string | null;
+  uso_continuo?: boolean;
+  medico_prescritor?: string | null;
+  estoque_total?: number | null;
+  estoque_minimo?: number | null;
 };
 
 export type UpdateMedication = {
@@ -49,6 +57,10 @@ export type UpdateMedication = {
   end_date?: string | null;
   status?: string;
   consultation_id?: string | null;
+  uso_continuo?: boolean;
+  medico_prescritor?: string | null;
+  estoque_total?: number | null;
+  estoque_minimo?: number | null;
 };
 
 export const useMedications = (familyMemberId?: string) => {
