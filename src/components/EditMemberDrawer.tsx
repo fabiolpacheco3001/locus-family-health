@@ -38,6 +38,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const [gender, setGender] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const initials = member?.name?.[0]?.toUpperCase() ?? "?";
 
@@ -94,10 +95,16 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
             {/* Avatar */}
-            <button className="flex justify-center mb-2" onClick={() => setAvatarOpen(true)}>
+            <button className="flex justify-center mb-2 w-full" onClick={() => setAvatarOpen(true)}>
               <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center">
-                  <span className="text-xl font-bold text-secondary">{initials}</span>
+                <div className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
+                  {avatarUrl && avatarUrl.startsWith("data:") ? (
+                    <img src={avatarUrl} className="w-full h-full object-cover rounded-full" alt="Avatar" />
+                  ) : avatarUrl && avatarUrl.length <= 2 ? (
+                    <span className="text-3xl">{avatarUrl}</span>
+                  ) : (
+                    <span className="text-xl font-bold text-secondary">{initials}</span>
+                  )}
                 </div>
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
                   <Camera className="w-3 h-3 text-muted-foreground" />
@@ -211,7 +218,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} />
+      <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} onSelect={setAvatarUrl} />
     </>
   );
 };
