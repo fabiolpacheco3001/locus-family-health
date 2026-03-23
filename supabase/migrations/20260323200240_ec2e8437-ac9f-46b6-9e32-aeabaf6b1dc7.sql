@@ -1,0 +1,1 @@
+ALTER TABLE public.family_members ADD COLUMN avatar_url text;

@@ -49,6 +49,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
       setBirthDate(member.birth_date || "");
       setBloodType(member.blood_type || "");
       setGender(member.gender || "");
+      setAvatarUrl(member.avatar_url || "");
     }
   }, [open, member]);
 
@@ -65,6 +66,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
         birth_date: birthDate || null,
         blood_type: bloodType || null,
         gender: gender || null,
+        avatar_url: avatarUrl || null,
       });
       toast.success("Dados atualizados!");
       onOpenChange(false);

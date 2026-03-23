@@ -41,6 +41,7 @@ const MeusDados = () => {
       setGender(titular.gender || "");
       setPhone(titular.phone || "");
       setCpf(titular.cpf || "");
+      setAvatarUrl(titular.avatar_url || "");
     }
   }, [titular]);
 
@@ -73,6 +74,7 @@ const MeusDados = () => {
         gender: gender || null,
         phone: phone || null,
         cpf: cpf || null,
+        avatar_url: avatarUrl || null,
       });
       toast.success("Dados atualizados com sucesso!");
       navigate("/ajustes");

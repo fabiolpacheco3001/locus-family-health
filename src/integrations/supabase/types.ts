@@ -202,6 +202,7 @@ export type Database = {
       }
       family_members: {
         Row: {
+          avatar_url: string | null
           birth_date: string | null
           blood_type: string | null
           cpf: string | null
@@ -217,6 +218,7 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          avatar_url?: string | null
           birth_date?: string | null
           blood_type?: string | null
           cpf?: string | null
@@ -232,6 +234,7 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          avatar_url?: string | null
           birth_date?: string | null
           blood_type?: string | null
           cpf?: string | null
