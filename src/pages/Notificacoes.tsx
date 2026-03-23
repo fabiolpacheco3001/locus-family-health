@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,20 +47,23 @@ const NotificationCard = ({
   const x = useMotionValue(0);
   const trashOpacity = useTransform(x, [-100, -40, 0], [1, 0.5, 0]);
 
-  const handleDragEnd = () => {
-    if (x.get() < SWIPE_THRESHOLD) {
-      animate(x, -400, { type: "spring", duration: 0.3 });
-      setTimeout(() => onDelete(notification.id), 200);
-    } else {
-      animate(x, 0, { type: "spring", stiffness: 500, damping: 30 });
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (info.offset.x < SWIPE_THRESHOLD) {
+      onDelete(notification.id);
     }
   };
 
   return (
-    <div className="relative overflow-hidden rounded-xl mb-2">
+    <motion.div
+      layout
+      initial={{ opacity: 1, x: 0 }}
+      exit={{ x: -400, opacity: 0, height: 0, marginBottom: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="relative overflow-hidden rounded-xl mb-2"
+    >
       {/* Red background with trash icon */}
       <motion.div
-        className="absolute inset-0 bg-destructive flex items-center justify-end px-6"
+        className="absolute inset-0 bg-destructive flex items-center justify-end px-6 rounded-xl"
         style={{ opacity: trashOpacity }}
       >
         <Trash2 className="w-6 h-6 text-white" />
@@ -70,8 +73,8 @@ const NotificationCard = ({
       <motion.div
         style={{ x }}
         drag="x"
-        dragConstraints={{ left: -150, right: 0 }}
-        dragElastic={{ left: 0.3, right: 0 }}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ left: 0.5, right: 0 }}
         onDragEnd={handleDragEnd}
         className={`relative flex items-start gap-3 p-4 rounded-xl border text-left w-full transition-colors cursor-grab active:cursor-grabbing ${
           isUnread
@@ -104,7 +107,7 @@ const NotificationCard = ({
           </div>
         </button>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -191,7 +194,7 @@ const Notificacoes = () => {
             <p className="text-muted-foreground text-sm">Você não tem novas notificações.</p>
           </div>
         ) : (
-          <div className="flex flex-col space-y-2">
+          <AnimatePresence mode="popLayout">
             {notifications.map((n) => (
               <NotificationCard
                 key={n.id}
@@ -200,7 +203,7 @@ const Notificacoes = () => {
                 onDelete={(id) => deleteNotification.mutate(id)}
               />
             ))}
-          </div>
+          </AnimatePresence>
         )}
       </div>
     </div>
