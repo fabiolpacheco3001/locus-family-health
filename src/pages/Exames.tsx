@@ -12,9 +12,11 @@ import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
-  Agendado: "bg-primary/10 text-primary border-primary/20",
-  Coletado: "bg-[#FFB085]/20 text-[#c97a3a] border-[#FFB085]/30",
-  "Resultado Pronto": "bg-secondary/10 text-secondary border-secondary/20",
+  Agendado: "bg-[#A0C4D7] text-slate-900 border-none",
+  Realizado: "bg-[#F2A97F] text-slate-900 border-none",
+  Coletado: "bg-[#F2A97F] text-slate-900 border-none",
+  Pronto: "bg-[#A7D3CB] text-slate-900 border-none",
+  "Resultado Pronto": "bg-[#A7D3CB] text-slate-900 border-none",
 };
 
 const Exames = () => {
@@ -103,7 +105,7 @@ const Exames = () => {
                       variant="outline"
                       className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${statusColors[e.status] ?? ""}`}
                     >
-                      {e.status}
+                      {e.status === "Coletado" ? "Realizado" : e.status === "Resultado Pronto" ? "Pronto" : e.status}
                     </Badge>
                   </div>
                   {e.location && (

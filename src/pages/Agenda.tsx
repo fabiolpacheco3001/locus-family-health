@@ -53,7 +53,7 @@ const Agenda = () => {
           .from("exams")
           .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
           .eq("user_id", user!.id)
-          .or("status.eq.Agendado,and(status.eq.Coletado,result_date.not.is.null)")
+          .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
           .order("exam_date", { ascending: true }),
       ]);
 
@@ -77,19 +77,21 @@ const Agenda = () => {
       });
 
       const exams: AgendaItem[] = (examRes.data ?? []).map((e: any) => {
-        const isColetado = e.status === "Coletado";
-        const displayDate = isColetado ? e.result_date : e.exam_date;
-        const subtitle = isColetado
+        const isRealizado = e.status === "Realizado" || e.status === "Coletado";
+        const displayDate = isRealizado ? e.result_date : e.exam_date;
+        const subtitle = isRealizado
           ? `Buscar Resultado de ${e.name}`
           : e.location ? `em ${e.location}` : "Exame Agendado";
+        // Normalize old status names to new ones
+        const normalizedStatus = e.status === "Coletado" ? "Realizado" : e.status === "Resultado Pronto" ? "Pronto" : e.status;
         return {
           id: e.id,
           family_member_id: e.family_member_id,
-          title: isColetado ? "Resultado Pendente" : e.name,
+          title: isRealizado ? "Resultado Pendente" : e.name,
           subtitle,
           date: displayDate,
           type: null,
-          status: e.status,
+          status: normalizedStatus,
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
@@ -112,7 +114,7 @@ const Agenda = () => {
     if (currentFilter === "consultas") return items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
     if (currentFilter === "exames") return items.filter((i) => i.kind === "exam");
     if (currentFilter === "upcoming") return items.filter((i) =>
-      i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Resultado Pronto" && !i.isOverdue
+      i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Pronto" && !i.isOverdue
     );
     return items;
   }, [items, currentFilter]);
@@ -228,14 +230,16 @@ const Agenda = () => {
                     )}
                     <Badge
                       variant="outline"
-                      className={`text-[10px] px-1.5 py-0 ${
+                      className={`text-[10px] px-1.5 py-0 border-none ${
                         item.status === "Agendada" || item.status === "Agendado"
-                          ? "bg-primary/10 text-primary border-primary/20"
-                          : item.status === "Coletado"
-                          ? "bg-accent/50 text-accent-foreground border-accent/30"
-                          : item.status === "Realizada" || item.status === "Resultado Pronto"
-                          ? "bg-secondary/10 text-secondary border-secondary/20"
-                          : "bg-destructive/10 text-destructive border-destructive/20"
+                          ? "bg-[#A0C4D7] text-slate-900"
+                          : item.status === "Realizada" || item.status === "Realizado"
+                          ? "bg-[#F2A97F] text-slate-900"
+                          : item.status === "Pronto"
+                          ? "bg-[#A7D3CB] text-slate-900"
+                          : item.status === "Cancelada" || item.status === "Cancelado"
+                          ? "bg-[#F87171] text-white"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {item.status}

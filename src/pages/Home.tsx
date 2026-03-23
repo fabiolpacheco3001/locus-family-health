@@ -56,7 +56,7 @@ const Home = () => {
         .from("exams")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user!.id)
-        .or("status.eq.Agendado,status.eq.Coletado");
+        .or("status.eq.Agendado,status.eq.Realizado,status.eq.Coletado");
       if (error) throw error;
       return count ?? 0;
     },
@@ -78,7 +78,7 @@ const Home = () => {
           .from("exams")
           .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
           .eq("user_id", user!.id)
-          .or("status.eq.Agendado,and(status.eq.Coletado,result_date.not.is.null)")
+          .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
           .order("exam_date", { ascending: true })
           .limit(5),
       ]);
@@ -110,13 +110,13 @@ const Home = () => {
       });
 
       (examRes.data ?? []).forEach((e: any) => {
-        const isColetado = e.status === "Coletado";
-        const displayDate = isColetado ? e.result_date : e.exam_date;
+        const isRealizado = e.status === "Realizado" || e.status === "Coletado";
+        const displayDate = isRealizado ? e.result_date : e.exam_date;
         const overdue = e.status === "Agendado" && e.exam_date ? isBefore(new Date(e.exam_date), startOfDay(new Date())) : false;
         items.push({
           id: e.id,
-          title: isColetado ? `Buscar Resultado` : e.name,
-          subtitle: isColetado ? e.name : (e.location ?? "Exame"),
+          title: isRealizado ? `Buscar Resultado` : e.name,
+          subtitle: isRealizado ? e.name : (e.location ?? "Exame"),
           date: displayDate,
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",

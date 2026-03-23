@@ -101,7 +101,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           location: location.trim() || null,
           status,
           file_url: fileUrl,
-          result_date: status === "Coletado" && resultDate ? resultDate : null,
+          result_date: status === "Realizado" && resultDate ? resultDate : null,
           consultation_id: consultationId === "none" ? null : consultationId,
         });
         toast.success("Exame atualizado!");
@@ -188,8 +188,8 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Agendado">Agendado</SelectItem>
-                    <SelectItem value="Coletado">Coletado</SelectItem>
-                    <SelectItem value="Resultado Pronto">Resultado Pronto</SelectItem>
+                    <SelectItem value="Realizado">Realizado</SelectItem>
+                    <SelectItem value="Pronto">Pronto</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -211,7 +211,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               onValueChange={setConsultationId}
             />
 
-            {status === "Coletado" && (
+            {status === "Realizado" && (
               <div className="space-y-1.5">
                 <Label>Data Prevista do Resultado</Label>
                 <input
