@@ -26,17 +26,6 @@ const GerenciarFamilia = () => {
     (a, b) => (ordemParentesco[a.relationship] || 99) - (ordemParentesco[b.relationship] || 99)
   );
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    try {
-      await deleteMember.mutateAsync(deleteTarget.id);
-      toast.success("Familiar removido.");
-      setDeleteTarget(null);
-    } catch {
-      toast.error("Erro ao excluir. Tente novamente.");
-    }
-  };
-
   return (
     <>
       {!addDrawerOpen && !editMember && <FixedFAB onClick={() => setAddDrawerOpen(true)} />}
