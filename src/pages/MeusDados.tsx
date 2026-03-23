@@ -79,9 +79,9 @@ const MeusDados = () => {
   };
 
   return (
-    <div className="px-4 pt-6 pb-32 animate-fade-in">
+    <div className="flex flex-col h-[calc(100dvh-72px)] bg-background animate-fade-in">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex-none flex items-center gap-3 px-4 pt-6 mb-4">
         <button onClick={() => navigate("/ajustes")} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
