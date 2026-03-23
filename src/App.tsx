@@ -17,6 +17,7 @@ import Exames from "./pages/Exames";
 import Notificacoes from "./pages/Notificacoes";
 import MinhaSaude from "./pages/MinhaSaude";
 import MeusDados from "./pages/MeusDados";
+import GerenciarFamilia from "./pages/GerenciarFamilia";
 import Alergias from "./pages/Alergias";
 import Doencas from "./pages/Doencas";
 import Vacinas from "./pages/Vacinas";
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/familia" element={<Familia />} />
               <Route path="/ajustes" element={<Ajustes />} />
               <Route path="/meus-dados" element={<MeusDados />} />
+              <Route path="/gerenciar-familia" element={<GerenciarFamilia />} />
               <Route path="/familiar/:id/saude" element={<MinhaSaude />} />
               <Route path="/familiar/:id" element={<FamiliarProfile />} />
               <Route path="/familiar/:id/consultas" element={<Consultas />} />

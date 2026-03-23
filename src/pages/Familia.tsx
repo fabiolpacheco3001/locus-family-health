@@ -1,21 +1,14 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
-import AddMemberDrawer from "@/components/AddMemberDrawer";
-import FixedFAB from "@/components/ui/FixedFAB";
 
 const Familia = () => {
   const { members, isLoading } = useFamilyMembers();
   const navigate = useNavigate();
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <>
-      {!drawerOpen && <FixedFAB onClick={() => setDrawerOpen(true)} />}
-      <AddMemberDrawer open={drawerOpen} onOpenChange={setDrawerOpen} />
-
       <div className="px-5 pt-6 animate-fade-in">
         <h1 className="text-2xl font-bold text-foreground mb-4">Família</h1>
 
