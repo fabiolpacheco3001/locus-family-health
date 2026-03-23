@@ -23,6 +23,7 @@ export type NewFamilyMember = {
   blood_type?: string | null;
   phone?: string | null;
   cpf?: string | null;
+  avatar_url?: string | null;
 };
 
 export const useFamilyMembers = () => {

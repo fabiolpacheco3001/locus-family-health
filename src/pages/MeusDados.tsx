@@ -74,6 +74,7 @@ const MeusDados = () => {
         gender: gender || null,
         phone: phone || null,
         cpf: cpf || null,
+        avatar_url: avatarUrl || null,
       });
       toast.success("Dados atualizados com sucesso!");
       navigate("/ajustes");
