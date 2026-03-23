@@ -105,7 +105,7 @@ const Exames = () => {
                       variant="outline"
                       className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${statusColors[e.status] ?? ""}`}
                     >
-                      {e.status}
+                      {e.status === "Coletado" ? "Realizado" : e.status === "Resultado Pronto" ? "Pronto" : e.status}
                     </Badge>
                   </div>
                   {e.location && (
