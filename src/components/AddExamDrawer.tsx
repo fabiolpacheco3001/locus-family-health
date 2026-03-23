@@ -190,6 +190,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                     <SelectItem value="Agendado">Agendado</SelectItem>
                     <SelectItem value="Realizado">Realizado</SelectItem>
                     <SelectItem value="Pronto">Pronto</SelectItem>
+                    <SelectItem value="Cancelado">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
