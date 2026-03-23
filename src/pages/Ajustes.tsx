@@ -39,8 +39,8 @@ const Ajustes = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-6 overscroll-contain no-scrollbar">
         {/* Profile Card */}
         <div className="flex items-center gap-4 p-4 bg-white rounded-xl shadow-sm border border-border/40">
-          <div className="w-14 h-14 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
-            <span className="text-lg font-bold text-white">{initials}</span>
+          <div className="w-14 h-14 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center shrink-0">
+            <span className="text-lg font-bold text-secondary">{initials}</span>
           </div>
           <div>
             <p className="text-base font-semibold text-black">{titular?.name ?? "Carregando..."}</p>
