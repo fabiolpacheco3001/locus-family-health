@@ -159,12 +159,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           const endStr = calculatedEndDate
             ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy")
             : "";
-          let msgParts = `Registro de tratamento com ${name.trim()} realizado.`;
+          let msgParts = `Medicamento: ${name.trim()}`;
           if (startStr) {
             msgParts += `\nInício: ${startStr}${timeStr ? ` às ${timeStr}` : ""}`;
           }
           if (endStr) {
-            msgParts += ` | Término: ${endStr}${timeStr ? ` às ${timeStr}` : ""}`;
+            msgParts += `\nTérmino: ${endStr}${timeStr ? ` às ${timeStr}` : ""}`;
           }
           await supabase.from("notifications").insert({
             user_id: user.id,
