@@ -172,9 +172,9 @@ const FamiliarProfile = () => {
   );
 
   return (
-    <div className="px-4 pt-6 pb-28 animate-fade-in">
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex-none px-4 pt-6 pb-2 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={goBack}>
           <ArrowLeft size={22} />
         </Button>
