@@ -245,6 +245,8 @@ const Vacinas = () => {
                   type="date"
                   value={form.applied_date}
                   onChange={(e) => setForm({ ...form, applied_date: e.target.value })}
+                  min="1900-01-01"
+                  max={new Date().toISOString().split('T')[0]}
                   className={INPUT_CLASSES}
                 />
               </div>
