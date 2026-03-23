@@ -354,7 +354,35 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               onValueChange={setConsultationId}
             />
 
-            {isEditing && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-muted-foreground">Controle de Estoque (Opcional)</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Qtd. Total na Caixa</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ex: 30"
+                    value={estoqueTotal}
+                    onChange={(e) => setEstoqueTotal(e.target.value)}
+                    className="text-[16px]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Avisar quando chegar a</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ex: 5"
+                    value={estoqueMinimo}
+                    onChange={(e) => setEstoqueMinimo(e.target.value)}
+                    className="text-[16px]"
+                  />
+                </div>
+              </div>
+            </div>
+
+
               <div className="pt-4 border-t border-border">
                 <Button
                   variant="outline"
