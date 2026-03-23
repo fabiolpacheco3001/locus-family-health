@@ -181,6 +181,9 @@ const FamiliarProfile = () => {
         <h1 className="text-lg font-bold text-foreground flex-1">Minha Saúde</h1>
       </div>
 
+      <div className="flex-1 overflow-y-auto no-scrollbar">
+        <div className="px-4 pb-4 space-y-0 min-h-[calc(100%+1px)]">
+
       {/* Identity Card */}
       <button
         onClick={() => setEditOpen(true)}
