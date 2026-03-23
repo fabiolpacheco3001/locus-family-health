@@ -304,15 +304,32 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
               {/* Linha 4: Status (apenas edição) */}
               {isEditing && (
-                <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="text-[16px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Concluído">Concluído</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-col gap-2">
+                  <Label>Status do Tratamento</Label>
+                  <div className="flex p-1 bg-muted rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setStatus('Ativo')}
+                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                        status === 'Ativo'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Ativo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatus('Concluído')}
+                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                        status === 'Concluído'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Concluído
+                    </button>
+                  </div>
                 </div>
               )}
 
