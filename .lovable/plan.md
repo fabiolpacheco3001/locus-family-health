@@ -1,20 +1,19 @@
 
 
-## Plan: Propagar MemberAvatar no Drawer do BottomNav
+## Plan: Remover barra de rolagem lateral na Home
 
-### Alteração em `src/components/BottomNav.tsx`
+### Problema
+O container de scroll na Home (`flex-1 overflow-y-auto`) não possui a classe `no-scrollbar`, que é o padrão global do app para ocultar scrollbars visíveis.
 
-**Linhas 78-82:** Substituir a div circular com inicial estática pelo componente `<MemberAvatar>`:
+### Alteração em `src/pages/Home.tsx`
+
+**Linha 184:** Adicionar `no-scrollbar` ao container de scroll:
 
 ```tsx
 // De:
-<div className="w-10 h-10 rounded-full bg-secondary/20 border-2 border-secondary ...">
-  <span>{member.name.charAt(0).toUpperCase()}</span>
-</div>
+<div className="flex-1 overflow-y-auto px-5 pt-6 pb-4">
 
 // Para:
-<MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="sm" />
+<div className="flex-1 overflow-y-auto no-scrollbar px-5 pt-6 pb-4">
 ```
-
-Adicionar o import de `MemberAvatar` no topo do arquivo.
 
