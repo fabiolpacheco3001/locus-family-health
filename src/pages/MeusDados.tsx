@@ -102,8 +102,8 @@ const MeusDados = () => {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-1.5">
+      <div className="space-y-3">
+        <div className="space-y-1">
           <Label>Nome Completo *</Label>
           <Input
             placeholder="Seu nome completo"
@@ -113,7 +113,7 @@ const MeusDados = () => {
           />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           <Label>E-mail</Label>
           <Input
             value={user?.email || ""}
@@ -125,8 +125,8 @@ const MeusDados = () => {
         </div>
 
         {/* Grid: Nascimento + Gênero */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
             <Label>Nascimento</Label>
             <input
               type="date"
@@ -135,11 +135,11 @@ const MeusDados = () => {
               onChange={(e) => setBirthDate(e.target.value)}
               min="1900-01-01"
               max={new Date().toISOString().split("T")[0]}
-              className="flex h-10 w-full max-w-full box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+              className="flex h-10 w-full max-w-full box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] text-left justify-start ring-offset-background"
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <Label>Gênero</Label>
             <Select value={gender} onValueChange={setGender}>
               <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
@@ -156,8 +156,8 @@ const MeusDados = () => {
         </div>
 
         {/* Grid: CPF + Telefone */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
             <Label>CPF</Label>
             <Input
               type="text"
@@ -168,7 +168,7 @@ const MeusDados = () => {
             />
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <Label>Telefone</Label>
             <Input
               type="tel"
