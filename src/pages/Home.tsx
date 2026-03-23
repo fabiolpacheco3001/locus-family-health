@@ -233,8 +233,8 @@ const Home = () => {
                       <Pill className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-foreground leading-none">{activeMeds.length}</span>
-                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Meds Ativos</span>
+                      <span className="text-3xl font-bold text-black leading-none">{activeMeds.length}</span>
+                      <span className="text-sm font-medium text-black mt-1">Meds Ativos</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
@@ -252,8 +252,8 @@ const Home = () => {
                       <Calendar className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-foreground leading-none">{upcoming.length}</span>
-                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Compromissos</span>
+                      <span className="text-3xl font-bold text-black leading-none">{upcoming.length}</span>
+                      <span className="text-sm font-medium text-black mt-1">Compromissos</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
@@ -271,8 +271,8 @@ const Home = () => {
                       <Stethoscope className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-foreground leading-none">{pendingConsultations}</span>
-                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Consultas Pendentes</span>
+                      <span className="text-3xl font-bold text-black leading-none">{pendingConsultations}</span>
+                      <span className="text-sm font-medium text-black mt-1">Consultas Pendentes</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
@@ -290,8 +290,8 @@ const Home = () => {
                       <FileText className="w-6 h-6 text-black" />
                     </div>
                     <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-foreground leading-none">{pendingExams}</span>
-                      <span className="text-sm font-medium text-[#A7D3CB] mt-1">Exames Pendentes</span>
+                      <span className="text-3xl font-bold text-black leading-none">{pendingExams}</span>
+                      <span className="text-sm font-medium text-black mt-1">Exames Pendentes</span>
                     </div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground/30" />
