@@ -170,10 +170,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             ? format(new Date(parsedDate.date + "T12:00:00"), "dd/MM/yyyy")
             : "";
           const timeStr = parsedDate.time ? parsedDate.time.slice(0, 5) : "";
-          const endStr = calculatedEndDate
-            ? format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy")
+           const endStr = finalEndDate
+174:             ? format(new Date(finalEndDate + "T12:00:00"), "dd/MM/yyyy")
             : "";
           let msgParts = `Medicamento: ${name.trim()}`;
+          if (usoContinuo) {
+            msgParts += `\nUso Contínuo`;
+          }
           if (startStr) {
             msgParts += `\nInício: ${startStr}${timeStr ? ` às ${timeStr}` : ""}`;
           }
