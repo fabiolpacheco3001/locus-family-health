@@ -14,7 +14,11 @@ const Seguranca = () => {
   const handleBiometria = (checked: boolean) => {
     setBiometria(checked);
     localStorage.setItem("biometria", String(checked));
-    toast.success(checked ? "Biometria ativada!" : "Biometria desativada.");
+    if (checked) {
+      toast.info("A ativação do Face ID / Touch ID (WebAuthn) será concluída quando o aplicativo estiver conectado ao servidor de segurança final.", { duration: 5000 });
+    } else {
+      toast("Biometria desativada. Você acessará o aplicativo apenas com sua senha.");
+    }
   };
   const [senhaAtual, setSenhaAtual] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
