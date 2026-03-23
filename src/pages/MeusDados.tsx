@@ -32,6 +32,7 @@ const MeusDados = () => {
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   useEffect(() => {
     if (titular) {
