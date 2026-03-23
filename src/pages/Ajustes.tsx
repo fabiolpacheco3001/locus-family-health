@@ -8,7 +8,7 @@ const menuItems = [
   { icon: User, label: "Meus Dados", path: "/meus-dados" },
   { icon: Users, label: "Gerenciar Família", path: "/gerenciar-familia" },
   { icon: Bell, label: "Notificações", path: "/notificacoes" },
-  { icon: Shield, label: "Segurança e Senha", path: null },
+  { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: null },
 ];
 
