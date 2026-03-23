@@ -91,6 +91,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setDurationDays("");
     setStatus("Ativo");
     setConsultationId("none");
+    setUsoContinuo(false);
+    setMedicoPrescritor("");
+    setEstoqueTotal("");
+    setEstoqueMinimo("");
   };
 
   // Extract date and time from the combined datetime-local
