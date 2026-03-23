@@ -201,6 +201,7 @@ const MeusDados = () => {
           {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
         </Button>
       </div>
+      <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} />
     </div>
   );
 };

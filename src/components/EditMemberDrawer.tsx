@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Loader2, Trash2, Camera } from "lucide-react";
+import AvatarSelector from "@/components/AvatarSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
