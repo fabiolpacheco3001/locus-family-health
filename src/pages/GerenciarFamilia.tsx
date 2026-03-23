@@ -48,7 +48,7 @@ const GerenciarFamilia = () => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-3">
           {members.length === 0 && !isLoading && (
             <p className="text-muted-foreground text-sm">
               Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.

@@ -73,7 +73,7 @@ const Seguranca = () => {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-4 space-y-6">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-6">
         {/* Biometria */}
         <div className="bg-card rounded-xl p-4 shadow-sm border border-border/40 space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Acesso Rápido</h2>

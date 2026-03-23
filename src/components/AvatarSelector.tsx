@@ -44,7 +44,7 @@ const AvatarSelector = ({ open, onOpenChange, onSelect }: Props) => {
           <DrawerDescription>Personalize seu avatar.</DrawerDescription>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain">
+        <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-5 overscroll-contain">
           <input
             ref={fileInputRef}
             type="file"

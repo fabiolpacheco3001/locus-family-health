@@ -131,7 +131,7 @@ const Metricas = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
         {/* Family member selector */}
         <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
           <SelectTrigger className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none">
