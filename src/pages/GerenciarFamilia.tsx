@@ -17,11 +17,10 @@ const ordemParentesco: Record<string, number> = {
 };
 
 const GerenciarFamilia = () => {
-  const { members, isLoading, deleteMember } = useFamilyMembers();
+  const { members, isLoading } = useFamilyMembers();
   const navigate = useNavigate();
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [editMember, setEditMember] = useState<FamilyMember | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<FamilyMember | null>(null);
 
   const sorted = [...members].sort(
     (a, b) => (ordemParentesco[a.relationship] || 99) - (ordemParentesco[b.relationship] || 99)
