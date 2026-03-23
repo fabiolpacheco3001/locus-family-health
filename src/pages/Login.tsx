@@ -95,7 +95,7 @@ const Login = () => {
           {isSignUp ? "Já tem uma conta? Entrar" : "Criar nova conta familiar"}
         </button>
       </div>
-    </MobileShell>
+    </div>
   );
 };
 

@@ -226,6 +226,9 @@ const FamiliarProfile = () => {
         ))}
       </div>
 
+        </div>
+      </div>
+
       {/* Edit Drawer */}
       <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
       <AtualizarMedidasDrawer
