@@ -150,9 +150,9 @@ const Agenda = () => {
         </div>
       ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Calendar className="text-primary" size={28} />
-          </div>
+           <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+             <Calendar className="text-black" size={28} />
+           </div>
           <p className="text-foreground font-semibold mb-1">Nenhum compromisso</p>
           <p className="text-muted-foreground text-sm">
             {currentFilter ? "Nenhum item encontrado para este filtro." : "Sua família não tem compromissos agendados no momento."}
