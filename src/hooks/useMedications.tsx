@@ -38,6 +38,10 @@ export type NewMedication = {
   start_time?: string | null;
   end_date?: string | null;
   consultation_id?: string | null;
+  uso_continuo?: boolean;
+  medico_prescritor?: string | null;
+  estoque_total?: number | null;
+  estoque_minimo?: number | null;
 };
 
 export type UpdateMedication = {
