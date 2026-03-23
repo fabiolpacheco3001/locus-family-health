@@ -1,33 +1,46 @@
 
 
-## Plan: Persistir Avatar no Banco de Dados
+## Plan: Corrigir Swipe-to-Delete nas Notificações
 
-### Problema
-O avatar selecionado (emoji ou imagem Base64) existe apenas em memória (React state). Ao recarregar a página ou navegar, ele volta para as iniciais porque nunca é salvo no banco.
+### Diagnóstico
+Analisando o session replay, o card está voando para -1043px (muito além dos constraints), indicando que o `animate()` do framer-motion v12 não está controlando o `useMotionValue` corretamente — ou o `onDragEnd` não está disparando como esperado.
 
-### Solução
+O framer-motion v12 mudou a assinatura de `animate` para motion values. A abordagem mais robusta é usar `useAnimationControls` ou simplesmente controlar via `x.set()` com transição manual.
 
-**1. Migration: adicionar coluna `avatar_url` na tabela `family_members`**
+### Alterações em `src/pages/Notificacoes.tsx`
 
-```sql
-ALTER TABLE public.family_members ADD COLUMN avatar_url text;
+**1. Substituir `animate()` por controle direto do motion value**
+
+Em vez de `animate(x, -400, ...)`, usar a API `useAnimate` do framer-motion v12 ou fallback com `x.set()` + `requestAnimationFrame` para animar a saída.
+
+Alternativa mais estável: usar `useState` para controlar se o card está "dismissed" e aplicar `variants` do framer-motion para a animação de saída.
+
+**2. Abordagem com `AnimatePresence` + `variants`**
+
+- Envolver a lista com `<AnimatePresence>`
+- Cada `NotificationCard` usa `motion.div` com `exit={{ x: -400, opacity: 0 }}`
+- O swipe apenas seta um estado `dismissed` → chama `onDelete` → o `AnimatePresence` cuida da animação de saída
+- O drag usa `onDragEnd` com `info.offset.x` (API v12) em vez de `x.get()` para detecção de threshold
+
+**3. Corrigir detecção de threshold**
+
+```tsx
+const handleDragEnd = (_: any, info: PanInfo) => {
+  if (info.offset.x < SWIPE_THRESHOLD) {
+    onDelete(notification.id);
+  }
+};
 ```
 
-**2. Atualizar `useFamilyMembers.tsx`**
-- Adicionar `avatar_url` ao tipo `FamilyMember`
-- Adicionar `avatar_url` ao tipo `NewFamilyMember`
+Usar `info.offset.x` (fornecido pelo framer-motion no callback) é mais confiável que `x.get()`.
 
-**3. Atualizar `MeusDados.tsx`**
-- No `useEffect`, carregar `avatarUrl` do `titular.avatar_url`
-- No `handleSave`, incluir `avatar_url: avatarUrl || null` no payload de update
+**4. Estrutura final do NotificationCard**
 
-**4. Atualizar `EditMemberDrawer.tsx`**
-- No `useEffect`, carregar `avatarUrl` do `member.avatar_url`
-- No `handleSave`, incluir `avatar_url: avatarUrl || null`
+- Container `relative overflow-hidden` com fundo vermelho + lixeira
+- `motion.div` frontal com `drag="x"`, `dragConstraints={{ left: 0, right: 0 }}`, `dragElastic={{ left: 0.5, right: 0 }}`
+- `onDragEnd` usa `info.offset.x` para decidir delete vs snap-back
+- Lista envolta em `AnimatePresence` para animação de saída suave
 
-**5. Exibição global do avatar**
-- Nos locais que renderizam membros da família (Home, GerenciarFamilia, FamiliarProfile, seletores), usar `member.avatar_url` para renderizar emoji/imagem ao invés de apenas iniciais
-
-### Nota sobre imagens Base64
-Strings Base64 de fotos podem ser muito grandes para uma coluna `text` no banco. Para o MVP isso funciona, mas no futuro deve-se migrar para Storage (bucket) com URL pública.
+### Resultado
+Swipe fluido para a esquerda, snap-back quando solto antes do limiar, animação de saída suave ao deletar.
 
