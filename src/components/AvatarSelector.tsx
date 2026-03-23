@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,13 +8,36 @@ import {
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSelect?: (avatar: string) => void;
 }
 
 const avatarEmojis = ["👨", "👩", "👴", "👵", "👦", "👧", "🐶", "🐱"];
 
-const AvatarSelector = ({ open, onOpenChange }: Props) => {
+const AvatarSelector = ({ open, onOpenChange, onSelect }: Props) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleEmojiClick = (emoji: string) => {
+    onSelect?.(emoji);
+    onOpenChange(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (reader.result && typeof reader.result === "string") {
+        onSelect?.(reader.result);
+        onOpenChange(false);
+      }
+    };
+    reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+  };
+
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
         <DrawerHeader>
           <DrawerTitle className="text-primary">Escolher Foto de Perfil</DrawerTitle>
@@ -21,10 +45,17 @@ const AvatarSelector = ({ open, onOpenChange }: Props) => {
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
           <Button
             variant="outline"
             className="w-full h-12 gap-2 text-base font-medium"
-            onClick={() => {/* Upload logic TBD */}}
+            onClick={() => fileInputRef.current?.click()}
           >
             <Upload size={18} />
             Fazer Upload de Foto
@@ -37,7 +68,7 @@ const AvatarSelector = ({ open, onOpenChange }: Props) => {
                 <button
                   key={emoji}
                   className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-transparent hover:border-primary active:scale-95 transition-all flex items-center justify-center text-3xl mx-auto"
-                  onClick={() => {/* Selection logic TBD */}}
+                  onClick={() => handleEmojiClick(emoji)}
                 >
                   {emoji}
                 </button>
