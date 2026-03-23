@@ -12,9 +12,9 @@ import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
-  Agendada: "bg-primary/10 text-primary border-primary/20",
-  Realizada: "bg-secondary/10 text-secondary border-secondary/20",
-  Cancelada: "bg-destructive/10 text-destructive border-destructive/20",
+  Agendada: "bg-[#A0C4D7] text-black border-none",
+  Realizada: "bg-[#F2A97F] text-black border-none",
+  Cancelada: "bg-[#F87171] text-black border-none",
 };
 
 // Add "Realizada" status option - handled in AddConsultationDrawer
