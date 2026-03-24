@@ -325,17 +325,18 @@ const Home = () => {
             ))}
           </div>
         </div>
+        {/* Acesso Rápido - título dentro do bloco escuro */}
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 mt-6 mb-3">
+          <Zap size={18} className="text-[#A7D3CB]" />
+          Acesso Rápido
+        </h2>
       </div>
 
       {/* Conteúdo flutuante */}
-      <div className="px-5 -mt-6 relative z-10 space-y-6">
+      <div className="px-5 -mt-24 relative z-10 space-y-6">
 
-      {/* Acesso Rápido */}
+      {/* Acesso Rápido - Cards */}
       <div className="mb-6">
-        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <Zap size={18} style={{ color: '#6A978F' }} />
-          Acesso Rápido
-        </h2>
         <div className="grid grid-cols-2 gap-3 mt-4">
           {[
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
