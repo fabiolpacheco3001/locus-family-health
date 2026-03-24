@@ -226,7 +226,7 @@ const Home = () => {
       {/* Visão Geral */}
       <div className="mb-6">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <LayoutDashboard size={18} className="text-primary" />
+          <LayoutDashboard size={18} style={{ color: '#6A978F' }} />
           Visão Geral
         </h2>
         <Carousel
