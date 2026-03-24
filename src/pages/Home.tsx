@@ -360,7 +360,7 @@ const Home = () => {
         <AccordionItem value="acoes-hoje" id="acoes-hoje" className="border-b-0">
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
-              <Activity size={18} className="text-primary" />
+              <Activity size={18} style={{ color: '#6A978F' }} />
               Ações de Hoje
             </span>
           </AccordionTrigger>
