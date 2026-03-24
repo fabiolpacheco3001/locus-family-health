@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck, ArrowLeft } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -266,6 +266,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     const nextIndex = currentMedIndex + 1;
     setCurrentMedIndex(nextIndex);
     populateFromExtracted(extractedMeds[nextIndex]);
+  };
+
+  const handleBackMed = () => {
+    saveCurrentToExtracted();
+    const prevIndex = currentMedIndex - 1;
+    setCurrentMedIndex(prevIndex);
+    populateFromExtracted(extractedMeds[prevIndex]);
   };
 
   const buildMedPayload = () => {
@@ -738,9 +745,16 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           </div>
 
           <DrawerFooter className="flex-row gap-3">
-            <DrawerClose asChild>
-              <Button variant="ghost" className="flex-1">Cancelar</Button>
-            </DrawerClose>
+            {isWizardMode && currentMedIndex > 0 ? (
+              <Button variant="ghost" className="flex-1" onClick={handleBackMed}>
+                <ArrowLeft size={16} className="mr-1" />
+                Voltar
+              </Button>
+            ) : (
+              <DrawerClose asChild>
+                <Button variant="ghost" className="flex-1">Cancelar</Button>
+              </DrawerClose>
+            )}
             {isWizardMode && !isLastWizardStep ? (
               <Button
                 onClick={handleNextMed}
