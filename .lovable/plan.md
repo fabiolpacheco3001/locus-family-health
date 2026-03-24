@@ -1,58 +1,19 @@
 
 
-## Diagnóstico: Erro de Upload de Avatar
+## Plano: Ajuste de Espaçamento "Acesso Rápido" na Home
 
-**Causa raiz:** O bucket `avatars` existe e é público para leitura, mas a tabela `storage.objects` não possui políticas de RLS que permitam INSERT/UPDATE/DELETE para esse bucket. Resultado: qualquer tentativa de upload falha com "new row violates row-level security policy".
+### Problema
+O título "Acesso Rápido" (linha 329) tem `mt-6 mb-3` e o container flutuante (linha 336) tem `-mt-24`, criando gap excessivo entre título e cards.
 
-O mesmo problema afeta o bucket `receitas`.
+### Alterações em `src/pages/Home.tsx`
 
-## Plano de Correção
+**1. Linha 329** — Reduzir margens do título:
+- De: `mt-6 mb-3`
+- Para: `mt-4 mb-1`
 
-### Passo único: Criar políticas de RLS para os buckets `avatars` e `receitas`
+**2. Linha 336** — Aumentar margem negativa do container flutuante:
+- De: `-mt-24`
+- Para: `-mt-28`
 
-Executar uma migration SQL com as seguintes políticas:
-
-```sql
--- AVATARS: INSERT
-CREATE POLICY "Authenticated users can upload avatars"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'avatars');
-
--- AVATARS: SELECT (público)
-CREATE POLICY "Anyone can view avatars"
-ON storage.objects FOR SELECT TO public
-USING (bucket_id = 'avatars');
-
--- AVATARS: UPDATE
-CREATE POLICY "Authenticated users can update avatars"
-ON storage.objects FOR UPDATE TO authenticated
-USING (bucket_id = 'avatars');
-
--- AVATARS: DELETE
-CREATE POLICY "Authenticated users can delete avatars"
-ON storage.objects FOR DELETE TO authenticated
-USING (bucket_id = 'avatars');
-
--- RECEITAS: INSERT
-CREATE POLICY "Authenticated users can upload receitas"
-ON storage.objects FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'receitas');
-
--- RECEITAS: SELECT (público)
-CREATE POLICY "Anyone can view receitas"
-ON storage.objects FOR SELECT TO public
-USING (bucket_id = 'receitas');
-
--- RECEITAS: UPDATE
-CREATE POLICY "Authenticated users can update receitas"
-ON storage.objects FOR UPDATE TO authenticated
-USING (bucket_id = 'receitas');
-
--- RECEITAS: DELETE
-CREATE POLICY "Authenticated users can delete receitas"
-ON storage.objects FOR DELETE TO authenticated
-USING (bucket_id = 'receitas');
-```
-
-**Nenhum arquivo de código precisa ser alterado** — o `AvatarSelector.tsx` já usa a lógica correta de upload para o bucket `avatars`. O problema é exclusivamente de permissão no banco.
+Estas duas mudanças puxam os cards para mais perto do título, igualando o padrão de espaçamento da seção "Visão Geral".
 
