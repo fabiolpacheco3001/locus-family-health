@@ -102,6 +102,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setMedicoPrescritor("");
     setEstoqueTotal("");
     setEstoqueMinimo("");
+    setReceitaFile(null);
+    setExistingReceitaUrl(null);
   };
 
   const parsedDate = useMemo(() => {
