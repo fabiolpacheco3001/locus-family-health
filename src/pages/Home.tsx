@@ -504,6 +504,7 @@ const Home = () => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      </div>
 
       {/* Drawer de seleção de familiar */}
       <Drawer open={!!quickAction} onOpenChange={(open) => !open && setQuickAction(null)}>
@@ -550,8 +551,6 @@ const Home = () => {
           </div>
         </DrawerContent>
       </Drawer>
-      </div>
-      </div>
     </div>
   );
 };
