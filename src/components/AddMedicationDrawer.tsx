@@ -54,7 +54,6 @@ type ExtractedMed = {
   dosagem?: string | null;
   frequencia?: string | null;
   duracao_dias?: number | null;
-  // User-editable fields stored per-step
   _name?: string;
   _dosage?: string;
   _frequencyHours?: string;
@@ -88,7 +87,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const isEditing = !!editingMedication;
 
-  // Wizard states
   const [extractedMeds, setExtractedMeds] = useState<ExtractedMed[]>([]);
   const [currentMedIndex, setCurrentMedIndex] = useState(0);
   const isWizardMode = extractedMeds.length > 1;
@@ -162,7 +160,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
 
-  // Populate form fields from an extracted med
   const populateFromExtracted = (med: ExtractedMed) => {
     setName(med._name ?? med.nome_medicamento ?? "");
     setDosage(med._dosage ?? med.dosagem ?? "");
@@ -175,7 +172,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setEstoqueMinimo(med._estoqueMinimo ?? "");
   };
 
-  // Save current form fields back into extractedMeds array at currentMedIndex
   const saveCurrentToExtracted = () => {
     setExtractedMeds((prev) => {
       const updated = [...prev];
@@ -195,7 +191,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     });
   };
 
-  // Auto-fill doctor from selected consultation
   const handleConsultationChange = (value: string) => {
     setConsultationId(value);
     if (value !== "none") {
@@ -233,20 +228,17 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         if (data.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
 
         if (data.medicamentos.length > 1) {
-          // Wizard mode: store all meds, populate first
           setExtractedMeds(data.medicamentos);
           setCurrentMedIndex(0);
           populateFromExtracted(data.medicamentos[0]);
           toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise um por um.`);
         } else {
-          // Single med - no wizard
           setExtractedMeds([]);
           setCurrentMedIndex(0);
           populateFromExtracted(data.medicamentos[0]);
           toast.success("Dados extraídos da receita com sucesso!");
         }
       } else {
-        // Fallback: legacy single-medication format
         if (data?.nome_medicamento) setName(data.nome_medicamento);
         if (data?.dosagem) setDosage(data.dosagem);
         if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
@@ -262,7 +254,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   };
 
-  // Wizard: go to next medication
   const handleNextMed = () => {
     saveCurrentToExtracted();
     const nextIndex = currentMedIndex + 1;
@@ -270,7 +261,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     populateFromExtracted(extractedMeds[nextIndex]);
   };
 
-  // Build medication payload from form state
   const buildMedPayload = () => {
     const freqNum = frequencyHours ? Number(frequencyHours) : null;
     const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
@@ -297,7 +287,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     };
   };
 
-  // Build payload from an extracted med's saved fields
   const buildMedPayloadFromExtracted = (med: ExtractedMed) => {
     const medName = (med._name ?? med.nome_medicamento ?? "").trim();
     const medDosage = (med._dosage ?? med.dosagem ?? "").trim() || null;
@@ -357,19 +346,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         });
         toast.success("Medicamento atualizado!");
       } else if (isWizardMode) {
-        // Bulk insert: save current form back, then insert all
         saveCurrentToExtracted();
-        // We need the latest extractedMeds - since saveCurrentToExtracted is async via setState,
-        // build the current one from form state and the rest from extractedMeds
         const allMeds = extractedMeds.map((med, idx) => {
           if (idx === currentMedIndex) {
-            // Use current form state for the currently displayed med
             return buildMedPayload();
           }
           return buildMedPayloadFromExtracted(med);
         });
 
-        // Filter out any without a name
         const validMeds = allMeds.filter((m) => m.name.trim());
 
         if (receitaFile) {
@@ -385,7 +369,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
         await Promise.all(inserts.map((med) => addMedication.mutateAsync(med)));
 
-        // Create notification for the batch
         if (user) {
           const { data: member } = await supabase
             .from("family_members")
@@ -407,7 +390,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
         toast.success(`${validMeds.length} medicamentos salvos com sucesso!`);
       } else {
-        // Single medication insert
         const tempId = crypto.randomUUID();
         if (receitaFile) {
           receitaUrl = await uploadReceita(receitaFile, tempId);
@@ -520,9 +502,21 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 no-scrollbar">
             <div className="flex flex-col gap-4">
-              {/* Receita Médica - Upload + IA (AI-First) */}
-              {!isEditing && (
-                <div className="space-y-3 pb-4 border-b border-border/50 mb-2">
+
+              {/* ═══════ BLOCO 1: Origem e Documentação (com moldura) ═══════ */}
+              <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
+                {/* Vincular Consulta */}
+                <div className="space-y-1.5">
+                  <Label>Vincular Consulta</Label>
+                  <ConsultationCombobox
+                    familyMemberId={familyMemberId}
+                    value={consultationId}
+                    onValueChange={handleConsultationChange}
+                  />
+                </div>
+
+                {/* Receita Médica - Upload + IA */}
+                <div className="space-y-3">
                   <Label>Receita Médica (PDF ou Imagem)</Label>
                   <input
                     ref={receitaInputRef}
@@ -539,7 +533,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     }}
                   />
                   {receitaFile ? (
-                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                    <div className="flex items-center gap-2 p-3 bg-background rounded-md border border-border">
                       <Paperclip size={16} className="text-muted-foreground shrink-0" />
                       <span className="text-sm text-foreground truncate flex-1">{receitaFile.name}</span>
                       <button onClick={() => { setReceitaFile(null); if (receitaInputRef.current) receitaInputRef.current.value = ""; }}>
@@ -547,7 +541,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                       </button>
                     </div>
                   ) : existingReceitaUrl ? (
-                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                    <div className="flex items-center gap-2 p-3 bg-background rounded-md border border-border">
                       <Paperclip size={16} className="text-muted-foreground shrink-0" />
                       <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
                       <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
@@ -568,7 +562,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     </Button>
                   )}
 
-                  {!isWizardMode && (
+                  {!isEditing && !isWizardMode && (
                     <div className="space-y-1.5">
                       <Button
                         type="button"
@@ -596,15 +590,25 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     </div>
                   )}
                 </div>
-              )}
 
-              {/* Linha 1: Nome */}
+                {/* Médico Prescritor */}
+                <div className="space-y-1.5">
+                  <Label>Médico Prescritor</Label>
+                  <Input
+                    placeholder="Ex: Dr. Varella"
+                    value={medicoPrescritor}
+                    onChange={(e) => setMedicoPrescritor(e.target.value)}
+                    className="text-[16px]"
+                  />
+                </div>
+              </div>
+
+              {/* ═══════ BLOCO 2: Tratamento Principal (sem moldura) ═══════ */}
               <div className="space-y-1.5">
                 <Label>Nome do Medicamento *</Label>
                 <MedicationAutocomplete value={name} onChange={setName} />
               </div>
 
-              {/* Linha 2: Dosagem | Frequência */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Dosagem</Label>
@@ -623,7 +627,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </div>
               </div>
 
-              {/* Linha 3: Início | Duração */}
               <div className="grid grid-cols-2 gap-3 items-start">
                 <div className="space-y-1.5">
                   <Label>Data e Hora de Início</Label>
@@ -655,17 +658,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </div>
               </div>
 
-              {/* Linha 4: Vincular Consulta */}
-              <div className="space-y-1.5">
-                <Label>Vincular Consulta</Label>
-                <ConsultationCombobox
-                  familyMemberId={familyMemberId}
-                  value={consultationId}
-                  onValueChange={handleConsultationChange}
-                />
-              </div>
-
-              {/* Moldura Expansível: Uso Contínuo & Avançado */}
+              {/* ═══════ BLOCO 3: Uso Contínuo (com moldura) ═══════ */}
               <div className="p-4 bg-muted/40 border border-border rounded-xl flex flex-col gap-4 transition-all">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-foreground">Uso Contínuo</span>
@@ -673,84 +666,24 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </div>
 
                 {usoContinuo && (
-                  <>
-                    <div className="space-y-1.5">
-                      <Label>Médico Prescritor</Label>
-                      <Input
-                        placeholder="Ex: Dr. Varella"
-                        value={medicoPrescritor}
-                        onChange={(e) => setMedicoPrescritor(e.target.value)}
-                        className="text-[16px]"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-muted-foreground">Controle de Estoque</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label>Qtd. Comprimidos</Label>
-                          <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label>Alertar Faltando</Label>
-                          <Input type="number" inputMode="numeric" placeholder="Ex: 5" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-[16px]" />
-                        </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">Controle de Estoque</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Qtd. na Caixa/Frasco</Label>
+                        <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Alerta de Reposição</Label>
+                        <Input type="number" inputMode="numeric" placeholder="Ex: 5" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-[16px]" />
                       </div>
                     </div>
-                  </>
+                    {/* Espaço reservado para Foto do Medicamento (próximo prompt) */}
+                  </div>
                 )}
               </div>
 
-              {/* Receita Médica - Upload (editing mode only, since new mode has it at top) */}
-              {isEditing && (
-                <div className="space-y-1.5">
-                  <Label>Receita Médica (PDF ou Imagem)</Label>
-                  <input
-                    ref={receitaInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const selected = e.target.files?.[0] ?? null;
-                      if (selected && selected.size > 20 * 1024 * 1024) {
-                        toast.error("Arquivo muito grande (máx 20MB).");
-                        return;
-                      }
-                      setReceitaFile(selected);
-                    }}
-                  />
-                  {receitaFile ? (
-                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
-                      <Paperclip size={16} className="text-muted-foreground shrink-0" />
-                      <span className="text-sm text-foreground truncate flex-1">{receitaFile.name}</span>
-                      <button onClick={() => { setReceitaFile(null); if (receitaInputRef.current) receitaInputRef.current.value = ""; }}>
-                        <X size={16} className="text-muted-foreground" />
-                      </button>
-                    </div>
-                  ) : existingReceitaUrl ? (
-                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
-                      <Paperclip size={16} className="text-muted-foreground shrink-0" />
-                      <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
-                      <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
-                        <Eye size={16} className="text-primary" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => { setExistingReceitaUrl(null); setReceitaFile(null); }}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start gap-2 text-muted-foreground"
-                      onClick={() => receitaInputRef.current?.click()}
-                    >
-                      <Paperclip size={16} />
-                      Selecionar arquivo
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* Status do Tratamento (apenas edição) - último item */}
+              {/* Status do Tratamento (apenas edição) */}
               {isEditing && (
                 <div className="flex flex-col gap-2">
                   <Label>Status do Tratamento</Label>
