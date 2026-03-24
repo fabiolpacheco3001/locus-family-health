@@ -40,7 +40,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background">
+    <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
       <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
         {/* Logo */}
         <div className="flex flex-col items-center mb-12">

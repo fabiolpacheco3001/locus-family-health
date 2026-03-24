@@ -119,9 +119,9 @@ const Metricas = () => {
   const unitLabel = graficoAtivo === "peso" ? "kg" : "cm";
 
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-24">
+    <div className="flex flex-col min-h-screen bg-[#f2f0eb] pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background border-b border-border px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-30 bg-[#f2f0eb] border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={goBack} className="p-1 -ml-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>

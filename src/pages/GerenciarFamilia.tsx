@@ -38,7 +38,7 @@ const GerenciarFamilia = () => {
         />
       )}
 
-      <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
+      <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
         {/* Header */}
         <div className="flex-none flex items-center gap-3 px-4 py-3 bg-card border-b border-border">
           <button onClick={() => navigate("/ajustes")} className="p-1">

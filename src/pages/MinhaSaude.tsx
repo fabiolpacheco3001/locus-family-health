@@ -118,7 +118,7 @@ const MinhaSaude = () => {
   const unitLabel = graficoAtivo === "peso" ? "kg" : "cm";
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-background overflow-hidden z-10">
+    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       {/* Header */}
       <div className="flex-none bg-background border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={goBack} className="p-1 -ml-1">
