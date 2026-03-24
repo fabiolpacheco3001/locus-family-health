@@ -1,33 +1,25 @@
 
 
-## Plan: Aplicar fundo #f2f0eb em todas as telas
+## Plan: Substituir logo do coração pela logo Locus Vita na tela de Login
 
-**Estrategia:** Mesma abordagem da Home — substituir `bg-background` por `bg-[#f2f0eb]` no container principal fixo de cada página. Para sub-páginas sem container próprio, o fundo vem do `AppLayout`/`MobileShell`, que também será atualizado.
+**Arquivo:** `src/pages/Login.tsx`
 
-### Alterações
+### Mudanças:
 
-**1. Container global — `src/components/MobileShell.tsx`**
-- Trocar `bg-background` por `bg-[#f2f0eb]` (afeta todas as sub-páginas que herdam o fundo do layout)
+1. **Copiar a imagem** do upload para `src/assets/locus-vita-logo.jpeg`
 
-**2. Páginas com Caixa Rígida (container fixo próprio) — substituir `bg-background` por `bg-[#f2f0eb]` no div principal:**
+2. **Atualizar `src/pages/Login.tsx`:**
+   - Remover o import do `Heart` (se não usado em outro lugar)
+   - Adicionar `import locusvitaLogo from "@/assets/locus-vita-logo.jpeg"`
+   - Substituir o bloco do logo (linhas 46-51) — remover o quadrado verde com coração e colocar a imagem da logo:
 
-| Arquivo | Linha aprox. |
-|---|---|
-| `src/pages/Agenda.tsx` | ~123 |
-| `src/pages/Familia.tsx` | ~11 |
-| `src/pages/Ajustes.tsx` | ~35 |
-| `src/pages/FamiliarProfile.tsx` | ~175 |
-| `src/pages/MinhaSaude.tsx` | ~121 |
-| `src/pages/Notificacoes.tsx` | ~133 |
-| `src/pages/MeusDados.tsx` | ~87 |
-| `src/pages/Seguranca.tsx` | ~66 |
-| `src/pages/GerenciarFamilia.tsx` | ~41 |
+```tsx
+<div className="flex flex-col items-center mb-12">
+  <img src={locusvitaLogo} alt="Locus Vita" className="w-40 h-40 object-contain mb-4" />
+  <p className="text-muted-foreground text-sm mt-1">Saúde familiar simplificada</p>
+</div>
+```
 
-**3. Página sem Caixa Rígida:**
-- `src/pages/Metricas.tsx` (~122): trocar `bg-background` por `bg-[#f2f0eb]` no container e no header sticky
-
-**4. Tela de Login — `src/pages/Login.tsx` (~43):**
-- Trocar `bg-background` por `bg-[#f2f0eb]`
-
-**Escopo excluído:** inputs, drawers, footers e headers internos (`bg-card`, `bg-background` em campos de formulário) permanecem inalterados — a mudança é apenas no fundo principal de cada tela.
+   - O título "Locus Vita" em texto será removido pois a logo já contém o nome
+   - A tagline "Saúde familiar simplificada" permanece
 
