@@ -1,9 +1,11 @@
-import { useRef } from "react";
-import { Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription,
 } from "@/components/ui/drawer";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   open: boolean;
@@ -15,25 +17,39 @@ const avatarEmojis = ["👨", "👩", "👴", "👵", "👦", "👧", "🐶", "�
 
 const AvatarSelector = ({ open, onOpenChange, onSelect }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleEmojiClick = (emoji: string) => {
     onSelect?.(emoji);
     onOpenChange(false);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (reader.result && typeof reader.result === "string") {
-        onSelect?.(reader.result);
-        onOpenChange(false);
-      }
-    };
-    reader.readAsDataURL(file);
-    // Reset input so same file can be re-selected
-    e.target.value = "";
+
+    setUploading(true);
+    try {
+      const fileName = `${crypto.randomUUID()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(fileName);
+
+      onSelect?.(data.publicUrl);
+      onOpenChange(false);
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      toast.error("Erro ao enviar a foto. Tente novamente.");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   return (
@@ -56,9 +72,19 @@ const AvatarSelector = ({ open, onOpenChange, onSelect }: Props) => {
             variant="outline"
             className="w-full h-12 gap-2 text-base font-medium"
             onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
           >
-            <Upload size={18} />
-            Fazer Upload de Foto
+            {uploading ? (
+              <>
+                <Loader2 size={18} className="animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Upload size={18} />
+                Fazer Upload de Foto
+              </>
+            )}
           </Button>
 
           <div>
@@ -69,6 +95,7 @@ const AvatarSelector = ({ open, onOpenChange, onSelect }: Props) => {
                   key={emoji}
                   className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-transparent hover:border-primary active:scale-95 transition-all flex items-center justify-center text-3xl mx-auto"
                   onClick={() => handleEmojiClick(emoji)}
+                  disabled={uploading}
                 >
                   {emoji}
                 </button>
