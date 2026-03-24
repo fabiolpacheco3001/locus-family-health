@@ -34,17 +34,24 @@ interface Props {
 }
 
 const FREQUENCY_OPTIONS = [
-  { label: "1x ao dia (24h)", value: "24" },
-  { label: "De 12 em 12 horas", value: "12" },
-  { label: "De 8 em 8 horas", value: "8" },
-  { label: "De 6 em 6 horas", value: "6" },
+  { label: "1x dia", value: "24" },
+  { label: "12/12 h", value: "12" },
+  { label: "8/8 h", value: "8" },
+  { label: "6/6 h", value: "6" },
+  { label: "4/4 h", value: "4" },
+  { label: "2/2 h", value: "2" },
+  { label: "1/1 h", value: "1" },
 ];
 
 const FREQ_MAP: Record<string, string> = {
   "De 24 em 24 horas": "24",
+  "1x ao dia": "24",
   "De 12 em 12 horas": "12",
   "De 8 em 8 horas": "8",
   "De 6 em 6 horas": "6",
+  "De 4 em 4 horas": "4",
+  "De 2 em 2 horas": "2",
+  "De 1 em 1 hora": "1",
 };
 
 const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
@@ -472,8 +479,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           <DrawerHeader>
             <DrawerTitle className="text-primary">
               {isWizardMode ? (
-                <span className="text-indigo-600 font-bold">
-                  Revisando {currentMedIndex + 1} de {extractedMeds.length}
+              <span className="text-[#1C3333] font-bold">
+                  Medicamento {currentMedIndex + 1} de {extractedMeds.length}
                 </span>
               ) : isEditing ? "Editar Medicamento" : "Novo Medicamento"}
             </DrawerTitle>
@@ -492,7 +499,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   <div
                     key={idx}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      idx <= currentMedIndex ? "bg-indigo-500" : "bg-muted"
+                      idx <= currentMedIndex ? "bg-[#1C3333]" : "bg-muted"
                     }`}
                   />
                 ))}
@@ -737,7 +744,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             {isWizardMode && !isLastWizardStep ? (
               <Button
                 onClick={handleNextMed}
-                className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="flex-1 gap-2 bg-[#1C3333] hover:bg-[#2A4B4B] text-white"
               >
                 Próximo Medicamento
                 <ChevronRight size={16} />
@@ -746,14 +753,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               <Button
                 onClick={handleSave}
                 disabled={isPending}
-                className={`flex-1 gap-2 ${isWizardMode ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
+                className={`flex-1 gap-2 ${isWizardMode ? "bg-[#1C3333] hover:bg-[#2A4B4B] text-white" : ""}`}
               >
                 {isPending ? (
                   <Loader2 className="animate-spin" size={18} />
                 ) : isWizardMode ? (
                   <>
                     <CheckCheck size={16} />
-                    Salvar Tratamento Completo
+                    Salvar Receita
                   </>
                 ) : isEditing ? "Salvar Alterações" : "Salvar Medicamento"}
               </Button>
