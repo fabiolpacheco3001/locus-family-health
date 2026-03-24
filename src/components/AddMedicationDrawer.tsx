@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X, Eye, Sparkles } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -40,7 +40,29 @@ const FREQUENCY_OPTIONS = [
   { label: "De 6 em 6 horas", value: "6" },
 ];
 
+const FREQ_MAP: Record<string, string> = {
+  "De 24 em 24 horas": "24",
+  "De 12 em 12 horas": "12",
+  "De 8 em 8 horas": "8",
+  "De 6 em 6 horas": "6",
+};
+
 const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
+
+type ExtractedMed = {
+  nome_medicamento: string;
+  dosagem?: string | null;
+  frequencia?: string | null;
+  duracao_dias?: number | null;
+  // User-editable fields stored per-step
+  _name?: string;
+  _dosage?: string;
+  _frequencyHours?: string;
+  _durationDays?: string;
+  _usoContinuo?: boolean;
+  _estoqueTotal?: string;
+  _estoqueMinimo?: string;
+};
 
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { user } = useAuth();
@@ -66,6 +88,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const isEditing = !!editingMedication;
 
+  // Wizard states
+  const [extractedMeds, setExtractedMeds] = useState<ExtractedMed[]>([]);
+  const [currentMedIndex, setCurrentMedIndex] = useState(0);
+  const isWizardMode = extractedMeds.length > 1;
+
   useEffect(() => {
     if (editingMedication) {
       setName(editingMedication.name);
@@ -89,6 +116,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
       setExistingReceitaUrl(editingMedication.receita_url ?? null);
       setReceitaFile(null);
+      setExtractedMeds([]);
+      setCurrentMedIndex(0);
     } else {
       resetForm();
     }
@@ -108,6 +137,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setEstoqueMinimo("");
     setReceitaFile(null);
     setExistingReceitaUrl(null);
+    setExtractedMeds([]);
+    setCurrentMedIndex(0);
   };
 
   const parsedDate = useMemo(() => {
@@ -130,6 +161,39 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     const opt = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours);
     return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
+
+  // Populate form fields from an extracted med
+  const populateFromExtracted = (med: ExtractedMed) => {
+    setName(med._name ?? med.nome_medicamento ?? "");
+    setDosage(med._dosage ?? med.dosagem ?? "");
+    const freq = med._frequencyHours ?? (med.frequencia ? FREQ_MAP[med.frequencia] ?? "" : "");
+    setFrequencyHours(freq);
+    const dur = med._durationDays ?? (med.duracao_dias ? String(med.duracao_dias) : "");
+    setDurationDays(dur);
+    setUsoContinuo(med._usoContinuo ?? false);
+    setEstoqueTotal(med._estoqueTotal ?? "");
+    setEstoqueMinimo(med._estoqueMinimo ?? "");
+  };
+
+  // Save current form fields back into extractedMeds array at currentMedIndex
+  const saveCurrentToExtracted = () => {
+    setExtractedMeds((prev) => {
+      const updated = [...prev];
+      if (updated[currentMedIndex]) {
+        updated[currentMedIndex] = {
+          ...updated[currentMedIndex],
+          _name: name,
+          _dosage: dosage,
+          _frequencyHours: frequencyHours,
+          _durationDays: durationDays,
+          _usoContinuo: usoContinuo,
+          _estoqueTotal: estoqueTotal,
+          _estoqueMinimo: estoqueMinimo,
+        };
+      }
+      return updated;
+    });
+  };
 
   // Auto-fill doctor from selected consultation
   const handleConsultationChange = (value: string) => {
@@ -165,31 +229,22 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      // New multi-medication format: { medico_prescritor, medicamentos[] }
       if (data?.medicamentos?.length > 0) {
-        const med = data.medicamentos[0];
-        if (med.nome_medicamento) setName(med.nome_medicamento);
-        if (med.dosagem) setDosage(med.dosagem);
-        if (med.frequencia) {
-          // Map descriptive frequency to hours
-          const freqMap: Record<string, string> = {
-            "De 24 em 24 horas": "24",
-            "De 12 em 12 horas": "12",
-            "De 8 em 8 horas": "8",
-            "De 6 em 6 horas": "6",
-          };
-          const mapped = freqMap[med.frequencia];
-          if (mapped) setFrequencyHours(mapped);
-        }
-        if (med.duracao_dias) setDurationDays(String(med.duracao_dias));
         if (data.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
 
-        const total = data.medicamentos.length;
-        toast.success(
-          total > 1
-            ? `${total} medicamentos encontrados! Preenchido com o primeiro. (Wizard em breve)`
-            : "Dados extraídos da receita com sucesso!"
-        );
+        if (data.medicamentos.length > 1) {
+          // Wizard mode: store all meds, populate first
+          setExtractedMeds(data.medicamentos);
+          setCurrentMedIndex(0);
+          populateFromExtracted(data.medicamentos[0]);
+          toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise um por um.`);
+        } else {
+          // Single med - no wizard
+          setExtractedMeds([]);
+          setCurrentMedIndex(0);
+          populateFromExtracted(data.medicamentos[0]);
+          toast.success("Dados extraídos da receita com sucesso!");
+        }
       } else {
         // Fallback: legacy single-medication format
         if (data?.nome_medicamento) setName(data.nome_medicamento);
@@ -207,24 +262,29 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   };
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      toast.error("Preencha o nome do medicamento.");
-      return;
-    }
+  // Wizard: go to next medication
+  const handleNextMed = () => {
+    saveCurrentToExtracted();
+    const nextIndex = currentMedIndex + 1;
+    setCurrentMedIndex(nextIndex);
+    populateFromExtracted(extractedMeds[nextIndex]);
+  };
 
+  // Build medication payload from form state
+  const buildMedPayload = () => {
     const freqNum = frequencyHours ? Number(frequencyHours) : null;
     const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
     const finalEndDate = usoContinuo ? null : calculatedEndDate;
     const estTotalNum = estoqueTotal ? Number(estoqueTotal) : null;
     const estMinNum = estoqueMinimo ? Number(estoqueMinimo) : null;
+    const freqLbl = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours)?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : null);
 
-    const commonFields = {
+    return {
       name: name.trim(),
       dosage: dosage.trim() || null,
       start_time: parsedDate.time || null,
       frequency_hours: freqNum,
-      frequency: frequencyLabel || null,
+      frequency: freqLbl || null,
       duration_days: durNum,
       duration: durNum ? `${durNum} dias` : null,
       start_date: parsedDate.date || null,
@@ -235,6 +295,50 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       estoque_total: estTotalNum,
       estoque_minimo: estMinNum,
     };
+  };
+
+  // Build payload from an extracted med's saved fields
+  const buildMedPayloadFromExtracted = (med: ExtractedMed) => {
+    const medName = (med._name ?? med.nome_medicamento ?? "").trim();
+    const medDosage = (med._dosage ?? med.dosagem ?? "").trim() || null;
+    const medFreqHours = med._frequencyHours ?? (med.frequencia ? FREQ_MAP[med.frequencia] ?? "" : "");
+    const medDurDays = med._durationDays ?? (med.duracao_dias ? String(med.duracao_dias) : "");
+    const medUsoContinuo = med._usoContinuo ?? false;
+    const freqNum = medFreqHours ? Number(medFreqHours) : null;
+    const durNum = medUsoContinuo ? null : (medDurDays ? Number(medDurDays) : null);
+    const freqLbl = FREQUENCY_OPTIONS.find((o) => o.value === medFreqHours)?.label ?? (medFreqHours ? `A cada ${medFreqHours}h` : null);
+
+    let endDate: string | null = null;
+    if (!medUsoContinuo && parsedDate.date && durNum && durNum > 0) {
+      endDate = format(addDays(new Date(parsedDate.date + "T12:00:00"), durNum), "yyyy-MM-dd");
+    }
+
+    const estTotalNum = med._estoqueTotal ? Number(med._estoqueTotal) : null;
+    const estMinNum = med._estoqueMinimo ? Number(med._estoqueMinimo) : null;
+
+    return {
+      name: medName,
+      dosage: medDosage,
+      start_time: parsedDate.time || null,
+      frequency_hours: freqNum,
+      frequency: freqLbl || null,
+      duration_days: durNum,
+      duration: durNum ? `${durNum} dias` : null,
+      start_date: parsedDate.date || null,
+      end_date: endDate,
+      consultation_id: consultationId === "none" ? null : consultationId,
+      uso_continuo: medUsoContinuo,
+      medico_prescritor: medicoPrescritor.trim() || null,
+      estoque_total: estTotalNum,
+      estoque_minimo: estMinNum,
+    };
+  };
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error("Preencha o nome do medicamento.");
+      return;
+    }
 
     try {
       setUploading(true);
@@ -244,24 +348,78 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         if (receitaFile) {
           receitaUrl = await uploadReceita(receitaFile, editingMedication.id);
         }
+        const payload = buildMedPayload();
         await updateMedication.mutateAsync({
           id: editingMedication.id,
-          ...commonFields,
+          ...payload,
           status,
           receita_url: receitaUrl,
         });
         toast.success("Medicamento atualizado!");
+      } else if (isWizardMode) {
+        // Bulk insert: save current form back, then insert all
+        saveCurrentToExtracted();
+        // We need the latest extractedMeds - since saveCurrentToExtracted is async via setState,
+        // build the current one from form state and the rest from extractedMeds
+        const allMeds = extractedMeds.map((med, idx) => {
+          if (idx === currentMedIndex) {
+            // Use current form state for the currently displayed med
+            return buildMedPayload();
+          }
+          return buildMedPayloadFromExtracted(med);
+        });
+
+        // Filter out any without a name
+        const validMeds = allMeds.filter((m) => m.name.trim());
+
+        if (receitaFile) {
+          const tempId = crypto.randomUUID();
+          receitaUrl = await uploadReceita(receitaFile, tempId);
+        }
+
+        const inserts: NewMedication[] = validMeds.map((m) => ({
+          family_member_id: familyMemberId,
+          ...m,
+          receita_url: receitaUrl,
+        }));
+
+        await Promise.all(inserts.map((med) => addMedication.mutateAsync(med)));
+
+        // Create notification for the batch
+        if (user) {
+          const { data: member } = await supabase
+            .from("family_members")
+            .select("name")
+            .eq("id", familyMemberId)
+            .single();
+          const memberName = member?.name ?? "Familiar";
+          const medNames = validMeds.map((m) => m.name).join(", ");
+          await supabase.from("notifications").insert({
+            user_id: user.id,
+            family_member_id: familyMemberId,
+            title: `${validMeds.length} Medicamentos adicionados para ${memberName}`,
+            message: `Medicamentos: ${medNames}`,
+            type: "medication",
+            scheduled_for: new Date().toISOString(),
+            is_read: false,
+          });
+        }
+
+        toast.success(`${validMeds.length} medicamentos salvos com sucesso!`);
       } else {
+        // Single medication insert
         const tempId = crypto.randomUUID();
         if (receitaFile) {
           receitaUrl = await uploadReceita(receitaFile, tempId);
         }
+        const payload = buildMedPayload();
         const medication: NewMedication = {
           family_member_id: familyMemberId,
-          ...commonFields,
+          ...payload,
           receita_url: receitaUrl,
         };
-        const result = await addMedication.mutateAsync(medication);
+        await addMedication.mutateAsync(medication);
+
         if (user) {
           const { data: member } = await supabase
             .from("family_members")
@@ -273,6 +431,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             ? format(new Date(parsedDate.date + "T12:00:00"), "dd/MM/yyyy")
             : "";
           const timeStr = parsedDate.time ? parsedDate.time.slice(0, 5) : "";
+          const finalEndDate = usoContinuo ? null : calculatedEndDate;
           const endStr = finalEndDate
             ? format(new Date(finalEndDate + "T12:00:00"), "dd/MM/yyyy")
             : "";
@@ -322,6 +481,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
   const isPending = addMedication.isPending || updateMedication.isPending || uploading;
   const isReceitaPdf = existingReceitaUrl?.toLowerCase().endsWith(".pdf");
+  const isLastWizardStep = isWizardMode && currentMedIndex === extractedMeds.length - 1;
 
   return (
     <>
@@ -329,12 +489,34 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
           <DrawerHeader>
             <DrawerTitle className="text-primary">
-              {isEditing ? "Editar Medicamento" : "Novo Medicamento"}
+              {isWizardMode ? (
+                <span className="text-indigo-600 font-bold">
+                  Revisando {currentMedIndex + 1} de {extractedMeds.length}
+                </span>
+              ) : isEditing ? "Editar Medicamento" : "Novo Medicamento"}
             </DrawerTitle>
             <DrawerDescription>
-              {isEditing ? "Altere os dados do medicamento." : "Preencha os dados do medicamento."}
+              {isWizardMode
+                ? "Revise e ajuste os dados de cada medicamento extraído pela IA."
+                : isEditing ? "Altere os dados do medicamento." : "Preencha os dados do medicamento."}
             </DrawerDescription>
           </DrawerHeader>
+
+          {/* Wizard progress bar */}
+          {isWizardMode && (
+            <div className="px-4 pb-2">
+              <div className="flex gap-1">
+                {extractedMeds.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${
+                      idx <= currentMedIndex ? "bg-indigo-500" : "bg-muted"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 no-scrollbar">
             <div className="flex flex-col gap-4">
@@ -489,7 +671,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               </div>
 
               {/* AI Prescription Reader */}
-              {(receitaFile || existingReceitaUrl) && (
+              {(receitaFile || existingReceitaUrl) && !isWizardMode && (
                 <div className="space-y-1.5">
                   <Button
                     type="button"
@@ -562,13 +744,30 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             <DrawerClose asChild>
               <Button variant="ghost" className="flex-1">Cancelar</Button>
             </DrawerClose>
-            <Button
-              onClick={handleSave}
-              disabled={isPending}
-              className="flex-1"
-            >
-              {isPending ? <Loader2 className="animate-spin" size={18} /> : isEditing ? "Salvar Alterações" : "Salvar Medicamento"}
-            </Button>
+            {isWizardMode && !isLastWizardStep ? (
+              <Button
+                onClick={handleNextMed}
+                className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                Próximo Medicamento
+                <ChevronRight size={16} />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSave}
+                disabled={isPending}
+                className={`flex-1 gap-2 ${isWizardMode ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
+              >
+                {isPending ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : isWizardMode ? (
+                  <>
+                    <CheckCheck size={16} />
+                    Salvar Tratamento Completo
+                  </>
+                ) : isEditing ? "Salvar Alterações" : "Salvar Medicamento"}
+              </Button>
+            )}
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
