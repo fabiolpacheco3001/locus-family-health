@@ -628,9 +628,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 items-start">
+                <div className="grid grid-cols-[2fr_1fr] gap-4 items-start">
                   <div className="space-y-1.5">
-                    <Label>Data e Hora de Início</Label>
+                    <Label>Data/Hora Início</Label>
                     <input
                       type="datetime-local"
                       value={startDateTime}
@@ -672,11 +672,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     <p className="text-xs font-medium text-muted-foreground">Controle de Estoque</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label>Qtd. na Caixa/Frasco</Label>
+                        <Label>Qtd. Comprimidos</Label>
                         <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label>Alerta de Reposição</Label>
+                        <Label>Alerta de Compra</Label>
                         <Input type="number" inputMode="numeric" placeholder="Ex: 5" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-[16px]" />
                       </div>
                     </div>
