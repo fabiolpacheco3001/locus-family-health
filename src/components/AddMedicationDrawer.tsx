@@ -520,6 +520,84 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 no-scrollbar">
             <div className="flex flex-col gap-4">
+              {/* Receita Médica - Upload + IA (AI-First) */}
+              {!isEditing && (
+                <div className="space-y-3 pb-4 border-b border-border/50 mb-2">
+                  <Label>Receita Médica (PDF ou Imagem)</Label>
+                  <input
+                    ref={receitaInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const selected = e.target.files?.[0] ?? null;
+                      if (selected && selected.size > 20 * 1024 * 1024) {
+                        toast.error("Arquivo muito grande (máx 20MB).");
+                        return;
+                      }
+                      setReceitaFile(selected);
+                    }}
+                  />
+                  {receitaFile ? (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                      <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground truncate flex-1">{receitaFile.name}</span>
+                      <button onClick={() => { setReceitaFile(null); if (receitaInputRef.current) receitaInputRef.current.value = ""; }}>
+                        <X size={16} className="text-muted-foreground" />
+                      </button>
+                    </div>
+                  ) : existingReceitaUrl ? (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                      <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
+                      <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
+                        <Eye size={16} className="text-primary" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => { setExistingReceitaUrl(null); setReceitaFile(null); }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-muted-foreground"
+                      onClick={() => receitaInputRef.current?.click()}
+                    >
+                      <Paperclip size={16} />
+                      Selecionar arquivo
+                    </Button>
+                  )}
+
+                  {!isWizardMode && (
+                    <div className="space-y-1.5">
+                      <Button
+                        type="button"
+                        disabled={(!receitaFile && !existingReceitaUrl) || isAnalyzing || isPending}
+                        onClick={handleAnalyzeWithAI}
+                        className="w-full gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground hover:opacity-90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isAnalyzing ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />
+                            Lendo receita...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={16} />
+                            Preencher formulário com IA
+                          </>
+                        )}
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center">
+                        {(!receitaFile && !existingReceitaUrl)
+                          ? "Anexe uma foto da receita para ativar o preenchimento automático."
+                          : "Nossa IA lê a foto da receita e preenche o formulário para você."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Linha 1: Nome */}
               <div className="space-y-1.5">
                 <Label>Nome do Medicamento *</Label>
@@ -622,78 +700,53 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 )}
               </div>
 
-              {/* Receita Médica - Upload */}
-              <div className="space-y-1.5">
-                <Label>Receita Médica (PDF ou Imagem)</Label>
-                <input
-                  ref={receitaInputRef}
-                  type="file"
-                  accept="image/*,.pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const selected = e.target.files?.[0] ?? null;
-                    if (selected && selected.size > 20 * 1024 * 1024) {
-                      toast.error("Arquivo muito grande (máx 20MB).");
-                      return;
-                    }
-                    setReceitaFile(selected);
-                  }}
-                />
-                {receitaFile ? (
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
-                    <Paperclip size={16} className="text-muted-foreground shrink-0" />
-                    <span className="text-sm text-foreground truncate flex-1">{receitaFile.name}</span>
-                    <button onClick={() => { setReceitaFile(null); if (receitaInputRef.current) receitaInputRef.current.value = ""; }}>
-                      <X size={16} className="text-muted-foreground" />
-                    </button>
-                  </div>
-                ) : existingReceitaUrl ? (
-                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
-                    <Paperclip size={16} className="text-muted-foreground shrink-0" />
-                    <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
-                    <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
-                      <Eye size={16} className="text-primary" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => { setExistingReceitaUrl(null); setReceitaFile(null); }}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start gap-2 text-muted-foreground"
-                    onClick={() => receitaInputRef.current?.click()}
-                  >
-                    <Paperclip size={16} />
-                    Selecionar arquivo
-                  </Button>
-                )}
-              </div>
-
-              {/* AI Prescription Reader */}
-              {(receitaFile || existingReceitaUrl) && !isWizardMode && (
+              {/* Receita Médica - Upload (editing mode only, since new mode has it at top) */}
+              {isEditing && (
                 <div className="space-y-1.5">
-                  <Button
-                    type="button"
-                    disabled={isAnalyzing || isPending}
-                    onClick={handleAnalyzeWithAI}
-                    className="w-full gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground hover:opacity-90 shadow-md"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        Lendo receita...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={16} />
-                        Preencher formulário com IA
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Nossa IA lê a foto da receita e preenche o formulário para você.
-                  </p>
+                  <Label>Receita Médica (PDF ou Imagem)</Label>
+                  <input
+                    ref={receitaInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const selected = e.target.files?.[0] ?? null;
+                      if (selected && selected.size > 20 * 1024 * 1024) {
+                        toast.error("Arquivo muito grande (máx 20MB).");
+                        return;
+                      }
+                      setReceitaFile(selected);
+                    }}
+                  />
+                  {receitaFile ? (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                      <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground truncate flex-1">{receitaFile.name}</span>
+                      <button onClick={() => { setReceitaFile(null); if (receitaInputRef.current) receitaInputRef.current.value = ""; }}>
+                        <X size={16} className="text-muted-foreground" />
+                      </button>
+                    </div>
+                  ) : existingReceitaUrl ? (
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                      <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
+                      <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
+                        <Eye size={16} className="text-primary" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => { setExistingReceitaUrl(null); setReceitaFile(null); }}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-muted-foreground"
+                      onClick={() => receitaInputRef.current?.click()}
+                    >
+                      <Paperclip size={16} />
+                      Selecionar arquivo
+                    </Button>
+                  )}
                 </div>
               )}
 
