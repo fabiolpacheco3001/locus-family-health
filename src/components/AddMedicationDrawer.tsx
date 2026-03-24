@@ -805,6 +805,23 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         </DrawerContent>
       </Drawer>
 
+      <AlertDialog open={showDateAlert} onOpenChange={setShowDateAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Data e Hora não informadas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Data e Hora de início do tratamento não inserido. Continuar mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingAction(null)}>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDateAlertConfirm}>
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
