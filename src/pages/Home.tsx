@@ -331,7 +331,7 @@ const Home = () => {
           <Zap size={18} style={{ color: '#6A978F' }} />
           Acesso Rápido
         </h2>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 mt-4">
           {[
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
             { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
@@ -341,12 +341,12 @@ const Home = () => {
             <button
               key={label}
               onClick={action}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:bg-slate-50 transition-colors active:scale-95"
             >
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-2 bg-[#A7D3CB] text-black active:scale-95 transition-transform">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 bg-[#A7D3CB] text-black">
                 <Icon className="w-6 h-6" />
               </div>
-              <span className="text-[11px] font-medium text-center leading-tight text-foreground">
+              <span className="text-sm font-semibold text-slate-700">
                 {label}
               </span>
             </button>
