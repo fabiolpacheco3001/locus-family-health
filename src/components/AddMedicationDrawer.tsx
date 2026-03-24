@@ -41,7 +41,7 @@ const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border bor
 
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { user } = useAuth();
-  const { addMedication, updateMedication, deleteMedication } = useMedications(familyMemberId);
+  const { addMedication, updateMedication, deleteMedication, uploadReceita } = useMedications(familyMemberId);
   const { consultations } = useConsultations(familyMemberId);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
