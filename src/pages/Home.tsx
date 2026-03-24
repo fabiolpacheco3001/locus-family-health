@@ -181,9 +181,10 @@ const Home = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-      <div className="flex-1 overflow-y-auto no-scrollbar px-5 pt-6 pb-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
+      {/* Header with gradient splash */}
+      <div className="bg-gradient-to-b from-[#C4BFB3] to-[#f2f0eb] px-5 pt-6 pb-6 rounded-b-3xl mb-2">
+      <div className="flex items-center justify-between mb-0">
         <div className="flex items-center gap-3">
           <div
             onClick={() => navigate('/meus-dados', { state: { from: '/home' } })}
@@ -222,7 +223,9 @@ const Home = () => {
           )}
         </button>
       </div>
+      </div>
 
+      <div className="px-5">
       {/* Visão Geral */}
       <div className="mb-6">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
@@ -545,6 +548,7 @@ const Home = () => {
           </div>
         </DrawerContent>
       </Drawer>
+      </div>
       </div>
     </div>
   );
