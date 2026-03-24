@@ -549,6 +549,7 @@ const Home = () => {
         </DrawerContent>
       </Drawer>
       </div>
+      </div>
     </div>
   );
 };
