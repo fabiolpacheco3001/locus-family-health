@@ -183,7 +183,7 @@ const Home = () => {
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
       {/* Color Block do Topo */}
-      <div className="bg-[#1C3333] pt-8 pb-12 px-5 rounded-b-[2rem]">
+      <div className="bg-[#1C3333] pt-8 pb-32 px-5 rounded-b-[2.5rem]">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div
@@ -325,17 +325,18 @@ const Home = () => {
             ))}
           </div>
         </div>
+        {/* Acesso Rápido - título dentro do bloco escuro */}
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 mt-6 mb-3">
+          <Zap size={18} className="text-[#A7D3CB]" />
+          Acesso Rápido
+        </h2>
       </div>
 
       {/* Conteúdo flutuante */}
-      <div className="px-5 -mt-6 relative z-10 space-y-6">
+      <div className="px-5 -mt-24 relative z-10 space-y-6">
 
-      {/* Acesso Rápido */}
+      {/* Acesso Rápido - Cards */}
       <div className="mb-6">
-        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <Zap size={18} style={{ color: '#6A978F' }} />
-          Acesso Rápido
-        </h2>
         <div className="grid grid-cols-2 gap-3 mt-4">
           {[
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
