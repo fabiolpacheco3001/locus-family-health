@@ -308,6 +308,7 @@ export type Database = {
           id: string
           medico_prescritor: string | null
           name: string
+          receita_url: string | null
           start_date: string | null
           start_time: string | null
           status: string
@@ -329,6 +330,7 @@ export type Database = {
           id?: string
           medico_prescritor?: string | null
           name: string
+          receita_url?: string | null
           start_date?: string | null
           start_time?: string | null
           status?: string
@@ -350,6 +352,7 @@ export type Database = {
           id?: string
           medico_prescritor?: string | null
           name?: string
+          receita_url?: string | null
           start_date?: string | null
           start_time?: string | null
           status?: string

@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Loader2, Trash2, Paperclip, X, Eye } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +18,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useMedications, Medication, NewMedication } from "@/hooks/useMedications";
 import { useConsultations } from "@/hooks/useConsultations";
@@ -41,7 +44,7 @@ const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border bor
 
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { user } = useAuth();
-  const { addMedication, updateMedication, deleteMedication } = useMedications(familyMemberId);
+  const { addMedication, updateMedication, deleteMedication, uploadReceita } = useMedications(familyMemberId);
   const { consultations } = useConsultations(familyMemberId);
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
@@ -55,7 +58,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [estoqueTotal, setEstoqueTotal] = useState("");
   const [estoqueMinimo, setEstoqueMinimo] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-
+  const [receitaFile, setReceitaFile] = useState<File | null>(null);
+  const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const receitaInputRef = useRef<HTMLInputElement>(null);
   const isEditing = !!editingMedication;
 
   useEffect(() => {
@@ -79,6 +86,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setMedicoPrescritor(editingMedication.medico_prescritor ?? "");
       setEstoqueTotal(editingMedication.estoque_total?.toString() ?? "");
       setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
+      setExistingReceitaUrl(editingMedication.receita_url ?? null);
+      setReceitaFile(null);
     } else {
       resetForm();
     }
@@ -96,6 +105,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setMedicoPrescritor("");
     setEstoqueTotal("");
     setEstoqueMinimo("");
+    setReceitaFile(null);
+    setExistingReceitaUrl(null);
   };
 
   const parsedDate = useMemo(() => {
@@ -160,17 +171,29 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     };
 
     try {
+      setUploading(true);
+      let receitaUrl: string | null = existingReceitaUrl;
+
       if (isEditing) {
+        if (receitaFile) {
+          receitaUrl = await uploadReceita(receitaFile, editingMedication.id);
+        }
         await updateMedication.mutateAsync({
           id: editingMedication.id,
           ...commonFields,
           status,
+          receita_url: receitaUrl,
         });
         toast.success("Medicamento atualizado!");
       } else {
+        const tempId = crypto.randomUUID();
+        if (receitaFile) {
+          receitaUrl = await uploadReceita(receitaFile, tempId);
+        }
         const medication: NewMedication = {
           family_member_id: familyMemberId,
           ...commonFields,
+          receita_url: receitaUrl,
         };
         const result = await addMedication.mutateAsync(medication);
         if (user) {
@@ -213,6 +236,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       onOpenChange(false);
     } catch {
       toast.error("Erro ao salvar. Tente novamente.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -229,7 +254,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setShowDeleteAlert(false);
   };
 
-  const isPending = addMedication.isPending || updateMedication.isPending;
+  const isPending = addMedication.isPending || updateMedication.isPending || uploading;
+  const isReceitaPdf = existingReceitaUrl?.toLowerCase().endsWith(".pdf");
 
   return (
     <>
@@ -348,6 +374,54 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 )}
               </div>
 
+              {/* Receita Médica - Upload */}
+              <div className="space-y-1.5">
+                <Label>Receita Médica (PDF ou Imagem)</Label>
+                <input
+                  ref={receitaInputRef}
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const selected = e.target.files?.[0] ?? null;
+                    if (selected && selected.size > 20 * 1024 * 1024) {
+                      toast.error("Arquivo muito grande (máx 20MB).");
+                      return;
+                    }
+                    setReceitaFile(selected);
+                  }}
+                />
+                {receitaFile ? (
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                    <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                    <span className="text-sm text-foreground truncate flex-1">{receitaFile.name}</span>
+                    <button onClick={() => { setReceitaFile(null); if (receitaInputRef.current) receitaInputRef.current.value = ""; }}>
+                      <X size={16} className="text-muted-foreground" />
+                    </button>
+                  </div>
+                ) : existingReceitaUrl ? (
+                  <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
+                    <Paperclip size={16} className="text-muted-foreground shrink-0" />
+                    <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
+                    <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
+                      <Eye size={16} className="text-primary" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => { setExistingReceitaUrl(null); setReceitaFile(null); }}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2 text-muted-foreground"
+                    onClick={() => receitaInputRef.current?.click()}
+                  >
+                    <Paperclip size={16} />
+                    Selecionar arquivo
+                  </Button>
+                )}
+              </div>
+
               {/* Status do Tratamento (apenas edição) - último item */}
               {isEditing && (
                 <div className="flex flex-col gap-2">
@@ -425,6 +499,24 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Visualizador de Receita */}
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[90vh] p-0 gap-0">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="text-primary">Receita Médica</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 pb-4 flex-1 overflow-auto">
+            {existingReceitaUrl && (
+              isReceitaPdf ? (
+                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(existingReceitaUrl)}&embedded=true`} className="w-full h-[70vh] rounded-md border-0" />
+              ) : (
+                <img src={existingReceitaUrl} alt="Receita médica" className="w-full object-contain max-h-[70vh] rounded-md" />
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

@@ -21,6 +21,7 @@ export type Medication = {
   medico_prescritor: string | null;
   estoque_total: number | null;
   estoque_minimo: number | null;
+  receita_url: string | null;
   created_at: string;
   consultations?: { professional_name: string | null; specialty: string } | null;
   family_members?: { name: string } | null;
@@ -42,6 +43,7 @@ export type NewMedication = {
   medico_prescritor?: string | null;
   estoque_total?: number | null;
   estoque_minimo?: number | null;
+  receita_url?: string | null;
 };
 
 export type UpdateMedication = {
@@ -61,6 +63,7 @@ export type UpdateMedication = {
   medico_prescritor?: string | null;
   estoque_total?: number | null;
   estoque_minimo?: number | null;
+  receita_url?: string | null;
 };
 
 export const useMedications = (familyMemberId?: string) => {
@@ -132,6 +135,19 @@ export const useMedications = (familyMemberId?: string) => {
     },
   });
 
+  const uploadReceita = async (file: File, medicationId: string) => {
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${user!.id}/${medicationId}/receita.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("exam-files")
+      .upload(path, file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data: urlData } = supabase.storage
+      .from("exam-files")
+      .getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   return {
     medications: query.data ?? [],
     isLoading: query.isLoading,
@@ -139,5 +155,6 @@ export const useMedications = (familyMemberId?: string) => {
     addMedication,
     updateMedication,
     deleteMedication,
+    uploadReceita,
   };
 };
