@@ -223,7 +223,9 @@ const Home = () => {
           )}
         </button>
       </div>
+      </div>
 
+      <div className="px-5">
       {/* Visão Geral */}
       <div className="mb-6">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
