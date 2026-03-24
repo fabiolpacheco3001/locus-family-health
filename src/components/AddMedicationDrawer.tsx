@@ -251,7 +251,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setShowDeleteAlert(false);
   };
 
-  const isPending = addMedication.isPending || updateMedication.isPending;
+  const isPending = addMedication.isPending || updateMedication.isPending || uploading;
+  const isReceitaPdf = existingReceitaUrl?.toLowerCase().endsWith(".pdf");
 
   return (
     <>
