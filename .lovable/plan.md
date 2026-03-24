@@ -1,30 +1,22 @@
 
 
-## Plan: Usar a logo Locus Vita como ícone do PWA
+## Plan: Corrigir rota do Menu Família
 
-**Objetivo:** Substituir os ícones genéricos do PWA (icon-192.png, icon-512.png, favicon) pela logo SVG da Locus Vita enviada.
+**Problema:** O botão "Família" na barra inferior leva para `/familia`, onde clicar num membro abre o perfil de saúde (`/familiar/:id`). O usuário quer que leve para `/gerenciar-familia`, onde clicar num membro abre o drawer de edição.
 
-### Abordagem
+### Alteração
 
-O SVG será copiado para a pasta `public/` e adicionado ao `manifest.json` como ícone SVG. Além disso, será gerado um PNG a partir do SVG via script para garantir compatibilidade com iOS (Safari não suporta SVG como `apple-touch-icon`) e navegadores mais antigos.
+**Arquivo:** `src/components/BottomNav.tsx`
 
-### Alterações
+- Trocar o `path` do item "Família" de `"/familia"` para `"/gerenciar-familia"`
 
-**1. Copiar o SVG para o projeto**
-- `user-uploads://Logo_Locus_Vita.svg` → `public/logo-locus-vita.svg`
+```tsx
+// De:
+{ icon: Users, label: "Família", path: "/familia" },
 
-**2. Gerar PNGs 192x192 e 512x512 a partir do SVG**
-- Usar script com `sharp` ou `resvg` para converter o SVG em `public/icon-192.png` e `public/icon-512.png` (sobrescrevendo os atuais)
+// Para:
+{ icon: Users, label: "Família", path: "/gerenciar-familia" },
+```
 
-**3. Atualizar `public/manifest.json`**
-- Adicionar entrada SVG com `"type": "image/svg+xml"` e `"purpose": "any"`
-- Manter as entradas PNG (agora com a nova logo)
-- Atualizar `background_color` para `#f2f0eb` (consistente com o fundo do app)
-
-**4. Atualizar `index.html`**
-- Trocar o favicon para apontar ao SVG: `<link rel="icon" href="/logo-locus-vita.svg" type="image/svg+xml">`
-- Manter o `apple-touch-icon` apontando para o PNG 192px (compatibilidade iOS)
-
-### Limitação
-- A conversão SVG→PNG será feita via script no build. Se a qualidade não ficar ideal, o usuário pode fornecer PNGs prontos nos tamanhos 192x192 e 512x512.
+Isso faz com que a aba "Família" na navegação inferior abra diretamente a tela de gerenciamento, onde selecionar um familiar abre o drawer de edição (e não o hub de saúde).
 
