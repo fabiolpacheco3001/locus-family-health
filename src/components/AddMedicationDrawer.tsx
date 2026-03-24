@@ -261,7 +261,27 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   };
 
-  const handleNextMed = () => {
+  const [showDateAlert, setShowDateAlert] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"next" | "save" | null>(null);
+
+  const checkDateAndProceed = (action: "next" | "save") => {
+    if (!startDateTime) {
+      setPendingAction(action);
+      setShowDateAlert(true);
+    } else {
+      if (action === "next") proceedNext();
+      else handleSave();
+    }
+  };
+
+  const handleDateAlertConfirm = () => {
+    setShowDateAlert(false);
+    if (pendingAction === "next") proceedNext();
+    else if (pendingAction === "save") handleSave();
+    setPendingAction(null);
+  };
+
+  const proceedNext = () => {
     saveCurrentToExtracted();
     const nextIndex = currentMedIndex + 1;
     setCurrentMedIndex(nextIndex);
