@@ -63,6 +63,7 @@ export type UpdateMedication = {
   medico_prescritor?: string | null;
   estoque_total?: number | null;
   estoque_minimo?: number | null;
+  receita_url?: string | null;
 };
 
 export const useMedications = (familyMemberId?: string) => {
