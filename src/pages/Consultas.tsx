@@ -66,6 +66,27 @@ const Consultas = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Consultas</h1>
         </div>
 
+        <div className="mb-4">
+          <div className="flex p-1 bg-slate-100 rounded-xl">
+            <button
+              onClick={() => setAbaAtiva('proximas')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === 'proximas' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Próximas
+            </button>
+            <button
+              onClick={() => setAbaAtiva('historico')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === 'historico' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Histórico
+            </button>
+          </div>
+        </div>
+
         {/* List */}
         {isLoading ? (
           <div className="space-y-3">
@@ -73,17 +94,21 @@ const Consultas = () => {
               <Skeleton key={i} className="h-24 w-full rounded-xl" />
             ))}
           </div>
-        ) : consultations.length === 0 ? (
+        ) : consultasFiltradas.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
               <Stethoscope className="text-black" size={28} />
             </div>
-            <p className="text-foreground font-semibold mb-1">Nenhuma consulta agendada</p>
-            <p className="text-muted-foreground text-sm">Toque no botão abaixo para adicionar.</p>
+            <p className="text-foreground font-semibold mb-1">
+              {abaAtiva === 'proximas' ? 'Nenhuma consulta agendada' : 'Nenhum histórico encontrado'}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {abaAtiva === 'proximas' ? 'Toque no botão abaixo para adicionar.' : 'Consultas realizadas ou canceladas aparecerão aqui.'}
+            </p>
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {consultations.map((c) => (
+            {consultasFiltradas.map((c) => (
               <button
                 key={c.id}
                 onClick={() => handleOpenEdit(c)}

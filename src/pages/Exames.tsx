@@ -68,6 +68,27 @@ const Exames = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Exames</h1>
         </div>
 
+        <div className="mb-4">
+          <div className="flex p-1 bg-slate-100 rounded-xl">
+            <button
+              onClick={() => setAbaAtiva('pendentes')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === 'pendentes' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Pendentes
+            </button>
+            <button
+              onClick={() => setAbaAtiva('resultados')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === 'resultados' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Resultados
+            </button>
+          </div>
+        </div>
+
         {/* List */}
         {isLoading ? (
           <div className="space-y-3">
@@ -75,17 +96,21 @@ const Exames = () => {
               <Skeleton key={i} className="h-24 w-full rounded-xl" />
             ))}
           </div>
-        ) : exams.length === 0 ? (
+        ) : examesFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
               <FileText className="text-black" size={28} />
             </div>
-            <p className="text-foreground font-semibold mb-1">Nenhum exame registrado</p>
-            <p className="text-muted-foreground text-sm">Toque no botão abaixo para adicionar.</p>
+            <p className="text-foreground font-semibold mb-1">
+              {abaAtiva === 'pendentes' ? 'Nenhum exame pendente' : 'Nenhum resultado encontrado'}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {abaAtiva === 'pendentes' ? 'Toque no botão abaixo para adicionar.' : 'Exames com resultado aparecerão aqui.'}
+            </p>
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {exams.map((e) => {
+            {examesFiltrados.map((e) => {
               const today = startOfDay(new Date());
               const isOverdue = e.status === "Agendado" && e.exam_date
                 ? isBefore(new Date(e.exam_date), today)
