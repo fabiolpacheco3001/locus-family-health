@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X, Eye } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Eye, Sparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -63,6 +63,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [uploading, setUploading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const receitaInputRef = useRef<HTMLInputElement>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const isEditing = !!editingMedication;
 
   useEffect(() => {
@@ -138,6 +139,44 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       if (selected?.professional_name && !medicoPrescritor.trim()) {
         setMedicoPrescritor(selected.professional_name);
       }
+    }
+  };
+
+  const handleAnalyzeWithAI = async () => {
+    setIsAnalyzing(true);
+    try {
+      let urlToAnalyze = existingReceitaUrl;
+      if (receitaFile) {
+        const tempId = editingMedication?.id ?? crypto.randomUUID();
+        urlToAnalyze = await uploadReceita(receitaFile, tempId);
+        setExistingReceitaUrl(urlToAnalyze);
+        setReceitaFile(null);
+      }
+
+      if (!urlToAnalyze) {
+        toast.error("Nenhum arquivo disponível para análise.");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("analyze-prescription", {
+        body: { fileUrl: urlToAnalyze },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.nome_medicamento) setName(data.nome_medicamento);
+      if (data?.dosagem) setDosage(data.dosagem);
+      if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
+      if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
+      if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+
+      toast.success("Dados extraídos da receita com sucesso!");
+    } catch (err: any) {
+      console.error("Prescription OCR error:", err);
+      toast.error(err?.message || "Não foi possível ler a receita. Preencha manualmente.");
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -421,6 +460,33 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   </Button>
                 )}
               </div>
+
+              {/* AI Prescription Reader */}
+              {(receitaFile || existingReceitaUrl) && (
+                <div className="space-y-1.5">
+                  <Button
+                    type="button"
+                    disabled={isAnalyzing || isPending}
+                    onClick={handleAnalyzeWithAI}
+                    className="w-full gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground hover:opacity-90 shadow-md"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Lendo receita...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={16} />
+                        Preencher formulário com IA
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Nossa IA lê a foto da receita e preenche o formulário para você.
+                  </p>
+                </div>
+              )}
 
               {/* Status do Tratamento (apenas edição) - último item */}
               {isEditing && (
