@@ -499,7 +499,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   <div
                     key={idx}
                     className={`h-1.5 flex-1 rounded-full transition-colors ${
-                      idx <= currentMedIndex ? "bg-indigo-500" : "bg-muted"
+                      idx <= currentMedIndex ? "bg-[#1C3333]" : "bg-muted"
                     }`}
                   />
                 ))}
