@@ -628,9 +628,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 items-start">
+                <div className="grid grid-cols-[2fr_1fr] gap-4 items-start">
                   <div className="space-y-1.5">
-                    <Label>Data e Hora de Início</Label>
+                    <Label>Data/Hora Início</Label>
                     <input
                       type="datetime-local"
                       value={startDateTime}
