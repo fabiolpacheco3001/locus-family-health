@@ -261,7 +261,27 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   };
 
-  const handleNextMed = () => {
+  const [showDateAlert, setShowDateAlert] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"next" | "save" | null>(null);
+
+  const checkDateAndProceed = (action: "next" | "save") => {
+    if (!startDateTime) {
+      setPendingAction(action);
+      setShowDateAlert(true);
+    } else {
+      if (action === "next") proceedNext();
+      else handleSave();
+    }
+  };
+
+  const handleDateAlertConfirm = () => {
+    setShowDateAlert(false);
+    if (pendingAction === "next") proceedNext();
+    else if (pendingAction === "save") handleSave();
+    setPendingAction(null);
+  };
+
+  const proceedNext = () => {
     saveCurrentToExtracted();
     const nextIndex = currentMedIndex + 1;
     setCurrentMedIndex(nextIndex);
@@ -744,44 +764,63 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             </div>
           </div>
 
-          <DrawerFooter className="flex-row gap-3">
-            {isWizardMode && currentMedIndex > 0 ? (
-              <Button variant="ghost" className="flex-1" onClick={handleBackMed}>
-                <ArrowLeft size={16} className="mr-1" />
-                Voltar
-              </Button>
-            ) : (
-              <DrawerClose asChild>
-                <Button variant="ghost" className="flex-1">Cancelar</Button>
-              </DrawerClose>
-            )}
-            {isWizardMode && !isLastWizardStep ? (
-              <Button
-                onClick={handleNextMed}
-                className="flex-1 gap-2 bg-[#1C3333] hover:bg-[#2A4B4B] text-white"
-              >
-                Próximo Medicamento
-                <ChevronRight size={16} />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSave}
-                disabled={isPending}
-                className={`flex-1 gap-2 ${isWizardMode ? "bg-[#1C3333] hover:bg-[#2A4B4B] text-white" : ""}`}
-              >
-                {isPending ? (
-                  <Loader2 className="animate-spin" size={18} />
-                ) : isWizardMode ? (
-                  <>
-                    <CheckCheck size={16} />
-                    Salvar Receita
-                  </>
-                ) : isEditing ? "Salvar Alterações" : "Salvar Medicamento"}
-              </Button>
-            )}
+          <DrawerFooter>
+            <div className="flex w-full gap-4 pt-4">
+              {isWizardMode && currentMedIndex > 0 ? (
+                <Button variant="ghost" className="flex-1 flex items-center justify-center gap-2" onClick={handleBackMed}>
+                  <ArrowLeft size={16} />
+                  Voltar
+                </Button>
+              ) : (
+                <DrawerClose asChild>
+                  <Button variant="ghost" className="flex-1">Cancelar</Button>
+                </DrawerClose>
+              )}
+              {isWizardMode && !isLastWizardStep ? (
+                <Button
+                  onClick={() => checkDateAndProceed("next")}
+                  className="flex-1 gap-2 bg-[#1C3333] hover:bg-[#2A4B4B] text-white"
+                >
+                  Próximo Medicamento
+                  <ChevronRight size={16} />
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => checkDateAndProceed("save")}
+                  disabled={isPending}
+                  className={`flex-1 gap-2 ${isWizardMode ? "bg-[#1C3333] hover:bg-[#2A4B4B] text-white" : ""}`}
+                >
+                  {isPending ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : isWizardMode ? (
+                    <>
+                      <CheckCheck size={16} />
+                      Salvar Receita
+                    </>
+                  ) : isEditing ? "Salvar Alterações" : "Salvar Medicamento"}
+                </Button>
+              )}
+            </div>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <AlertDialog open={showDateAlert} onOpenChange={setShowDateAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Data e Hora não informadas</AlertDialogTitle>
+            <AlertDialogDescription>
+              Data e Hora de início do tratamento não inserido. Continuar mesmo assim?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingAction(null)}>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDateAlertConfirm}>
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
         <AlertDialogContent>
