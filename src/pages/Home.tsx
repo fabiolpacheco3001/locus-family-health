@@ -326,17 +326,17 @@ const Home = () => {
           </div>
         </div>
         {/* Acesso Rápido - título dentro do bloco escuro */}
-        <h2 className="text-base font-semibold text-white flex items-center gap-2 mt-4 mb-1">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 mt-4 mb-0">
           <Zap size={18} className="text-[#A7D3CB]" />
           Acesso Rápido
         </h2>
       </div>
 
       {/* Conteúdo flutuante */}
-      <div className="px-5 -mt-28 relative z-10 space-y-6">
+      <div className="px-5 -mt-[7.5rem] relative z-10 space-y-6">
 
       {/* Acesso Rápido - Cards */}
-      <div className="mb-6">
+      <div>
         <div className="grid grid-cols-2 gap-3">
           {[
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
