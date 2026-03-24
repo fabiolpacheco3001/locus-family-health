@@ -104,7 +104,7 @@ const Medicamentos = () => {
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {medications.map((m) => (
+            {medicamentosFiltrados.map((m) => (
               <button
                 key={m.id}
                 onClick={() => handleOpenEdit(m)}
