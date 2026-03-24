@@ -501,7 +501,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           )}
 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 no-scrollbar">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
 
               {/* ═══════ BLOCO 1: Origem e Documentação (com moldura) ═══════ */}
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
