@@ -226,7 +226,7 @@ const Home = () => {
       {/* Visão Geral */}
       <div className="mb-6">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <LayoutDashboard size={18} className="text-primary" />
+          <LayoutDashboard size={18} style={{ color: '#6A978F' }} />
           Visão Geral
         </h2>
         <Carousel
@@ -328,7 +328,7 @@ const Home = () => {
       {/* Acesso Rápido */}
       <div className="mb-6">
         <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <Zap size={18} className="text-primary" />
+          <Zap size={18} style={{ color: '#6A978F' }} />
           Acesso Rápido
         </h2>
         <div className="grid grid-cols-4 gap-4">
@@ -360,7 +360,7 @@ const Home = () => {
         <AccordionItem value="acoes-hoje" id="acoes-hoje" className="border-b-0">
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
-              <Activity size={18} className="text-primary" />
+              <Activity size={18} style={{ color: '#6A978F' }} />
               Ações de Hoje
             </span>
           </AccordionTrigger>
@@ -434,7 +434,7 @@ const Home = () => {
         <AccordionItem value="proximos-compromissos" className="border-b-0">
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
-              <Calendar size={18} className="text-secondary" />
+              <Calendar size={18} style={{ color: '#6A978F' }} />
               Próximos Compromissos
             </span>
           </AccordionTrigger>
