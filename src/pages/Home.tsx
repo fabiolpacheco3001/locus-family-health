@@ -182,151 +182,153 @@ const Home = () => {
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
-      {/* Header with gradient splash */}
-      <div className="bg-gradient-to-b from-[#C4BFB3] to-[#f2f0eb] px-5 pt-6 pb-6 rounded-b-3xl mb-2">
-      <div className="flex items-center justify-between mb-0">
-        <div className="flex items-center gap-3">
-          <div
-            onClick={() => navigate('/meus-dados', { state: { from: '/home' } })}
-            className="cursor-pointer transition-transform active:scale-95"
-          >
-            <MemberAvatar
-              avatarUrl={members.find(m => m.relationship === 'Titular')?.avatar_url}
-              name={userName}
-              size="md"
-            />
+      {/* Color Block do Topo */}
+      <div className="bg-[#1C3333] pt-8 pb-12 px-5 rounded-b-[2rem]">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div
+              onClick={() => navigate('/meus-dados', { state: { from: '/home' } })}
+              className="cursor-pointer transition-transform active:scale-95"
+            >
+              <MemberAvatar
+                avatarUrl={members.find(m => m.relationship === 'Titular')?.avatar_url}
+                name={userName}
+                size="md"
+              />
+            </div>
+            <div>
+              <p className="text-sm text-white/70 flex items-center gap-1">
+                {(() => {
+                  const h = new Date().getHours();
+                  const isDay = h >= 6 && h < 18;
+                  const greeting = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+                  return (
+                    <>
+                      {greeting}
+                      {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-[#DCC5F1] inline-block" />}
+                    </>
+                  );
+                })()}
+              </p>
+              <h1 className="text-2xl font-bold text-white">Olá, {userName}!</h1>
+            </div>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              {(() => {
-                const h = new Date().getHours();
-                const isDay = h >= 6 && h < 18;
-                const greeting = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-                return (
-                  <>
-                    {greeting}
-                    {isDay ? <Sun className="w-4 h-4 text-yellow-500 inline-block" /> : <Moon className="w-4 h-4 text-[#DCC5F1] inline-block" />}
-                  </>
-                );
-              })()}
-            </p>
-            <h1 className="text-2xl font-bold text-foreground">Olá, {userName}!</h1>
+          <button
+            onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
+            className="relative p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
+          >
+            <Bell size={24} className="text-white" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-[#1C3333]" />
+            )}
+          </button>
+        </div>
+
+        {/* Visão Geral */}
+        <div>
+          <h2 className="text-base font-semibold text-white/90 flex items-center gap-2 mb-3">
+            <LayoutDashboard size={18} className="text-[#A7D3CB]" />
+            Visão Geral
+          </h2>
+          <Carousel
+            setApi={setCarouselApi}
+            opts={{ align: "start", loop: true }}
+            plugins={[Autoplay({ delay: 4000, stopOnInteraction: true })]}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-2">
+              <CarouselItem className="pl-2 basis-full">
+                <Card
+                  className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
+                  onClick={() => navigate('/medicamentos')}
+                >
+                  <CardContent className="flex items-center justify-between w-full py-3 px-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-[#A7D3CB]">
+                        <Pill className="w-6 h-6 text-black" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-3xl font-bold text-black leading-none">{activeMeds.length}</span>
+                        <span className="text-sm font-medium text-black mt-1">Tratamentos Ativos</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-black" />
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+              <CarouselItem className="pl-2 basis-full">
+                <Card
+                  className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
+                  onClick={() => navigate('/agenda?filter=upcoming')}
+                >
+                  <CardContent className="flex items-center justify-between w-full py-3 px-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-[#A7D3CB]">
+                        <Calendar className="w-6 h-6 text-black" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-3xl font-bold text-black leading-none">{upcoming.length}</span>
+                        <span className="text-sm font-medium text-black mt-1">Compromissos</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-black" />
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+              <CarouselItem className="pl-2 basis-full">
+                <Card
+                  className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
+                  onClick={() => navigate('/agenda?filter=consultas')}
+                >
+                  <CardContent className="flex items-center justify-between w-full py-3 px-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-[#A7D3CB]">
+                        <Stethoscope className="w-6 h-6 text-black" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-3xl font-bold text-black leading-none">{pendingConsultations}</span>
+                        <span className="text-sm font-medium text-black mt-1">Consultas Pendentes</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-black" />
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+              <CarouselItem className="pl-2 basis-full">
+                <Card
+                  className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
+                  onClick={() => navigate('/agenda?filter=exames')}
+                >
+                  <CardContent className="flex items-center justify-between w-full py-3 px-4">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 rounded-full bg-[#A7D3CB]">
+                        <FileText className="w-6 h-6 text-black" />
+                      </div>
+                      <div className="flex flex-col items-start">
+                        <span className="text-3xl font-bold text-black leading-none">{pendingExams}</span>
+                        <span className="text-sm font-medium text-black mt-1">Exames Pendentes</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-black" />
+                  </CardContent>
+                </Card>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
+          <div className="flex justify-center gap-1.5 mt-3">
+            {Array.from({ length: slideCount }).map((_, i) => (
+              <button
+                key={i}
+                className={`w-2 h-2 rounded-full transition-colors ${i === currentSlide ? "bg-[#A7D3CB]" : "bg-white/30"}`}
+                onClick={() => carouselApi?.scrollTo(i)}
+              />
+            ))}
           </div>
         </div>
-        <button
-          onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
-          className="relative p-2 rounded-full hover:bg-muted/50 active:bg-muted/50 transition-colors"
-        >
-          <Bell size={24} className="text-foreground" />
-          {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
-          )}
-        </button>
-      </div>
       </div>
 
-      <div className="px-5">
-      {/* Visão Geral */}
-      <div className="mb-6">
-        <h2 className="text-base font-semibold text-foreground flex items-center gap-2 mb-3">
-          <LayoutDashboard size={18} style={{ color: '#6A978F' }} />
-          Visão Geral
-        </h2>
-        <Carousel
-          setApi={setCarouselApi}
-          opts={{ align: "start", loop: true }}
-          plugins={[Autoplay({ delay: 4000, stopOnInteraction: true })]}
-          className="w-full"
-        >
-          <CarouselContent className="-ml-2">
-            <CarouselItem className="pl-2 basis-full">
-              <Card
-                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
-                onClick={() => navigate('/medicamentos')}
-              >
-                <CardContent className="flex items-center justify-between w-full py-3 px-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-[#A7D3CB]">
-                      <Pill className="w-6 h-6 text-black" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-black leading-none">{activeMeds.length}</span>
-                      <span className="text-sm font-medium text-black mt-1">Tratamentos Ativos</span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-black" />
-                </CardContent>
-              </Card>
-            </CarouselItem>
-            <CarouselItem className="pl-2 basis-full">
-              <Card
-                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
-                onClick={() => navigate('/agenda?filter=upcoming')}
-              >
-                <CardContent className="flex items-center justify-between w-full py-3 px-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-[#A7D3CB]">
-                      <Calendar className="w-6 h-6 text-black" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-black leading-none">{upcoming.length}</span>
-                      <span className="text-sm font-medium text-black mt-1">Compromissos</span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-black" />
-                </CardContent>
-              </Card>
-            </CarouselItem>
-            <CarouselItem className="pl-2 basis-full">
-              <Card
-                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
-                onClick={() => navigate('/agenda?filter=consultas')}
-              >
-                <CardContent className="flex items-center justify-between w-full py-3 px-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-[#A7D3CB]">
-                      <Stethoscope className="w-6 h-6 text-black" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-black leading-none">{pendingConsultations}</span>
-                      <span className="text-sm font-medium text-black mt-1">Consultas Pendentes</span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-black" />
-                </CardContent>
-              </Card>
-            </CarouselItem>
-            <CarouselItem className="pl-2 basis-full">
-              <Card
-                className="border-border/50 bg-[#6A978F] cursor-pointer active:bg-[#6A978F]/90 sm:hover:bg-[#6A978F]/90 transition-colors"
-                onClick={() => navigate('/agenda?filter=exames')}
-              >
-                <CardContent className="flex items-center justify-between w-full py-3 px-4">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-[#A7D3CB]">
-                      <FileText className="w-6 h-6 text-black" />
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <span className="text-3xl font-bold text-black leading-none">{pendingExams}</span>
-                      <span className="text-sm font-medium text-black mt-1">Exames Pendentes</span>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-black" />
-                </CardContent>
-              </Card>
-            </CarouselItem>
-          </CarouselContent>
-        </Carousel>
-        <div className="flex justify-center gap-1.5 mt-3">
-          {Array.from({ length: slideCount }).map((_, i) => (
-            <button
-              key={i}
-              className={`w-2 h-2 rounded-full transition-colors ${i === currentSlide ? "bg-primary" : "bg-muted-foreground/30"}`}
-              onClick={() => carouselApi?.scrollTo(i)}
-            />
-          ))}
-        </div>
-      </div>
+      {/* Conteúdo flutuante */}
+      <div className="px-5 -mt-6 relative z-10 space-y-6">
 
       {/* Acesso Rápido */}
       <div className="mb-6">
@@ -502,6 +504,7 @@ const Home = () => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      </div>
 
       {/* Drawer de seleção de familiar */}
       <Drawer open={!!quickAction} onOpenChange={(open) => !open && setQuickAction(null)}>
@@ -548,7 +551,6 @@ const Home = () => {
           </div>
         </DrawerContent>
       </Drawer>
-      </div>
       </div>
     </div>
   );
