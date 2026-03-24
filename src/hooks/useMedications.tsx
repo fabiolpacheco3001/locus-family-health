@@ -135,6 +135,19 @@ export const useMedications = (familyMemberId?: string) => {
     },
   });
 
+  const uploadReceita = async (file: File, medicationId: string) => {
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${user!.id}/${medicationId}/receita.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from("exam-files")
+      .upload(path, file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data: urlData } = supabase.storage
+      .from("exam-files")
+      .getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   return {
     medications: query.data ?? [],
     isLoading: query.isLoading,
@@ -142,5 +155,6 @@ export const useMedications = (familyMemberId?: string) => {
     addMedication,
     updateMedication,
     deleteMedication,
+    uploadReceita,
   };
 };
