@@ -55,7 +55,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [estoqueTotal, setEstoqueTotal] = useState("");
   const [estoqueMinimo, setEstoqueMinimo] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-
+  const [receitaFile, setReceitaFile] = useState<File | null>(null);
+  const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const receitaInputRef = useRef<HTMLInputElement>(null);
   const isEditing = !!editingMedication;
 
   useEffect(() => {
