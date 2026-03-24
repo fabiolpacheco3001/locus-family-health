@@ -744,7 +744,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             {isWizardMode && !isLastWizardStep ? (
               <Button
                 onClick={handleNextMed}
-                className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="flex-1 gap-2 bg-[#1C3333] hover:bg-[#2A4B4B] text-white"
               >
                 Próximo Medicamento
                 <ChevronRight size={16} />
