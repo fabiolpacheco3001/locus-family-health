@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Heart, Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import locusvitaLogo from "@/assets/locus-vita-logo.jpeg";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -44,10 +45,7 @@ const Login = () => {
       <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
         {/* Logo */}
         <div className="flex flex-col items-center mb-12">
-          <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-4">
-            <Heart className="text-primary-foreground" size={32} />
-          </div>
-          <h1 className="text-3xl font-bold text-primary tracking-tight">Locus Vita</h1>
+          <img src={locusvitaLogo} alt="Locus Vita" className="w-40 h-40 object-contain mb-4" />
           <p className="text-muted-foreground text-sm mt-1">Saúde familiar simplificada</p>
         </div>
 
