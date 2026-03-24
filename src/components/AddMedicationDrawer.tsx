@@ -142,6 +142,44 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   };
 
+  const handleAnalyzeWithAI = async () => {
+    setIsAnalyzing(true);
+    try {
+      let urlToAnalyze = existingReceitaUrl;
+      if (receitaFile) {
+        const tempId = editingMedication?.id ?? crypto.randomUUID();
+        urlToAnalyze = await uploadReceita(receitaFile, tempId);
+        setExistingReceitaUrl(urlToAnalyze);
+        setReceitaFile(null);
+      }
+
+      if (!urlToAnalyze) {
+        toast.error("Nenhum arquivo disponível para análise.");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke("analyze-prescription", {
+        body: { fileUrl: urlToAnalyze },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.nome_medicamento) setName(data.nome_medicamento);
+      if (data?.dosagem) setDosage(data.dosagem);
+      if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
+      if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
+      if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+
+      toast.success("Dados extraídos da receita com sucesso!");
+    } catch (err: any) {
+      console.error("Prescription OCR error:", err);
+      toast.error(err?.message || "Não foi possível ler a receita. Preencha manualmente.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!name.trim()) {
       toast.error("Preencha o nome do medicamento.");
