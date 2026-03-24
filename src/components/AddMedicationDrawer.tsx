@@ -165,13 +165,40 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      if (data?.nome_medicamento) setName(data.nome_medicamento);
-      if (data?.dosagem) setDosage(data.dosagem);
-      if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
-      if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
-      if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+      // New multi-medication format: { medico_prescritor, medicamentos[] }
+      if (data?.medicamentos?.length > 0) {
+        const med = data.medicamentos[0];
+        if (med.nome_medicamento) setName(med.nome_medicamento);
+        if (med.dosagem) setDosage(med.dosagem);
+        if (med.frequencia) {
+          // Map descriptive frequency to hours
+          const freqMap: Record<string, string> = {
+            "De 24 em 24 horas": "24",
+            "De 12 em 12 horas": "12",
+            "De 8 em 8 horas": "8",
+            "De 6 em 6 horas": "6",
+          };
+          const mapped = freqMap[med.frequencia];
+          if (mapped) setFrequencyHours(mapped);
+        }
+        if (med.duracao_dias) setDurationDays(String(med.duracao_dias));
+        if (data.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
 
-      toast.success("Dados extraídos da receita com sucesso!");
+        const total = data.medicamentos.length;
+        toast.success(
+          total > 1
+            ? `${total} medicamentos encontrados! Preenchido com o primeiro. (Wizard em breve)`
+            : "Dados extraídos da receita com sucesso!"
+        );
+      } else {
+        // Fallback: legacy single-medication format
+        if (data?.nome_medicamento) setName(data.nome_medicamento);
+        if (data?.dosagem) setDosage(data.dosagem);
+        if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
+        if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
+        if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+        toast.success("Dados extraídos da receita com sucesso!");
+      }
     } catch (err: any) {
       console.error("Prescription OCR error:", err);
       toast.error(err?.message || "Não foi possível ler a receita. Preencha manualmente.");

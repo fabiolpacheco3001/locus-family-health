@@ -25,24 +25,28 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um assistente médico especializado em leitura de Receitas Médicas. Analise o documento anexado (foto ou PDF de uma receita médica) e extraia as informações do medicamento prescrito.
+    const systemPrompt = `Você é um assistente médico especialista em ler receitas médicas. Sua missão é ler a imagem anexada e extrair TODOS os medicamentos listados na receita.
 
-Retorne os dados estruturados usando a função fornecida. Se não conseguir identificar algum campo, use null.
+Retorne um array contendo os dados de cada medicamento individualmente, usando a função fornecida.
 
-Para o campo "frequencia_horas", mapeie da seguinte forma:
-- "1x ao dia" ou "a cada 24 horas" → 24
-- "De 12 em 12 horas" ou "2x ao dia" → 12
-- "De 8 em 8 horas" ou "3x ao dia" → 8
-- "De 6 em 6 horas" ou "4x ao dia" → 6
+Para o campo "frequencia", use o formato padrão descritivo:
+- "1x ao dia" ou "a cada 24 horas" → "De 24 em 24 horas"
+- "De 12 em 12 horas" ou "2x ao dia" → "De 12 em 12 horas"
+- "De 8 em 8 horas" ou "3x ao dia" → "De 8 em 8 horas"
+- "De 6 em 6 horas" ou "4x ao dia" → "De 6 em 6 horas"
 
-Para "duracao_dias", extraia o número de dias do tratamento (ex: "por 7 dias" → 7).`;
+Para "duracao_dias", extraia o número de dias do tratamento (ex: "por 7 dias" → 7). Se for uso contínuo, retorne null.
+
+Para "medico_prescritor", extraia o nome do médico do carimbo ou assinatura da receita. Este campo é global (não por medicamento).
+
+Se não conseguir identificar algum campo, use null.`;
 
     const isPdf = fileUrl.toLowerCase().includes(".pdf");
 
     const userContent: any[] = [
       {
         type: "text",
-        text: "Extraia os dados desta receita médica.",
+        text: "Extraia TODOS os medicamentos desta receita médica.",
       },
     ];
 
@@ -78,38 +82,42 @@ Para "duracao_dias", extraia o número de dias do tratamento (ex: "por 7 dias" �
               function: {
                 name: "extract_prescription_data",
                 description:
-                  "Extract structured prescription data from a medical prescription document.",
+                  "Extract structured prescription data with ALL medications found in a medical prescription document.",
                 parameters: {
                   type: "object",
                   properties: {
-                    nome_medicamento: {
-                      type: "string",
-                      description: "Name of the medication (e.g. Amoxicilina)",
-                    },
-                    dosagem: {
-                      type: "string",
-                      description: "Dosage (e.g. 500mg, 5ml)",
-                    },
-                    frequencia_horas: {
-                      type: "number",
-                      description: "Frequency in hours (6, 8, 12, or 24)",
-                    },
-                    duracao_dias: {
-                      type: "number",
-                      description: "Duration in days (e.g. 7)",
-                    },
                     medico_prescritor: {
                       type: "string",
-                      description: "Prescribing doctor name",
+                      description: "Prescribing doctor name (from stamp or signature)",
+                    },
+                    medicamentos: {
+                      type: "array",
+                      description: "List of all medications found in the prescription",
+                      items: {
+                        type: "object",
+                        properties: {
+                          nome_medicamento: {
+                            type: "string",
+                            description: "Name of the medication (e.g. Amoxicilina)",
+                          },
+                          dosagem: {
+                            type: "string",
+                            description: "Dosage (e.g. 500mg, 5ml)",
+                          },
+                          frequencia: {
+                            type: "string",
+                            description: "Frequency in descriptive format (e.g. 'De 8 em 8 horas')",
+                          },
+                          duracao_dias: {
+                            type: "number",
+                            description: "Duration in days (e.g. 7), or null if continuous use",
+                          },
+                        },
+                        required: ["nome_medicamento"],
+                      },
                     },
                   },
-                  required: [
-                    "nome_medicamento",
-                    "dosagem",
-                    "frequencia_horas",
-                    "duracao_dias",
-                    "medico_prescritor",
-                  ],
+                  required: ["medicamentos"],
                   additionalProperties: false,
                 },
               },
