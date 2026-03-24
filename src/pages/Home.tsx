@@ -434,7 +434,7 @@ const Home = () => {
         <AccordionItem value="proximos-compromissos" className="border-b-0">
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
-              <Calendar size={18} className="text-secondary" />
+              <Calendar size={18} style={{ color: '#6A978F' }} />
               Próximos Compromissos
             </span>
           </AccordionTrigger>
