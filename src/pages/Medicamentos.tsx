@@ -16,7 +16,13 @@ const Medicamentos = () => {
   const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
+  const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const { medications, isLoading } = useMedications(id!);
+
+  const medicamentosFiltrados = medications.filter(med => {
+    if (abaAtiva === 'ativos') return med.status === 'Ativo';
+    return med.status === 'Concluído';
+  });
 
   const handleOpenEdit = (m: Medication) => {
     setEditingMedication(m);
@@ -53,23 +59,52 @@ const Medicamentos = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Medicamentos</h1>
         </div>
 
+        <div className="mb-4">
+          <div className="flex p-1 bg-slate-100 rounded-xl">
+            <button
+              onClick={() => setAbaAtiva('ativos')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === 'ativos'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Tratamentos Ativos
+            </button>
+            <button
+              onClick={() => setAbaAtiva('historico')}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === 'historico'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Histórico
+            </button>
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-24 w-full rounded-xl" />
             ))}
           </div>
-        ) : medications.length === 0 ? (
+        ) : medicamentosFiltrados.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
               <Pill className="text-black" size={28} />
             </div>
-            <p className="text-foreground font-semibold mb-1">Nenhum medicamento ativo</p>
-            <p className="text-muted-foreground text-sm">Toque no botão abaixo para adicionar.</p>
+            <p className="text-foreground font-semibold mb-1">
+              {abaAtiva === 'ativos' ? 'Nenhum medicamento ativo' : 'Nenhum histórico encontrado'}
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {abaAtiva === 'ativos' ? 'Toque no botão abaixo para adicionar.' : 'Tratamentos concluídos aparecerão aqui.'}
+            </p>
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {medications.map((m) => (
+            {medicamentosFiltrados.map((m) => (
               <button
                 key={m.id}
                 onClick={() => handleOpenEdit(m)}
