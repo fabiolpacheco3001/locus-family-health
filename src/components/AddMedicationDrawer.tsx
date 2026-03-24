@@ -499,6 +499,24 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Visualizador de Receita */}
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[90vh] p-0 gap-0">
+          <DialogHeader className="p-4 pb-2">
+            <DialogTitle className="text-primary">Receita Médica</DialogTitle>
+          </DialogHeader>
+          <div className="px-4 pb-4 flex-1 overflow-auto">
+            {existingReceitaUrl && (
+              isReceitaPdf ? (
+                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(existingReceitaUrl)}&embedded=true`} className="w-full h-[70vh] rounded-md border-0" />
+              ) : (
+                <img src={existingReceitaUrl} alt="Receita médica" className="w-full object-contain max-h-[70vh] rounded-md" />
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
