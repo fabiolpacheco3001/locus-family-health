@@ -641,11 +641,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className={usoContinuo ? "text-muted-foreground" : ""}>Duração (dias)</Label>
+                    <Label className={usoContinuo ? "text-muted-foreground" : ""}>Duração</Label>
                     <Input
                       type="number"
                       inputMode="numeric"
-                      placeholder="Ex: 7"
+                      min={1}
+                      step={1}
+                      placeholder="Ex: 7 dias"
                       value={usoContinuo ? "" : durationDays}
                       onChange={(e) => setDurationDays(e.target.value)}
                       disabled={usoContinuo}
