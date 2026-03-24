@@ -603,58 +603,60 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </div>
               </div>
 
-              {/* ═══════ BLOCO 2: Tratamento Principal (sem moldura) ═══════ */}
-              <div className="space-y-1.5">
-                <Label>Nome do Medicamento *</Label>
-                <MedicationAutocomplete value={name} onChange={setName} />
-              </div>
+              {/* ═══════ BLOCO 2: Tratamento Principal (com moldura) ═══════ */}
+              <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
+                <div className="space-y-1.5">
+                  <Label>Nome do Medicamento *</Label>
+                  <MedicationAutocomplete value={name} onChange={setName} />
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Dosagem</Label>
-                  <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className="text-[16px]" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Dosagem</Label>
+                    <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className="text-[16px]" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Frequência</Label>
+                    <Select value={frequencyHours} onValueChange={setFrequencyHours}>
+                      <SelectTrigger className="text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {FREQUENCY_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Frequência</Label>
-                  <Select value={frequencyHours} onValueChange={setFrequencyHours}>
-                    <SelectTrigger className="text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {FREQUENCY_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3 items-start">
-                <div className="space-y-1.5">
-                  <Label>Data e Hora de Início</Label>
-                  <input
-                    type="datetime-local"
-                    value={startDateTime}
-                    onChange={(e) => setStartDateTime(e.target.value)}
-                    min="1900-01-01T00:00"
-                    max="2099-12-31T23:59"
-                    className={`${INPUT_CLASSES} appearance-none`}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className={usoContinuo ? "text-muted-foreground" : ""}>Duração (dias)</Label>
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    placeholder="Ex: 7"
-                    value={usoContinuo ? "" : durationDays}
-                    onChange={(e) => setDurationDays(e.target.value)}
-                    disabled={usoContinuo}
-                    className="text-[16px]"
-                  />
-                  {!usoContinuo && calculatedEndDateLabel && (
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      Término previsto: {calculatedEndDateLabel}
-                    </p>
-                  )}
+                <div className="grid grid-cols-2 gap-3 items-start">
+                  <div className="space-y-1.5">
+                    <Label>Data e Hora de Início</Label>
+                    <input
+                      type="datetime-local"
+                      value={startDateTime}
+                      onChange={(e) => setStartDateTime(e.target.value)}
+                      min="1900-01-01T00:00"
+                      max="2099-12-31T23:59"
+                      className={`${INPUT_CLASSES} appearance-none`}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className={usoContinuo ? "text-muted-foreground" : ""}>Duração (dias)</Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder="Ex: 7"
+                      value={usoContinuo ? "" : durationDays}
+                      onChange={(e) => setDurationDays(e.target.value)}
+                      disabled={usoContinuo}
+                      className="text-[16px]"
+                    />
+                    {!usoContinuo && calculatedEndDateLabel && (
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Término previsto: {calculatedEndDateLabel}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
