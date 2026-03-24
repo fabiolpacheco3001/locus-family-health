@@ -319,7 +319,7 @@ const Home = () => {
             {Array.from({ length: slideCount }).map((_, i) => (
               <button
                 key={i}
-                className={`w-2 h-2 rounded-full transition-colors ${i === currentSlide ? "bg-[#A7D3CB]" : "bg-white/30"}`}
+                className={`w-2 h-2 rounded-full transition-colors ${i === currentSlide ? "bg-white" : "bg-white/30"}`}
                 onClick={() => carouselApi?.scrollTo(i)}
               />
             ))}
