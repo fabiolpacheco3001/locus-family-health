@@ -304,26 +304,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
               {/* Linha 4: Vincular Consulta */}
               <div className="space-y-1.5">
-                <Label>Vincular a uma Consulta (Opcional)</Label>
-                <Select value={consultationId} onValueChange={handleConsultationChange}>
-                  <SelectTrigger className="text-[16px]">
-                    <SelectValue placeholder="Nenhuma consulta selecionada" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    {consultations.map((c) => {
-                      const dateLabel = c.consultation_date
-                        ? format(new Date(c.consultation_date), "dd/MM/yyyy")
-                        : "Sem data";
-                      const profLabel = c.professional_name || c.specialty;
-                      return (
-                        <SelectItem key={c.id} value={c.id}>
-                          {dateLabel} - {profLabel}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <Label>Vincular Consulta</Label>
+                <ConsultationCombobox
+                  familyMemberId={familyMemberId}
+                  value={consultationId}
+                  onValueChange={handleConsultationChange}
+                />
               </div>
 
               {/* Moldura Expansível: Uso Contínuo & Avançado */}
