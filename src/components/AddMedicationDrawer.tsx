@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck, ArrowLeft } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -806,16 +806,19 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       </Drawer>
 
       <AlertDialog open={showDateAlert} onOpenChange={setShowDateAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Data e Hora não informadas</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw] p-6">
+          <AlertDialogHeader className="space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <AlertTriangle className="w-6 h-6 text-amber-500" />
+              <AlertDialogTitle className="text-lg font-bold text-slate-800">Alerta de Preenchimento</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-center text-slate-600 text-sm">
               Data e Hora de início do tratamento não inserido. Continuar mesmo assim?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingAction(null)}>Voltar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDateAlertConfirm}>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel className="rounded-xl" onClick={() => setPendingAction(null)}>Voltar</AlertDialogCancel>
+            <AlertDialogAction className="rounded-xl" onClick={handleDateAlertConfirm}>
               Continuar
             </AlertDialogAction>
           </AlertDialogFooter>
