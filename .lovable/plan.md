@@ -1,24 +1,19 @@
 
 
-## Plano: Trocar ordem de "Status do Tratamento" e "Vincular Consulta"
+## Plan: Alterar cor dos ícones de seção para Verde Sálvia (#6A978F)
 
-### O que muda
+**Arquivo:** `src/pages/Home.tsx`
 
-No formulário de edição de medicamentos, a ordem atual é:
-1. Início | Duração
-2. **Status do Tratamento** (linha 305-334)
-3. **Vincular Consulta** (linha 336-358)
-4. Moldura Uso Contínuo
+**Mudanças:**
 
-A nova ordem será:
-1. Início | Duração
-2. **Vincular Consulta** (sobe)
-3. **Status do Tratamento** (desce, continua só em edição)
-4. Moldura Uso Contínuo
+Substituir as classes de cor dos 4 ícones de título de seção por `style={{ color: '#6A978F' }}`:
 
-### Alteração
+| Seção | Ícone | Linha | De | Para |
+|---|---|---|---|---|
+| Visão Geral | `LayoutDashboard` | ~229 | `className="text-primary"` | `style={{ color: '#6A978F' }}` |
+| Acesso Rápido | `Zap` | ~331 | `className="text-primary"` | `style={{ color: '#6A978F' }}` |
+| Ações de Hoje | `Activity` | ~363 | `className="text-primary"` | `style={{ color: '#6A978F' }}` |
+| Próximos Compromissos | `Calendar` | ~437 | `className="text-secondary"` | `style={{ color: '#6A978F' }}` |
 
-Arquivo: `src/components/AddMedicationDrawer.tsx`
-
-Mover o bloco "Vincular Consulta" (linhas 336-358) para **antes** do bloco "Status do Tratamento" (linhas 305-334). Apenas troca de posição dos dois blocos, sem alteração de código ou estilo.
+Resultado: os 4 ícones passarão a usar Verde Sálvia (#6A978F), a mesma cor de fundo do carrossel.
 
