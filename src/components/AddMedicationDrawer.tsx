@@ -168,17 +168,29 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     };
 
     try {
+      setUploading(true);
+      let receitaUrl: string | null = existingReceitaUrl;
+
       if (isEditing) {
+        if (receitaFile) {
+          receitaUrl = await uploadReceita(receitaFile, editingMedication.id);
+        }
         await updateMedication.mutateAsync({
           id: editingMedication.id,
           ...commonFields,
           status,
+          receita_url: receitaUrl,
         });
         toast.success("Medicamento atualizado!");
       } else {
+        const tempId = crypto.randomUUID();
+        if (receitaFile) {
+          receitaUrl = await uploadReceita(receitaFile, tempId);
+        }
         const medication: NewMedication = {
           family_member_id: familyMemberId,
           ...commonFields,
+          receita_url: receitaUrl,
         };
         const result = await addMedication.mutateAsync(medication);
         if (user) {
@@ -221,6 +233,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       onOpenChange(false);
     } catch {
       toast.error("Erro ao salvar. Tente novamente.");
+    } finally {
+      setUploading(false);
     }
   };
 
