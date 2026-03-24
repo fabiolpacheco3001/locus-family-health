@@ -672,7 +672,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     <p className="text-xs font-medium text-muted-foreground">Controle de Estoque</p>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                        <Label>Qtd. na Caixa/Frasco</Label>
+                        <Label>Qtd. Comprimidos</Label>
                         <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
                       </div>
                       <div className="space-y-1.5">
