@@ -326,7 +326,7 @@ const Home = () => {
           </div>
         </div>
         {/* Acesso Rápido - título dentro do bloco escuro */}
-        <h2 className="text-base font-semibold text-white flex items-center gap-2 mt-6 mb-3">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2 mt-4 mb-1">
           <Zap size={18} className="text-[#A7D3CB]" />
           Acesso Rápido
         </h2>
