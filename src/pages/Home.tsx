@@ -336,7 +336,7 @@ const Home = () => {
       <div className="px-5 -mt-[7.5rem] relative z-10 space-y-6">
 
       {/* Acesso Rápido - Cards */}
-      <div className="mb-6">
+      <div>
         <div className="grid grid-cols-2 gap-3">
           {[
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
