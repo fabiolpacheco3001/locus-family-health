@@ -461,6 +461,33 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 )}
               </div>
 
+              {/* AI Prescription Reader */}
+              {(receitaFile || existingReceitaUrl) && (
+                <div className="space-y-1.5">
+                  <Button
+                    type="button"
+                    disabled={isAnalyzing || isPending}
+                    onClick={handleAnalyzeWithAI}
+                    className="w-full gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground hover:opacity-90 shadow-md"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Lendo receita...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={16} />
+                        Preencher formulário com IA
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Nossa IA lê a foto da receita e preenche o formulário para você.
+                  </p>
+                </div>
+              )}
+
               {/* Status do Tratamento (apenas edição) - último item */}
               {isEditing && (
                 <div className="flex flex-col gap-2">
