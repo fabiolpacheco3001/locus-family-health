@@ -342,7 +342,7 @@ const Home = () => {
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
             { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
             { icon: Pill, label: "Medicamentos", action: () => setQuickAction('medicamentos') },
-            { icon: Users, label: "Família", action: () => navigate('/familia') },
+            { icon: Users, label: "Família", action: () => navigate('/gerenciar-familia', { state: { from: '/home' } }) },
           ].map(({ icon: Icon, label, action }) => (
             <button
               key={label}
