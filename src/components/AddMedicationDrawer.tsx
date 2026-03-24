@@ -676,7 +676,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                         <Input type="number" inputMode="numeric" placeholder="Ex: 30" value={estoqueTotal} onChange={(e) => setEstoqueTotal(e.target.value)} className="text-[16px]" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label>Alerta de Reposição</Label>
+                        <Label>Alerta de Compra</Label>
                         <Input type="number" inputMode="numeric" placeholder="Ex: 5" value={estoqueMinimo} onChange={(e) => setEstoqueMinimo(e.target.value)} className="text-[16px]" />
                       </div>
                     </div>
