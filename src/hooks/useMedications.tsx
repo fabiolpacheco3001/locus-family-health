@@ -21,6 +21,7 @@ export type Medication = {
   medico_prescritor: string | null;
   estoque_total: number | null;
   estoque_minimo: number | null;
+  receita_url: string | null;
   created_at: string;
   consultations?: { professional_name: string | null; specialty: string } | null;
   family_members?: { name: string } | null;
