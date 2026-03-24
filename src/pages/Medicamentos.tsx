@@ -16,7 +16,13 @@ const Medicamentos = () => {
   const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
+  const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const { medications, isLoading } = useMedications(id!);
+
+  const medicamentosFiltrados = medications.filter(med => {
+    if (abaAtiva === 'ativos') return med.status === 'Ativo';
+    return med.status === 'Concluído';
+  });
 
   const handleOpenEdit = (m: Medication) => {
     setEditingMedication(m);
