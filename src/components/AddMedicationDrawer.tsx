@@ -753,14 +753,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               <Button
                 onClick={handleSave}
                 disabled={isPending}
-                className={`flex-1 gap-2 ${isWizardMode ? "bg-indigo-600 hover:bg-indigo-700 text-white" : ""}`}
+                className={`flex-1 gap-2 ${isWizardMode ? "bg-[#1C3333] hover:bg-[#2A4B4B] text-white" : ""}`}
               >
                 {isPending ? (
                   <Loader2 className="animate-spin" size={18} />
                 ) : isWizardMode ? (
                   <>
                     <CheckCheck size={16} />
-                    Salvar Tratamento Completo
+                    Salvar Receita
                   </>
                 ) : isEditing ? "Salvar Alterações" : "Salvar Medicamento"}
               </Button>
