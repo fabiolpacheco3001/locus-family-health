@@ -326,37 +326,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </Select>
               </div>
 
-              {/* Linha 5: Status (apenas edição) */}
-              {isEditing && (
-                <div className="flex flex-col gap-2">
-                  <Label>Status do Tratamento</Label>
-                  <div className="flex p-1 bg-muted rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => setStatus('Ativo')}
-                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                        status === 'Ativo'
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      Ativo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStatus('Concluído')}
-                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                        status === 'Concluído'
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      Concluído
-                    </button>
-                  </div>
-                </div>
-              )}
-
               {/* Moldura Expansível: Uso Contínuo & Avançado */}
               <div className="p-4 bg-muted/40 border border-border rounded-xl flex flex-col gap-4 transition-all">
                 <div className="flex items-center justify-between">
@@ -391,6 +360,37 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   </>
                 )}
               </div>
+
+              {/* Status do Tratamento (apenas edição) - último item */}
+              {isEditing && (
+                <div className="flex flex-col gap-2">
+                  <Label>Status do Tratamento</Label>
+                  <div className="flex p-1 bg-muted rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setStatus('Ativo')}
+                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                        status === 'Ativo'
+                          ? 'bg-[#F2A97F] text-slate-900 shadow-sm font-bold'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Ativo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStatus('Concluído')}
+                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
+                        status === 'Concluído'
+                          ? 'bg-[#A7D3CB] text-slate-900 shadow-sm font-bold'
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      Concluído
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Botão Excluir (apenas edição) */}
               {isEditing && (
