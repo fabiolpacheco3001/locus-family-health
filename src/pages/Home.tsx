@@ -337,12 +337,12 @@ const Home = () => {
 
       {/* Acesso Rápido - Cards */}
       <div className="mb-6">
-        <div className="grid grid-cols-2 gap-3 mt-4">
+        <div className="grid grid-cols-2 gap-3">
           {[
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
             { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
             { icon: Pill, label: "Medicamentos", action: () => setQuickAction('medicamentos') },
-            { icon: Users, label: "Família", action: () => navigate('/familia') },
+            { icon: Users, label: "Família", action: () => navigate('/gerenciar-familia', { state: { from: '/home' } }) },
           ].map(({ icon: Icon, label, action }) => (
             <button
               key={label}
@@ -361,7 +361,7 @@ const Home = () => {
       </div>
 
       {/* Accordion Sections */}
-      <Accordion type="multiple" defaultValue={["acoes-hoje"]}>
+      <Accordion type="multiple">
         {/* Today's Actions */}
         <AccordionItem value="acoes-hoje" id="acoes-hoje" className="border-b-0">
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">

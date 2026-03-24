@@ -410,16 +410,34 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             .eq("id", familyMemberId)
             .single();
           const memberName = member?.name ?? "Familiar";
-          const medNames = validMeds.map((m) => m.name).join(", ");
-          await supabase.from("notifications").insert({
-            user_id: user.id,
-            family_member_id: familyMemberId,
-            title: `${validMeds.length} Medicamentos adicionados para ${memberName}`,
-            message: `Medicamentos: ${medNames}`,
-            type: "medication",
-            scheduled_for: new Date().toISOString(),
-            is_read: false,
+          const firstName = memberName.split(" ")[0];
+
+          const notifInserts = validMeds.map((m) => {
+            let msgParts = `Medicamento: ${m.name}`;
+            if (m.uso_continuo) {
+              msgParts += `\nUso Contínuo`;
+            }
+            if (m.start_date) {
+              const startStr = format(new Date(m.start_date + "T12:00:00"), "dd/MM/yyyy");
+              const timeStr = m.start_time ? m.start_time.slice(0, 5) : "";
+              msgParts += `\nInício: ${startStr}${timeStr ? ` às ${timeStr}` : ""}`;
+            }
+            if (m.end_date) {
+              const endStr = format(new Date(m.end_date + "T12:00:00"), "dd/MM/yyyy");
+              msgParts += `\nTérmino: ${endStr}`;
+            }
+            return {
+              user_id: user.id,
+              family_member_id: familyMemberId,
+              title: `Novo Tratamento de ${firstName}`,
+              message: msgParts,
+              type: "medication",
+              scheduled_for: new Date().toISOString(),
+              is_read: false,
+            };
           });
+
+          await supabase.from("notifications").insert(notifInserts);
         }
 
         toast.success(`${validMeds.length} medicamentos salvos com sucesso!`);
