@@ -337,7 +337,7 @@ const Home = () => {
 
       {/* Acesso Rápido - Cards */}
       <div className="mb-6">
-        <div className="grid grid-cols-2 gap-3 mt-4">
+        <div className="grid grid-cols-2 gap-3">
           {[
             { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
             { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
