@@ -83,6 +83,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setMedicoPrescritor(editingMedication.medico_prescritor ?? "");
       setEstoqueTotal(editingMedication.estoque_total?.toString() ?? "");
       setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
+      setExistingReceitaUrl(editingMedication.receita_url ?? null);
+      setReceitaFile(null);
     } else {
       resetForm();
     }
