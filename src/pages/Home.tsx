@@ -333,7 +333,7 @@ const Home = () => {
       </div>
 
       {/* Conteúdo flutuante */}
-      <div className="px-5 -mt-24 relative z-10 space-y-6">
+      <div className="px-5 -mt-28 relative z-10 space-y-6">
 
       {/* Acesso Rápido - Cards */}
       <div className="mb-6">
