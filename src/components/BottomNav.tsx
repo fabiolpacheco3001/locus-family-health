@@ -10,7 +10,7 @@ const navItems = [
   { icon: Home, label: "Início", path: "/home" },
   { icon: Calendar, label: "Agenda", path: "/agenda" },
   { icon: Activity, label: "Minha Saúde", path: "__drawer_saude__" },
-  { icon: Users, label: "Família", path: "/familia" },
+  { icon: Users, label: "Família", path: "/gerenciar-familia" },
   { icon: Settings, label: "Ajustes", path: "/ajustes" },
 ];
 
