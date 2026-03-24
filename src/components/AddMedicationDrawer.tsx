@@ -268,6 +268,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     populateFromExtracted(extractedMeds[nextIndex]);
   };
 
+  const handleBackMed = () => {
+    saveCurrentToExtracted();
+    const prevIndex = currentMedIndex - 1;
+    setCurrentMedIndex(prevIndex);
+    populateFromExtracted(extractedMeds[prevIndex]);
+  };
+
   const buildMedPayload = () => {
     const freqNum = frequencyHours ? Number(frequencyHours) : null;
     const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
