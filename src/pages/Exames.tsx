@@ -24,7 +24,13 @@ const Exames = () => {
   const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
+  const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
   const { exams, isLoading } = useExams(id!);
+
+  const examesFiltrados = exams.filter(e => {
+    if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
+    return e.status === 'Pronto' || e.status === 'Concluído' || e.status === 'Resultado Pronto' || e.status === 'Resultado Disponível';
+  });
 
   const handleOpenEdit = (e: Exam) => {
     setEditingExam(e);

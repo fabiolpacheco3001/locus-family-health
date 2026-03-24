@@ -24,7 +24,13 @@ const Consultas = () => {
   const goBack = useSmartBack();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
+  const [abaAtiva, setAbaAtiva] = useState<'proximas' | 'historico'>('proximas');
   const { consultations, isLoading } = useConsultations(id!);
+
+  const consultasFiltradas = consultations.filter(c => {
+    if (abaAtiva === 'proximas') return c.status === 'Agendada';
+    return c.status === 'Realizada' || c.status === 'Cancelada';
+  });
 
   const handleOpenEdit = (c: Consultation) => {
     setEditingConsultation(c);
