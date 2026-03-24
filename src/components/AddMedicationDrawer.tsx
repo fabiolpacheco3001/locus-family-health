@@ -479,8 +479,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           <DrawerHeader>
             <DrawerTitle className="text-primary">
               {isWizardMode ? (
-                <span className="text-indigo-600 font-bold">
-                  Revisando {currentMedIndex + 1} de {extractedMeds.length}
+              <span className="text-[#1C3333] font-bold">
+                  Medicamento {currentMedIndex + 1} de {extractedMeds.length}
                 </span>
               ) : isEditing ? "Editar Medicamento" : "Novo Medicamento"}
             </DrawerTitle>
