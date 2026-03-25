@@ -59,14 +59,11 @@ const Ajustes = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-      {/* Header */}
-      <div className="flex-none px-4 pt-6 pb-2">
-        <h1 className="text-2xl font-bold text-foreground px-1">Ajustes</h1>
-      </div>
-
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="px-4 pb-4 space-y-4 min-h-[calc(100%+1px)]">
+        <div className="px-4 pb-32 space-y-4 min-h-[calc(100%+1px)]">
+        {/* Sticky Header with Glassmorphism */}
+        <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-4 -mx-4 px-5">
         {/* Profile Card */}
         <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
           <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />
