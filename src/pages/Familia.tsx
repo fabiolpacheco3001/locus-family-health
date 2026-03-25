@@ -14,6 +14,8 @@ const Familia = () => {
         <div className="px-5 pb-4 min-h-[calc(100%+1px)]">
         {/* Sticky Header with Glassmorphism */}
         <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-2 -mx-5 px-5">
+          <h1 className="text-2xl font-bold text-foreground">Família</h1>
+        </div>
         {members.length === 0 && !isLoading && (
           <p className="text-muted-foreground text-sm">
             Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.
