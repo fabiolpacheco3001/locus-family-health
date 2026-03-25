@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { getBPClassification } from "@/lib/bloodPressure";
 
 interface Props {
   open: boolean;
@@ -139,12 +140,6 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
     setAddOpen(false);
   };
 
-  const getBPCategory = (sys: number, dia: number) => {
-    if (sys < 120 && dia < 80) return { label: "Normal", color: "bg-green-100 text-green-800" };
-    if (sys < 130 && dia < 80) return { label: "Elevada", color: "bg-yellow-100 text-yellow-800" };
-    if (sys < 140 || dia < 90) return { label: "Hipertensão 1", color: "bg-orange-100 text-orange-800" };
-    return { label: "Hipertensão 2", color: "bg-red-100 text-red-800" };
-  };
 
   const latestRecord = records[0];
 
@@ -178,7 +173,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
               </div>
             ) : (
               records.map((r) => {
-                const cat = getBPCategory(r.systolic, r.diastolic);
+                const cat = getBPClassification(r.systolic, r.diastolic);
                 const consultation = r.consultation_id ? consultationMap.get(r.consultation_id) : null;
 
                 return (
@@ -191,7 +186,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
                         {r.systolic} / {r.diastolic}{" "}
                         <span className="text-sm font-normal text-muted-foreground">mmHg</span>
                       </p>
-                      <Badge className={`${cat.color} border-0 text-[10px] font-semibold`}>
+                      <Badge className={`${cat.colorClass} border-0 text-[10px] font-semibold`}>
                         {cat.label}
                       </Badge>
                     </div>
