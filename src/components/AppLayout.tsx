@@ -5,11 +5,13 @@ import BottomNav from "./BottomNav";
 import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { useMedications } from "@/hooks/useMedications";
+import { useMenstrualAlerts } from "@/hooks/useMenstrualAlerts";
 
 const AppLayout = () => {
   const { medications } = useMedications();
   useMedicationAlarms(medications);
   useStockAlerts(medications);
+  useMenstrualAlerts();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
 

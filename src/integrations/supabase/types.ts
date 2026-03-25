@@ -429,7 +429,9 @@ export type Database = {
       }
       menstrual_cycles: {
         Row: {
+          alert_advance_days: number
           created_at: string
+          cycle_length: number
           end_date: string | null
           familiar_id: string
           flow_intensity: string | null
@@ -440,7 +442,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          alert_advance_days?: number
           created_at?: string
+          cycle_length?: number
           end_date?: string | null
           familiar_id: string
           flow_intensity?: string | null
@@ -451,7 +455,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          alert_advance_days?: number
           created_at?: string
+          cycle_length?: number
           end_date?: string | null
           familiar_id?: string
           flow_intensity?: string | null

@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Droplets, Plus, Loader2 } from "lucide-react";
+import { Droplets, Plus, Loader2, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -34,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import SwipeableCard from "@/components/SwipeableCard";
@@ -46,13 +45,15 @@ interface Props {
   familyMemberId: string;
 }
 
-type CycleRecord = {
+export type CycleRecord = {
   id: string;
   start_date: string;
   end_date: string | null;
   flow_intensity: string | null;
   symptoms: string | null;
   notes: string | null;
+  cycle_length: number;
+  alert_advance_days: number;
 };
 
 const flowColors: Record<string, string> = {
@@ -64,12 +65,26 @@ const flowColors: Record<string, string> = {
 export function getCycleDay(records: CycleRecord[]): string | null {
   if (records.length === 0) return null;
   const latest = records[0];
-  if (latest.end_date) return null; // cycle ended
+  if (latest.end_date) return null;
   const start = parseISO(latest.start_date + "T12:00:00");
   const today = new Date();
   const day = differenceInDays(today, start) + 1;
   if (day < 1 || day > 60) return null;
   return `Dia ${day} do ciclo`;
+}
+
+export function getNextPeriodInfo(records: CycleRecord[]): { date: Date; daysLeft: number; formatted: string } | null {
+  if (records.length === 0) return null;
+  const latest = records[0];
+  const start = parseISO(latest.start_date + "T12:00:00");
+  const nextDate = addDays(start, latest.cycle_length);
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+  const daysLeft = differenceInDays(nextDate, today);
+  const dayName = format(nextDate, "EEE", { locale: ptBR }).substring(0, 3);
+  const capitalDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+  const formatted = `${format(nextDate, "dd MMM yyyy", { locale: ptBR })} - ${capitalDay}`;
+  return { date: nextDate, daysLeft, formatted };
 }
 
 const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => {
@@ -84,6 +99,8 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
     flow_intensity: "",
     symptoms: "",
     notes: "",
+    cycle_length: "28",
+    alert_advance_days: "2",
   });
 
   const { data: records = [], isLoading } = useQuery({
@@ -101,6 +118,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
   });
 
   const cycleStatus = getCycleDay(records);
+  const prediction = getNextPeriodInfo(records);
 
   const formatDateRange = (start: string, end: string | null) => {
     try {
@@ -124,6 +142,9 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
     if (!user) return;
 
     setSaving(true);
+    const cycleLen = parseInt(form.cycle_length) || 28;
+    const alertDays = parseInt(form.alert_advance_days) || 2;
+
     const { error } = await supabase.from("menstrual_cycles" as any).insert({
       user_id: user.id,
       familiar_id: familyMemberId,
@@ -132,6 +153,8 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
       flow_intensity: form.flow_intensity || null,
       symptoms: form.symptoms.trim() || null,
       notes: form.notes.trim() || null,
+      cycle_length: cycleLen,
+      alert_advance_days: alertDays,
     } as any);
     setSaving(false);
 
@@ -142,7 +165,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
 
     toast.success("Ciclo registrado!");
     queryClient.invalidateQueries({ queryKey: ["menstrual_cycles", familyMemberId] });
-    setForm({ start_date: "", end_date: "", flow_intensity: "", symptoms: "", notes: "" });
+    setForm({ start_date: "", end_date: "", flow_intensity: "", symptoms: "", notes: "", cycle_length: "28", alert_advance_days: "2" });
     setAddOpen(false);
   };
 
@@ -172,14 +195,35 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
               <Droplets className="w-5 h-5" />
               Ciclo Menstrual
             </DrawerTitle>
-            <DrawerDescription>
-              {cycleStatus ? (
-                <span className="font-semibold text-pink-600">{cycleStatus}</span>
-              ) : records.length > 0 ? (
-                `${records.length} registro${records.length > 1 ? "s" : ""}`
-              ) : (
-                "Nenhum ciclo registrado."
-              )}
+            <DrawerDescription asChild>
+              <div className="space-y-1">
+                {cycleStatus && (
+                  <p className="font-semibold text-pink-600">{cycleStatus}</p>
+                )}
+                {prediction && (
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <CalendarClock className="w-3.5 h-3.5 text-pink-400" />
+                    <span className="text-foreground font-medium">
+                      Próxima menstruação: {prediction.formatted}
+                    </span>
+                  </div>
+                )}
+                {prediction && (
+                  <p className={`text-xs font-semibold ${prediction.daysLeft > 0 ? "text-pink-500" : "text-red-500"}`}>
+                    {prediction.daysLeft > 0
+                      ? `Faltam ${prediction.daysLeft} dia${prediction.daysLeft > 1 ? "s" : ""}`
+                      : prediction.daysLeft === 0
+                        ? "Prevista para hoje!"
+                        : `Atrasada há ${Math.abs(prediction.daysLeft)} dia${Math.abs(prediction.daysLeft) > 1 ? "s" : ""}`}
+                  </p>
+                )}
+                {!cycleStatus && !prediction && records.length > 0 && (
+                  <p>{records.length} registro{records.length > 1 ? "s" : ""}</p>
+                )}
+                {records.length === 0 && !isLoading && (
+                  <p>Nenhum ciclo registrado.</p>
+                )}
+              </div>
             </DrawerDescription>
           </DrawerHeader>
 
@@ -222,6 +266,10 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                           "{r.notes}"
                         </p>
                       )}
+
+                      <p className="text-[10px] text-muted-foreground">
+                        Ciclo: {r.cycle_length} dias
+                      </p>
                     </div>
                   </SwipeableCard>
                 ))}
@@ -255,7 +303,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Data de Início *</Label>
+                <Label className="text-xs text-muted-foreground">Início do Sangramento *</Label>
                 <input
                   type="date"
                   value={form.start_date}
@@ -266,7 +314,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Data de Fim</Label>
+                <Label className="text-xs text-muted-foreground">Fim do Sangramento</Label>
                 <input
                   type="date"
                   value={form.end_date}
@@ -275,6 +323,35 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                   max={today}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Duração do Ciclo (Dias)</Label>
+                <input
+                  type="number"
+                  value={form.cycle_length}
+                  onChange={(e) => setForm({ ...form, cycle_length: e.target.value })}
+                  min={15}
+                  max={60}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
+                />
+                <p className="text-[10px] text-muted-foreground">O padrão médico é 28 dias</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">Aviso Antecipado</Label>
+                <Select value={form.alert_advance_days} onValueChange={(v) => setForm({ ...form, alert_advance_days: v })}>
+                  <SelectTrigger className="text-[16px]">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Não avisar</SelectItem>
+                    <SelectItem value="1">1 dia antes</SelectItem>
+                    <SelectItem value="2">2 dias antes</SelectItem>
+                    <SelectItem value="3">3 dias antes</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

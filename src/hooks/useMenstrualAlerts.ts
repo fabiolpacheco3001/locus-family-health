@@ -1,0 +1,110 @@
+import { useEffect } from "react";
+import { useAuth } from "./useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { addDays, differenceInDays, parseISO } from "date-fns";
+import type { CycleRecord } from "@/components/MenstrualCycleDrawer";
+
+const menstrualAlertSessionRuns = new Set<string>();
+
+/**
+ * Checks menstrual cycles and creates advance notifications
+ * for upcoming periods. At most one notification per familiar per day.
+ */
+export function useMenstrualAlerts() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!user) return;
+
+    const todayKey = new Date().toDateString();
+    const sessionKey = `${user.id}-menstrual-${todayKey}`;
+
+    if (menstrualAlertSessionRuns.has(sessionKey)) return;
+    menstrualAlertSessionRuns.add(sessionKey);
+
+    let cancelled = false;
+
+    const checkAndNotify = async () => {
+      // Fetch all cycles for this user, most recent per familiar
+      const { data: allCycles, error } = await supabase
+        .from("menstrual_cycles" as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("start_date", { ascending: false });
+
+      if (error || !allCycles || cancelled) return;
+
+      const cycles = allCycles as unknown as (CycleRecord & { familiar_id: string; user_id: string })[];
+
+      // Group by familiar_id, take latest per familiar
+      const latestByFamiliar = new Map<string, typeof cycles[0]>();
+      for (const c of cycles) {
+        if (!latestByFamiliar.has(c.familiar_id)) {
+          latestByFamiliar.set(c.familiar_id, c);
+        }
+      }
+
+      let hasInserted = false;
+      const today = new Date();
+      today.setHours(12, 0, 0, 0);
+
+      for (const [familiarId, cycle] of latestByFamiliar) {
+        if (cancelled) return;
+        if (cycle.alert_advance_days === 0) continue;
+
+        const startDate = parseISO(cycle.start_date + "T12:00:00");
+        const nextPeriod = addDays(startDate, cycle.cycle_length);
+        const alertDate = addDays(nextPeriod, -cycle.alert_advance_days);
+        const daysUntilAlert = differenceInDays(alertDate, today);
+
+        // Only fire if today is exactly the alert date
+        if (daysUntilAlert !== 0) continue;
+
+        const daysLeft = cycle.alert_advance_days;
+
+        // Check if already notified today for this familiar
+        const { data: latest } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("type", "menstrual")
+          .eq("family_member_id", familiarId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        const latestNotification = latest?.[0];
+        const wasAlreadyNotifiedToday =
+          !!latestNotification?.created_at &&
+          new Date(latestNotification.created_at).toDateString() === todayKey;
+
+        if (wasAlreadyNotifiedToday) continue;
+
+        const { error: insertError } = await supabase.from("notifications").insert({
+          user_id: user.id,
+          family_member_id: familiarId,
+          title: "Ciclo Menstrual se Aproxima",
+          message: `Faltam ${daysLeft} dia${daysLeft > 1 ? "s" : ""} para o seu próximo ciclo menstrual. Prepare-se e cuide-se!`,
+          type: "menstrual",
+          scheduled_for: new Date().toISOString(),
+        } as never);
+
+        if (!insertError) {
+          hasInserted = true;
+        }
+      }
+
+      if (!cancelled && hasInserted) {
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
+      }
+    };
+
+    void checkAndNotify();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, queryClient]);
+}
