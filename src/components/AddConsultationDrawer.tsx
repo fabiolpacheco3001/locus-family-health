@@ -232,7 +232,41 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               />
             </div>
 
-            {isEditing && (
+            {/* Medições Clínicas */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" />
+                <Label className="text-sm font-semibold text-foreground">Medições Clínicas</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Sistólica (mmHg)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="ex: 120"
+                    value={systolic}
+                    onChange={(e) => setSystolic(e.target.value.replace(/[^0-9]/g, ''))}
+                    min={1}
+                    max={300}
+                    className="text-[16px] scroll-m-20"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Diastólica (mmHg)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="ex: 80"
+                    value={diastolic}
+                    onChange={(e) => setDiastolic(e.target.value.replace(/[^0-9]/g, ''))}
+                    min={1}
+                    max={300}
+                    className="text-[16px] scroll-m-20"
+                  />
+                </div>
+              </div>
+            </div>
               <div className="space-y-3">
                 {!isCancelled && (
                   <div className="space-y-1.5">
