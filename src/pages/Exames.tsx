@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useExams, Exam } from "@/hooks/useExams";
 import AddExamDrawer from "@/components/AddExamDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
+import SwipeableCard from "@/components/SwipeableCard";
 import useSmartBack from "@/hooks/useSmartBack";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AnimatePresence } from "framer-motion";
+import {
+  AlertDialog, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const statusColors: Record<string, string> = {
   Agendado: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -26,7 +32,8 @@ const Exames = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
-  const { exams, isLoading } = useExams(id!);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const { exams, isLoading, deleteExam } = useExams(id!);
 
   const examesFiltrados = exams.filter(e => {
     if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
@@ -48,6 +55,14 @@ const Exames = () => {
     setDrawerOpen(true);
   };
 
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteExam.mutateAsync(deleteTarget);
+    } catch { /* handled */ }
+    setDeleteTarget(null);
+  };
+
   const handleBack = goBack;
 
   return (
@@ -61,7 +76,6 @@ const Exames = () => {
       />
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">
-        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="icon" onClick={handleBack}>
             <ArrowLeft size={22} />
@@ -90,7 +104,6 @@ const Exames = () => {
           </div>
         </div>
 
-        {/* List */}
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
@@ -111,69 +124,93 @@ const Exames = () => {
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {examesFiltrados.map((e) => {
-              const today = startOfDay(new Date());
-              const isOverdue = e.status === "Agendado" && e.exam_date
-                ? isBefore(new Date(e.exam_date), today)
-                : false;
-              return (
-              <button
-                key={e.id}
-                onClick={() => handleOpenEdit(e)}
-                className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText className="text-black" size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <p className="text-sm font-bold text-foreground truncate">{e.name}</p>
-                    {isOverdue && (
-                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                        Atrasado
-                      </Badge>
-                    )}
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${statusColors[e.status] ?? ""}`}
+            <AnimatePresence mode="popLayout">
+              {examesFiltrados.map((e) => {
+                const today = startOfDay(new Date());
+                const isOverdue = e.status === "Agendado" && e.exam_date
+                  ? isBefore(new Date(e.exam_date), today)
+                  : false;
+                return (
+                  <SwipeableCard key={e.id} onSwipeDelete={() => setDeleteTarget(e.id)}>
+                    <button
+                      onClick={() => handleOpenEdit(e)}
+                      className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
                     >
-                      {e.status === "Coletado" ? "Realizado" : e.status === "Resultado Pronto" ? "Pronto" : e.status}
-                    </Badge>
-                  </div>
-                  {e.location && (
-                    <p className="text-xs text-muted-foreground truncate">{e.location}</p>
-                  )}
-                  {e.consultations?.professional_name && (
-                    <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
-                      <Stethoscope size={12} />
-                      <span>Solicitado por {e.consultations.professional_name}</span>
-                    </div>
-                  )}
-                  {e.exam_date && (
-                    <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                      <Calendar size={12} />
-                      <span>
-                        {(() => {
-                          const hasTime = e.exam_date!.length > 10;
-                          const parsed = hasTime ? parseISO(e.exam_date!) : new Date(e.exam_date + 'T12:00:00');
-                          const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
-                          const dayName = format(parsed, "EEEEEE", { locale: ptBR });
-                          const dayAbbr = dayName.substring(0, 3);
-                          const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
-                          const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
-                          return `${datePart} - ${dayCapitalized}${timePart}`;
-                        })()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
-              </button>
-              );
-            })}
+                      <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
+                        <FileText className="text-black" size={20} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="text-sm font-bold text-foreground truncate">{e.name}</p>
+                          {isOverdue && (
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                              Atrasado
+                            </Badge>
+                          )}
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 whitespace-nowrap ${statusColors[e.status] ?? ""}`}
+                          >
+                            {e.status === "Coletado" ? "Realizado" : e.status === "Resultado Pronto" ? "Pronto" : e.status}
+                          </Badge>
+                        </div>
+                        {e.location && (
+                          <p className="text-xs text-muted-foreground truncate">{e.location}</p>
+                        )}
+                        {e.consultations?.professional_name && (
+                          <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+                            <Stethoscope size={12} />
+                            <span>Solicitado por {e.consultations.professional_name}</span>
+                          </div>
+                        )}
+                        {e.exam_date && (
+                          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                            <Calendar size={12} />
+                            <span>
+                              {(() => {
+                                const hasTime = e.exam_date!.length > 10;
+                                const parsed = hasTime ? parseISO(e.exam_date!) : new Date(e.exam_date + 'T12:00:00');
+                                const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
+                                const dayName = format(parsed, "EEEEEE", { locale: ptBR });
+                                const dayAbbr = dayName.substring(0, 3);
+                                const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
+                                const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
+                                return `${datePart} - ${dayCapitalized}${timePart}`;
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
+                    </button>
+                  </SwipeableCard>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent className="max-w-[320px] w-[90vw] rounded-[24px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Registro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir permanentemente este registro? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteExam.isPending}
+            >
+              {deleteExam.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
