@@ -128,7 +128,8 @@ export function useMedicationAlarms(medications: Medication[]) {
         }
 
         const elapsedHours = (now.getTime() - refTime.getTime()) / (1000 * 60 * 60);
-        const missedDoses = Math.floor(elapsedHours / med.frequency_hours);
+        const isFirstRun = !med.last_stock_decrement;
+        const missedDoses = Math.floor(elapsedHours / med.frequency_hours) + (isFirstRun ? 1 : 0);
 
         if (missedDoses > 0) {
           const safeDoses = Math.min(missedDoses, med.estoque_total);
