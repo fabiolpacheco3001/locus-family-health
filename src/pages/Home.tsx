@@ -70,7 +70,7 @@ const Home = () => {
       const [consultRes, examRes] = await Promise.all([
         supabase
           .from("consultations")
-          .select("id, family_member_id, specialty, professional_name, consultation_date, status, family_members(name)")
+          .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
           .eq("user_id", user!.id)
           .in("status", ["Agendada"])
           .order("consultation_date", { ascending: true })
@@ -93,6 +93,7 @@ const Home = () => {
         kind: "consultation" | "exam";
         familyMemberId: string;
         isOverdue: boolean;
+        consultationType?: string | null;
       }> = [];
 
       (consultRes.data ?? []).forEach((c: any) => {
@@ -107,6 +108,7 @@ const Home = () => {
           kind: "consultation",
           familyMemberId: c.family_member_id,
           isOverdue: overdue,
+          consultationType: c.type,
         });
       });
 
@@ -481,8 +483,16 @@ const Home = () => {
                               Atrasado
                             </Badge>
                           )}
-                          <Badge className={`text-[10px] px-1.5 py-0 shrink-0 border-none ${isExam ? "bg-[#FFF4A3] text-black" : "bg-[#DCC5F1] text-black"}`}>
-                            {isExam ? "Exame" : "Consulta"}
+                          <Badge className={`text-[10px] px-1.5 py-0 shrink-0 border-none ${
+                            isExam
+                              ? "bg-[#FFF4A3] text-black"
+                              : item.consultationType === "Retorno"
+                              ? "bg-[#A0C4D7] text-slate-800"
+                              : item.consultationType === "Emergência"
+                              ? "bg-[#F87171] text-white"
+                              : "bg-[#DCC5F1] text-black"
+                          }`}>
+                            {isExam ? "Exame" : item.consultationType === "Retorno" ? "Retorno" : item.consultationType === "Emergência" ? "Emergência" : "Consulta"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
