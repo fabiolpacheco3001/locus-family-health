@@ -280,7 +280,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                   <Input
                     type="number"
                     inputMode="numeric"
-                    placeholder="ex: 80"
+                    placeholder="Ex: 80"
                     value={diastolic}
                     onChange={(e) => setDiastolic(e.target.value.replace(/[^0-9]/g, ''))}
                     min={1}
