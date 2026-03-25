@@ -79,7 +79,7 @@ const Medicamentos = () => {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Histórico
+              Concluídos
             </button>
           </div>
         </div>
