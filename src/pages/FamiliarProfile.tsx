@@ -137,13 +137,12 @@ const FamiliarProfile = () => {
   const infoLine = infoParts.join(" • ");
 
   const isFemale = member.gender === "Feminino";
-  const infoItems = useMemo(() => {
-    const items = [...baseInfoItems];
-    if (isFemale) {
-      items.push({ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" });
-    }
-    return items;
-  }, [isFemale]);
+  const infoItems: CardItem[] = [
+    ...baseInfoItems,
+    ...(isFemale
+      ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }]
+      : []),
+  ];
 
   const memberWeight = (member as any).weight as number | null;
   const memberHeight = (member as any).height as number | null;
