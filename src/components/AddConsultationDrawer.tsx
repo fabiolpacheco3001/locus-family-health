@@ -265,7 +265,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               Essa ação mudará o status da consulta para cancelada.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="px-6 pb-2">
+          <div className="px-6">
             <Textarea
               placeholder="Motivo do cancelamento (opcional)"
               maxLength={200}
@@ -277,7 +277,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             />
             <p className="text-xs text-muted-foreground/60 text-right mt-2">{cancelReason.length}/200</p>
           </div>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="px-6 pb-6">
             <AlertDialogCancel>Voltar</AlertDialogCancel>
             <Button
               variant="destructive"
