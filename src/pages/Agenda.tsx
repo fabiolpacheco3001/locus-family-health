@@ -207,7 +207,7 @@ const Agenda = () => {
                     <div className="flex items-center gap-2 mb-1">
                      <Avatar className="h-5 w-5 border border-[#1C3333]/20">
                         <AvatarFallback className="bg-secondary/20 text-secondary text-[10px] font-bold">
-                          {item.memberName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()}
+                          {(() => { const p = item.memberName.trim().split(' ').filter(Boolean); return p.length <= 1 ? (p[0]?.[0] ?? '').toUpperCase() : `${p[0][0]}${p[p.length-1][0]}`.toUpperCase(); })()}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-xs text-muted-foreground truncate">{item.memberName}</span>

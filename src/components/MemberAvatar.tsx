@@ -15,12 +15,12 @@ const sizeClasses = {
 
 const MemberAvatar = ({ avatarUrl, name, size = "md", className = "" }: MemberAvatarProps) => {
   const s = sizeClasses[size];
-  const initials = name
-    ?.split(" ")
-    .map((w) => w[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase() ?? "—";
+  const initials = (() => {
+    const parts = (name ?? "").trim().split(" ").filter(Boolean);
+    if (parts.length === 0) return "—";
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  })();
 
   const isImage = avatarUrl?.startsWith("data:image") || avatarUrl?.startsWith("http");
   const isEmoji = avatarUrl && !isImage && avatarUrl.length > 0;
