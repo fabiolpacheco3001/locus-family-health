@@ -77,7 +77,10 @@ export const useFamilyMembers = () => {
 
   const deleteMember = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("family_members").delete().eq("id", id);
+      const { error } = await supabase
+        .from("family_members")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
