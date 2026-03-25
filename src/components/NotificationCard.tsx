@@ -10,6 +10,7 @@ const iconMap: Record<string, React.ElementType> = {
   consultation: Stethoscope,
   exam: FileText,
   stock: AlertTriangle,
+  menstrual: Droplets,
 };
 
 const iconBgMap: Record<string, string> = {
@@ -17,6 +18,7 @@ const iconBgMap: Record<string, string> = {
   consultation: "bg-[#A7D3CB]",
   exam: "bg-[#A7D3CB]",
   stock: "bg-amber-400",
+  menstrual: "bg-pink-400",
 };
 
 const SWIPE_THRESHOLD = -80;
