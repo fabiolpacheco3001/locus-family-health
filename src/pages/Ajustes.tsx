@@ -108,7 +108,7 @@ const Ajustes = () => {
       </div>
 
       {/* Footer - Logout */}
-      <div className="flex-none py-2 px-4 bg-card border-t">
+      <div className="flex-none py-2 px-4 bg-[#f2f0eb]/80 backdrop-blur-md border-t border-foreground/10">
         <Button
           onClick={handleLogout}
           className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
