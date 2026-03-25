@@ -30,7 +30,7 @@ const Exames = () => {
 
   const examesFiltrados = exams.filter(e => {
     if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
-    return e.status === 'Pronto' || e.status === 'Concluído' || e.status === 'Resultado Pronto' || e.status === 'Resultado Disponível';
+    return e.status === 'Pronto' || e.status === 'Concluído' || e.status === 'Resultado Pronto' || e.status === 'Resultado Disponível' || e.status === 'Cancelado';
   });
 
   const handleOpenEdit = (e: Exam) => {
