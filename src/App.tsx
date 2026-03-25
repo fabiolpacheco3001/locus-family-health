@@ -10,6 +10,7 @@ import Agenda from "./pages/Agenda";
 import Familia from "./pages/Familia";
 import Ajustes from "./pages/Ajustes";
 import FamiliarProfile from "./pages/FamiliarProfile";
+import Prontuario from "./pages/Prontuario";
 import Consultas from "./pages/Consultas";
 import Medicamentos from "./pages/Medicamentos";
 import MedicamentosGeral from "./pages/MedicamentosGeral";
