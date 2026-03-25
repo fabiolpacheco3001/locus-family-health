@@ -119,9 +119,11 @@ const Home = () => {
         consultationType?: string | null;
       }> = [];
 
+      const now = new Date();
       (consultRes.data ?? []).forEach((c: any) => {
         const dateStr = c.consultation_date;
-        const overdue = c.status === "Agendada" && dateStr ? isBefore(new Date(dateStr), new Date()) : false;
+        // Skip past appointments for "Próximos 5"
+        if (dateStr && new Date(dateStr) <= now) return;
         items.push({
           id: c.id,
           title: c.specialty,
