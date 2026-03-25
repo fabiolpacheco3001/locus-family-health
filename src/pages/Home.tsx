@@ -132,7 +132,7 @@ const Home = () => {
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
           familyMemberId: c.family_member_id,
-          isOverdue: overdue,
+          isOverdue: false,
           consultationType: c.type,
         });
       });
