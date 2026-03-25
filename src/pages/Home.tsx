@@ -185,7 +185,7 @@ const Home = () => {
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
       {/* Color Block do Topo */}
-      <div className="bg-[#1C3333] pt-8 pb-32 px-5 rounded-b-[2.5rem]">
+      <div className="bg-[#1C3333] pt-8 pb-16 px-5 rounded-b-[2.5rem]">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div
@@ -335,7 +335,7 @@ const Home = () => {
       </div>
 
       {/* Conteúdo flutuante */}
-      <div className="px-5 -mt-[7.5rem] relative z-10 space-y-6">
+      <div className="px-5 -mt-[3.5rem] relative z-10 space-y-6">
 
       {/* Acesso Rápido - Cards */}
       <div>
