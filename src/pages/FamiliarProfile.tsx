@@ -173,15 +173,14 @@ const FamiliarProfile = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-      {/* Header */}
-      <div className="flex-none px-4 pt-6 pb-2 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={goBack}>
-          <ArrowLeft size={22} />
-        </Button>
-        <h1 className="text-lg font-bold text-foreground flex-1">Minha Saúde</h1>
-      </div>
-
       <div className="flex-1 overflow-y-auto no-scrollbar">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-40 w-full bg-[#F4F1EB]/80 backdrop-blur-md px-4 pt-6 pb-2 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={goBack}>
+            <ArrowLeft size={22} />
+          </Button>
+          <h1 className="text-lg font-bold text-foreground flex-1">Minha Saúde</h1>
+        </div>
         <div className="p-4 pb-8 space-y-6 min-h-[calc(100%+1px)]">
 
       {/* Identity Card */}

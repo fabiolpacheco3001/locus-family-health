@@ -184,9 +184,9 @@ const Home = () => {
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       <div className="flex-1 overflow-y-auto no-scrollbar pb-4">
-      {/* Color Block do Topo */}
-      <div className="bg-[#1C3333] pt-8 pb-16 px-5 rounded-b-[2.5rem]">
-        <div className="flex items-center justify-between mb-6">
+      {/* Sticky Header Escuro */}
+      <div className="sticky top-0 z-40 w-full bg-[#1C3333]/90 backdrop-blur-md px-5 pt-8 pb-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
               onClick={() => navigate('/meus-dados', { state: { from: '/home' } })}
@@ -225,6 +225,10 @@ const Home = () => {
             )}
           </button>
         </div>
+      </div>
+
+      {/* Color Block do Topo (continuação) */}
+      <div className="bg-[#1C3333] pb-16 px-5 rounded-b-[2.5rem]">
 
         {/* Visão Geral */}
         <div>
