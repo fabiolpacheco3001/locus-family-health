@@ -218,6 +218,21 @@ const FamiliarProfile = () => {
         </div>
       </button>
 
+      {/* Prontuário (RES) Button */}
+      <button
+        onClick={() => navigate(`/familiar/${id}/prontuario`)}
+        className="w-full rounded-xl bg-[#1C3333] p-4 flex items-center gap-3 active:opacity-90 sm:hover:opacity-90 transition-opacity"
+      >
+        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+          <FileText className="text-white" size={20} />
+        </div>
+        <div className="flex-1 text-left">
+          <p className="text-sm font-semibold text-white">Prontuário (RES)</p>
+          <p className="text-[10px] text-white/60">Resumo de emergência e dados clínicos</p>
+        </div>
+        <ArrowLeft className="text-white/40 rotate-180" size={16} />
+      </button>
+
       {/* Group 1: Gestão de Saúde */}
       <SectionTitle icon={HeartPulse} title="Gestão de Saúde" />
       {renderCardGrid(gestaoItems)}
