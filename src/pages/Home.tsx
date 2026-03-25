@@ -49,7 +49,7 @@ const Home = () => {
     enabled: !!user,
   });
 
-  // Pending exams count
+  // Pending exams count (only truly pending statuses)
   const { data: pendingExams = 0 } = useQuery({
     queryKey: ["pending-exams-count", user?.id],
     queryFn: async () => {
@@ -57,9 +57,32 @@ const Home = () => {
         .from("exams")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user!.id)
-        .or("status.eq.Agendado,status.eq.Realizado,status.eq.Coletado");
+        .eq("status", "Agendado");
       if (error) throw error;
       return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  // Total open appointments count (for carousel card — no limit)
+  const { data: totalOpenAppointments = 0 } = useQuery({
+    queryKey: ["total-open-appointments", user?.id],
+    queryFn: async () => {
+      const [consultRes, examRes] = await Promise.all([
+        supabase
+          .from("consultations")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("status", "Agendada"),
+        supabase
+          .from("exams")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("status", "Agendado"),
+      ]);
+      if (consultRes.error) throw consultRes.error;
+      if (examRes.error) throw examRes.error;
+      return (consultRes.count ?? 0) + (examRes.count ?? 0);
     },
     enabled: !!user,
   });
