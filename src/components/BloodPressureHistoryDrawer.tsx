@@ -295,7 +295,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
                 <Input
                   type="number"
                   inputMode="numeric"
-                  placeholder="ex: 120"
+                  placeholder="Ex: 120"
                   value={form.systolic}
                   onChange={(e) => setForm({ ...form, systolic: e.target.value.replace(/[^0-9]/g, "") })}
                   min={1}
