@@ -186,7 +186,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
                         {r.systolic} / {r.diastolic}{" "}
                         <span className="text-sm font-normal text-muted-foreground">mmHg</span>
                       </p>
-                      <Badge className={`${cat.color} border-0 text-[10px] font-semibold`}>
+                      <Badge className={`${cat.colorClass} border-0 text-[10px] font-semibold`}>
                         {cat.label}
                       </Badge>
                     </div>
