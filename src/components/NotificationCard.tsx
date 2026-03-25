@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pill, Stethoscope, FileText, ChevronDown, Trash2 } from "lucide-react";
+import { Pill, Stethoscope, FileText, ChevronDown, Trash2, AlertTriangle } from "lucide-react";
 import { Notification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -9,6 +9,14 @@ const iconMap: Record<string, React.ElementType> = {
   medication: Pill,
   consultation: Stethoscope,
   exam: FileText,
+  stock: AlertTriangle,
+};
+
+const iconBgMap: Record<string, string> = {
+  medication: "bg-[#A7D3CB]",
+  consultation: "bg-[#A7D3CB]",
+  exam: "bg-[#A7D3CB]",
+  stock: "bg-amber-400",
 };
 
 const SWIPE_THRESHOLD = -80;
@@ -75,8 +83,8 @@ const NotificationCard = ({ notification, onRead, onDelete }: NotificationCardPr
           className="flex items-center gap-3 p-4 w-full text-left"
         >
           <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center">
-              <Icon className="text-black" size={20} />
+            <div className={`w-10 h-10 rounded-xl ${iconBgMap[notification.type] || "bg-[#A7D3CB]"} flex items-center justify-center`}>
+              <Icon className={notification.type === "stock" ? "text-white" : "text-black"} size={20} />
             </div>
             {isUnread && (
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
