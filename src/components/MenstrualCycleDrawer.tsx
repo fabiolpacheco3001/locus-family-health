@@ -95,7 +95,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
         .eq("familiar_id", familyMemberId)
         .order("start_date", { ascending: false });
       if (error) throw error;
-      return (data || []) as CycleRecord[];
+      return (data || []) as unknown as CycleRecord[];
     },
     enabled: !!familyMemberId && !!user && open,
   });
