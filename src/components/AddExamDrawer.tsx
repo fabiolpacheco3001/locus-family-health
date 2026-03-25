@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X, Eye, Sparkles } from "lucide-react";
+import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -11,7 +12,7 @@ import {
   Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerDescription,
 } from "@/components/ui/drawer";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
@@ -38,18 +39,19 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   const [consultationId, setConsultationId] = useState("none");
   const [file, setFile] = useState<File | null>(null);
   const [existingFileUrl, setExistingFileUrl] = useState<string | null>(null);
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showCancelAlert, setShowCancelAlert] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [uploading, setUploading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editingExam;
+  const isCancelled = editingExam?.status === "Cancelado";
 
   useEffect(() => {
     if (editingExam) {
       setName(editingExam.name);
-      // Convert ISO timestamp to datetime-local format (YYYY-MM-DDTHH:mm)
       const ed = editingExam.exam_date;
       if (ed) {
         const d = new Date(ed);
@@ -78,6 +80,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
     setConsultationId("none");
     setFile(null);
     setExistingFileUrl(null);
+    setCancelReason("");
   };
 
   const handleSave = async () => {
@@ -130,17 +133,21 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
     }
   };
 
-  const handleDelete = async () => {
+  const handleCancelExam = async () => {
     if (!editingExam) return;
     try {
-      await deleteExam.mutateAsync(editingExam.id);
-      toast.success("Exame excluído.");
+      await updateExam.mutateAsync({
+        id: editingExam.id,
+        status: "Cancelado",
+        cancel_reason: cancelReason.trim() || null,
+      });
+      toast.success("Exame cancelado.");
       resetForm();
       onOpenChange(false);
     } catch {
-      toast.error("Erro ao excluir. Tente novamente.");
+      toast.error("Erro ao cancelar. Tente novamente.");
     }
-    setShowDeleteAlert(false);
+    setShowCancelAlert(false);
   };
 
   const isPending = addExam.isPending || updateExam.isPending || uploading;
@@ -184,7 +191,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               </div>
               <div className="space-y-1.5">
                 <Label>Status</Label>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={isCancelled ? "Cancelado" : status} onValueChange={setStatus} disabled={isCancelled}>
                   <SelectTrigger className="text-[16px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -192,7 +199,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                     <SelectItem value="Agendado">Agendado</SelectItem>
                     <SelectItem value="Realizado">Realizado</SelectItem>
                     <SelectItem value="Pronto">Pronto</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</SelectItem>
+                    {isCancelled && <SelectItem value="Cancelado">Cancelado</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -276,7 +283,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               )}
             </div>
 
-            {/* AI OCR Button - shown when a file is selected or exists */}
+            {/* AI OCR Button */}
             {(file || existingFileUrl) && (
               <div className="space-y-1.5">
                 <Button
@@ -341,15 +348,15 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               </div>
             )}
 
-            {isEditing && (
+            {isEditing && !isCancelled && (
               <div className="pt-4 border-t border-border">
                 <Button
                   variant="outline"
                   className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                  onClick={() => setShowDeleteAlert(true)}
+                  onClick={() => { setCancelReason(""); setShowCancelAlert(true); }}
                 >
-                  <Trash2 size={16} className="mr-2" />
-                  Excluir Exame
+                  <Ban size={16} className="mr-2" />
+                  Cancelar Exame
                 </Button>
               </div>
             )}
@@ -359,13 +366,15 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
             <DrawerClose asChild>
               <Button variant="ghost" className="flex-1">Cancelar</Button>
             </DrawerClose>
-            <Button
-              onClick={handleSave}
-              disabled={isPending}
-              className="flex-1"
-            >
-              {isPending ? <Loader2 className="animate-spin" size={18} /> : isEditing ? "Salvar Alterações" : "Salvar Exame"}
-            </Button>
+            {!isCancelled && (
+              <Button
+                onClick={handleSave}
+                disabled={isPending}
+                className="flex-1"
+              >
+                {isPending ? <Loader2 className="animate-spin" size={18} /> : isEditing ? "Salvar Alterações" : "Salvar Exame"}
+              </Button>
+            )}
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
@@ -388,22 +397,35 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
+      <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
+        <AlertDialogContent className="max-w-[320px] w-[90vw] rounded-[24px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir este exame?</AlertDialogTitle>
+            <AlertDialogTitle>Cancelar Compromisso</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita e os dados do exame serão perdidos.
+              Essa ação mudará o status do exame para cancelado.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="px-6 pb-2">
+            <Textarea
+              placeholder="Motivo do cancelamento (opcional)"
+              maxLength={200}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="text-[16px] resize-none"
+              rows={3}
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground text-right mt-1">{cancelReason.length}/200</p>
+          </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleCancelExam}
+              disabled={updateExam.isPending}
             >
-              {deleteExam.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, excluir"}
-            </AlertDialogAction>
+              {updateExam.isPending ? <Loader2 className="animate-spin" size={16} /> : "Confirmar Cancelamento"}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

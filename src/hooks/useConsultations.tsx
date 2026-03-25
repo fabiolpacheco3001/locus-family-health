@@ -35,6 +35,7 @@ export type UpdateConsultation = {
   symptoms?: string | null;
   questions?: string | null;
   status?: string;
+  cancel_reason?: string | null;
 };
 
 export const useConsultations = (familyMemberId: string) => {

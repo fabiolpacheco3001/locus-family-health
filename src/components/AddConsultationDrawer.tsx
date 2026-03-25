@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import SpecialtyCombobox from "@/components/SpecialtyCombobox";
@@ -12,7 +12,7 @@ import {
   Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerDescription,
 } from "@/components/ui/drawer";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
@@ -26,23 +26,24 @@ interface Props {
 }
 
 const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation }: Props) => {
-  const { addConsultation, updateConsultation, deleteConsultation } = useConsultations(familyMemberId);
+  const { addConsultation, updateConsultation } = useConsultations(familyMemberId);
   const [specialty, setSpecialty] = useState("");
   const [professionalName, setProfessionalName] = useState("");
   const [consultationDate, setConsultationDate] = useState("");
   const [type, setType] = useState("Rotina");
   const [symptoms, setSymptoms] = useState("");
   const [questions, setQuestions] = useState("");
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [showCancelAlert, setShowCancelAlert] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [statusValue, setStatusValue] = useState("Agendada");
 
   const isEditing = !!editingConsultation;
+  const isCancelled = editingConsultation?.status === "Cancelada";
 
   useEffect(() => {
     if (editingConsultation) {
       setSpecialty(editingConsultation.specialty);
       setProfessionalName(editingConsultation.professional_name ?? "");
-      // Convert ISO timestamp to datetime-local format
       const cd = editingConsultation.consultation_date;
       if (cd) {
         const d = new Date(cd);
@@ -68,6 +69,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setSymptoms("");
     setQuestions("");
     setStatusValue("Agendada");
+    setCancelReason("");
   };
 
   const handleSave = async () => {
@@ -109,17 +111,21 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     }
   };
 
-  const handleDelete = async () => {
+  const handleCancel = async () => {
     if (!editingConsultation) return;
     try {
-      await deleteConsultation.mutateAsync(editingConsultation.id);
-      toast.success("Consulta excluída.");
+      await updateConsultation.mutateAsync({
+        id: editingConsultation.id,
+        status: "Cancelada",
+        cancel_reason: cancelReason.trim() || null,
+      });
+      toast.success("Consulta cancelada.");
       resetForm();
       onOpenChange(false);
     } catch {
-      toast.error("Erro ao excluir. Tente novamente.");
+      toast.error("Erro ao cancelar. Tente novamente.");
     }
-    setShowDeleteAlert(false);
+    setShowCancelAlert(false);
   };
 
   const isPending = addConsultation.isPending || updateConsultation.isPending;
@@ -204,29 +210,32 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
 
             {isEditing && (
               <div className="space-y-3">
-                <div className="space-y-1.5">
-                  <Label>Status</Label>
-                  <Select value={statusValue} onValueChange={setStatusValue}>
-                    <SelectTrigger className="text-[16px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Agendada">Agendada</SelectItem>
-                      <SelectItem value="Realizada">Realizada</SelectItem>
-                      <SelectItem value="Cancelada">Cancelada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="pt-4 border-t border-border">
-                  <Button
-                    variant="outline"
-                    className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                    onClick={() => setShowDeleteAlert(true)}
-                  >
-                    <Trash2 size={16} className="mr-2" />
-                    Excluir Consulta
-                  </Button>
-                </div>
+                {!isCancelled && (
+                  <div className="space-y-1.5">
+                    <Label>Status</Label>
+                    <Select value={statusValue} onValueChange={setStatusValue}>
+                      <SelectTrigger className="text-[16px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Agendada">Agendada</SelectItem>
+                        <SelectItem value="Realizada">Realizada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+                {!isCancelled && (
+                  <div className="pt-4 border-t border-border">
+                    <Button
+                      variant="outline"
+                      className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                      onClick={() => { setCancelReason(""); setShowCancelAlert(true); }}
+                    >
+                      <Ban size={16} className="mr-2" />
+                      Cancelar Consulta
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -235,33 +244,48 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             <DrawerClose asChild>
               <Button variant="ghost" className="flex-1">Cancelar</Button>
             </DrawerClose>
-            <Button
-              onClick={handleSave}
-              disabled={isPending}
-              className="flex-1"
-            >
-              {isPending ? <Loader2 className="animate-spin" size={18} /> : isEditing ? "Salvar Alterações" : "Agendar Consulta"}
-            </Button>
+            {!isCancelled && (
+              <Button
+                onClick={handleSave}
+                disabled={isPending}
+                className="flex-1"
+              >
+                {isPending ? <Loader2 className="animate-spin" size={18} /> : isEditing ? "Salvar Alterações" : "Agendar Consulta"}
+              </Button>
+            )}
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
+      <AlertDialog open={showCancelAlert} onOpenChange={setShowCancelAlert}>
+        <AlertDialogContent className="max-w-[320px] w-[90vw] rounded-[24px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir esta consulta?</AlertDialogTitle>
+            <AlertDialogTitle>Cancelar Compromisso</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza? Você perderá as anotações feitas.
+              Essa ação mudará o status da consulta para cancelada.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="px-6 pb-2">
+            <Textarea
+              placeholder="Motivo do cancelamento (opcional)"
+              maxLength={200}
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="text-[16px] resize-none"
+              rows={3}
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground text-right mt-1">{cancelReason.length}/200</p>
+          </div>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            <AlertDialogCancel>Voltar</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleCancel}
+              disabled={updateConsultation.isPending}
             >
-              {deleteConsultation.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, excluir"}
-            </AlertDialogAction>
+              {updateConsultation.isPending ? <Loader2 className="animate-spin" size={16} /> : "Confirmar Cancelamento"}
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
