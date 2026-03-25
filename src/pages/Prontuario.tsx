@@ -2,11 +2,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import useSmartBack from "@/hooks/useSmartBack";
-import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse } from "lucide-react";
+import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import MemberAvatar from "@/components/MemberAvatar";
+import ClinicalTimeline from "@/components/ClinicalTimeline";
+import { useClinicalTimeline } from "@/hooks/useClinicalTimeline";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -23,6 +25,7 @@ const Prontuario = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
+  const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ["family_member", id],
@@ -189,6 +192,22 @@ const Prontuario = () => {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">Nenhuma doença crônica registrada.</p>
+            )}
+          </div>
+
+          {/* Clinical Timeline */}
+          <div>
+            <div className="flex items-center gap-2 mb-4 mt-2">
+              <Clock className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Histórico Clínico</h2>
+            </div>
+            {timelineLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+              </div>
+            ) : (
+              <ClinicalTimeline events={timeline} />
             )}
           </div>
 
