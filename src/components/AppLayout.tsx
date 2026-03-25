@@ -4,10 +4,12 @@ import MobileShell from "./MobileShell";
 import BottomNav from "./BottomNav";
 import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
+import { useMedications } from "@/hooks/useMedications";
 
 const AppLayout = () => {
-  useMedicationAlarms();
-  useStockAlerts();
+  const { medications } = useMedications();
+  useMedicationAlarms(medications);
+  useStockAlerts(medications);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
 
