@@ -2,11 +2,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import useSmartBack from "@/hooks/useSmartBack";
-import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse } from "lucide-react";
+import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import MemberAvatar from "@/components/MemberAvatar";
+import ClinicalTimeline from "@/components/ClinicalTimeline";
+import { useClinicalTimeline } from "@/hooks/useClinicalTimeline";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
