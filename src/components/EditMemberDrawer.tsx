@@ -40,8 +40,6 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
 
-  const initials = member?.name?.[0]?.toUpperCase() ?? "?";
-
   useEffect(() => {
     if (open && member) {
       setName(member.name);
@@ -122,7 +120,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
                 {avatarUrl && (
                   <button
                     onClick={() => setAvatarUrl("")}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 border-2 border-background flex items-center justify-center"
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-slate-800/60 backdrop-blur-sm hover:bg-slate-800/80 border border-white/20 flex items-center justify-center transition-colors"
                   >
                     <X className="w-3 h-3 text-white" />
                   </button>
@@ -192,19 +190,8 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
 
           </div>
 
-          <DrawerFooter className="flex-col gap-3">
-            <div className="flex gap-3">
-              <DrawerClose asChild>
-                <Button variant="ghost" className="flex-1">Cancelar</Button>
-              </DrawerClose>
-              <Button
-                onClick={handleSave}
-                disabled={updateMember.isPending}
-                className="flex-1"
-              >
-                {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar Alterações"}
-              </Button>
-            </div>
+          {/* Delete button above footer */}
+          <div className="px-4 pb-2">
             <Button
               variant="outline"
               className="w-full text-destructive border-destructive/30 hover:bg-destructive/5 flex items-center justify-center gap-2"
@@ -213,12 +200,25 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
               <Trash2 className="w-4 h-4" />
               Excluir Familiar
             </Button>
+          </div>
+
+          <DrawerFooter className="flex-row gap-3 pt-2">
+            <DrawerClose asChild>
+              <Button variant="ghost" className="flex-1">Cancelar</Button>
+            </DrawerClose>
+            <Button
+              onClick={handleSave}
+              disabled={updateMember.isPending}
+              className="flex-1"
+            >
+              {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar Alterações"}
+            </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
             <AlertDialogDescription>

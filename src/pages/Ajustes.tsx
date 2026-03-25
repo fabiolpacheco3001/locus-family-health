@@ -1,9 +1,16 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight } from "lucide-react";
+import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { supabase } from "@/integrations/supabase/client";
 import MemberAvatar from "@/components/MemberAvatar";
+import { toast } from "sonner";
 
 const menuItems = [
   { icon: User, label: "Meus Dados", path: "/meus-dados" },
@@ -14,21 +21,39 @@ const menuItems = [
 ];
 
 const Ajustes = () => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
-  const { members } = useFamilyMembers();
+  const { members, updateMember } = useFamilyMembers();
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const titular = members?.find((m) => m.relationship === "Titular");
-  const initials = titular?.name
-    ?.split(" ")
-    .map((w) => w[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase() ?? "—";
 
   const handleLogout = async () => {
     await signOut();
     navigate("/login", { replace: true });
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      // Soft delete: mark all family members as deleted
+      if (members && members.length > 0) {
+        for (const member of members) {
+          await updateMember.mutateAsync({
+            id: member.id,
+            deleted_at: new Date().toISOString(),
+          } as any);
+        }
+      }
+      await supabase.auth.signOut();
+      toast.success("Conta excluída com sucesso.");
+      navigate("/login", { replace: true });
+    } catch {
+      toast.error("Erro ao excluir conta. Tente novamente.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -65,6 +90,18 @@ const Ajustes = () => {
               <ChevronRight size={18} className="text-muted-foreground" />
             </button>
           ))}
+
+          {/* Delete Account - danger item */}
+          <button
+            onClick={() => setShowDeleteAccount(true)}
+            className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-destructive/20 active:bg-destructive/5 transition-colors"
+          >
+            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+              <Trash2 size={20} className="text-destructive" />
+            </div>
+            <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Minha Conta</span>
+            <ChevronRight size={18} className="text-destructive/50" />
+          </button>
         </div>
         </div>
       </div>
@@ -79,6 +116,28 @@ const Ajustes = () => {
           Sair da conta
         </Button>
       </div>
+
+      {/* Delete Account AlertDialog */}
+      <AlertDialog open={showDeleteAccount} onOpenChange={setShowDeleteAccount}>
+        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alerta de Exclusão de Conta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir sua conta Locus Vita? Todos os seus dados e os dados de sua família serão apagados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+            >
+              {deleting ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

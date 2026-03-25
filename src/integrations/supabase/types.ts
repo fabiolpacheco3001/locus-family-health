@@ -207,6 +207,7 @@ export type Database = {
           blood_type: string | null
           cpf: string | null
           created_at: string
+          deleted_at: string | null
           gender: string | null
           height: number | null
           id: string
@@ -223,6 +224,7 @@ export type Database = {
           blood_type?: string | null
           cpf?: string | null
           created_at?: string
+          deleted_at?: string | null
           gender?: string | null
           height?: number | null
           id?: string
@@ -239,6 +241,7 @@ export type Database = {
           blood_type?: string | null
           cpf?: string | null
           created_at?: string
+          deleted_at?: string | null
           gender?: string | null
           height?: number | null
           id?: string
