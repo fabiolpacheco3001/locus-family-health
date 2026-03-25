@@ -295,7 +295,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
                 <Input
                   type="number"
                   inputMode="numeric"
-                  placeholder="ex: 120"
+                  placeholder="Ex: 120"
                   value={form.systolic}
                   onChange={(e) => setForm({ ...form, systolic: e.target.value.replace(/[^0-9]/g, "") })}
                   min={1}
@@ -308,7 +308,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
                 <Input
                   type="number"
                   inputMode="numeric"
-                  placeholder="ex: 80"
+                  placeholder="Ex: 80"
                   value={form.diastolic}
                   onChange={(e) => setForm({ ...form, diastolic: e.target.value.replace(/[^0-9]/g, "") })}
                   min={1}
@@ -333,7 +333,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Observações</Label>
               <Textarea
-                placeholder="Sintomas, contexto..."
+                placeholder="Ex: Após exercício, em repouso..."
                 rows={3}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}

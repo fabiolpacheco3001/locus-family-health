@@ -236,7 +236,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             <div className="space-y-1.5">
               <Label>Motivo da Visita</Label>
               <Textarea
-                placeholder="Descreva os sintomas ou motivo..."
+                placeholder="Ex: Dores no estômago após as refeições"
                 rows={3}
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
@@ -247,7 +247,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             <div className="space-y-1.5">
               <Label>Dúvidas para o Médico</Label>
               <Textarea
-                placeholder="Anote suas perguntas..."
+                placeholder="Ex: Posso tomar com outros remédios?"
                 rows={3}
                 value={questions}
                 onChange={(e) => setQuestions(e.target.value)}
@@ -267,7 +267,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                   <Input
                     type="number"
                     inputMode="numeric"
-                    placeholder="ex: 120"
+                    placeholder="Ex: 120"
                     value={systolic}
                     onChange={(e) => setSystolic(e.target.value.replace(/[^0-9]/g, ''))}
                     min={1}
@@ -280,7 +280,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                   <Input
                     type="number"
                     inputMode="numeric"
-                    placeholder="ex: 80"
+                    placeholder="Ex: 80"
                     value={diastolic}
                     onChange={(e) => setDiastolic(e.target.value.replace(/[^0-9]/g, ''))}
                     min={1}
@@ -349,7 +349,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           </AlertDialogHeader>
           <div className="px-6">
             <Textarea
-              placeholder="Motivo do cancelamento (opcional)"
+              placeholder="Ex: Conflito de horário, remarcação..."
               maxLength={200}
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}

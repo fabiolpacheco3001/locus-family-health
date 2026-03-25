@@ -450,7 +450,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Sintomas</Label>
               <Textarea
-                placeholder="Cólica, dor de cabeça..."
+                placeholder="Ex: Cólica, dor de cabeça..."
                 rows={2}
                 value={form.symptoms}
                 onChange={(e) => setForm({ ...form, symptoms: e.target.value })}
@@ -463,7 +463,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Observações</Label>
               <Textarea
-                placeholder="Anotações adicionais..."
+                placeholder="Ex: Anotações adicionais, fluxo mais intenso..."
                 rows={2}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}

@@ -54,7 +54,7 @@ const Login = () => {
           {isSignUp && (
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">Nome</label>
-              <Input placeholder="Seu nome completo" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input placeholder="Ex: João da Silva" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
           )}
           <div className="space-y-1.5">

@@ -126,7 +126,7 @@ const MeusDados = () => {
         <div className="space-y-1">
           <Label>Nome Completo *</Label>
           <Input
-            placeholder="Seu nome completo"
+            placeholder="Ex: João da Silva"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full max-w-full box-border min-w-0 text-[16px]"
