@@ -119,7 +119,7 @@ const Agenda = () => {
     if (currentFilter === "consultas") return items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
     if (currentFilter === "exames") return items.filter((i) => i.kind === "exam");
     if (currentFilter === "upcoming") return items.filter((i) =>
-      i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Pronto" && !i.isOverdue
+      i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Pronto"
     );
     return items;
   }, [items, currentFilter]);

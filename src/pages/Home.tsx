@@ -119,9 +119,11 @@ const Home = () => {
         consultationType?: string | null;
       }> = [];
 
+      const now = new Date();
       (consultRes.data ?? []).forEach((c: any) => {
         const dateStr = c.consultation_date;
-        const overdue = c.status === "Agendada" && dateStr ? isBefore(new Date(dateStr), new Date()) : false;
+        // Skip past appointments for "Próximos 5"
+        if (dateStr && new Date(dateStr) <= now) return;
         items.push({
           id: c.id,
           title: c.specialty,
@@ -130,7 +132,7 @@ const Home = () => {
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
           familyMemberId: c.family_member_id,
-          isOverdue: overdue,
+          isOverdue: false,
           consultationType: c.type,
         });
       });
@@ -138,7 +140,8 @@ const Home = () => {
       (examRes.data ?? []).forEach((e: any) => {
         const isRealizado = e.status === "Realizado" || e.status === "Coletado";
         const displayDate = isRealizado ? e.result_date : e.exam_date;
-        const overdue = e.status === "Agendado" && e.exam_date ? isBefore(new Date(e.exam_date), startOfDay(new Date())) : false;
+        // Skip past exams
+        if (e.status === "Agendado" && e.exam_date && isBefore(new Date(e.exam_date), startOfDay(now))) return;
         items.push({
           id: e.id,
           title: isRealizado ? `Buscar Resultado` : e.name,
@@ -147,14 +150,14 @@ const Home = () => {
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           familyMemberId: e.family_member_id,
-          isOverdue: overdue,
+          isOverdue: false,
         });
       });
 
       items.sort((a, b) => {
-        if (a.isOverdue && !b.isOverdue) return -1;
-        if (!a.isOverdue && b.isOverdue) return 1;
         if (!a.date) return 1;
+        if (!b.date) return -1;
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
         if (!b.date) return -1;
         return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
