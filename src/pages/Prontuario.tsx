@@ -195,6 +195,22 @@ const Prontuario = () => {
             )}
           </div>
 
+          {/* Clinical Timeline */}
+          <div>
+            <div className="flex items-center gap-2 mb-4 mt-2">
+              <Clock className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold text-foreground">Histórico Clínico</h2>
+            </div>
+            {timelineLoading ? (
+              <div className="space-y-3">
+                <Skeleton className="h-20 w-full rounded-xl" />
+                <Skeleton className="h-20 w-full rounded-xl" />
+              </div>
+            ) : (
+              <ClinicalTimeline events={timeline} />
+            )}
+          </div>
+
         </div>
       </div>
     </div>
