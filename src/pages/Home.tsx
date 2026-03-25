@@ -296,7 +296,7 @@ const Home = () => {
                         <Calendar className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex flex-col items-start">
-                        <span className="text-3xl font-bold text-white leading-none">{upcoming.length}</span>
+                        <span className="text-3xl font-bold text-white leading-none">{totalOpenAppointments}</span>
                         <span className="text-sm font-medium text-white/80 mt-1">Compromissos</span>
                       </div>
                     </div>
