@@ -10,6 +10,8 @@ import type { Medication } from "./useMedications";
  * then fires both an OS Notification and an in-app toast.
  * Receives medications externally to avoid duplicate useQuery calls.
  */
+let permissionToastShown = false;
+
 export function useMedicationAlarms(medications: Medication[]) {
   const queryClient = useQueryClient();
   const firedRef = useRef<Set<string>>(new Set());
@@ -27,12 +29,16 @@ export function useMedicationAlarms(medications: Medication[]) {
     }
     if (Notification.permission === "denied") {
       permissionRef.current = "denied";
-      toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
+      if (!permissionToastShown) {
+        permissionToastShown = true;
+        toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
+      }
       return;
     }
     Notification.requestPermission().then((perm) => {
       permissionRef.current = perm;
-      if (perm === "denied") {
+      if (perm === "denied" && !permissionToastShown) {
+        permissionToastShown = true;
         toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
       }
     });
