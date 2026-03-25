@@ -9,14 +9,13 @@ const Familia = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-      {/* Header */}
-      <div className="flex-none px-5 pt-6 pb-2">
-        <h1 className="text-2xl font-bold text-foreground">Família</h1>
-      </div>
-
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="px-5 pb-4 min-h-[calc(100%+1px)]">
+        {/* Sticky Header with Glassmorphism */}
+        <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-2 -mx-5 px-5">
+          <h1 className="text-2xl font-bold text-foreground">Família</h1>
+        </div>
         {members.length === 0 && !isLoading && (
           <p className="text-muted-foreground text-sm">
             Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.
