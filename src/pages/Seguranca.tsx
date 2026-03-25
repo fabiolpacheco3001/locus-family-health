@@ -117,7 +117,7 @@ const Seguranca = () => {
                 type={showNova ? "text" : "password"}
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="Digite a nova senha"
+                placeholder="Ex: MinhaS3nh@Forte!"
                 className={inputClass}
               />
               <button
