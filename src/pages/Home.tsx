@@ -140,7 +140,8 @@ const Home = () => {
       (examRes.data ?? []).forEach((e: any) => {
         const isRealizado = e.status === "Realizado" || e.status === "Coletado";
         const displayDate = isRealizado ? e.result_date : e.exam_date;
-        const overdue = e.status === "Agendado" && e.exam_date ? isBefore(new Date(e.exam_date), startOfDay(new Date())) : false;
+        // Skip past exams
+        if (e.status === "Agendado" && e.exam_date && isBefore(new Date(e.exam_date), startOfDay(now))) return;
         items.push({
           id: e.id,
           title: isRealizado ? `Buscar Resultado` : e.name,
