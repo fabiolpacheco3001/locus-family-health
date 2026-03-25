@@ -69,7 +69,7 @@ const Medicamentos = () => {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Tratamentos Ativos
+              Ativos
             </button>
             <button
               onClick={() => setAbaAtiva('historico')}
@@ -79,7 +79,7 @@ const Medicamentos = () => {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Histórico
+              Concluídos
             </button>
           </div>
         </div>
