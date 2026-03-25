@@ -57,9 +57,9 @@ export type CycleRecord = {
 };
 
 const flowColors: Record<string, string> = {
-  Leve: "bg-pink-100 text-pink-700",
-  Moderado: "bg-rose-100 text-rose-700",
-  Intenso: "bg-red-100 text-red-700",
+  Leve: "bg-primary/10 text-primary",
+  Moderado: "bg-primary/20 text-primary",
+  Intenso: "bg-primary/30 text-primary",
 };
 
 export function getCycleDay(records: CycleRecord[]): string | null {
@@ -87,21 +87,34 @@ export function getNextPeriodInfo(records: CycleRecord[]): { date: Date; daysLef
   return { date: nextDate, daysLeft, formatted };
 }
 
+type FormState = {
+  start_date: string;
+  end_date: string;
+  flow_intensity: string;
+  symptoms: string;
+  notes: string;
+  cycle_length: string;
+  alert_advance_days: string;
+};
+
+const emptyForm: FormState = {
+  start_date: "",
+  end_date: "",
+  flow_intensity: "",
+  symptoms: "",
+  notes: "",
+  cycle_length: "28",
+  alert_advance_days: "2",
+};
+
 const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    start_date: "",
-    end_date: "",
-    flow_intensity: "",
-    symptoms: "",
-    notes: "",
-    cycle_length: "28",
-    alert_advance_days: "2",
-  });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>({ ...emptyForm });
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["menstrual_cycles", familyMemberId],
@@ -134,6 +147,48 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
     }
   };
 
+  const openNewForm = () => {
+    const lastRecord = records.length > 0 ? records[0] : null;
+    if (lastRecord) {
+      const predInfo = getNextPeriodInfo(records);
+      let prefillDate = "";
+      if (predInfo) {
+        const today = new Date();
+        today.setHours(12, 0, 0, 0);
+        prefillDate = predInfo.daysLeft > 0
+          ? predInfo.date.toISOString().split("T")[0]
+          : today.toISOString().split("T")[0];
+      }
+      setForm({
+        start_date: prefillDate,
+        end_date: "",
+        flow_intensity: "",
+        symptoms: "",
+        notes: "",
+        cycle_length: String(lastRecord.cycle_length),
+        alert_advance_days: String(lastRecord.alert_advance_days),
+      });
+    } else {
+      setForm({ ...emptyForm });
+    }
+    setEditingId(null);
+    setAddOpen(true);
+  };
+
+  const openEditForm = (record: CycleRecord) => {
+    setForm({
+      start_date: record.start_date,
+      end_date: record.end_date || "",
+      flow_intensity: record.flow_intensity || "",
+      symptoms: record.symptoms || "",
+      notes: record.notes || "",
+      cycle_length: String(record.cycle_length),
+      alert_advance_days: String(record.alert_advance_days),
+    });
+    setEditingId(record.id);
+    setAddOpen(true);
+  };
+
   const handleSave = async () => {
     if (!form.start_date) {
       toast.error("Informe a data de início.");
@@ -145,9 +200,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
     const cycleLen = parseInt(form.cycle_length) || 28;
     const alertDays = parseInt(form.alert_advance_days) || 2;
 
-    const { error } = await supabase.from("menstrual_cycles" as any).insert({
-      user_id: user.id,
-      familiar_id: familyMemberId,
+    const payload = {
       start_date: form.start_date,
       end_date: form.end_date || null,
       flow_intensity: form.flow_intensity || null,
@@ -155,7 +208,23 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
       notes: form.notes.trim() || null,
       cycle_length: cycleLen,
       alert_advance_days: alertDays,
-    } as any);
+    };
+
+    let error;
+    if (editingId) {
+      const res = await supabase
+        .from("menstrual_cycles" as any)
+        .update(payload as any)
+        .eq("id", editingId);
+      error = res.error;
+    } else {
+      const res = await supabase.from("menstrual_cycles" as any).insert({
+        ...payload,
+        user_id: user.id,
+        familiar_id: familyMemberId,
+      } as any);
+      error = res.error;
+    }
     setSaving(false);
 
     if (error) {
@@ -163,9 +232,10 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
       return;
     }
 
-    toast.success("Ciclo registrado!");
+    toast.success(editingId ? "Registro atualizado!" : "Ciclo registrado!");
     queryClient.invalidateQueries({ queryKey: ["menstrual_cycles", familyMemberId] });
-    setForm({ start_date: "", end_date: "", flow_intensity: "", symptoms: "", notes: "", cycle_length: "28", alert_advance_days: "2" });
+    setForm({ ...emptyForm });
+    setEditingId(null);
     setAddOpen(false);
   };
 
@@ -191,25 +261,25 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[90dvh] flex flex-col rounded-t-2xl bg-background outline-none">
           <DrawerHeader>
-            <DrawerTitle className="flex items-center gap-2 text-pink-600">
+            <DrawerTitle className="flex items-center gap-2 text-primary">
               <Droplets className="w-5 h-5" />
               Ciclo Menstrual
             </DrawerTitle>
             <DrawerDescription asChild>
               <div className="space-y-1">
                 {cycleStatus && (
-                  <p className="font-semibold text-pink-600">{cycleStatus}</p>
+                  <p className="font-semibold text-primary">{cycleStatus}</p>
                 )}
                 {prediction && (
                   <div className="flex items-center gap-1.5 text-xs">
-                    <CalendarClock className="w-3.5 h-3.5 text-pink-400" />
+                    <CalendarClock className="w-3.5 h-3.5 text-primary/60" />
                     <span className="text-foreground font-medium">
                       Próxima menstruação: {prediction.formatted}
                     </span>
                   </div>
                 )}
                 {prediction && (
-                  <p className={`text-xs font-semibold ${prediction.daysLeft > 0 ? "text-pink-500" : "text-red-500"}`}>
+                  <p className={`text-xs font-semibold ${prediction.daysLeft > 0 ? "text-primary" : "text-destructive"}`}>
                     {prediction.daysLeft > 0
                       ? `Faltam ${prediction.daysLeft} dia${prediction.daysLeft > 1 ? "s" : ""}`
                       : prediction.daysLeft === 0
@@ -234,7 +304,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
               </div>
             ) : records.length === 0 ? (
               <div className="text-center py-8">
-                <Droplets className="mx-auto mb-3 text-pink-300" size={32} />
+                <Droplets className="mx-auto mb-3 text-primary/30" size={32} />
                 <p className="text-sm text-muted-foreground">
                   Nenhum ciclo registrado ainda.
                 </p>
@@ -243,13 +313,17 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
               <AnimatePresence mode="popLayout">
                 {records.map((r) => (
                   <SwipeableCard key={r.id} onSwipeDelete={() => setDeleteTarget(r.id)}>
-                    <div className="bg-card rounded-xl border border-border/50 p-4 space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => openEditForm(r)}
+                      className="w-full text-left bg-card rounded-xl border border-border/50 p-4 space-y-2 cursor-pointer active:bg-muted/50 transition-colors"
+                    >
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-foreground">
                           {formatDateRange(r.start_date, r.end_date)}
                         </p>
                         {r.flow_intensity && (
-                          <Badge className={`${flowColors[r.flow_intensity] || "bg-pink-100 text-pink-700"} border-0 text-[10px] font-semibold`}>
+                          <Badge className={`${flowColors[r.flow_intensity] || "bg-primary/10 text-primary"} border-0 text-[10px] font-semibold`}>
                             {r.flow_intensity}
                           </Badge>
                         )}
@@ -270,7 +344,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                       <p className="text-[10px] text-muted-foreground">
                         Ciclo: {r.cycle_length} dias
                       </p>
-                    </div>
+                    </button>
                   </SwipeableCard>
                 ))}
               </AnimatePresence>
@@ -282,8 +356,8 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
               <Button variant="ghost" className="flex-1">Fechar</Button>
             </DrawerClose>
             <Button
-              className="flex-1 bg-pink-500 hover:bg-pink-600 text-white"
-              onClick={() => setAddOpen(true)}
+              className="flex-1"
+              onClick={openNewForm}
             >
               <Plus size={16} className="mr-1" />
               Registrar Menstruação
@@ -292,11 +366,13 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
         </DrawerContent>
       </Drawer>
 
-      {/* Add form drawer */}
-      <Drawer open={addOpen} onOpenChange={setAddOpen}>
+      {/* Add/Edit form drawer */}
+      <Drawer open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setEditingId(null); }}>
         <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
           <DrawerHeader>
-            <DrawerTitle className="text-pink-600">Registrar Menstruação</DrawerTitle>
+            <DrawerTitle className="text-primary">
+              {editingId ? "Editar Registro" : "Registrar Menstruação"}
+            </DrawerTitle>
             <DrawerDescription>Informe os dados do ciclo menstrual.</DrawerDescription>
           </DrawerHeader>
 
@@ -337,7 +413,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                   max={60}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
                 />
-                <p className="text-[10px] text-muted-foreground">O padrão médico é 28 dias</p>
+                <p className="text-[10px] text-muted-foreground">O padrão médio é 28 dias</p>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Aviso Antecipado</Label>
@@ -400,7 +476,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             <DrawerClose asChild>
               <Button variant="ghost" className="flex-1">Cancelar</Button>
             </DrawerClose>
-            <Button onClick={handleSave} disabled={saving} className="flex-1 bg-pink-500 hover:bg-pink-600 text-white">
+            <Button onClick={handleSave} disabled={saving} className="flex-1">
               {saving ? <Loader2 className="animate-spin" size={16} /> : "Salvar"}
             </Button>
           </DrawerFooter>

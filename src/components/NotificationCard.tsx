@@ -18,7 +18,7 @@ const iconBgMap: Record<string, string> = {
   consultation: "bg-[#A7D3CB]",
   exam: "bg-[#A7D3CB]",
   stock: "bg-amber-400",
-  menstrual: "bg-pink-400",
+  menstrual: "bg-[#A7D3CB]",
 };
 
 const SWIPE_THRESHOLD = -80;

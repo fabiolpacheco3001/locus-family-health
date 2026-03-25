@@ -91,7 +91,7 @@ const FamiliarProfile = () => {
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
-      return data as FamilyMember | null;
+      return data as (FamilyMember & { tracks_menstrual_cycle?: boolean }) | null;
     },
     enabled: !!id,
   });
@@ -136,10 +136,10 @@ const FamiliarProfile = () => {
   if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
-  const isFemale = member.gender === "Feminino";
+  const tracksCycle = !!(member as any).tracks_menstrual_cycle;
   const infoItems: CardItem[] = [
     ...baseInfoItems,
-    ...(isFemale
+    ...(tracksCycle
       ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }]
       : []),
   ];
@@ -268,7 +268,7 @@ const FamiliarProfile = () => {
         onOpenChange={setBpOpen}
         familyMemberId={member.id}
       />
-      {isFemale && (
+      {tracksCycle && (
         <MenstrualCycleDrawer
           open={cycleOpen}
           onOpenChange={setCycleOpen}
