@@ -105,17 +105,18 @@ const Ajustes = () => {
           </button>
         </div>
 
-        {/* Footer - Logout (inside scroll for sticky glassmorphism) */}
-        <div className="sticky bottom-0 z-20 w-full p-4 bg-[#F4F1EB]/70 backdrop-blur-xl border-t border-slate-200/50 shadow-[0_-4px_20px_-15px_rgba(0,0,0,0.1)]">
-          <Button
-            onClick={handleLogout}
-            className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
-          >
-            <LogOut size={18} />
-            Sair da conta
-          </Button>
         </div>
-        </div>
+      </div>
+
+      {/* Fixed Footer with Glassmorphism */}
+      <div className="fixed bottom-20 left-0 right-0 z-20 p-4 bg-[#F4F1EB]/70 backdrop-blur-xl border-t border-slate-200/50 shadow-[0_-4px_20px_-15px_rgba(0,0,0,0.1)]">
+        <Button
+          onClick={handleLogout}
+          className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
+        >
+          <LogOut size={18} />
+          Sair da conta
+        </Button>
       </div>
 
       {/* Delete Account AlertDialog */}
