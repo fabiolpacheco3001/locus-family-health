@@ -19,9 +19,9 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
       const fid = familyMemberId!;
 
       const [cRes, mRes, eRes] = await Promise.all([
-        supabase.from("consultations").select("*").eq("family_member_id", fid),
+        supabase.from("consultations").select("*").eq("family_member_id", fid).neq("status", "Cancelada"),
         supabase.from("medications").select("*").eq("family_member_id", fid),
-        supabase.from("exams").select("*").eq("family_member_id", fid),
+        supabase.from("exams").select("*").eq("family_member_id", fid).neq("status", "Cancelado"),
       ]);
 
       if (cRes.error) throw cRes.error;
