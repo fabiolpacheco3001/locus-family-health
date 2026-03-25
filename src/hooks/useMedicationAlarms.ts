@@ -2,6 +2,8 @@ import { useEffect, useRef, useCallback } from "react";
 import { useMedications } from "./useMedications";
 import { calculateNextDose } from "@/lib/calculateNextDose";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Hook that checks every 60s if any active medication dose is due,
@@ -10,7 +12,10 @@ import { toast } from "sonner";
  */
 export function useMedicationAlarms() {
   const { medications } = useMedications();
+  const queryClient = useQueryClient();
   const firedRef = useRef<Set<string>>(new Set());
+  const decrementedRef = useRef<Set<string>>(new Set());
+  const catchUpDoneRef = useRef<Set<string>>(new Set());
   const permissionRef = useRef<NotificationPermission | null>(null);
 
   // Request permission once on mount
@@ -33,7 +38,16 @@ export function useMedicationAlarms() {
     });
   }, []);
 
-  const fireNotification = useCallback((med: { id: string; name: string; dosage: string | null }, key: string, body: string, isLate: boolean) => {
+  const decrementStock = useCallback(async (medId: string, amount: number = 1) => {
+    try {
+      await supabase.rpc("decrement_stock", { med_id: medId, amount });
+      queryClient.invalidateQueries({ queryKey: ["medications"] });
+    } catch {
+      // Silent fail – stock will catch up on next cycle
+    }
+  }, [queryClient]);
+
+  const fireNotification = useCallback((med: { id: string; name: string; dosage: string | null; estoque_total?: number | null; uso_continuo?: boolean }, key: string, body: string, isLate: boolean) => {
     if (firedRef.current.has(key)) return;
     firedRef.current.add(key);
 
@@ -60,7 +74,59 @@ export function useMedicationAlarms() {
     } else {
       toast.error(`💊 Hora do Remédio!`, { description: body, duration: 15000 });
     }
-  }, []);
+
+    // Decrement stock by 1 on alarm fire (if has stock tracking)
+    if (med.estoque_total != null && med.estoque_total > 0) {
+      const decKey = `${med.id}-${key}`;
+      if (!decrementedRef.current.has(decKey)) {
+        decrementedRef.current.add(decKey);
+        decrementStock(med.id, 1);
+      }
+    }
+  }, [decrementStock]);
+
+  // Catch-up: calculate missed doses since last_stock_decrement and decrement
+  const catchUpMissedDoses = useCallback(async (activeMeds: typeof medications) => {
+    const now = new Date();
+
+    for (const med of activeMeds) {
+      if (med.estoque_total == null || med.estoque_total <= 0) continue;
+      if (!med.frequency_hours || med.frequency_hours <= 0) continue;
+      if (catchUpDoneRef.current.has(med.id)) continue;
+      catchUpDoneRef.current.add(med.id);
+
+      // Determine the reference point: last decrement or start_date
+      let refTime: Date | null = null;
+      if (med.last_stock_decrement) {
+        refTime = new Date(med.last_stock_decrement);
+      } else if (med.start_date) {
+        const dateOnly = med.start_date.slice(0, 10);
+        refTime = med.start_time
+          ? new Date(`${dateOnly}T${med.start_time}`)
+          : new Date(`${dateOnly}T12:00:00`);
+      }
+
+      if (!refTime || isNaN(refTime.getTime())) continue;
+      if (refTime >= now) continue;
+
+      // Check end_date
+      if (med.end_date) {
+        const endDate = new Date(`${med.end_date}T23:59:59`);
+        if (now > endDate) continue; // treatment ended
+      }
+
+      const elapsedMs = now.getTime() - refTime.getTime();
+      const elapsedHours = elapsedMs / (1000 * 60 * 60);
+      const missedDoses = Math.floor(elapsedHours / med.frequency_hours);
+
+      if (missedDoses > 0) {
+        const safeDoses = Math.min(missedDoses, med.estoque_total);
+        if (safeDoses > 0) {
+          await decrementStock(med.id, safeDoses);
+        }
+      }
+    }
+  }, [decrementStock, medications]);
 
   const checkAlarms = useCallback(() => {
     const now = new Date();
@@ -110,15 +176,23 @@ export function useMedicationAlarms() {
     if (firedRef.current.size > 500) {
       firedRef.current.clear();
     }
+    if (decrementedRef.current.size > 500) {
+      decrementedRef.current.clear();
+    }
   }, [medications, fireNotification]);
 
-  // Interval + visibilitychange
+  // Interval + visibilitychange + catch-up
   useEffect(() => {
+    const activeMeds = medications.filter((m) => m.status === "Ativo");
+    catchUpMissedDoses(activeMeds);
     checkAlarms();
     const interval = setInterval(checkAlarms, 60_000);
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
+        catchUpDoneRef.current.clear(); // allow re-check on each app resume
+        const active = medications.filter((m) => m.status === "Ativo");
+        catchUpMissedDoses(active);
         checkAlarms();
       }
     };
@@ -128,5 +202,5 @@ export function useMedicationAlarms() {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [checkAlarms]);
+  }, [checkAlarms, catchUpMissedDoses, medications]);
 }
