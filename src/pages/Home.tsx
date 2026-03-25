@@ -470,7 +470,7 @@ const Home = () => {
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
               <Calendar size={18} style={{ color: '#6A978F' }} />
-              Próximos Compromissos
+              Próximos 5 Compromissos
             </span>
           </AccordionTrigger>
           <AccordionContent>

@@ -29,7 +29,7 @@ type AgendaItem = {
 const filterLabels: Record<string, string> = {
   consultas: "Consultas Pendentes",
   exames: "Exames Pendentes",
-  upcoming: "Próximos Compromissos",
+  upcoming: "Compromissos em Aberto",
 };
 
 const Agenda = () => {
