@@ -98,6 +98,7 @@ const MeusDados = () => {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-3">
         {/* Avatar */}
+        <div className="pt-4" />
         <button className="flex justify-center mb-4 w-full" onClick={() => setAvatarOpen(true)}>
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
