@@ -108,6 +108,7 @@ const Home = () => {
           kind: "consultation",
           familyMemberId: c.family_member_id,
           isOverdue: overdue,
+          consultationType: c.type,
         });
       });
 
