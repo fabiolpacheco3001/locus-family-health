@@ -25,6 +25,7 @@ const Prontuario = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
+  const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ["family_member", id],
