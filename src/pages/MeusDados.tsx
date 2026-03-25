@@ -90,6 +90,19 @@ const MeusDados = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await supabase.auth.signOut();
+      toast.success("Conta excluída com sucesso.");
+      navigate("/login");
+    } catch {
+      toast.error("Erro ao excluir conta. Tente novamente.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10 animate-fade-in">
       {/* Header */}
