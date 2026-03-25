@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Trash2, Camera } from "lucide-react";
+import { Loader2, Trash2, Camera, X } from "lucide-react";
 import AvatarSelector from "@/components/AvatarSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,22 +97,38 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
             {/* Avatar */}
-            <button className="flex justify-center mb-2 w-full" onClick={() => setAvatarOpen(true)}>
+            <div className="flex justify-center mb-2 w-full">
               <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
-                  {avatarUrl && (avatarUrl.startsWith("data:image") || avatarUrl.startsWith("http")) ? (
-                    <img src={avatarUrl} className="w-full h-full object-cover rounded-full" alt="Avatar" />
-                  ) : avatarUrl && avatarUrl.length <= 2 ? (
-                    <span className="text-4xl flex items-center justify-center w-full h-full">{avatarUrl}</span>
-                  ) : (
-                    <span className="text-xl font-bold text-secondary">{initials}</span>
-                  )}
-                </div>
+                <button onClick={() => setAvatarOpen(true)}>
+                  <div className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
+                    {avatarUrl && (avatarUrl.startsWith("data:image") || avatarUrl.startsWith("http")) ? (
+                      <img src={avatarUrl} className="w-full h-full object-cover rounded-full" alt="Avatar" />
+                    ) : avatarUrl && avatarUrl.length <= 2 ? (
+                      <span className="text-4xl flex items-center justify-center w-full h-full">{avatarUrl}</span>
+                    ) : (
+                      <span className="text-xl font-bold text-secondary">
+                        {(() => {
+                          const parts = (member?.name ?? "").trim().split(" ").filter(Boolean);
+                          if (parts.length <= 1) return (parts[0]?.[0] ?? "?").toUpperCase();
+                          return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+                        })()}
+                      </span>
+                    )}
+                  </div>
+                </button>
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
                   <Camera className="w-3 h-3 text-muted-foreground" />
                 </div>
+                {avatarUrl && (
+                  <button
+                    onClick={() => setAvatarUrl("")}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 border-2 border-background flex items-center justify-center"
+                  >
+                    <X className="w-3 h-3 text-white" />
+                  </button>
+                )}
               </div>
-            </button>
+            </div>
 
             <div className="space-y-1.5">
               <Label>Nome Completo *</Label>
