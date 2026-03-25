@@ -2,6 +2,8 @@ import { useEffect, useRef, useCallback } from "react";
 import { useMedications } from "./useMedications";
 import { calculateNextDose } from "@/lib/calculateNextDose";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Hook that checks every 60s if any active medication dose is due,
