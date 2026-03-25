@@ -17,6 +17,7 @@ const statusColors: Record<string, string> = {
   Coletado: "bg-[#F2A97F] text-slate-900 border-none",
   Pronto: "bg-[#A7D3CB] text-slate-900 border-none",
   "Resultado Pronto": "bg-[#A7D3CB] text-slate-900 border-none",
+  Cancelado: "bg-[#F87171] text-white border-none",
 };
 
 const Exames = () => {
@@ -29,7 +30,7 @@ const Exames = () => {
 
   const examesFiltrados = exams.filter(e => {
     if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
-    return e.status === 'Pronto' || e.status === 'Concluído' || e.status === 'Resultado Pronto' || e.status === 'Resultado Disponível';
+    return e.status === 'Pronto' || e.status === 'Concluído' || e.status === 'Resultado Pronto' || e.status === 'Resultado Disponível' || e.status === 'Cancelado';
   });
 
   const handleOpenEdit = (e: Exam) => {
