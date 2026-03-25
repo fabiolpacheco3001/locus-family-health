@@ -29,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
+import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
