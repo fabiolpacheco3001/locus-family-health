@@ -168,9 +168,9 @@ const FamiliarProfile = () => {
           onClick={() => {
             if (route === "__bp__") {
               setBpOpen(true);
+            } else if (route === "__cycle__") {
+              setCycleOpen(true);
             } else {
-              navigate(`/familiar/${id}/${route}`);
-            }
           }}
           className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
         >
