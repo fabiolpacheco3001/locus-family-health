@@ -315,6 +315,7 @@ export type Database = {
           frequency: string | null
           frequency_hours: number | null
           id: string
+          last_stock_decrement: string | null
           medico_prescritor: string | null
           name: string
           receita_url: string | null
@@ -337,6 +338,7 @@ export type Database = {
           frequency?: string | null
           frequency_hours?: number | null
           id?: string
+          last_stock_decrement?: string | null
           medico_prescritor?: string | null
           name: string
           receita_url?: string | null
@@ -359,6 +361,7 @@ export type Database = {
           frequency?: string | null
           frequency_hours?: number | null
           id?: string
+          last_stock_decrement?: string | null
           medico_prescritor?: string | null
           name?: string
           receita_url?: string | null
@@ -481,7 +484,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      decrement_stock: {
+        Args: { amount?: number; med_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
