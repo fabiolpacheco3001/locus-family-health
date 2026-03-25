@@ -236,7 +236,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             <div className="space-y-1.5">
               <Label>Motivo da Visita</Label>
               <Textarea
-                placeholder="Descreva os sintomas ou motivo..."
+                placeholder="Ex: Dores no estômago após as refeições"
                 rows={3}
                 value={symptoms}
                 onChange={(e) => setSymptoms(e.target.value)}
