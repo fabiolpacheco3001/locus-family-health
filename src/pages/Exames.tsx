@@ -12,11 +12,11 @@ import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const statusColors: Record<string, string> = {
-  Agendado: "bg-[#A0C4D7] text-slate-900 border-none",
+  Agendado: "bg-[#AEE2D4] text-slate-800 border-none",
   Realizado: "bg-[#F2A97F] text-slate-900 border-none",
   Coletado: "bg-[#F2A97F] text-slate-900 border-none",
-  Pronto: "bg-[#A7D3CB] text-slate-900 border-none",
-  "Resultado Pronto": "bg-[#A7D3CB] text-slate-900 border-none",
+  Pronto: "bg-[#1C3333] text-white border-none",
+  "Resultado Pronto": "bg-[#1C3333] text-white border-none",
   Cancelado: "bg-[#F87171] text-white border-none",
 };
 
