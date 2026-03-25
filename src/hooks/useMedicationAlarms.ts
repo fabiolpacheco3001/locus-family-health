@@ -1,28 +1,24 @@
 import { useEffect, useRef, useCallback } from "react";
-import { useMedications } from "./useMedications";
 import { calculateNextDose } from "@/lib/calculateNextDose";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Medication } from "./useMedications";
 
 /**
  * Hook that checks every 60s if any active medication dose is due,
  * then fires both an OS Notification and an in-app toast.
- * Also detects late doses when the app regains visibility.
- * Decrements stock on alarm fire + catches up missed doses on app resume.
+ * Receives medications externally to avoid duplicate useQuery calls.
  */
-export function useMedicationAlarms() {
-  const { medications } = useMedications();
+export function useMedicationAlarms(medications: Medication[]) {
   const queryClient = useQueryClient();
   const firedRef = useRef<Set<string>>(new Set());
   const decrementedRef = useRef<Set<string>>(new Set());
   const catchUpDoneRef = useRef(false);
   const permissionRef = useRef<NotificationPermission | null>(null);
-  // Keep a stable ref to medications to avoid dependency cycles
   const medsRef = useRef(medications);
   medsRef.current = medications;
 
-  // Request permission once on mount
   useEffect(() => {
     if (typeof Notification === "undefined") return;
     if (Notification.permission === "granted") {
@@ -42,7 +38,6 @@ export function useMedicationAlarms() {
     });
   }, []);
 
-  // Silent decrement – does NOT invalidate queries to avoid loops
   const decrementStock = useCallback(async (medId: string, amount: number = 1) => {
     try {
       await supabase.rpc("decrement_stock", { med_id: medId, amount });
@@ -51,11 +46,10 @@ export function useMedicationAlarms() {
     }
   }, []);
 
-  // Delayed refresh after decrements are done (single debounced call)
   const scheduleRefresh = useCallback(() => {
     setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ["medications"] });
-    }, 5000); // 5s delay to batch and avoid loops
+    }, 5000);
   }, [queryClient]);
 
   const fireNotification = useCallback((med: { id: string; name: string; dosage: string | null; estoque_total?: number | null }, key: string, body: string, isLate: boolean) => {
@@ -64,7 +58,6 @@ export function useMedicationAlarms() {
 
     const title = isLate ? "⚠️ Dose Atrasada!" : "Hora do Remédio! 💊";
 
-    // OS Notification
     if (permissionRef.current === "granted") {
       try {
         if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
@@ -75,18 +68,16 @@ export function useMedicationAlarms() {
           new Notification(title, { body, icon: "/logo-locus-vita.svg", tag: key });
         }
       } catch {
-        // Fallback silently to toast only
+        // Fallback silently
       }
     }
 
-    // In-App Toast
     if (isLate) {
       toast.warning(`⚠️ Dose Atrasada!`, { description: body, duration: 20000 });
     } else {
       toast.error(`💊 Hora do Remédio!`, { description: body, duration: 15000 });
     }
 
-    // Decrement stock by 1 on alarm fire (if has stock tracking)
     if (med.estoque_total != null && med.estoque_total > 0) {
       const decKey = `${med.id}-${key}`;
       if (!decrementedRef.current.has(decKey)) {
@@ -97,7 +88,7 @@ export function useMedicationAlarms() {
     }
   }, [decrementStock, scheduleRefresh]);
 
-  // Catch-up on mount: calculate missed doses since last_stock_decrement
+  // Catch-up missed doses on mount
   useEffect(() => {
     if (catchUpDoneRef.current) return;
     if (medications.length === 0) return;
@@ -112,7 +103,6 @@ export function useMedicationAlarms() {
         if (med.estoque_total == null || med.estoque_total <= 0) continue;
         if (!med.frequency_hours || med.frequency_hours <= 0) continue;
 
-        // Determine reference point
         let refTime: Date | null = null;
         if (med.last_stock_decrement) {
           refTime = new Date(med.last_stock_decrement);
@@ -159,7 +149,6 @@ export function useMedicationAlarms() {
       const nowM = now.getMinutes();
       const todayStr = now.toISOString().slice(0, 10);
       const currentMeds = medsRef.current;
-
       const activeMeds = currentMeds.filter((m) => m.status === "Ativo");
 
       for (const med of activeMeds) {
@@ -196,7 +185,6 @@ export function useMedicationAlarms() {
         }
       }
 
-      // Cleanup old keys
       if (firedRef.current.size > 500) firedRef.current.clear();
       if (decrementedRef.current.size > 500) decrementedRef.current.clear();
     };
@@ -206,7 +194,6 @@ export function useMedicationAlarms() {
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
-        // Reset catch-up flag so it re-runs on next medications load
         catchUpDoneRef.current = false;
         checkAlarms();
       }

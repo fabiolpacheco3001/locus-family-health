@@ -1,17 +1,16 @@
 import { useEffect, useRef } from "react";
-import { useMedications } from "./useMedications";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import type { Medication } from "./useMedications";
 
 /**
  * Checks continuous-use medications for low stock and creates
  * a notification if one doesn't already exist (unread) for that med.
- * Runs once on mount + when medications change.
+ * Receives medications externally to avoid duplicate useQuery calls.
  */
-export function useStockAlerts() {
+export function useStockAlerts(medications: Medication[]) {
   const { user } = useAuth();
-  const { medications } = useMedications();
   const queryClient = useQueryClient();
   const checkedRef = useRef<Set<string>>(new Set());
 
@@ -31,11 +30,9 @@ export function useStockAlerts() {
 
     const checkAndNotify = async () => {
       for (const med of lowStockMeds) {
-        // Skip if already checked this session
         if (checkedRef.current.has(med.id)) continue;
         checkedRef.current.add(med.id);
 
-        // Check for existing unread stock notification for this med
         const { data: existing } = await supabase
           .from("notifications")
           .select("id")
