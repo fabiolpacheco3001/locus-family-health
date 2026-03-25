@@ -59,63 +59,63 @@ const Ajustes = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-      {/* Header */}
-      <div className="flex-none px-4 pt-6 pb-2">
-        <h1 className="text-2xl font-bold text-foreground px-1">Ajustes</h1>
-      </div>
-
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="px-4 pb-4 space-y-4 min-h-[calc(100%+1px)]">
-        {/* Profile Card */}
-        <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
-          <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />
-          <div>
-            <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
-            <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
+        <div className="px-4 pb-32 space-y-4 min-h-[calc(100%+1px)]">
+          {/* Sticky Header with Glassmorphism */}
+          <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-4 -mx-4 px-5">
+            <h1 className="text-2xl font-bold text-foreground px-1">Ajustes</h1>
+          </div>
+
+          {/* Profile Card */}
+          <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
+            <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />
+            <div>
+              <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
+              <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
+            </div>
+          </div>
+
+          {/* Menu Items */}
+          <div className="space-y-3">
+            {menuItems.map(({ icon: Icon, label, path }) => (
+              <button
+                key={label}
+                onClick={() => path && navigate(path)}
+                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                  <Icon size={20} className="text-black" />
+                </div>
+                <span className="flex-1 text-left text-sm font-medium text-foreground">{label}</span>
+                <ChevronRight size={18} className="text-muted-foreground" />
+              </button>
+            ))}
+
+            {/* Delete Account - danger item */}
+            <button
+              onClick={() => setShowDeleteAccount(true)}
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-destructive/20 active:bg-destructive/5 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <Trash2 size={20} className="text-destructive" />
+              </div>
+              <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Minha Conta</span>
+              <ChevronRight size={18} className="text-destructive/50" />
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Menu Items */}
-        <div className="space-y-3">
-          {menuItems.map(({ icon: Icon, label, path }) => (
-            <button
-              key={label}
-              onClick={() => path && navigate(path)}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
-                <Icon size={20} className="text-black" />
-              </div>
-              <span className="flex-1 text-left text-sm font-medium text-foreground">{label}</span>
-              <ChevronRight size={18} className="text-muted-foreground" />
-            </button>
-          ))}
-
-          {/* Delete Account - danger item */}
-          <button
-            onClick={() => setShowDeleteAccount(true)}
-            className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-destructive/20 active:bg-destructive/5 transition-colors"
-          >
-            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-              <Trash2 size={20} className="text-destructive" />
-            </div>
-            <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Minha Conta</span>
-            <ChevronRight size={18} className="text-destructive/50" />
-          </button>
-        </div>
-
-        {/* Footer - Logout (inside scroll for sticky glassmorphism) */}
-        <div className="sticky bottom-0 z-20 w-full p-4 bg-[#F4F1EB]/70 backdrop-blur-xl border-t border-slate-200/50 shadow-[0_-4px_20px_-15px_rgba(0,0,0,0.1)]">
-          <Button
-            onClick={handleLogout}
-            className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
-          >
-            <LogOut size={18} />
-            Sair da conta
-          </Button>
-        </div>
-        </div>
+      {/* Fixed Footer with Glassmorphism */}
+      <div className="fixed bottom-20 left-0 right-0 z-20 p-4 bg-[#F4F1EB]/70 backdrop-blur-xl border-t border-slate-200/50 shadow-[0_-4px_20px_-15px_rgba(0,0,0,0.1)]">
+        <Button
+          onClick={handleLogout}
+          className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
+        >
+          <LogOut size={18} />
+          Sair da conta
+        </Button>
       </div>
 
       {/* Delete Account AlertDialog */}
