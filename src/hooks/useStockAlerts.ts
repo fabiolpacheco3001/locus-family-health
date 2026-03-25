@@ -50,7 +50,7 @@ export function useStockAlerts(medications: Medication[]) {
           user_id: user.id,
           family_member_id: med.family_member_id,
           title: `Estoque Baixo: ${med.name}`,
-          message: `Restam apenas ${med.estoque_total} unidades para ${memberName}. Lembre-se de comprar uma nova caixa.`,
+          message: `Restam apenas ${med.estoque_total} comprimidos para ${memberName}. Lembre-se de comprar uma nova caixa.`,
           type: "stock",
           scheduled_for: new Date().toISOString(),
         });
