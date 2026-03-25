@@ -241,12 +241,12 @@ const Agenda = () => {
                       <Badge
                         variant="outline"
                         className={`text-[10px] px-1.5 py-0 border-none ${
-                          item.status === "Agendada" || item.status === "Agendado"
-                            ? "bg-[#A0C4D7] text-slate-900"
+                           item.status === "Agendada" || item.status === "Agendado"
+                            ? "bg-[#AEE2D4] text-slate-800"
                             : item.status === "Realizada" || item.status === "Realizado"
                             ? "bg-[#F2A97F] text-slate-900"
                             : item.status === "Pronto"
-                            ? "bg-[#A7D3CB] text-slate-900"
+                            ? "bg-[#1C3333] text-white"
                             : item.status === "Cancelada" || item.status === "Cancelado"
                             ? "bg-[#F87171] text-white"
                             : "bg-muted text-muted-foreground"
