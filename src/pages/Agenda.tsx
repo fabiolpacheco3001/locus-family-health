@@ -48,11 +48,13 @@ const Agenda = () => {
           .from("consultations")
           .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
           .eq("user_id", user!.id)
+          .neq("status", "Cancelada")
           .order("consultation_date", { ascending: true }),
         supabase
           .from("exams")
           .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
           .eq("user_id", user!.id)
+          .neq("status", "Cancelado")
           .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
           .order("exam_date", { ascending: true }),
       ]);
