@@ -1,18 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useAuth } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Medication } from "./useMedications";
 
+const stockAlertSessionRuns = new Set<string>();
+
 /**
  * Checks continuous-use medications for low stock and creates
- * a notification if one doesn't already exist (unread) for that med.
+ * at most one stock notification per medication per day.
  * Receives medications externally to avoid duplicate useQuery calls.
  */
 export function useStockAlerts(medications: Medication[]) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const checkedRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user || medications.length === 0) return;
@@ -23,60 +24,68 @@ export function useStockAlerts(medications: Medication[]) {
         m.uso_continuo &&
         m.estoque_minimo != null &&
         m.estoque_total != null &&
-        m.estoque_total <= m.estoque_minimo
+        m.estoque_total <= m.estoque_minimo,
     );
 
     if (lowStockMeds.length === 0) return;
 
+    const todayKey = new Date().toDateString();
+    const sessionKey = `${user.id}-${todayKey}`;
+
+    if (stockAlertSessionRuns.has(sessionKey)) return;
+    stockAlertSessionRuns.add(sessionKey);
+
+    let cancelled = false;
+
     const checkAndNotify = async () => {
+      let hasInserted = false;
+
       for (const med of lowStockMeds) {
-        if (checkedRef.current.has(med.id)) continue;
-        checkedRef.current.add(med.id);
+        if (cancelled) return;
 
-        // Check for unread notification (existing rule)
-        const { data: unread } = await supabase
-          .from("notifications")
-          .select("id")
-          .eq("user_id", user.id)
-          .eq("type", "stock")
-          .eq("is_read", false)
-          .ilike("title", `%${med.name}%`)
-          .limit(1);
-
-        if (unread && unread.length > 0) continue;
-
-        // Temporal lock: max 1 notification per medication per day
         const { data: latest } = await supabase
           .from("notifications")
-          .select("created_at")
+          .select("*")
           .eq("user_id", user.id)
           .eq("type", "stock")
-          .ilike("title", `%${med.name}%`)
+          .eq("medication_id", med.id)
           .order("created_at", { ascending: false })
           .limit(1);
 
-        if (
-          latest &&
-          latest.length > 0 &&
-          new Date(latest[0].created_at!).toDateString() === new Date().toDateString()
-        ) continue;
+        const latestNotification = latest?.[0];
+        const wasAlreadyNotifiedToday =
+          !!latestNotification?.created_at && new Date(latestNotification.created_at).toDateString() === todayKey;
+
+        if (wasAlreadyNotifiedToday) continue;
 
         const memberName = med.family_members?.name ?? "o familiar";
-
-        await supabase.from("notifications").insert({
+        const notificationInsert = {
           user_id: user.id,
           family_member_id: med.family_member_id,
+          medication_id: med.id,
           title: `Estoque Baixo: ${med.name}`,
           message: `Restam apenas ${med.estoque_total} comprimidos para ${memberName}. Lembre-se de comprar uma nova caixa.`,
           type: "stock",
           scheduled_for: new Date().toISOString(),
-        });
+        };
+
+        const { error } = await supabase.from("notifications").insert(notificationInsert as never);
+
+        if (!error) {
+          hasInserted = true;
+        }
       }
 
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-      queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
+      if (!cancelled && hasInserted) {
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
+      }
     };
 
-    checkAndNotify();
+    void checkAndNotify();
+
+    return () => {
+      cancelled = true;
+    };
   }, [user, medications, queryClient]);
 }

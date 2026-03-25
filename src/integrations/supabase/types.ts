@@ -395,6 +395,7 @@ export type Database = {
           family_member_id: string | null
           id: string
           is_read: boolean | null
+          medication_id: string | null
           message: string
           scheduled_for: string
           title: string
@@ -407,6 +408,7 @@ export type Database = {
           family_member_id?: string | null
           id?: string
           is_read?: boolean | null
+          medication_id?: string | null
           message: string
           scheduled_for: string
           title: string
@@ -419,6 +421,7 @@ export type Database = {
           family_member_id?: string | null
           id?: string
           is_read?: boolean | null
+          medication_id?: string | null
           message?: string
           scheduled_for?: string
           title?: string
