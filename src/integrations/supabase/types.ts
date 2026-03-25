@@ -427,6 +427,42 @@ export type Database = {
           },
         ]
       }
+      menstrual_cycles: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          familiar_id: string
+          flow_intensity: string | null
+          id: string
+          notes: string | null
+          start_date: string
+          symptoms: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          familiar_id: string
+          flow_intensity?: string | null
+          id?: string
+          notes?: string | null
+          start_date: string
+          symptoms?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          familiar_id?: string
+          flow_intensity?: string | null
+          id?: string
+          notes?: string | null
+          start_date?: string
+          symptoms?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
