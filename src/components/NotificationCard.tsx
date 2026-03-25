@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pill, Stethoscope, FileText, ChevronDown, Trash2 } from "lucide-react";
+import { Pill, Stethoscope, FileText, ChevronDown, Trash2, AlertTriangle } from "lucide-react";
 import { Notification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
