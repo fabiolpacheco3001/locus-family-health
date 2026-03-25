@@ -247,7 +247,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             <div className="space-y-1.5">
               <Label>Dúvidas para o Médico</Label>
               <Textarea
-                placeholder="Anote suas perguntas..."
+                placeholder="Ex: Posso tomar com outros remédios?"
                 rows={3}
                 value={questions}
                 onChange={(e) => setQuestions(e.target.value)}
