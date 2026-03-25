@@ -36,6 +36,7 @@ export const useFamilyMembers = () => {
       const { data, error } = await supabase
         .from("family_members")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data as FamilyMember[];
