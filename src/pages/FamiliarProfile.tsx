@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
+import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -56,6 +57,7 @@ const gestaoItems: CardItem[] = [
 
 const infoItems: CardItem[] = [
   { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
+  { icon: HeartPulse, label: "Pressão Arterial", subtitle: "Histórico de PA", route: "__bp__" },
   { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
   { icon: Activity, label: "Doenças", subtitle: "Histórico clínico", route: "doencas" },
 ];
@@ -74,6 +76,7 @@ const FamiliarProfile = () => {
   const goBack = useSmartBack();
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
+  const [bpOpen, setBpOpen] = useState(false);
 
 
   const { data: member, isLoading, error } = useQuery({
@@ -151,7 +154,13 @@ const FamiliarProfile = () => {
       {items.map(({ icon: Icon, label, subtitle, route }) => (
         <button
           key={label}
-          onClick={() => navigate(`/familiar/${id}/${route}`)}
+          onClick={() => {
+            if (route === "__bp__") {
+              setBpOpen(true);
+            } else {
+              navigate(`/familiar/${id}/${route}`);
+            }
+          }}
           className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
         >
           <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
@@ -240,6 +249,11 @@ const FamiliarProfile = () => {
           height: memberHeight,
           physical_activity: memberActivity,
         }}
+      />
+      <BloodPressureHistoryDrawer
+        open={bpOpen}
+        onOpenChange={setBpOpen}
+        familyMemberId={member.id}
       />
     </div>
   );
