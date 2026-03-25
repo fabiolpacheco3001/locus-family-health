@@ -76,6 +76,7 @@ const FamiliarProfile = () => {
   const goBack = useSmartBack();
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
+  const [bpOpen, setBpOpen] = useState(false);
 
 
   const { data: member, isLoading, error } = useQuery({
