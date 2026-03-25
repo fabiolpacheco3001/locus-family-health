@@ -173,7 +173,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
               </div>
             ) : (
               records.map((r) => {
-                const cat = getBPCategory(r.systolic, r.diastolic);
+                const cat = getBPClassification(r.systolic, r.diastolic);
                 const consultation = r.consultation_id ? consultationMap.get(r.consultation_id) : null;
 
                 return (
