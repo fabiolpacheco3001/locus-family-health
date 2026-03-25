@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   UserCircle,
   Ban,
+  Droplets,
   Syringe,
   Activity,
   Droplet,
