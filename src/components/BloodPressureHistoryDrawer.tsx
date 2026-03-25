@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HeartPulse, Plus, Loader2 } from "lucide-react";
+import { HeartPulse, Plus, Loader2, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,16 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +31,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { getBPClassification } from "@/lib/bloodPressure";
+import SwipeableCard from "@/components/SwipeableCard";
+import { AnimatePresence } from "framer-motion";
 
 interface Props {
   open: boolean;
@@ -52,6 +64,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ systolic: "", diastolic: "", date: "", notes: "" });
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const { data: records = [], isLoading } = useQuery({
     queryKey: ["blood_pressure_history", familyMemberId],
@@ -67,7 +80,6 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
     enabled: !!familyMemberId && !!user && open,
   });
 
-  // Fetch consultation details for records that came from consultations
   const consultationIds = records
     .filter((r) => r.source === "consultation" && r.consultation_id)
     .map((r) => r.consultation_id!);
@@ -140,8 +152,20 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
     setAddOpen(false);
   };
 
-
-  const latestRecord = records[0];
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase
+      .from("blood_pressure_history")
+      .delete()
+      .eq("id", deleteTarget);
+    if (error) {
+      toast.error("Erro ao excluir medição.");
+    } else {
+      toast.success("Medição excluída.");
+      queryClient.invalidateQueries({ queryKey: ["blood_pressure_history", familyMemberId] });
+    }
+    setDeleteTarget(null);
+  };
 
   return (
     <>
@@ -153,8 +177,8 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
               Histórico de Pressão Arterial
             </DrawerTitle>
             <DrawerDescription>
-              {latestRecord
-                ? `Última: ${latestRecord.systolic}/${latestRecord.diastolic} mmHg`
+              {records.length > 0
+                ? `${records.length} registro${records.length > 1 ? "s" : ""}`
                 : "Nenhuma medição registrada."}
             </DrawerDescription>
           </DrawerHeader>
@@ -172,59 +196,75 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
                 </p>
               </div>
             ) : (
-              records.map((r) => {
-                const cat = getBPClassification(r.systolic, r.diastolic);
-                const consultation = r.consultation_id ? consultationMap.get(r.consultation_id) : null;
+              <AnimatePresence mode="popLayout">
+                {records.map((r) => {
+                  const cat = getBPClassification(r.systolic, r.diastolic);
+                  const consultation = r.consultation_id ? consultationMap.get(r.consultation_id) : null;
+                  const isConsultation = r.source === "consultation" && consultation;
 
-                return (
-                  <div
-                    key={r.id}
-                    className="bg-card rounded-xl border border-border/50 p-4 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="text-xl font-bold text-foreground">
-                        {r.systolic} / {r.diastolic}{" "}
-                        <span className="text-sm font-normal text-muted-foreground">mmHg</span>
-                      </p>
-                      <Badge className={`${cat.colorClass} border-0 text-[10px] font-semibold`}>
-                        {cat.label}
-                      </Badge>
-                    </div>
+                  return (
+                    <SwipeableCard key={r.id} onSwipeDelete={() => setDeleteTarget(r.id)}>
+                      <div className="bg-card rounded-xl border border-border/50 p-4 space-y-2">
+                        {/* Consultation origin header */}
+                        {isConsultation && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
+                            <Stethoscope className="w-3.5 h-3.5" />
+                            <span className="font-medium">Origem: Consulta Médica</span>
+                          </div>
+                        )}
 
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <span>{formatDate(r.measurement_date)}</span>
-                      <span>•</span>
-                      <span className="capitalize">
-                        {r.source === "consultation" && consultation
-                          ? `Consulta Dr(a). ${consultation.professional_name || consultation.specialty}`
-                          : "Manual"}
-                      </span>
-                    </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xl font-bold text-foreground">
+                            {r.systolic} / {r.diastolic}{" "}
+                            <span className="text-sm font-normal text-muted-foreground">mmHg</span>
+                          </p>
+                          <Badge className={`${cat.colorClass} border-0 text-[10px] font-semibold`}>
+                            {cat.label}
+                          </Badge>
+                        </div>
 
-                    {r.source === "consultation" && consultation && (
-                      <div className="mt-2 pt-2 border-t border-border/40 space-y-1">
-                        <p className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">Consulta:</span>{" "}
-                          <span className="capitalize">{formatConsultationDate(consultation.consultation_date)}</span>
-                          {consultation.professional_name && ` — Dr(a). ${consultation.professional_name}`}
-                        </p>
-                        {consultation.symptoms && (
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            <span className="font-medium text-foreground">Anamnese:</span>{" "}
-                            {consultation.symptoms}
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <span>{formatDate(r.measurement_date)}</span>
+                          {!isConsultation && (
+                            <>
+                              <span>•</span>
+                              <span>Manual</span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Consultation details */}
+                        {isConsultation && (
+                          <div className="mt-2 pt-2 border-t border-border/40 space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              <span className="font-medium text-foreground">Consulta:</span>{" "}
+                              <span className="capitalize">{formatConsultationDate(consultation.consultation_date)}</span>
+                            </p>
+                            {consultation.professional_name && (
+                              <p className="text-xs text-muted-foreground">
+                                <span className="font-medium text-foreground">Médico:</span>{" "}
+                                Dr(a). {consultation.professional_name}
+                              </p>
+                            )}
+                            {consultation.symptoms && (
+                              <p className="text-xs text-muted-foreground line-clamp-1">
+                                <span className="font-medium text-foreground">Motivo/Sintomas:</span>{" "}
+                                {consultation.symptoms}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        {r.notes && (
+                          <p className="text-xs text-muted-foreground italic line-clamp-2">
+                            "{r.notes}"
                           </p>
                         )}
                       </div>
-                    )}
-
-                    {r.notes && (
-                      <p className="text-xs text-muted-foreground italic line-clamp-2">
-                        "{r.notes}"
-                      </p>
-                    )}
-                  </div>
-                );
-              })
+                    </SwipeableCard>
+                  );
+                })}
+              </AnimatePresence>
             )}
           </div>
 
@@ -313,6 +353,27 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent className="max-w-[320px] rounded-[24px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Medição?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir permanentemente este registro de pressão arterial? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
