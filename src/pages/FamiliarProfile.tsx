@@ -79,6 +79,7 @@ const FamiliarProfile = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);
+  const [cycleOpen, setCycleOpen] = useState(false);
 
 
   const { data: member, isLoading, error } = useQuery({
