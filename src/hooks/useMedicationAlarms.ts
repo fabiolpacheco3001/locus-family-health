@@ -29,7 +29,10 @@ export function useMedicationAlarms(medications: Medication[]) {
     }
     if (Notification.permission === "denied") {
       permissionRef.current = "denied";
-      toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
+      if (!permissionToastShown) {
+        permissionToastShown = true;
+        toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
+      }
       return;
     }
     Notification.requestPermission().then((perm) => {
