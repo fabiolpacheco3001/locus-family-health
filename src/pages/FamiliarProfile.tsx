@@ -266,6 +266,13 @@ const FamiliarProfile = () => {
         onOpenChange={setBpOpen}
         familyMemberId={member.id}
       />
+      {isFemale && (
+        <MenstrualCycleDrawer
+          open={cycleOpen}
+          onOpenChange={setCycleOpen}
+          familyMemberId={member.id}
+        />
+      )}
     </div>
   );
 };
