@@ -73,7 +73,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
         <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
           <div className="space-y-1.5">
             <Label>Nome Completo *</Label>
-            <Input placeholder="Nome completo" value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
+            <Input placeholder="Ex: Maria da Silva" value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
           </div>
 
           {/* Grid: Parentesco + Nascimento */}

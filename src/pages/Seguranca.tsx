@@ -138,7 +138,7 @@ const Seguranca = () => {
                 type={showConfirmar ? "text" : "password"}
                 value={confirmarSenha}
                 onChange={(e) => setConfirmarSenha(e.target.value)}
-                placeholder="Repita a nova senha"
+                placeholder="Ex: MinhaS3nh@Forte!"
                 className={inputClass}
               />
               <button

@@ -407,7 +407,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           </AlertDialogHeader>
           <div className="px-6">
             <Textarea
-              placeholder="Motivo do cancelamento (opcional)"
+              placeholder="Ex: Remarcação, preparo inadequado..."
               maxLength={200}
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}

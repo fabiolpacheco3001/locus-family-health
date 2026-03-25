@@ -264,7 +264,7 @@ const Doencas = () => {
                 {isCustom && (
                   <input
                     type="text"
-                    placeholder="Digite o nome da doença..."
+                    placeholder="Ex: Fibromialgia, Artrite..."
                     value={customDiseaseName}
                     onChange={(e) => setCustomDiseaseName(e.target.value)}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none mt-4"

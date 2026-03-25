@@ -333,7 +333,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Observações</Label>
               <Textarea
-                placeholder="Sintomas, contexto..."
+                placeholder="Ex: Após exercício, em repouso..."
                 rows={3}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}

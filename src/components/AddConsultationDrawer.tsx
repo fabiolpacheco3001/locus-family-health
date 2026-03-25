@@ -349,7 +349,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           </AlertDialogHeader>
           <div className="px-6">
             <Textarea
-              placeholder="Motivo do cancelamento (opcional)"
+              placeholder="Ex: Conflito de horário, remarcação..."
               maxLength={200}
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}

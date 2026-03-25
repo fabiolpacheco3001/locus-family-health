@@ -463,7 +463,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Observações</Label>
               <Textarea
-                placeholder="Anotações adicionais..."
+                placeholder="Ex: Anotações adicionais, fluxo mais intenso..."
                 rows={2}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
