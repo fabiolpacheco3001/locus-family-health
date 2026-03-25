@@ -190,28 +190,28 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-border">
-              <Button
-                variant="outline"
-                className="w-full text-red-500 border-red-200 hover:bg-red-50 flex items-center justify-center gap-2"
-                onClick={() => setShowDeleteAlert(true)}
-              >
-                <Trash2 className="w-4 h-4" />
-                Excluir Familiar
-              </Button>
-            </div>
           </div>
 
-          <DrawerFooter className="flex-row gap-3">
-            <DrawerClose asChild>
-              <Button variant="ghost" className="flex-1">Cancelar</Button>
-            </DrawerClose>
+          <DrawerFooter className="flex-col gap-3">
+            <div className="flex gap-3">
+              <DrawerClose asChild>
+                <Button variant="ghost" className="flex-1">Cancelar</Button>
+              </DrawerClose>
+              <Button
+                onClick={handleSave}
+                disabled={updateMember.isPending}
+                className="flex-1"
+              >
+                {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar Alterações"}
+              </Button>
+            </div>
             <Button
-              onClick={handleSave}
-              disabled={updateMember.isPending}
-              className="flex-1"
+              variant="outline"
+              className="w-full text-destructive border-destructive/30 hover:bg-destructive/5 flex items-center justify-center gap-2"
+              onClick={() => setShowDeleteAlert(true)}
             >
-              {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar Alterações"}
+              <Trash2 className="w-4 h-4" />
+              Excluir Familiar
             </Button>
           </DrawerFooter>
         </DrawerContent>
