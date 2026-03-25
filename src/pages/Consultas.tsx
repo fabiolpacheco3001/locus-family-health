@@ -125,9 +125,6 @@ const Consultas = () => {
                         Atrasado
                       </Badge>
                     )}
-                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusColors[c.status] ?? ""}`}>
-                      {c.status}
-                    </Badge>
                     {c.type && (
                       <Badge
                         variant="outline"
@@ -142,6 +139,9 @@ const Consultas = () => {
                         {c.type === "Retorno" ? "Retorno" : c.type === "Emergência" ? "Emergência" : "Consulta"}
                       </Badge>
                     )}
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusColors[c.status] ?? ""}`}>
+                      {c.status}
+                    </Badge>
                   </div>
                   {c.professional_name && (
                     <p className="text-xs text-muted-foreground truncate">{c.professional_name}</p>
