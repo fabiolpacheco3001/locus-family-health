@@ -250,6 +250,11 @@ const FamiliarProfile = () => {
           physical_activity: memberActivity,
         }}
       />
+      <BloodPressureHistoryDrawer
+        open={bpOpen}
+        onOpenChange={setBpOpen}
+        familyMemberId={member.id}
+      />
     </div>
   );
 };
