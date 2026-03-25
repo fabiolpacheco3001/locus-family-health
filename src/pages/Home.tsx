@@ -231,7 +231,7 @@ const Home = () => {
       <div className="bg-[#1C3333] pb-16 px-5 rounded-b-[2.5rem]">
 
         {/* Visão Geral */}
-        <div>
+        <div className="mt-6">
           <h2 className="text-base font-semibold text-white/90 flex items-center gap-2 mb-3">
             <LayoutDashboard size={18} className="text-[#A7D3CB]" />
             Visão Geral
