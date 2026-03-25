@@ -267,6 +267,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 </div>
               </div>
             </div>
+            {isEditing && (
               <div className="space-y-3">
                 {!isCancelled && (
                   <div className="space-y-1.5">
