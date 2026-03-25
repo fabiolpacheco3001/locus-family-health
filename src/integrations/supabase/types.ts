@@ -54,6 +54,7 @@ export type Database = {
       }
       consultations: {
         Row: {
+          cancel_reason: string | null
           consultation_date: string | null
           created_at: string
           family_member_id: string
@@ -67,6 +68,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancel_reason?: string | null
           consultation_date?: string | null
           created_at?: string
           family_member_id: string
@@ -80,6 +82,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancel_reason?: string | null
           consultation_date?: string | null
           created_at?: string
           family_member_id?: string
@@ -145,6 +148,7 @@ export type Database = {
       }
       exams: {
         Row: {
+          cancel_reason: string | null
           consultation_id: string | null
           created_at: string
           exam_date: string | null
@@ -158,6 +162,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancel_reason?: string | null
           consultation_id?: string | null
           created_at?: string
           exam_date?: string | null
@@ -171,6 +176,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancel_reason?: string | null
           consultation_id?: string | null
           created_at?: string
           exam_date?: string | null
