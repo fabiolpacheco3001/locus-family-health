@@ -11,6 +11,7 @@ const AppLayout = () => {
   const { medications } = useMedications();
   useMedicationAlarms(medications);
   useStockAlerts(medications);
+  useMenstrualAlerts();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
 
