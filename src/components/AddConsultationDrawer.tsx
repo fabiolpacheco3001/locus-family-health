@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useConsultations, Consultation, NewConsultation } from "@/hooks/useConsultations";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Activity } from "lucide-react";
 
 interface Props {
   open: boolean;
