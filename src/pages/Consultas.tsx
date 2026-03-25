@@ -74,7 +74,7 @@ const Consultas = () => {
                 abaAtiva === 'proximas' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Próximas
+              Ativas
             </button>
             <button
               onClick={() => setAbaAtiva('historico')}
