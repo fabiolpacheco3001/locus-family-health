@@ -62,6 +62,22 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
       setSymptoms(editingConsultation.symptoms ?? "");
       setQuestions(editingConsultation.questions ?? "");
       setStatusValue(editingConsultation.status);
+
+      // Fetch existing BP for this consultation
+      supabase
+        .from("blood_pressure_history")
+        .select("systolic, diastolic")
+        .eq("consultation_id", editingConsultation.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setSystolic(String(data.systolic));
+            setDiastolic(String(data.diastolic));
+          } else {
+            setSystolic("");
+            setDiastolic("");
+          }
+        });
     } else {
       resetForm();
     }
