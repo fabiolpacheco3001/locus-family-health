@@ -80,6 +80,20 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setDiastolic("");
   };
 
+  const saveBP = async (consultationId: string) => {
+    const sys = parseInt(systolic, 10);
+    const dia = parseInt(diastolic, 10);
+    if (!systolic || !diastolic || isNaN(sys) || isNaN(dia) || sys <= 0 || dia <= 0) return;
+    await supabase.from("blood_pressure_history").insert({
+      user_id: user!.id,
+      familiar_id: familyMemberId,
+      consultation_id: consultationId,
+      systolic: sys,
+      diastolic: dia,
+      source: "consultation",
+    } as any);
+  };
+
   const handleSave = async () => {
     if (!specialty.trim()) {
       toast.error("Preencha a especialidade.");
@@ -98,6 +112,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           questions: questions.trim() || null,
           status: statusValue,
         });
+        await saveBP(editingConsultation.id);
         toast.success("Consulta atualizada!");
       } else {
         const consultation: NewConsultation = {
@@ -109,7 +124,8 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
         };
-        await addConsultation.mutateAsync(consultation);
+        const result = await addConsultation.mutateAsync(consultation);
+        await saveBP(result.id);
         toast.success("Consulta agendada com sucesso!");
       }
       resetForm();
