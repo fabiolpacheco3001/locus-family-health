@@ -100,6 +100,13 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     const sys = parseInt(systolic, 10);
     const dia = parseInt(diastolic, 10);
     if (!systolic || !diastolic || isNaN(sys) || isNaN(dia) || sys <= 0 || dia <= 0) return;
+
+    // Upsert: delete existing then insert new
+    await supabase
+      .from("blood_pressure_history")
+      .delete()
+      .eq("consultation_id", consultationId);
+
     await supabase.from("blood_pressure_history").insert({
       user_id: user!.id,
       familiar_id: familyMemberId,
