@@ -18,10 +18,8 @@ import MemberAvatar from "@/components/MemberAvatar";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
-import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
 
 const Home = () => {
-  useMedicationAlarms();
   const { user } = useAuth();
   const navigate = useNavigate();
   const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
