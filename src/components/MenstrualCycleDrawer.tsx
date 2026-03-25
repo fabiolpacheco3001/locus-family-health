@@ -350,6 +350,8 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                     <SelectItem value="1">1 dia antes</SelectItem>
                     <SelectItem value="2">2 dias antes</SelectItem>
                     <SelectItem value="3">3 dias antes</SelectItem>
+                    <SelectItem value="4">4 dias antes</SelectItem>
+                    <SelectItem value="5">5 dias antes</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
