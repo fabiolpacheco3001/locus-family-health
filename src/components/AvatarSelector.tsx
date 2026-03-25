@@ -13,7 +13,31 @@ interface Props {
   onSelect?: (avatar: string) => void;
 }
 
-const avatarEmojis = ["👨", "👩", "👴", "👵", "👦", "👧", "🐶", "🐱"];
+const avatarCategories = [
+  {
+    label: "Pessoas",
+    emojis: [
+      "👨", "👩", "👴", "👵", "👦", "👧",
+      "👨🏿", "👩🏿", "👦🏿", "👧🏿", "👴🏿", "👵🏿",
+      "👨🏾", "👩🏾", "👦🏾", "👧🏾",
+      "👨🏽", "👩🏽", "👦🏽", "👧🏽",
+      "👩🏿‍🦱", "👨🏿‍🦱", "👩🏾‍🦱", "👨🏾‍🦱",
+      "👩🏿‍🦳", "👨🏿‍🦳", "👩🏿‍🦲", "👨🏿‍🦲",
+      "👩‍🦰", "👨‍🦰", "👩🏽‍🦱", "👨🏽‍🦱",
+    ],
+  },
+  {
+    label: "Robôs",
+    emojis: ["🤖", "👾", "🛸", "🚀", "⚙️", "🔧"],
+  },
+  {
+    label: "Pets & Animais",
+    emojis: [
+      "🐶", "🐱", "🐕", "🐈‍⬛", "🦜", "🐹",
+      "🐰", "🐠", "🐢", "🦎", "🐴", "🐾",
+    ],
+  },
+];
 
 const AvatarSelector = ({ open, onOpenChange, onSelect }: Props) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
