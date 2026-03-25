@@ -191,7 +191,7 @@ const FamiliarProfile = () => {
       >
         <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-primary truncate">{member.name}</p>
+          <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
           <p className="text-sm text-muted-foreground">{member.relationship}</p>
           {infoLine && <p className="text-xs text-muted-foreground mt-0.5">{infoLine}</p>}
         </div>

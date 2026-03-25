@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Hand, AlertTriangle, ChevronRight, Trash2 } from "lucide-react";
+import { ArrowLeft, Ban, AlertTriangle, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -233,7 +233,7 @@ const Alergias = () => {
         ) : allergies.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
-              <Hand className="text-black" size={28} />
+              <Ban className="text-black" size={28} />
             </div>
             <p className="text-foreground font-semibold mb-1">Nenhuma alergia registrada</p>
             <p className="text-muted-foreground text-sm">Toque no botão + para adicionar.</p>
