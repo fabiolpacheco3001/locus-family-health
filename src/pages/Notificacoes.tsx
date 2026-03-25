@@ -1,12 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import useSmartBack from "@/hooks/useSmartBack";
-import { ArrowLeft, BellOff, Pill, Stethoscope, FileText, CheckCheck, Trash2, MoreVertical } from "lucide-react";
+import { ArrowLeft, BellOff, CheckCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useNotifications, Notification } from "@/hooks/useNotifications";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { motion, AnimatePresence, PanInfo, useMotionValue, useTransform } from "framer-motion";
+import { useNotifications } from "@/hooks/useNotifications";
+import { AnimatePresence } from "framer-motion";
+import NotificationCard from "@/components/NotificationCard";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,115 +23,15 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const iconMap: Record<string, React.ElementType> = {
-  medication: Pill,
-  consultation: Stethoscope,
-  exam: FileText,
-};
-
-const SWIPE_THRESHOLD = -80;
-
-const NotificationCard = ({
-  notification,
-  onRead,
-  onDelete,
-}: {
-  notification: Notification;
-  onRead: (id: string) => void;
-  onDelete: (id: string) => void;
-}) => {
-  const Icon = iconMap[notification.type] || FileText;
-  const isUnread = !notification.is_read;
-  const x = useMotionValue(0);
-  const trashOpacity = useTransform(x, [-100, -40, 0], [1, 0.5, 0]);
-
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    if (info.offset.x < SWIPE_THRESHOLD) {
-      onDelete(notification.id);
-    }
-  };
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 1, x: 0 }}
-      exit={{ x: -400, opacity: 0, height: 0, marginBottom: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="relative overflow-hidden rounded-xl mb-2"
-    >
-      {/* Red background with trash icon */}
-      <motion.div
-        className="absolute inset-0 bg-destructive flex items-center justify-end px-6 rounded-xl"
-        style={{ opacity: trashOpacity }}
-      >
-        <Trash2 className="w-6 h-6 text-white" />
-      </motion.div>
-
-      {/* Draggable card */}
-      <motion.div
-        style={{ x }}
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={{ left: 0.5, right: 0 }}
-        onDragEnd={handleDragEnd}
-        className={`relative flex items-start gap-3 p-4 rounded-xl border text-left w-full transition-colors cursor-grab active:cursor-grabbing ${
-          isUnread
-            ? "bg-accent/30 border-primary/20"
-            : "bg-card border-border/50"
-        }`}
-      >
-        <button
-          onClick={() => { if (isUnread) onRead(notification.id); }}
-          className="flex items-start gap-3 flex-1 min-w-0"
-        >
-          <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center">
-              <Icon className="text-black" size={20} />
-            </div>
-            {isUnread && (
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
-            )}
-          </div>
-          <div className="flex-1 w-full flex flex-col">
-            {/* Título Centralizado - extrai primeiro nome */}
-            <h4 className={`text-center text-sm md:text-base mb-2 ${isUnread ? "font-bold text-foreground" : "font-medium text-foreground"}`}>
-              {notification.title.includes(" de ")
-                ? notification.title.split(" de ").slice(0, -1).join(" de ") + " de " + notification.title.split(" de ").pop()!.split(" ")[0]
-                : notification.title}
-            </h4>
-
-            {/* Corpo Justificado e Separado em Linhas */}
-            <div className="text-justify text-xs text-muted-foreground flex flex-col gap-1">
-              {notification.message.split("\n").map((line, i) => (
-                <p key={i} className="m-0">{line}</p>
-              ))}
-            </div>
-
-            {/* Data/Hora da Notificação à Direita */}
-            {notification.created_at && (
-              <span className="text-right text-[11px] text-muted-foreground/70 mt-2 font-medium">
-                {format(new Date(notification.created_at), "dd MMM · HH:mm", { locale: ptBR })}
-              </span>
-            )}
-          </div>
-        </button>
-      </motion.div>
-    </motion.div>
-  );
-};
-
 const Notificacoes = () => {
   const navigate = useNavigate();
-  const goBack = useSmartBack();
   const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useNotifications();
-
-  const handleBack = () => navigate(-1);
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       {/* Header */}
       <div className="flex-none px-4 pt-6 pb-2 flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={handleBack}>
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Notificações</h1>
