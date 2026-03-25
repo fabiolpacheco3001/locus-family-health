@@ -62,46 +62,48 @@ const Ajustes = () => {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="px-4 pb-32 space-y-4 min-h-[calc(100%+1px)]">
-        {/* Sticky Header with Glassmorphism */}
-        <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-4 -mx-4 px-5">
-        {/* Profile Card */}
-        <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
-          <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />
-          <div>
-            <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
-            <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
+          {/* Sticky Header with Glassmorphism */}
+          <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-4 -mx-4 px-5">
+            <h1 className="text-2xl font-bold text-foreground px-1">Ajustes</h1>
           </div>
-        </div>
 
-        {/* Menu Items */}
-        <div className="space-y-3">
-          {menuItems.map(({ icon: Icon, label, path }) => (
-            <button
-              key={label}
-              onClick={() => path && navigate(path)}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
-                <Icon size={20} className="text-black" />
-              </div>
-              <span className="flex-1 text-left text-sm font-medium text-foreground">{label}</span>
-              <ChevronRight size={18} className="text-muted-foreground" />
-            </button>
-          ))}
-
-          {/* Delete Account - danger item */}
-          <button
-            onClick={() => setShowDeleteAccount(true)}
-            className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-destructive/20 active:bg-destructive/5 transition-colors"
-          >
-            <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-              <Trash2 size={20} className="text-destructive" />
+          {/* Profile Card */}
+          <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
+            <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />
+            <div>
+              <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
+              <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
             </div>
-            <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Minha Conta</span>
-            <ChevronRight size={18} className="text-destructive/50" />
-          </button>
-        </div>
+          </div>
 
+          {/* Menu Items */}
+          <div className="space-y-3">
+            {menuItems.map(({ icon: Icon, label, path }) => (
+              <button
+                key={label}
+                onClick={() => path && navigate(path)}
+                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                  <Icon size={20} className="text-black" />
+                </div>
+                <span className="flex-1 text-left text-sm font-medium text-foreground">{label}</span>
+                <ChevronRight size={18} className="text-muted-foreground" />
+              </button>
+            ))}
+
+            {/* Delete Account - danger item */}
+            <button
+              onClick={() => setShowDeleteAccount(true)}
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-destructive/20 active:bg-destructive/5 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <Trash2 size={20} className="text-destructive" />
+              </div>
+              <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Minha Conta</span>
+              <ChevronRight size={18} className="text-destructive/50" />
+            </button>
+          </div>
         </div>
       </div>
 
