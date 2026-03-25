@@ -140,12 +140,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
             <div className="space-y-1.5">
               <Label>Especialidade *</Label>
-              <Input
-                placeholder="Ex: Pediatria, Cardiologia"
-                value={specialty}
-                onChange={(e) => setSpecialty(e.target.value)}
-                className="text-[16px] scroll-m-20"
-              />
+              <SpecialtyCombobox value={specialty} onValueChange={setSpecialty} />
             </div>
 
             <div className="space-y-1.5">
