@@ -9,6 +9,14 @@ const iconMap: Record<string, React.ElementType> = {
   medication: Pill,
   consultation: Stethoscope,
   exam: FileText,
+  stock: AlertTriangle,
+};
+
+const iconBgMap: Record<string, string> = {
+  medication: "bg-[#A7D3CB]",
+  consultation: "bg-[#A7D3CB]",
+  exam: "bg-[#A7D3CB]",
+  stock: "bg-amber-400",
 };
 
 const SWIPE_THRESHOLD = -80;
