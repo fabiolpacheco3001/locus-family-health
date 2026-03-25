@@ -278,7 +278,7 @@ const Home = () => {
                       </div>
                       <div className="flex flex-col items-start">
                         <span className="text-3xl font-bold text-white leading-none">{activeMeds.length}</span>
-                        <span className="text-sm font-medium text-white/80 mt-1">Tratamentos Ativos</span>
+                        <span className="text-sm font-medium text-white/80 mt-1">Medicamentos Ativos</span>
                       </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-white/60" />
