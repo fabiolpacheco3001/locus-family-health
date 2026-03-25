@@ -6,6 +6,7 @@ import { toast } from "sonner";
 /**
  * Hook that checks every 60s if any active medication dose is due,
  * then fires both an OS Notification and an in-app toast.
+ * Also detects late doses when the app regains visibility.
  */
 export function useMedicationAlarms() {
   const { medications } = useMedications();
@@ -24,7 +25,6 @@ export function useMedicationAlarms() {
       toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
       return;
     }
-    // default → ask
     Notification.requestPermission().then((perm) => {
       permissionRef.current = perm;
       if (perm === "denied") {
@@ -33,10 +33,40 @@ export function useMedicationAlarms() {
     });
   }, []);
 
+  const fireNotification = useCallback((med: { id: string; name: string; dosage: string | null }, key: string, body: string, isLate: boolean) => {
+    if (firedRef.current.has(key)) return;
+    firedRef.current.add(key);
+
+    const title = isLate ? "⚠️ Dose Atrasada!" : "Hora do Remédio! 💊";
+
+    // OS Notification
+    if (permissionRef.current === "granted") {
+      try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then((reg) => {
+            reg.showNotification(title, { body, icon: "/logo-locus-vita.svg", tag: key });
+          });
+        } else {
+          new Notification(title, { body, icon: "/logo-locus-vita.svg", tag: key });
+        }
+      } catch {
+        // Fallback silently to toast only
+      }
+    }
+
+    // In-App Toast
+    if (isLate) {
+      toast.warning(`⚠️ Dose Atrasada!`, { description: body, duration: 20000 });
+    } else {
+      toast.error(`💊 Hora do Remédio!`, { description: body, duration: 15000 });
+    }
+  }, []);
+
   const checkAlarms = useCallback(() => {
     const now = new Date();
     const nowH = now.getHours();
     const nowM = now.getMinutes();
+    const todayStr = now.toISOString().slice(0, 10);
 
     const activeMeds = medications.filter((m) => m.status === "Ativo");
 
@@ -54,59 +84,47 @@ export function useMedicationAlarms() {
 
       const doseH = nextDose.getHours();
       const doseM = nextDose.getMinutes();
+      const diffMs = now.getTime() - nextDose.getTime();
 
-      // Same hour and minute → fire
+      // Exact match: same hour and minute → fire now
       if (doseH === nowH && doseM === nowM) {
-        // Dedup key: medId + hour:minute of this specific dose
-        const key = `${med.id}-${doseH}:${doseM}`;
-        if (firedRef.current.has(key)) continue;
-        firedRef.current.add(key);
-
+        const key = `${med.id}-${todayStr}-${doseH}:${doseM}`;
         const body = `Tome agora: ${med.name}${med.dosage ? ` (${med.dosage})` : ""}`;
+        fireNotification(med, key, body, false);
+        continue;
+      }
 
-        // 1. OS Notification
-        if (permissionRef.current === "granted") {
-          try {
-            if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-              navigator.serviceWorker.ready.then((reg) => {
-                reg.showNotification("Hora do Remédio! 💊", {
-                  body,
-                  icon: "/logo-locus-vita.svg",
-                  tag: key,
-                });
-              });
-            } else {
-              new Notification("Hora do Remédio! 💊", {
-                body,
-                icon: "/logo-locus-vita.svg",
-                tag: key,
-              });
-            }
-          } catch {
-            // Fallback silently to toast only
-          }
-        }
-
-        // 2. In-App Toast (always fires)
-        toast.error(`💊 Hora do Remédio!`, {
-          description: body,
-          duration: 15000,
-        });
+      // Late dose: nextDose is in the past but within 30 min window
+      if (diffMs > 0 && diffMs <= 30 * 60 * 1000) {
+        const lateKey = `${med.id}-${todayStr}-late-${doseH}:${doseM}`;
+        const hh = String(doseH).padStart(2, "0");
+        const mm = String(doseM).padStart(2, "0");
+        const body = `${med.name}${med.dosage ? ` (${med.dosage})` : ""} era às ${hh}:${mm}`;
+        fireNotification(med, lateKey, body, true);
       }
     }
 
-    // Cleanup old keys every hour to avoid memory leak
+    // Cleanup old keys daily
     if (firedRef.current.size > 500) {
       firedRef.current.clear();
     }
-  }, [medications]);
+  }, [medications, fireNotification]);
 
+  // Interval + visibilitychange
   useEffect(() => {
-    // Initial check
     checkAlarms();
-
-    // Check every 60 seconds
     const interval = setInterval(checkAlarms, 60_000);
-    return () => clearInterval(interval);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkAlarms();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [checkAlarms]);
 }

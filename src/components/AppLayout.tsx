@@ -2,8 +2,10 @@ import { useRef, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import BottomNav from "./BottomNav";
+import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
 
 const AppLayout = () => {
+  useMedicationAlarms();
   const scrollRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
 
