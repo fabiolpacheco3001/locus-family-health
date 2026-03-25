@@ -260,6 +260,7 @@ export type Database = {
           phone: string | null
           physical_activity: string | null
           relationship: string
+          tracks_menstrual_cycle: boolean
           user_id: string
           weight: number | null
         }
@@ -277,6 +278,7 @@ export type Database = {
           phone?: string | null
           physical_activity?: string | null
           relationship: string
+          tracks_menstrual_cycle?: boolean
           user_id: string
           weight?: number | null
         }
@@ -294,6 +296,7 @@ export type Database = {
           phone?: string | null
           physical_activity?: string | null
           relationship?: string
+          tracks_menstrual_cycle?: boolean
           user_id?: string
           weight?: number | null
         }
