@@ -76,7 +76,7 @@ const Exames = () => {
                 abaAtiva === 'pendentes' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Pendentes
+              Ativos
             </button>
             <button
               onClick={() => setAbaAtiva('resultados')}
