@@ -11,6 +11,7 @@ import {
   ShieldAlert,
   UserCircle,
   Ban,
+  Droplets,
   Syringe,
   Activity,
   Droplet,
@@ -28,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
+import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -55,7 +57,7 @@ const gestaoItems: CardItem[] = [
   { icon: FileText, label: "Exames", subtitle: "Resultados e pedidos", route: "exames" },
 ];
 
-const infoItems: CardItem[] = [
+const baseInfoItems: CardItem[] = [
   { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
   { icon: HeartPulse, label: "Pressão Arterial", subtitle: "Histórico de PA", route: "__bp__" },
   { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
@@ -77,6 +79,7 @@ const FamiliarProfile = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);
+  const [cycleOpen, setCycleOpen] = useState(false);
 
 
   const { data: member, isLoading, error } = useQuery({
@@ -133,6 +136,14 @@ const FamiliarProfile = () => {
   if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
+  const isFemale = member.gender === "Feminino";
+  const infoItems: CardItem[] = [
+    ...baseInfoItems,
+    ...(isFemale
+      ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }]
+      : []),
+  ];
+
   const memberWeight = (member as any).weight as number | null;
   const memberHeight = (member as any).height as number | null;
   const memberActivity = (member as any).physical_activity as string | null;
@@ -157,6 +168,8 @@ const FamiliarProfile = () => {
           onClick={() => {
             if (route === "__bp__") {
               setBpOpen(true);
+            } else if (route === "__cycle__") {
+              setCycleOpen(true);
             } else {
               navigate(`/familiar/${id}/${route}`);
             }
@@ -255,6 +268,13 @@ const FamiliarProfile = () => {
         onOpenChange={setBpOpen}
         familyMemberId={member.id}
       />
+      {isFemale && (
+        <MenstrualCycleDrawer
+          open={cycleOpen}
+          onOpenChange={setCycleOpen}
+          familyMemberId={member.id}
+        />
+      )}
     </div>
   );
 };
