@@ -376,7 +376,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             <DrawerDescription>Informe os dados do ciclo menstrual.</DrawerDescription>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Início do Sangramento *</Label>
@@ -454,8 +454,9 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                 rows={2}
                 value={form.symptoms}
                 onChange={(e) => setForm({ ...form, symptoms: e.target.value })}
-                className="text-[16px] resize-none"
+                className="text-[16px] resize-none min-h-[60px]"
                 maxLength={500}
+                onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
               />
             </div>
 
@@ -466,10 +467,13 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
                 rows={2}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="text-[16px] resize-none"
+                className="text-[16px] resize-none min-h-[60px]"
                 maxLength={500}
+                onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300)}
               />
             </div>
+
+            <div className="pb-32" />
           </div>
 
           <DrawerFooter className="flex-row gap-3">
