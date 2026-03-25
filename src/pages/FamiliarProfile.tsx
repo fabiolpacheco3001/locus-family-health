@@ -136,6 +136,15 @@ const FamiliarProfile = () => {
   if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
+  const isFemale = member.gender === "Feminino";
+  const infoItems = useMemo(() => {
+    const items = [...baseInfoItems];
+    if (isFemale) {
+      items.push({ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" });
+    }
+    return items;
+  }, [isFemale]);
+
   const memberWeight = (member as any).weight as number | null;
   const memberHeight = (member as any).height as number | null;
   const memberActivity = (member as any).physical_activity as string | null;
