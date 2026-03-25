@@ -150,7 +150,7 @@ const Home = () => {
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           familyMemberId: e.family_member_id,
-          isOverdue: overdue,
+          isOverdue: false,
         });
       });
 
