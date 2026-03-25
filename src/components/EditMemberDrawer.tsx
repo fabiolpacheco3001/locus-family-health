@@ -4,6 +4,7 @@ import AvatarSelector from "@/components/AvatarSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -21,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  member: FamilyMember;
+  member: FamilyMember & { tracks_menstrual_cycle?: boolean };
 }
 
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
@@ -39,6 +40,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [tracksCycle, setTracksCycle] = useState(false);
 
   useEffect(() => {
     if (open && member) {
@@ -48,6 +50,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
       setBloodType(member.blood_type || "");
       setGender(member.gender || "");
       setAvatarUrl(member.avatar_url || "");
+      setTracksCycle(!!(member as any).tracks_menstrual_cycle);
     }
   }, [open, member]);
 
@@ -65,7 +68,13 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
         blood_type: bloodType || null,
         gender: gender || null,
         avatar_url: avatarUrl || null,
-      });
+      } as any);
+      // Update tracks_menstrual_cycle separately since it's not in the typed interface
+      const { supabase } = await import("@/integrations/supabase/client");
+      await supabase
+        .from("family_members")
+        .update({ tracks_menstrual_cycle: tracksCycle } as any)
+        .eq("id", member.id);
       toast.success("Dados atualizados!");
       onOpenChange(false);
     } catch {
@@ -186,6 +195,15 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Toggle: Ciclo Menstrual */}
+            <div className="flex items-center justify-between rounded-xl bg-card border border-border/50 p-4">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Controle de Ciclo Menstrual</Label>
+                <p className="text-[11px] text-muted-foreground">Habilita o módulo de ciclo menstrual</p>
+              </div>
+              <Switch checked={tracksCycle} onCheckedChange={setTracksCycle} />
             </div>
 
           </div>
