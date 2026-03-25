@@ -9,14 +9,18 @@ import { useQueryClient } from "@tanstack/react-query";
  * Hook that checks every 60s if any active medication dose is due,
  * then fires both an OS Notification and an in-app toast.
  * Also detects late doses when the app regains visibility.
+ * Decrements stock on alarm fire + catches up missed doses on app resume.
  */
 export function useMedicationAlarms() {
   const { medications } = useMedications();
   const queryClient = useQueryClient();
   const firedRef = useRef<Set<string>>(new Set());
   const decrementedRef = useRef<Set<string>>(new Set());
-  const catchUpDoneRef = useRef<Set<string>>(new Set());
+  const catchUpDoneRef = useRef(false);
   const permissionRef = useRef<NotificationPermission | null>(null);
+  // Keep a stable ref to medications to avoid dependency cycles
+  const medsRef = useRef(medications);
+  medsRef.current = medications;
 
   // Request permission once on mount
   useEffect(() => {
@@ -38,16 +42,23 @@ export function useMedicationAlarms() {
     });
   }, []);
 
+  // Silent decrement – does NOT invalidate queries to avoid loops
   const decrementStock = useCallback(async (medId: string, amount: number = 1) => {
     try {
       await supabase.rpc("decrement_stock", { med_id: medId, amount });
-      queryClient.invalidateQueries({ queryKey: ["medications"] });
     } catch {
-      // Silent fail – stock will catch up on next cycle
+      // Silent fail
     }
+  }, []);
+
+  // Delayed refresh after decrements are done (single debounced call)
+  const scheduleRefresh = useCallback(() => {
+    setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["medications"] });
+    }, 5000); // 5s delay to batch and avoid loops
   }, [queryClient]);
 
-  const fireNotification = useCallback((med: { id: string; name: string; dosage: string | null; estoque_total?: number | null; uso_continuo?: boolean }, key: string, body: string, isLate: boolean) => {
+  const fireNotification = useCallback((med: { id: string; name: string; dosage: string | null; estoque_total?: number | null }, key: string, body: string, isLate: boolean) => {
     if (firedRef.current.has(key)) return;
     firedRef.current.add(key);
 
@@ -81,118 +92,122 @@ export function useMedicationAlarms() {
       if (!decrementedRef.current.has(decKey)) {
         decrementedRef.current.add(decKey);
         decrementStock(med.id, 1);
+        scheduleRefresh();
       }
     }
-  }, [decrementStock]);
+  }, [decrementStock, scheduleRefresh]);
 
-  // Catch-up: calculate missed doses since last_stock_decrement and decrement
-  const catchUpMissedDoses = useCallback(async (activeMeds: typeof medications) => {
-    const now = new Date();
+  // Catch-up on mount: calculate missed doses since last_stock_decrement
+  useEffect(() => {
+    if (catchUpDoneRef.current) return;
+    if (medications.length === 0) return;
+    catchUpDoneRef.current = true;
 
-    for (const med of activeMeds) {
-      if (med.estoque_total == null || med.estoque_total <= 0) continue;
-      if (!med.frequency_hours || med.frequency_hours <= 0) continue;
-      if (catchUpDoneRef.current.has(med.id)) continue;
-      catchUpDoneRef.current.add(med.id);
+    const runCatchUp = async () => {
+      const now = new Date();
+      let didDecrement = false;
 
-      // Determine the reference point: last decrement or start_date
-      let refTime: Date | null = null;
-      if (med.last_stock_decrement) {
-        refTime = new Date(med.last_stock_decrement);
-      } else if (med.start_date) {
-        const dateOnly = med.start_date.slice(0, 10);
-        refTime = med.start_time
-          ? new Date(`${dateOnly}T${med.start_time}`)
-          : new Date(`${dateOnly}T12:00:00`);
-      }
+      for (const med of medications) {
+        if (med.status !== "Ativo") continue;
+        if (med.estoque_total == null || med.estoque_total <= 0) continue;
+        if (!med.frequency_hours || med.frequency_hours <= 0) continue;
 
-      if (!refTime || isNaN(refTime.getTime())) continue;
-      if (refTime >= now) continue;
+        // Determine reference point
+        let refTime: Date | null = null;
+        if (med.last_stock_decrement) {
+          refTime = new Date(med.last_stock_decrement);
+        } else if (med.start_date) {
+          const dateOnly = med.start_date.slice(0, 10);
+          refTime = med.start_time
+            ? new Date(`${dateOnly}T${med.start_time}`)
+            : new Date(`${dateOnly}T12:00:00`);
+        }
 
-      // Check end_date
-      if (med.end_date) {
-        const endDate = new Date(`${med.end_date}T23:59:59`);
-        if (now > endDate) continue; // treatment ended
-      }
+        if (!refTime || isNaN(refTime.getTime())) continue;
+        if (refTime >= now) continue;
 
-      const elapsedMs = now.getTime() - refTime.getTime();
-      const elapsedHours = elapsedMs / (1000 * 60 * 60);
-      const missedDoses = Math.floor(elapsedHours / med.frequency_hours);
+        if (med.end_date) {
+          const endDate = new Date(`${med.end_date}T23:59:59`);
+          if (now > endDate) continue;
+        }
 
-      if (missedDoses > 0) {
-        const safeDoses = Math.min(missedDoses, med.estoque_total);
-        if (safeDoses > 0) {
-          await decrementStock(med.id, safeDoses);
+        const elapsedHours = (now.getTime() - refTime.getTime()) / (1000 * 60 * 60);
+        const missedDoses = Math.floor(elapsedHours / med.frequency_hours);
+
+        if (missedDoses > 0) {
+          const safeDoses = Math.min(missedDoses, med.estoque_total);
+          if (safeDoses > 0) {
+            await decrementStock(med.id, safeDoses);
+            didDecrement = true;
+          }
         }
       }
-    }
-  }, [decrementStock, medications]);
 
-  const checkAlarms = useCallback(() => {
-    const now = new Date();
-    const nowH = now.getHours();
-    const nowM = now.getMinutes();
-    const todayStr = now.toISOString().slice(0, 10);
-
-    const activeMeds = medications.filter((m) => m.status === "Ativo");
-
-    for (const med of activeMeds) {
-      const dateOnly = med.start_date?.slice(0, 10);
-      let startDateISO: string | null = null;
-      if (dateOnly && med.start_time) {
-        startDateISO = `${dateOnly}T${med.start_time}`;
-      } else if (dateOnly) {
-        startDateISO = `${dateOnly}T12:00:00`;
+      if (didDecrement) {
+        scheduleRefresh();
       }
+    };
 
-      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
-      if (!nextDose) continue;
+    runCatchUp();
+  }, [medications, decrementStock, scheduleRefresh]);
 
-      const doseH = nextDose.getHours();
-      const doseM = nextDose.getMinutes();
-      const diffMs = now.getTime() - nextDose.getTime();
-
-      // Exact match: same hour and minute → fire now
-      if (doseH === nowH && doseM === nowM) {
-        const key = `${med.id}-${todayStr}-${doseH}:${doseM}`;
-        const memberName = med.family_members?.name ?? "Você";
-        const body = `${memberName}, tome agora: ${med.name}${med.dosage ? ` (${med.dosage})` : ""}`;
-        fireNotification(med, key, body, false);
-        continue;
-      }
-
-      // Late dose: nextDose is in the past but within 30 min window
-      if (diffMs > 0 && diffMs <= 30 * 60 * 1000) {
-        const lateKey = `${med.id}-${todayStr}-late-${doseH}:${doseM}`;
-        const hh = String(doseH).padStart(2, "0");
-        const mm = String(doseM).padStart(2, "0");
-        const memberName = med.family_members?.name ?? "Você";
-        const body = `${memberName}, ${med.name}${med.dosage ? ` (${med.dosage})` : ""} era às ${hh}:${mm}`;
-        fireNotification(med, lateKey, body, true);
-      }
-    }
-
-    // Cleanup old keys daily
-    if (firedRef.current.size > 500) {
-      firedRef.current.clear();
-    }
-    if (decrementedRef.current.size > 500) {
-      decrementedRef.current.clear();
-    }
-  }, [medications, fireNotification]);
-
-  // Interval + visibilitychange + catch-up
+  // Check alarms every 60s
   useEffect(() => {
-    const activeMeds = medications.filter((m) => m.status === "Ativo");
-    catchUpMissedDoses(activeMeds);
+    const checkAlarms = () => {
+      const now = new Date();
+      const nowH = now.getHours();
+      const nowM = now.getMinutes();
+      const todayStr = now.toISOString().slice(0, 10);
+      const currentMeds = medsRef.current;
+
+      const activeMeds = currentMeds.filter((m) => m.status === "Ativo");
+
+      for (const med of activeMeds) {
+        const dateOnly = med.start_date?.slice(0, 10);
+        let startDateISO: string | null = null;
+        if (dateOnly && med.start_time) {
+          startDateISO = `${dateOnly}T${med.start_time}`;
+        } else if (dateOnly) {
+          startDateISO = `${dateOnly}T12:00:00`;
+        }
+
+        const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
+        if (!nextDose) continue;
+
+        const doseH = nextDose.getHours();
+        const doseM = nextDose.getMinutes();
+        const diffMs = now.getTime() - nextDose.getTime();
+
+        if (doseH === nowH && doseM === nowM) {
+          const key = `${med.id}-${todayStr}-${doseH}:${doseM}`;
+          const memberName = med.family_members?.name ?? "Você";
+          const body = `${memberName}, tome agora: ${med.name}${med.dosage ? ` (${med.dosage})` : ""}`;
+          fireNotification(med, key, body, false);
+          continue;
+        }
+
+        if (diffMs > 0 && diffMs <= 30 * 60 * 1000) {
+          const lateKey = `${med.id}-${todayStr}-late-${doseH}:${doseM}`;
+          const hh = String(doseH).padStart(2, "0");
+          const mm = String(doseM).padStart(2, "0");
+          const memberName = med.family_members?.name ?? "Você";
+          const body = `${memberName}, ${med.name}${med.dosage ? ` (${med.dosage})` : ""} era às ${hh}:${mm}`;
+          fireNotification(med, lateKey, body, true);
+        }
+      }
+
+      // Cleanup old keys
+      if (firedRef.current.size > 500) firedRef.current.clear();
+      if (decrementedRef.current.size > 500) decrementedRef.current.clear();
+    };
+
     checkAlarms();
     const interval = setInterval(checkAlarms, 60_000);
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
-        catchUpDoneRef.current.clear(); // allow re-check on each app resume
-        const active = medications.filter((m) => m.status === "Ativo");
-        catchUpMissedDoses(active);
+        // Reset catch-up flag so it re-runs on next medications load
+        catchUpDoneRef.current = false;
         checkAlarms();
       }
     };
@@ -202,5 +217,5 @@ export function useMedicationAlarms() {
       clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [checkAlarms, catchUpMissedDoses, medications]);
+  }, [fireNotification]);
 }
