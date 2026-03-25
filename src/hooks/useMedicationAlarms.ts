@@ -10,6 +10,8 @@ import type { Medication } from "./useMedications";
  * then fires both an OS Notification and an in-app toast.
  * Receives medications externally to avoid duplicate useQuery calls.
  */
+let permissionToastShown = false;
+
 export function useMedicationAlarms(medications: Medication[]) {
   const queryClient = useQueryClient();
   const firedRef = useRef<Set<string>>(new Set());
