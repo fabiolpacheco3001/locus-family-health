@@ -52,6 +52,45 @@ export type Database = {
           },
         ]
       }
+      blood_pressure_history: {
+        Row: {
+          consultation_id: string | null
+          created_at: string
+          diastolic: number
+          familiar_id: string
+          id: string
+          measurement_date: string
+          notes: string | null
+          source: string
+          systolic: number
+          user_id: string
+        }
+        Insert: {
+          consultation_id?: string | null
+          created_at?: string
+          diastolic: number
+          familiar_id: string
+          id?: string
+          measurement_date?: string
+          notes?: string | null
+          source?: string
+          systolic: number
+          user_id: string
+        }
+        Update: {
+          consultation_id?: string | null
+          created_at?: string
+          diastolic?: number
+          familiar_id?: string
+          id?: string
+          measurement_date?: string
+          notes?: string | null
+          source?: string
+          systolic?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       consultations: {
         Row: {
           cancel_reason: string | null

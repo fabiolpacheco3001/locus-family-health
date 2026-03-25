@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useConsultations, Consultation, NewConsultation } from "@/hooks/useConsultations";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Activity } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -26,6 +29,7 @@ interface Props {
 }
 
 const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation }: Props) => {
+  const { user } = useAuth();
   const { addConsultation, updateConsultation } = useConsultations(familyMemberId);
   const [specialty, setSpecialty] = useState("");
   const [professionalName, setProfessionalName] = useState("");
@@ -36,6 +40,8 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [statusValue, setStatusValue] = useState("Agendada");
+  const [systolic, setSystolic] = useState("");
+  const [diastolic, setDiastolic] = useState("");
 
   const isEditing = !!editingConsultation;
   const isCancelled = editingConsultation?.status === "Cancelada";
@@ -70,6 +76,22 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setQuestions("");
     setStatusValue("Agendada");
     setCancelReason("");
+    setSystolic("");
+    setDiastolic("");
+  };
+
+  const saveBP = async (consultationId: string) => {
+    const sys = parseInt(systolic, 10);
+    const dia = parseInt(diastolic, 10);
+    if (!systolic || !diastolic || isNaN(sys) || isNaN(dia) || sys <= 0 || dia <= 0) return;
+    await supabase.from("blood_pressure_history").insert({
+      user_id: user!.id,
+      familiar_id: familyMemberId,
+      consultation_id: consultationId,
+      systolic: sys,
+      diastolic: dia,
+      source: "consultation",
+    } as any);
   };
 
   const handleSave = async () => {
@@ -90,6 +112,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           questions: questions.trim() || null,
           status: statusValue,
         });
+        await saveBP(editingConsultation.id);
         toast.success("Consulta atualizada!");
       } else {
         const consultation: NewConsultation = {
@@ -101,7 +124,8 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
         };
-        await addConsultation.mutateAsync(consultation);
+        const result = await addConsultation.mutateAsync(consultation);
+        await saveBP(result.id);
         toast.success("Consulta agendada com sucesso!");
       }
       resetForm();
@@ -208,6 +232,41 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               />
             </div>
 
+            {/* Medições Clínicas */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-primary" />
+                <Label className="text-sm font-semibold text-foreground">Medições Clínicas</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Sistólica (mmHg)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="ex: 120"
+                    value={systolic}
+                    onChange={(e) => setSystolic(e.target.value.replace(/[^0-9]/g, ''))}
+                    min={1}
+                    max={300}
+                    className="text-[16px] scroll-m-20"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">Diastólica (mmHg)</Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="ex: 80"
+                    value={diastolic}
+                    onChange={(e) => setDiastolic(e.target.value.replace(/[^0-9]/g, ''))}
+                    min={1}
+                    max={300}
+                    className="text-[16px] scroll-m-20"
+                  />
+                </div>
+              </div>
+            </div>
             {isEditing && (
               <div className="space-y-3">
                 {!isCancelled && (
