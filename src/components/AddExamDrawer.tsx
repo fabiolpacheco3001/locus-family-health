@@ -401,7 +401,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
         <AlertDialogContent className="max-w-[320px] w-[90vw] rounded-[24px]">
           <AlertDialogHeader>
             <AlertDialogTitle>Cancelar Compromisso</AlertDialogTitle>
-            <AlertDialogDescription>
+          <AlertDialogDescription className="mb-4">
               Essa ação mudará o status do exame para cancelado.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -411,11 +411,11 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               maxLength={200}
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              className="text-[16px] resize-none"
-              rows={3}
+              className="text-[16px] resize-none min-h-[120px] border border-[hsl(var(--primary)/0.2)] focus-visible:ring-1 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-0"
+              rows={5}
               autoFocus
             />
-            <p className="text-xs text-muted-foreground text-right mt-1">{cancelReason.length}/200</p>
+            <p className="text-xs text-muted-foreground/60 text-right mt-2">{cancelReason.length}/200</p>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
