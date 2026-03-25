@@ -7,9 +7,14 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { supabase } from "@/integrations/supabase/client";
 import AvatarSelector from "@/components/AvatarSelector";
 
 const MeusDados = () => {
