@@ -49,6 +49,7 @@ const Agenda = () => {
           .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
           .eq("user_id", user!.id)
           .neq("status", "Cancelada")
+          .neq("status", "Realizada")
           .order("consultation_date", { ascending: true }),
         supabase
           .from("exams")
