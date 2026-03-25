@@ -100,7 +100,8 @@ export function useMedicationAlarms() {
         const lateKey = `${med.id}-${todayStr}-late-${doseH}:${doseM}`;
         const hh = String(doseH).padStart(2, "0");
         const mm = String(doseM).padStart(2, "0");
-        const body = `${med.name}${med.dosage ? ` (${med.dosage})` : ""} era às ${hh}:${mm}`;
+        const memberName = med.family_members?.name ?? "Você";
+        const body = `${memberName}, ${med.name}${med.dosage ? ` (${med.dosage})` : ""} era às ${hh}:${mm}`;
         fireNotification(med, lateKey, body, true);
       }
     }
