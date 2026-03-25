@@ -49,7 +49,7 @@ const Home = () => {
     enabled: !!user,
   });
 
-  // Pending exams count
+  // Pending exams count (only truly pending statuses)
   const { data: pendingExams = 0 } = useQuery({
     queryKey: ["pending-exams-count", user?.id],
     queryFn: async () => {
@@ -57,9 +57,32 @@ const Home = () => {
         .from("exams")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user!.id)
-        .or("status.eq.Agendado,status.eq.Realizado,status.eq.Coletado");
+        .eq("status", "Agendado");
       if (error) throw error;
       return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  // Total open appointments count (for carousel card — no limit)
+  const { data: totalOpenAppointments = 0 } = useQuery({
+    queryKey: ["total-open-appointments", user?.id],
+    queryFn: async () => {
+      const [consultRes, examRes] = await Promise.all([
+        supabase
+          .from("consultations")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("status", "Agendada"),
+        supabase
+          .from("exams")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("status", "Agendado"),
+      ]);
+      if (consultRes.error) throw consultRes.error;
+      if (examRes.error) throw examRes.error;
+      return (consultRes.count ?? 0) + (examRes.count ?? 0);
     },
     enabled: !!user,
   });
@@ -273,7 +296,7 @@ const Home = () => {
                         <Calendar className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex flex-col items-start">
-                        <span className="text-3xl font-bold text-white leading-none">{upcoming.length}</span>
+                        <span className="text-3xl font-bold text-white leading-none">{totalOpenAppointments}</span>
                         <span className="text-sm font-medium text-white/80 mt-1">Compromissos</span>
                       </div>
                     </div>
@@ -447,7 +470,7 @@ const Home = () => {
           <AccordionTrigger className="text-base font-semibold text-foreground hover:no-underline py-3">
             <span className="flex items-center gap-2">
               <Calendar size={18} style={{ color: '#6A978F' }} />
-              Próximos Compromissos
+              Próximos 5 Compromissos
             </span>
           </AccordionTrigger>
           <AccordionContent>
