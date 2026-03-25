@@ -93,6 +93,7 @@ const Home = () => {
         kind: "consultation" | "exam";
         familyMemberId: string;
         isOverdue: boolean;
+        consultationType?: string | null;
       }> = [];
 
       (consultRes.data ?? []).forEach((c: any) => {
