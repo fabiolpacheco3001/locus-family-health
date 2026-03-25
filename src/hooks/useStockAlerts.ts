@@ -33,7 +33,8 @@ export function useStockAlerts(medications: Medication[]) {
         if (checkedRef.current.has(med.id)) continue;
         checkedRef.current.add(med.id);
 
-        const { data: existing } = await supabase
+        // Check for unread notification (existing rule)
+        const { data: unread } = await supabase
           .from("notifications")
           .select("id")
           .eq("user_id", user.id)
@@ -42,7 +43,23 @@ export function useStockAlerts(medications: Medication[]) {
           .ilike("title", `%${med.name}%`)
           .limit(1);
 
-        if (existing && existing.length > 0) continue;
+        if (unread && unread.length > 0) continue;
+
+        // Temporal lock: max 1 notification per medication per day
+        const { data: latest } = await supabase
+          .from("notifications")
+          .select("created_at")
+          .eq("user_id", user.id)
+          .eq("type", "stock")
+          .ilike("title", `%${med.name}%`)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (
+          latest &&
+          latest.length > 0 &&
+          new Date(latest[0].created_at!).toDateString() === new Date().toDateString()
+        ) continue;
 
         const memberName = med.family_members?.name ?? "o familiar";
 
