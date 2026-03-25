@@ -154,7 +154,13 @@ const FamiliarProfile = () => {
       {items.map(({ icon: Icon, label, subtitle, route }) => (
         <button
           key={label}
-          onClick={() => navigate(`/familiar/${id}/${route}`)}
+          onClick={() => {
+            if (route === "__bp__") {
+              setBpOpen(true);
+            } else {
+              navigate(`/familiar/${id}/${route}`);
+            }
+          }}
           className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
         >
           <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
