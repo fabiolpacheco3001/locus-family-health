@@ -76,6 +76,8 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setQuestions("");
     setStatusValue("Agendada");
     setCancelReason("");
+    setSystolic("");
+    setDiastolic("");
   };
 
   const handleSave = async () => {
