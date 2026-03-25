@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
+import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
