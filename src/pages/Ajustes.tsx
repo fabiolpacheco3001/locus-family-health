@@ -17,6 +17,7 @@ const menuItems = [
   { icon: Users, label: "Gerenciar Família", path: "/gerenciar-familia" },
   { icon: Bell, label: "Notificações", path: "/notificacoes" },
   { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
+  { icon: FileText, label: "Política de Privacidade", path: null },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: null },
 ];
 
