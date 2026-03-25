@@ -229,7 +229,7 @@ const Vacinas = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Nome da Vacina</label>
                 <input
                   type="text"
-                  placeholder="Digite o nome..."
+                  placeholder="Ex: Pfizer COVID-19, Coronavac..."
                   value={form.customName}
                   onChange={(e) => setForm({ ...form, customName: e.target.value })}
                   className={INPUT_CLASSES}
