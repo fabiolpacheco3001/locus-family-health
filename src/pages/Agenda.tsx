@@ -218,8 +218,8 @@ const Agenda = () => {
                         </Badge>
                       )}
                       {isExam && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#A7D3CB] text-black border-none">
-                          Exame
+                         <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#FFF4A3] text-slate-800 border-none">
+                           Exame
                         </Badge>
                       )}
                       {!isExam && (
