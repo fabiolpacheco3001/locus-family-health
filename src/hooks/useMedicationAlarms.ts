@@ -89,7 +89,8 @@ export function useMedicationAlarms() {
       // Exact match: same hour and minute → fire now
       if (doseH === nowH && doseM === nowM) {
         const key = `${med.id}-${todayStr}-${doseH}:${doseM}`;
-        const body = `Tome agora: ${med.name}${med.dosage ? ` (${med.dosage})` : ""}`;
+        const memberName = med.family_members?.name ?? "Você";
+        const body = `${memberName}, tome agora: ${med.name}${med.dosage ? ` (${med.dosage})` : ""}`;
         fireNotification(med, key, body, false);
         continue;
       }
