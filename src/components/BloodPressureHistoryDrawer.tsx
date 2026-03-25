@@ -140,12 +140,6 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
     setAddOpen(false);
   };
 
-  const getBPCategory = (sys: number, dia: number) => {
-    if (sys < 120 && dia < 80) return { label: "Normal", color: "bg-green-100 text-green-800" };
-    if (sys < 130 && dia < 80) return { label: "Elevada", color: "bg-yellow-100 text-yellow-800" };
-    if (sys < 140 || dia < 90) return { label: "Hipertensão 1", color: "bg-orange-100 text-orange-800" };
-    return { label: "Hipertensão 2", color: "bg-red-100 text-red-800" };
-  };
 
   const latestRecord = records[0];
 
