@@ -209,6 +209,17 @@ const MeusDados = () => {
               className="w-full max-w-full box-border min-w-0 text-[16px]"
             />
           </div>
+          {/* Seção Excluir Conta */}
+          <div className="pt-6 mt-4 border-t border-border">
+            <Button
+              variant="outline"
+              className="w-full text-destructive border-destructive/30 hover:bg-destructive/5 flex items-center justify-center gap-2"
+              onClick={() => setShowDeleteAccount(true)}
+            >
+              <Trash2 className="w-4 h-4" />
+              Excluir Minha Conta
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -229,7 +240,28 @@ const MeusDados = () => {
           {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
         </Button>
       </div>
+
       <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} onSelect={setAvatarUrl} />
+
+      <AlertDialog open={showDeleteAccount} onOpenChange={setShowDeleteAccount}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alerta de Exclusão de Conta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir sua conta Locus Vita? Todos os seus dados e os dados de sua família serão apagados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

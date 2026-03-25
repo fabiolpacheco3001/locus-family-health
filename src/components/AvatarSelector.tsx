@@ -111,21 +111,23 @@ const AvatarSelector = ({ open, onOpenChange, onSelect }: Props) => {
             )}
           </Button>
 
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-3">Ou escolha um avatar:</p>
-            <div className="grid grid-cols-4 gap-4">
-              {avatarEmojis.map((emoji) => (
-                <button
-                  key={emoji}
-                  className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-transparent hover:border-primary active:scale-95 transition-all flex items-center justify-center text-3xl mx-auto"
-                  onClick={() => handleEmojiClick(emoji)}
-                  disabled={uploading}
-                >
-                  {emoji}
-                </button>
-              ))}
+          {avatarCategories.map((cat) => (
+            <div key={cat.label}>
+              <p className="text-sm font-medium text-muted-foreground mb-3">{cat.label}</p>
+              <div className="grid grid-cols-5 gap-3">
+                {cat.emojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    className="w-14 h-14 rounded-full bg-secondary/20 border-2 border-transparent hover:border-primary active:scale-95 transition-all flex items-center justify-center text-2xl mx-auto"
+                    onClick={() => handleEmojiClick(emoji)}
+                    disabled={uploading}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </DrawerContent>
     </Drawer>

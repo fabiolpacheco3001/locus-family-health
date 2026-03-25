@@ -231,7 +231,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
               onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteMember.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, excluir"}
+              {deleteMember.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
