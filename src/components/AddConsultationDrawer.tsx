@@ -40,6 +40,8 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [statusValue, setStatusValue] = useState("Agendada");
+  const [systolic, setSystolic] = useState("");
+  const [diastolic, setDiastolic] = useState("");
 
   const isEditing = !!editingConsultation;
   const isCancelled = editingConsultation?.status === "Cancelada";
