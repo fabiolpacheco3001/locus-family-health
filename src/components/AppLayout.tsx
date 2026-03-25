@@ -5,6 +5,7 @@ import BottomNav from "./BottomNav";
 import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { useMedications } from "@/hooks/useMedications";
+import { useMenstrualAlerts } from "@/hooks/useMenstrualAlerts";
 
 const AppLayout = () => {
   const { medications } = useMedications();
