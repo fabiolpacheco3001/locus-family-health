@@ -38,6 +38,8 @@ const MeusDados = () => {
   const [cpf, setCpf] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (titular) {
