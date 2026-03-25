@@ -83,8 +83,8 @@ const NotificationCard = ({ notification, onRead, onDelete }: NotificationCardPr
           className="flex items-center gap-3 p-4 w-full text-left"
         >
           <div className="relative shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center">
-              <Icon className="text-black" size={20} />
+            <div className={`w-10 h-10 rounded-xl ${iconBgMap[notification.type] || "bg-[#A7D3CB]"} flex items-center justify-center`}>
+              <Icon className={notification.type === "stock" ? "text-white" : "text-black"} size={20} />
             </div>
             {isUnread && (
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
