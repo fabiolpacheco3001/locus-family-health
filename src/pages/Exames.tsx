@@ -180,6 +180,7 @@ const Exames = () => {
                   <ExamSwipeableCard
                     key={e.id}
                     onDelete={() => handleInstantDelete(e.id)}
+                    disableDelete={!isAdmin}
                     onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
                     onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
                     quickActionMode={quickActionMode}
