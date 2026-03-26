@@ -80,7 +80,7 @@ const ExamSwipeableCard = ({
     >
       {/* Delete action (right side, revealed on swipe left) */}
       <motion.div
-        className="absolute inset-0 bg-[#F87171] flex items-center justify-end rounded-xl"
+        className="absolute inset-0 bg-[#F87171] flex items-center justify-end rounded-xl z-[15] pointer-events-none"
         style={{ opacity: deleteOpacity }}
       >
         <button
@@ -91,7 +91,7 @@ const ExamSwipeableCard = ({
             resetPosition();
             onDelete();
           }}
-          className="flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 relative z-20"
+          className="flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 pointer-events-auto"
         >
           <Trash2 className="w-6 h-6" />
           <span className="text-[10px] mt-1 font-medium">Excluir</span>
