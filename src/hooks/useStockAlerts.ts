@@ -37,7 +37,9 @@ export function useStockAlerts(medications: Medication[]) {
 
     let cancelled = false;
 
-    const checkAndNotify = async () => {
+    // Delay 2s to not block first paint
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
       let hasInserted = false;
 
       for (const med of lowStockMeds) {
@@ -80,12 +82,11 @@ export function useStockAlerts(medications: Medication[]) {
         queryClient.invalidateQueries({ queryKey: ["notifications"] });
         queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
       }
-    };
-
-    void checkAndNotify();
+    }, 2000);
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [user, medications, queryClient]);
 }
