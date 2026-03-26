@@ -157,8 +157,23 @@ const Agenda = () => {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-xl" />
+              <div key={i} className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50">
+                <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-32" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-5 h-5 rounded-full" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                  <Skeleton className="h-3.5 w-48" />
+                  <div className="flex gap-2 mt-1">
+                    <Skeleton className="h-4 w-14 rounded-full" />
+                    <Skeleton className="h-4 w-16 rounded-full" />
+                  </div>
+                </div>
+              </div>
             ))}
+          </div>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
