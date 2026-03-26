@@ -29,6 +29,7 @@ const Exames = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
   const { exams, isLoading, addExam, deleteExam, updateExam } = useExams(id!);
 
   const handleQuickStatusUpdate = async (examId: string, newStatus: string) => {
