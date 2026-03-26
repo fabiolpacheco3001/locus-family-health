@@ -139,6 +139,7 @@ const Home = () => {
       return items.slice(0, 5);
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Build list of active meds with their next dose
