@@ -1,21 +1,18 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Stethoscope, Calendar, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import SwipeableCard from "@/components/SwipeableCard";
+import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
 import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
-import {
-  AlertDialog, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   Agendada: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -29,8 +26,8 @@ const Consultas = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'proximas' | 'historico'>('proximas');
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const { consultations, isLoading, deleteConsultation } = useConsultations(id!);
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const { consultations, isLoading, addConsultation, updateConsultation, deleteConsultation } = useConsultations(id!);
 
   const consultasFiltradas = consultations.filter(c => {
     if (abaAtiva === 'proximas') return c.status === 'Agendada';
@@ -52,12 +49,53 @@ const Consultas = () => {
     setDrawerOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
+  const handleQuickStatusUpdate = async (consultationId: string, newStatus: string) => {
+    const consultation = consultations.find(c => c.id === consultationId);
+    const previousStatus = consultation?.status ?? 'Agendada';
     try {
-      await deleteConsultation.mutateAsync(deleteTarget);
-    } catch { /* handled by toast in hook */ }
-    setDeleteTarget(null);
+      await updateConsultation.mutateAsync({ id: consultationId, status: newStatus });
+      toast(`Consulta marcada como ${newStatus}`, {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await updateConsultation.mutateAsync({ id: consultationId, status: previousStatus });
+              toast.success("Status revertido.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
+    } catch { /* handled */ }
+  };
+
+  const handleInstantDelete = async (consultationId: string) => {
+    const toDelete = consultations.find(c => c.id === consultationId);
+    if (!toDelete) return;
+    const cached = { ...toDelete };
+    try {
+      await deleteConsultation.mutateAsync(consultationId);
+      toast("Consulta excluída.", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await addConsultation.mutateAsync({
+                family_member_id: cached.family_member_id,
+                specialty: cached.specialty,
+                professional_name: cached.professional_name,
+                consultation_date: cached.consultation_date,
+                type: cached.type,
+                symptoms: cached.symptoms,
+                questions: cached.questions,
+              });
+              toast.success("Consulta restaurada.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
+    } catch { /* handled */ }
   };
 
   return (
@@ -120,94 +158,88 @@ const Consultas = () => {
         ) : (
           <div className="flex flex-col space-y-3">
             <AnimatePresence mode="popLayout">
-              {consultasFiltradas.map((c) => (
-                <SwipeableCard key={c.id} onSwipeDelete={() => setDeleteTarget(c.id)}>
-                  <button
-                    onClick={() => handleOpenEdit(c)}
-                    className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+              {consultasFiltradas.map((c) => {
+                const isAgendada = c.status === 'Agendada';
+                return (
+                  <SwipeableActionCard
+                    key={c.id}
+                    onDelete={() => handleInstantDelete(c.id)}
+                    leadingAction={isAgendada ? {
+                      icon: <CheckCircle className="w-6 h-6" />,
+                      label: "Realizada",
+                      bgColor: "#F2A97F",
+                      textColor: "#1a1a1a",
+                      onAction: () => handleQuickStatusUpdate(c.id, 'Realizada'),
+                    } : undefined}
+                    isOpen={openCardId === c.id}
+                    onOpenChange={(isOpen) => setOpenCardId(isOpen ? c.id : null)}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
-                      <Stethoscope className="text-black" size={20} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <p className="text-sm font-bold text-foreground truncate">{c.specialty}</p>
-                        {c.status === "Agendada" && c.consultation_date && isBefore(parseISO(c.consultation_date), new Date()) && (
-                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                            Atrasado
-                          </Badge>
-                        )}
-                        {c.type && (
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] px-1.5 py-0 border-none ${
-                              c.type === "Retorno"
-                                ? "bg-[#A0C4D7] text-slate-800"
-                                : c.type === "Emergência"
-                                ? "bg-[#F87171] text-white"
-                                : "bg-[#DCC5F1] text-black"
-                            }`}
-                          >
-                            {c.type === "Retorno" ? "Retorno" : c.type === "Emergência" ? "Emergência" : "Consulta"}
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusColors[c.status] ?? ""}`}>
-                          {c.status}
-                        </Badge>
+                    <button
+                      onClick={() => handleOpenEdit(c)}
+                      className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
+                        <Stethoscope className="text-black" size={20} />
                       </div>
-                      {c.professional_name && (
-                        <p className="text-xs text-muted-foreground truncate">{c.professional_name}</p>
-                      )}
-                      {c.consultation_date && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                          <Calendar size={12} />
-                          <span>
-                            {(() => {
-                              const hasTime = c.consultation_date!.length > 10;
-                              const parsed = hasTime ? parseISO(c.consultation_date!) : new Date(c.consultation_date + 'T12:00:00');
-                              const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
-                              const dayName = format(parsed, "EEEEEE", { locale: ptBR });
-                              const dayAbbr = dayName.substring(0, 3);
-                              const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
-                              const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
-                              return `${datePart} - ${dayCapitalized}${timePart}`;
-                            })()}
-                          </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="text-sm font-bold text-foreground truncate">{c.specialty}</p>
+                          {c.status === "Agendada" && c.consultation_date && isBefore(parseISO(c.consultation_date), new Date()) && (
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                              Atrasado
+                            </Badge>
+                          )}
+                          {c.type && (
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] px-1.5 py-0 border-none ${
+                                c.type === "Retorno"
+                                  ? "bg-[#A0C4D7] text-slate-800"
+                                  : c.type === "Emergência"
+                                  ? "bg-[#F87171] text-white"
+                                  : "bg-[#DCC5F1] text-black"
+                              }`}
+                            >
+                              {c.type === "Retorno" ? "Retorno" : c.type === "Emergência" ? "Emergência" : "Consulta"}
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusColors[c.status] ?? ""}`}>
+                            {c.status}
+                          </Badge>
                         </div>
-                      )}
-                      {c.symptoms && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-1">Sintomas: {c.symptoms}</p>
-                      )}
-                    </div>
-                    <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
-                  </button>
-                </SwipeableCard>
-              ))}
+                        {c.professional_name && (
+                          <p className="text-xs text-muted-foreground truncate">{c.professional_name}</p>
+                        )}
+                        {c.consultation_date && (
+                          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                            <Calendar size={12} />
+                            <span>
+                              {(() => {
+                                const hasTime = c.consultation_date!.length > 10;
+                                const parsed = hasTime ? parseISO(c.consultation_date!) : new Date(c.consultation_date + 'T12:00:00');
+                                const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
+                                const dayName = format(parsed, "EEEEEE", { locale: ptBR });
+                                const dayAbbr = dayName.substring(0, 3);
+                                const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
+                                const timePart = hasTime ? ` às ${format(parsed, "HH:mm")}` : "";
+                                return `${datePart} - ${dayCapitalized}${timePart}`;
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                        {c.symptoms && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">Sintomas: {c.symptoms}</p>
+                        )}
+                      </div>
+                      <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
+                    </button>
+                  </SwipeableActionCard>
+                );
+              })}
             </AnimatePresence>
           </div>
         )}
       </div>
-
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent className="max-w-[320px] w-[90vw] rounded-[24px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Registro</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir permanentemente este registro? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={deleteConsultation.isPending}
-            >
-              {deleteConsultation.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
