@@ -300,7 +300,7 @@ const GestaoAcessos = () => {
       </div>
 
       {/* FAB */}
-      <FixedFAB onClick={() => { resetForm(); setDrawerOpen(true); }} visible={!drawerOpen} />
+      {!drawerOpen && <FixedFAB onClick={() => { resetForm(); setDrawerOpen(true); }} />}
 
       {/* Invite Drawer */}
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
