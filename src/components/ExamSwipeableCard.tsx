@@ -101,7 +101,7 @@ const ExamSwipeableCard = ({
       {/* Quick actions (left side, revealed on swipe right) */}
       {quickActionMode !== "none" && (
         <motion.div
-          className="absolute inset-0 flex items-center justify-start rounded-xl overflow-hidden"
+          className="absolute inset-0 flex items-center justify-start rounded-xl overflow-hidden z-[15] pointer-events-none"
           style={{ opacity: actionsOpacity }}
         >
           {quickActionMode === "both" && (
@@ -113,7 +113,7 @@ const ExamSwipeableCard = ({
                 resetPosition();
                 onMarkRealizado();
               }}
-              className="flex flex-col items-center justify-center w-[72px] h-full bg-[#F2A97F] text-slate-900 active:opacity-80 relative z-20"
+              className="flex flex-col items-center justify-center w-[72px] h-full bg-[#F2A97F] text-slate-900 active:opacity-80 pointer-events-auto"
             >
               <CheckCircle className="w-6 h-6" />
               <span className="text-[10px] mt-1 font-semibold">Realizado</span>
