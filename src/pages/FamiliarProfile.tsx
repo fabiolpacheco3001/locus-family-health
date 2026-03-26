@@ -131,7 +131,7 @@ const FamiliarProfile = () => {
   const age = member ? calculateAge(member.birth_date) : null;
   const infoParts: string[] = [];
   if (age !== null) infoParts.push(`${age} anos`);
-  if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
+  if (member?.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
   const tracksCycle = !!(member as any).tracks_menstrual_cycle;
