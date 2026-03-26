@@ -131,12 +131,12 @@ const MeusDados = () => {
         {/* Role Badge */}
         <div className="flex justify-center mb-2">
           {role === "admin" ? (
-            <Badge className="bg-[#1C3333] text-white border-none text-xs px-3 py-1 gap-1.5">
-              <Crown size={14} />
+            <Badge className="bg-slate-100/60 text-slate-700 border border-slate-200/80 text-xs px-3 py-1 gap-1.5 backdrop-blur-sm">
+              <Crown size={14} className="text-amber-500" />
               Admin
             </Badge>
           ) : (
-            <Badge className="bg-muted text-muted-foreground border-none text-xs px-3 py-1 gap-1.5">
+            <Badge className="bg-slate-100/60 text-muted-foreground border border-slate-200/80 text-xs px-3 py-1 gap-1.5 backdrop-blur-sm">
               <UserIcon size={14} />
               Usuário Convidado
             </Badge>
