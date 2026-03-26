@@ -134,8 +134,6 @@ const Home = () => {
         if (!a.date) return 1;
         if (!b.date) return -1;
         return new Date(a.date).getTime() - new Date(b.date).getTime();
-        if (!b.date) return -1;
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
 
       return items.slice(0, 5);
