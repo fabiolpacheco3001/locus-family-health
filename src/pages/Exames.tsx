@@ -27,6 +27,7 @@ const statusColors: Record<string, string> = {
 const Exames = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
+  const { isAdmin } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');

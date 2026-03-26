@@ -25,6 +25,7 @@ const statusColors: Record<string, string> = {
 const Consultas = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
+  const { isAdmin } = useFamilyGroup();
   const { members } = useFamilyMembers();
   const currentMember = members.find((m) => m.id === id);
   const [drawerOpen, setDrawerOpen] = useState(false);
