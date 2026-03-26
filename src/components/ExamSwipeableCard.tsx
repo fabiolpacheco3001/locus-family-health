@@ -171,7 +171,7 @@ const ExamSwipeableCard = ({
       <motion.div
         style={{ x, touchAction: "pan-y", willChange: "transform" }}
         drag="x"
-        dragConstraints={{ left: DELETE_SNAP - 10, right: rightSnap + 10 }}
+        dragConstraints={{ left: disableDelete ? 0 : DELETE_SNAP - 10, right: rightSnap + 10 }}
         dragElastic={0.15}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
