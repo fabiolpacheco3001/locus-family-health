@@ -31,6 +31,7 @@ export const useNotifications = () => {
       return data as Notification[];
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   const unreadCount = (query.data ?? []).filter((n) => !n.is_read).length;

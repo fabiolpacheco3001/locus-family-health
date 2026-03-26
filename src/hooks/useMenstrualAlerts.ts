@@ -26,8 +26,10 @@ export function useMenstrualAlerts() {
 
     let cancelled = false;
 
-    const checkAndNotify = async () => {
-      // Fetch all cycles for this user, most recent per familiar
+    // Delay 2s to not block first paint
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+
       const { data: allCycles, error } = await supabase
         .from("menstrual_cycles" as any)
         .select("*")
@@ -38,7 +40,6 @@ export function useMenstrualAlerts() {
 
       const cycles = allCycles as unknown as (CycleRecord & { familiar_id: string; user_id: string })[];
 
-      // Group by familiar_id, take latest per familiar
       const latestByFamiliar = new Map<string, typeof cycles[0]>();
       for (const c of cycles) {
         if (!latestByFamiliar.has(c.familiar_id)) {
@@ -59,12 +60,10 @@ export function useMenstrualAlerts() {
         const alertDate = addDays(nextPeriod, -cycle.alert_advance_days);
         const daysUntilAlert = differenceInDays(alertDate, today);
 
-        // Only fire if today is exactly the alert date
         if (daysUntilAlert !== 0) continue;
 
         const daysLeft = cycle.alert_advance_days;
 
-        // Check if already notified today for this familiar
         const { data: latest } = await supabase
           .from("notifications")
           .select("*")
@@ -99,12 +98,11 @@ export function useMenstrualAlerts() {
         queryClient.invalidateQueries({ queryKey: ["notifications"] });
         queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
       }
-    };
-
-    void checkAndNotify();
+    }, 2000);
 
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [user, queryClient]);
 }

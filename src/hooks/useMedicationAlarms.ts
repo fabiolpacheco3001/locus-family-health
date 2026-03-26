@@ -102,7 +102,7 @@ export function useMedicationAlarms(medications: Medication[]) {
 
     const runCatchUp = async () => {
       const now = new Date();
-      let didDecrement = false;
+      const decrements: { id: string; amount: number }[] = [];
 
       for (const med of medications) {
         if (med.status !== "Ativo") continue;
@@ -134,13 +134,14 @@ export function useMedicationAlarms(medications: Medication[]) {
         if (missedDoses > 0) {
           const safeDoses = Math.min(missedDoses, med.estoque_total);
           if (safeDoses > 0) {
-            await decrementStock(med.id, safeDoses);
-            didDecrement = true;
+            decrements.push({ id: med.id, amount: safeDoses });
           }
         }
       }
 
-      if (didDecrement) {
+      // Batch all decrements in parallel
+      if (decrements.length > 0) {
+        await Promise.all(decrements.map((d) => decrementStock(d.id, d.amount)));
         scheduleRefresh();
       }
     };

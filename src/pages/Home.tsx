@@ -34,39 +34,9 @@ const Home = () => {
   const { unreadCount } = useNotifications();
 
   // Upcoming appointments (2 nearest consultations + exams)
-  // Pending consultations count
-  const { data: pendingConsultations = 0 } = useQuery({
-    queryKey: ["pending-consultations-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("consultations")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id)
-        .eq("status", "Agendada");
-      if (error) throw error;
-      return count ?? 0;
-    },
-    enabled: !!user,
-  });
-
-  // Pending exams count (only truly pending statuses)
-  const { data: pendingExams = 0 } = useQuery({
-    queryKey: ["pending-exams-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("exams")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id)
-        .eq("status", "Agendado");
-      if (error) throw error;
-      return count ?? 0;
-    },
-    enabled: !!user,
-  });
-
-  // Total open appointments count (for carousel card — no limit)
-  const { data: totalOpenAppointments = 0 } = useQuery({
-    queryKey: ["total-open-appointments", user?.id],
+  // Pending counts (consolidated single query)
+  const { data: pendingCounts } = useQuery({
+    queryKey: ["pending-counts", user?.id],
     queryFn: async () => {
       const [consultRes, examRes] = await Promise.all([
         supabase
@@ -82,10 +52,16 @@ const Home = () => {
       ]);
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
-      return (consultRes.count ?? 0) + (examRes.count ?? 0);
+      return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0 };
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
+  const pendingConsultations = pendingCounts?.consultations ?? 0;
+  const pendingExams = pendingCounts?.exams ?? 0;
+
+  // Derived: total open appointments
+  const totalOpenAppointments = pendingConsultations + pendingExams;
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ["upcoming-appointments", user?.id],
@@ -158,13 +134,12 @@ const Home = () => {
         if (!a.date) return 1;
         if (!b.date) return -1;
         return new Date(a.date).getTime() - new Date(b.date).getTime();
-        if (!b.date) return -1;
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
       });
 
       return items.slice(0, 5);
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Build list of active meds with their next dose
