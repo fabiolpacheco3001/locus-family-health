@@ -91,6 +91,7 @@ export function useMenstrualAlerts() {
           message: `Faltam ${daysLeft} dia${daysLeft > 1 ? "s" : ""} para o seu próximo ciclo menstrual. Prepare-se e cuide-se!`,
           type: "menstrual",
           scheduled_for: new Date().toISOString(),
+          ...(groupId ? { group_id: groupId } : {}),
         } as never);
 
         if (!insertError) {

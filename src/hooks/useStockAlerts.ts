@@ -73,6 +73,7 @@ export function useStockAlerts(medications: Medication[]) {
           message: `Restam apenas ${med.estoque_total} comprimidos para ${memberName}. Lembre-se de comprar uma nova caixa.`,
           type: "stock",
           scheduled_for: new Date().toISOString(),
+          ...(groupId ? { group_id: groupId } : {}),
         };
 
         const { error } = await supabase.from("notifications").insert(notificationInsert as never);
