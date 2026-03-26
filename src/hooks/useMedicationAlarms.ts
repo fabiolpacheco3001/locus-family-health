@@ -197,7 +197,8 @@ export function useMedicationAlarms(medications: Medication[]) {
       if (decrementedRef.current.size > 500) decrementedRef.current.clear();
     };
 
-    checkAlarms();
+    // Defer first check to unblock main thread for First Paint
+    const initialTimeout = setTimeout(checkAlarms, 150);
     const interval = setInterval(checkAlarms, 60_000);
 
     const onVisibility = () => {
