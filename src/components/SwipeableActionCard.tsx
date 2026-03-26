@@ -29,6 +29,7 @@ const SwipeableActionCard = ({
   leadingAction,
   isOpen,
   onOpenChange,
+  disableDelete = false,
 }: SwipeableActionCardProps) => {
   const x = useMotionValue(0);
   const sideRef = useRef<"left" | "right" | "center">("center");
