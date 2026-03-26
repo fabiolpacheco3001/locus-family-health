@@ -19,6 +19,7 @@ const MeusDados = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { members, updateMember } = useFamilyMembers();
+  const { role } = useFamilyGroup();
 
   const titular = members?.find((m) => m.relationship === "Titular");
 
