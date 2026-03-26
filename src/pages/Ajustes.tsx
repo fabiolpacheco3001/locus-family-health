@@ -24,6 +24,7 @@ const menuItems = [
 
 const Ajustes = () => {
   const { signOut, user } = useAuth();
+  const { isAdmin } = useFamilyGroup();
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
