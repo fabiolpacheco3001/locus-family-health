@@ -49,7 +49,8 @@ export const useConsultations = (familyMemberId: string) => {
         .from("consultations")
         .select("*")
         .eq("family_member_id", familyMemberId)
-        .order("consultation_date", { ascending: false });
+        .order("consultation_date", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data as Consultation[];
     },
