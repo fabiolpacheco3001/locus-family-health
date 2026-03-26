@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, Loader2 } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,10 +13,6 @@ import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import {
-  AlertDialog, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const statusColors: Record<string, string> = {
   Agendado: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -33,8 +29,7 @@ const Exames = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const { exams, isLoading, deleteExam, updateExam } = useExams(id!);
+  const { exams, isLoading, addExam, deleteExam, updateExam } = useExams(id!);
 
   const handleQuickStatusUpdate = async (examId: string, newStatus: string) => {
     const exam = exams.find(e => e.id === examId);
@@ -76,12 +71,34 @@ const Exames = () => {
     setDrawerOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
+  const handleInstantDelete = async (examId: string) => {
+    const examToDelete = exams.find(e => e.id === examId);
+    if (!examToDelete) return;
+    const cached = { ...examToDelete };
+    delete (cached as any).consultations;
     try {
-      await deleteExam.mutateAsync(deleteTarget);
+      await deleteExam.mutateAsync(examId);
+      toast("Exame excluído.", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await addExam.mutateAsync({
+                family_member_id: cached.family_member_id,
+                name: cached.name,
+                exam_date: cached.exam_date,
+                location: cached.location,
+                status: cached.status,
+                file_url: cached.file_url,
+                consultation_id: cached.consultation_id,
+              });
+              toast.success("Exame restaurado.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
     } catch { /* handled */ }
-    setDeleteTarget(null);
   };
 
   const handleBack = goBack;
@@ -159,7 +176,7 @@ const Exames = () => {
                 return (
                   <ExamSwipeableCard
                     key={e.id}
-                    onDelete={() => setDeleteTarget(e.id)}
+                    onDelete={() => handleInstantDelete(e.id)}
                     onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
                     onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
                     quickActionMode={quickActionMode}
@@ -223,26 +240,6 @@ const Exames = () => {
         )}
       </div>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent className="max-w-[320px] w-[90vw] rounded-[24px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Registro</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir permanentemente este registro? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={deleteExam.isPending}
-            >
-              {deleteExam.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
