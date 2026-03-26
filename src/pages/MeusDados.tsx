@@ -127,6 +127,22 @@ const MeusDados = () => {
             )}
           </div>
         </button>
+
+        {/* Role Badge */}
+        <div className="flex justify-center mb-2">
+          {role === "admin" ? (
+            <Badge className="bg-[#1C3333] text-white border-none text-xs px-3 py-1 gap-1.5">
+              <Crown size={14} />
+              Admin
+            </Badge>
+          ) : (
+            <Badge className="bg-muted text-muted-foreground border-none text-xs px-3 py-1 gap-1.5">
+              <UserIcon size={14} />
+              Usuário Convidado
+            </Badge>
+          )}
+        </div>
+
         <div className="space-y-1">
           <Label>Nome Completo *</Label>
           <Input
