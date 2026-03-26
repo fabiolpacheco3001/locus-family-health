@@ -162,8 +162,10 @@ const GestaoAcessos = () => {
     setCopied(false);
   };
 
-  const getShareMessage = (email: string) =>
-    `Olá! Liberei o seu acesso ao Locus Vita. 💚\n\n1 - Baixe o aplicativo na sua loja de aplicativos.\n\n2 - Vá em Criar nova conta familiar.\n\n3 - Digite seus dados para criar a conta.\n\nIMPORTANTE: Utilize exatamente este e-mail: ${email} para fazer parte da sua família.\n\n4 - Aproveite seu aplicativo de saúde familiar mais apaixonante.`;
+  const getShareMessage = (email: string) => {
+    const safeEmail = email.replace('@', '@\u200B');
+    return `Olá! Seu acesso ao Locus Vita, foi liberado.💚\n\n1 - Baixe o aplicativo na sua loja de aplicativos, disponível para Android e Ios.\n2 - Clique no botão Criar nova conta familiar.\n3 - Digite este e-mail ${safeEmail} e defina uma senha para criar a conta.\n4 - Aproveite seu aplicativo de saúde familiar mais completo e apaixonante.\n\nIMPORTANTE: Utilize exatamente o e-mail constante no item 3 ${safeEmail}, um e-mail diferente deste inviabilizará o acesso ao plano para o qual você foi convidado.`;
+  };
 
   const handleCopyMessage = async () => {
     if (!successEmail) return;
