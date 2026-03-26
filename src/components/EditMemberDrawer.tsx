@@ -31,7 +31,7 @@ const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const genders = ["Masculino", "Feminino", "Outro", "Prefiro não informar"];
 const speciesOptions = ["Cachorro", "Gato", "Pássaro", "Outro"];
 
-const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
+const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => {
   const { updateMember, deleteMember } = useFamilyMembers();
   const navigate = useNavigate();
   const [name, setName] = useState("");
