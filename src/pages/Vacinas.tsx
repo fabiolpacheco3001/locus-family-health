@@ -29,7 +29,7 @@ type Vaccine = {
   created_at: string;
 };
 
-const VACCINE_OPTIONS = [
+const HUMAN_VACCINE_OPTIONS = [
   "BCG",
   "Covid-19",
   "Dengue",
@@ -44,6 +44,18 @@ const VACCINE_OPTIONS = [
   "Poliomielite (VIP/VOP)",
   "Rotavírus",
   "Tríplice Viral (SCR)",
+  "Outra (especificar)",
+];
+
+const PET_VACCINE_OPTIONS = [
+  "V8 / V10 (Polivalente)",
+  "Antirrábica",
+  "Gripe Canina (Tosse dos Canis)",
+  "Giardíase",
+  "Leishmaniose",
+  "Tríplice Felina (V3)",
+  "Quádrupla Felina (V4)",
+  "FeLV (Leucemia Felina)",
   "Outra (especificar)",
 ];
 
