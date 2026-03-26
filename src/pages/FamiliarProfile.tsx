@@ -280,6 +280,7 @@ const FamiliarProfile = () => {
             open={medidasOpen}
             onOpenChange={setMedidasOpen}
             memberId={member.id}
+            memberType={member.member_type}
             currentData={{
               blood_type: member.blood_type,
               weight: memberWeight,
