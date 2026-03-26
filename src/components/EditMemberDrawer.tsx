@@ -23,6 +23,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   member: FamilyMember;
+  memberRole?: string;
 }
 
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
