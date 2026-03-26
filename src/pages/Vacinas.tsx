@@ -74,6 +74,10 @@ const Vacinas = () => {
   const { user } = useAuth();
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
+  const { members } = useFamilyMembers();
+  const currentMember = members.find((m) => m.id === id);
+  const isPet = (currentMember?.member_type || "human") === "pet";
+  const VACCINE_OPTIONS = isPet ? PET_VACCINE_OPTIONS : HUMAN_VACCINE_OPTIONS;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingVaccine, setEditingVaccine] = useState<Vaccine | null>(null);
