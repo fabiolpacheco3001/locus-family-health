@@ -68,7 +68,7 @@ const SwipeableActionCard = ({
     if (startedFrom === "left" && offset > 0) { resetPosition(); return; }
     if (startedFrom === "right" && offset < 0) { resetPosition(); return; }
 
-    if (offset < -SNAP_THRESHOLD || velocity < -500) {
+    if (!disableDelete && (offset < -SNAP_THRESHOLD || velocity < -500)) {
       animate(x, DELETE_SNAP, { type: "spring", stiffness: 400, damping: 30 });
       sideRef.current = "left";
     } else if ((offset > SNAP_THRESHOLD || velocity > 500) && rightSnap > 0) {
