@@ -1,4 +1,4 @@
-import { ReactNode, useCallback } from "react";
+import { ReactNode, useCallback, useEffect, useRef } from "react";
 import { Trash2, CheckCircle, FileCheck } from "lucide-react";
 import { motion, PanInfo, useMotionValue, useTransform, animate } from "framer-motion";
 
@@ -16,6 +16,8 @@ interface ExamSwipeableCardProps {
   onMarkPronto: () => void;
   onCardTap?: () => void;
   quickActionMode?: QuickActionMode;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 const ExamSwipeableCard = ({
@@ -25,8 +27,11 @@ const ExamSwipeableCard = ({
   onMarkPronto,
   onCardTap,
   quickActionMode = "both",
+  isOpen,
+  onOpenChange,
 }: ExamSwipeableCardProps) => {
   const x = useMotionValue(0);
+  const sideRef = useRef<"left" | "right" | "center">("center");
 
   const deleteOpacity = useTransform(x, [-100, -30, 0], [1, 0.6, 0]);
   const actionsOpacity = useTransform(x, [0, 30, 80], [0, 0.6, 1]);
@@ -35,28 +40,53 @@ const ExamSwipeableCard = ({
 
   const resetPosition = useCallback(() => {
     animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
-  }, [x]);
+    sideRef.current = "center";
+    onOpenChange?.(false);
+  }, [x, onOpenChange]);
+
+  // Close when another card opens
+  useEffect(() => {
+    if (isOpen === false && Math.abs(x.get()) > 5) {
+      animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
+      sideRef.current = "center";
+    }
+  }, [isOpen, x]);
+
+  const handleDragStart = () => {
+    // Track which side we're starting from
+    const currentX = x.get();
+    if (currentX < -10) sideRef.current = "left";
+    else if (currentX > 10) sideRef.current = "right";
+    else sideRef.current = "center";
+
+    // Signal this card is opening
+    onOpenChange?.(true);
+  };
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const currentX = x.get();
     const velocity = info.velocity.x;
     const offset = info.offset.x;
+    const startedFrom = sideRef.current;
 
-    // If card is open and user drags toward center, close it
-    if (currentX < -20 && offset > 0) {
+    // Context-aware: if card was open on a side and user drags toward center,
+    // ALWAYS snap to center — never overshoot to opposite side
+    if (startedFrom === "left" && offset > 0) {
       resetPosition();
       return;
     }
-    if (currentX > 20 && offset < 0) {
+    if (startedFrom === "right" && offset < 0) {
       resetPosition();
       return;
     }
 
-    // Snap open or close based on threshold
+    // From center: snap open or close based on threshold
     if (offset < -SNAP_THRESHOLD || velocity < -500) {
       animate(x, DELETE_SNAP, { type: "spring", stiffness: 400, damping: 30 });
+      sideRef.current = "left";
     } else if ((offset > SNAP_THRESHOLD || velocity > 500) && rightSnap > 0) {
       animate(x, rightSnap, { type: "spring", stiffness: 400, damping: 30 });
+      sideRef.current = "right";
     } else {
       resetPosition();
     }
@@ -65,7 +95,6 @@ const ExamSwipeableCard = ({
   const handleCardClick = () => {
     const currentX = x.get();
     if (Math.abs(currentX) > 5) {
-      // Card is open, close it instead of opening edit
       resetPosition();
     }
   };
@@ -141,6 +170,7 @@ const ExamSwipeableCard = ({
         drag="x"
         dragConstraints={{ left: DELETE_SNAP - 10, right: rightSnap + 10 }}
         dragElastic={0.15}
+        onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onClick={handleCardClick}
         className="relative z-10 cursor-grab active:cursor-grabbing"
