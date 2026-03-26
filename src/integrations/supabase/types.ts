@@ -250,16 +250,19 @@ export type Database = {
           avatar_url: string | null
           birth_date: string | null
           blood_type: string | null
+          breed: string | null
           cpf: string | null
           created_at: string
           deleted_at: string | null
           gender: string | null
           height: number | null
           id: string
+          member_type: string | null
           name: string
           phone: string | null
           physical_activity: string | null
           relationship: string
+          species: string | null
           tracks_menstrual_cycle: boolean
           user_id: string
           weight: number | null
@@ -268,16 +271,19 @@ export type Database = {
           avatar_url?: string | null
           birth_date?: string | null
           blood_type?: string | null
+          breed?: string | null
           cpf?: string | null
           created_at?: string
           deleted_at?: string | null
           gender?: string | null
           height?: number | null
           id?: string
+          member_type?: string | null
           name: string
           phone?: string | null
           physical_activity?: string | null
           relationship: string
+          species?: string | null
           tracks_menstrual_cycle?: boolean
           user_id: string
           weight?: number | null
@@ -286,16 +292,19 @@ export type Database = {
           avatar_url?: string | null
           birth_date?: string | null
           blood_type?: string | null
+          breed?: string | null
           cpf?: string | null
           created_at?: string
           deleted_at?: string | null
           gender?: string | null
           height?: number | null
           id?: string
+          member_type?: string | null
           name?: string
           phone?: string | null
           physical_activity?: string | null
           relationship?: string
+          species?: string | null
           tracks_menstrual_cycle?: boolean
           user_id?: string
           weight?: number | null

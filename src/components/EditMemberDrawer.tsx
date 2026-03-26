@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Trash2, Camera, X } from "lucide-react";
+import { Loader2, Trash2, Camera, X, PawPrint } from "lucide-react";
 import AvatarSelector from "@/components/AvatarSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,12 +22,13 @@ import { useNavigate } from "react-router-dom";
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  member: FamilyMember & { tracks_menstrual_cycle?: boolean };
+  member: FamilyMember;
 }
 
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const genders = ["Masculino", "Feminino", "Outro", "Prefiro não informar"];
+const speciesOptions = ["Cachorro", "Gato", "Pássaro", "Outro"];
 
 const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const { updateMember, deleteMember } = useFamilyMembers();
@@ -41,6 +42,10 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [tracksCycle, setTracksCycle] = useState(false);
+  const [species, setSpecies] = useState("");
+  const [breed, setBreed] = useState("");
+
+  const isPet = (member?.member_type || "human") === "pet";
 
   useEffect(() => {
     if (open && member) {
@@ -50,31 +55,43 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
       setBloodType(member.blood_type || "");
       setGender(member.gender || "");
       setAvatarUrl(member.avatar_url || "");
-      setTracksCycle(!!(member as any).tracks_menstrual_cycle);
+      setTracksCycle(!!member.tracks_menstrual_cycle);
+      setSpecies(member.species || "");
+      setBreed(member.breed || "");
     }
   }, [open, member]);
 
   const handleSave = async () => {
-    if (!name.trim() || !relationship) {
-      toast.error("Preencha o nome e o parentesco.");
+    if (!name.trim()) {
+      toast.error("Preencha o nome.");
+      return;
+    }
+    if (!isPet && !relationship) {
+      toast.error("Preencha o parentesco.");
       return;
     }
     try {
-      await updateMember.mutateAsync({
+      const payload: any = {
         id: member.id,
         name: name.trim(),
-        relationship,
+        relationship: isPet ? "Pet" : relationship,
         birth_date: birthDate || null,
-        blood_type: bloodType || null,
-        gender: gender || null,
+        blood_type: isPet ? null : (bloodType || null),
+        gender: isPet ? null : (gender || null),
         avatar_url: avatarUrl || null,
-      } as any);
-      // Update tracks_menstrual_cycle separately since it's not in the typed interface
-      const { supabase } = await import("@/integrations/supabase/client");
-      await supabase
-        .from("family_members")
-        .update({ tracks_menstrual_cycle: tracksCycle } as any)
-        .eq("id", member.id);
+        species: isPet ? species : null,
+        breed: isPet ? (breed.trim() || null) : null,
+      };
+      await updateMember.mutateAsync(payload);
+
+      // Update tracks_menstrual_cycle separately
+      if (!isPet) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        await supabase
+          .from("family_members")
+          .update({ tracks_menstrual_cycle: tracksCycle } as any)
+          .eq("id", member.id);
+      }
       toast.success("Dados atualizados!");
       onOpenChange(false);
     } catch {
@@ -93,122 +110,174 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
     }
   };
 
+  const renderAvatar = () => {
+    const isImage = avatarUrl?.startsWith("data:image") || avatarUrl?.startsWith("http");
+    const isEmoji = avatarUrl && !isImage && avatarUrl.length > 0 && avatarUrl.length <= 2;
+
+    return (
+      <div className="flex justify-center mb-2 w-full">
+        <div className="relative">
+          <button onClick={() => setAvatarOpen(true)}>
+            <div className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
+              {isImage ? (
+                <img src={avatarUrl!} className="w-full h-full object-cover rounded-full" alt="Avatar" />
+              ) : isEmoji ? (
+                <span className="text-4xl flex items-center justify-center w-full h-full">{avatarUrl}</span>
+              ) : isPet ? (
+                <PawPrint className="w-7 h-7 text-secondary" />
+              ) : (
+                <span className="text-xl font-bold text-secondary">
+                  {(() => {
+                    const parts = (member?.name ?? "").trim().split(" ").filter(Boolean);
+                    if (parts.length <= 1) return (parts[0]?.[0] ?? "?").toUpperCase();
+                    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+                  })()}
+                </span>
+              )}
+            </div>
+          </button>
+          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+            <Camera className="w-3 h-3 text-muted-foreground" />
+          </div>
+          {avatarUrl && (
+            <button
+              onClick={() => setAvatarUrl("")}
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-slate-800/60 backdrop-blur-sm hover:bg-slate-800/80 border border-white/20 flex items-center justify-center transition-colors"
+            >
+              <X className="w-3 h-3 text-white" />
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
         <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
           <DrawerHeader>
-            <DrawerTitle className="text-primary">Editar Familiar</DrawerTitle>
+            <DrawerTitle className="text-primary">{isPet ? "Editar Pet 🐾" : "Editar Familiar"}</DrawerTitle>
             <DrawerDescription>Atualize os dados abaixo.</DrawerDescription>
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
-            {/* Avatar */}
-            <div className="flex justify-center mb-2 w-full">
-              <div className="relative">
-                <button onClick={() => setAvatarOpen(true)}>
-                  <div className="w-16 h-16 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
-                    {avatarUrl && (avatarUrl.startsWith("data:image") || avatarUrl.startsWith("http")) ? (
-                      <img src={avatarUrl} className="w-full h-full object-cover rounded-full" alt="Avatar" />
-                    ) : avatarUrl && avatarUrl.length <= 2 ? (
-                      <span className="text-4xl flex items-center justify-center w-full h-full">{avatarUrl}</span>
-                    ) : (
-                      <span className="text-xl font-bold text-secondary">
-                        {(() => {
-                          const parts = (member?.name ?? "").trim().split(" ").filter(Boolean);
-                          if (parts.length <= 1) return (parts[0]?.[0] ?? "?").toUpperCase();
-                          return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-                        })()}
-                      </span>
-                    )}
-                  </div>
-                </button>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-muted border-2 border-background flex items-center justify-center">
-                  <Camera className="w-3 h-3 text-muted-foreground" />
-                </div>
-                {avatarUrl && (
-                  <button
-                    onClick={() => setAvatarUrl("")}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-slate-800/60 backdrop-blur-sm hover:bg-slate-800/80 border border-white/20 flex items-center justify-center transition-colors"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                )}
+            {/* Type indicator (read-only) */}
+            <div className="flex rounded-lg border border-border overflow-hidden pointer-events-none opacity-70">
+              <div className={`flex-1 py-2 text-sm font-semibold text-center ${!isPet ? "bg-foreground text-background" : "bg-card text-muted-foreground"}`}>
+                👤 Pessoa
+              </div>
+              <div className={`flex-1 py-2 text-sm font-semibold text-center ${isPet ? "bg-[#F2A97F] text-slate-900" : "bg-card text-muted-foreground"}`}>
+                🐾 Pet
               </div>
             </div>
+
+            {renderAvatar()}
 
             <div className="space-y-1.5">
-              <Label>Nome Completo *</Label>
-              <Input placeholder="Ex: Maria da Silva" value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
+              <Label>{isPet ? "Nome do Pet *" : "Nome Completo *"}</Label>
+              <Input placeholder={isPet ? "Ex: Rex, Luna..." : "Ex: Maria da Silva"} value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
             </div>
 
-            {/* Grid: Parentesco + Nascimento */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Parentesco *</Label>
-                <Select value={relationship} onValueChange={setRelationship}>
-                  <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {relationships.map((r) => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {isPet ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Espécie</Label>
+                    <Select value={species} onValueChange={setSpecies}>
+                      <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {speciesOptions.map((s) => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Raça</Label>
+                    <Input placeholder="Ex: Labrador" value={breed} onChange={(e) => setBreed(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
+                  </div>
+                </div>
 
-              <div className="space-y-1.5">
-                <Label>Nascimento</Label>
-                <input
-                  type="date"
-                  lang="pt-BR"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  min="1900-01-01"
-                  max={new Date().toISOString().split('T')[0]}
-                  className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
-                />
-              </div>
-            </div>
+                <div className="space-y-1.5">
+                  <Label>Nascimento</Label>
+                  <input
+                    type="date"
+                    lang="pt-BR"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    min="1900-01-01"
+                    max={new Date().toISOString().split('T')[0]}
+                    className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Parentesco *</Label>
+                    <Select value={relationship} onValueChange={setRelationship}>
+                      <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {relationships.map((r) => (
+                          <SelectItem key={r} value={r}>{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Nascimento</Label>
+                    <input
+                      type="date"
+                      lang="pt-BR"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      min="1900-01-01"
+                      max={new Date().toISOString().split('T')[0]}
+                      className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                    />
+                  </div>
+                </div>
 
-            {/* Grid: Gênero + Tipo Sanguíneo */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>Gênero</Label>
-                <Select value={gender} onValueChange={setGender}>
-                  <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>
-                    {genders.map((g) => (
-                      <SelectItem key={g} value={g}>{g}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>Gênero</Label>
+                    <Select value={gender} onValueChange={setGender}>
+                      <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                      <SelectContent>
+                        {genders.map((g) => (
+                          <SelectItem key={g} value={g}>{g}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Tipo Sanguíneo</Label>
+                    <Select value={bloodType} onValueChange={setBloodType}>
+                      <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                      <SelectContent>
+                        {bloodTypes.map((bt) => (
+                          <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-              <div className="space-y-1.5">
-                <Label>Tipo Sanguíneo</Label>
-                <Select value={bloodType} onValueChange={setBloodType}>
-                  <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
-                  <SelectContent>
-                    {bloodTypes.map((bt) => (
-                      <SelectItem key={bt} value={bt}>{bt}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Toggle: Ciclo Menstrual */}
-            <div className="flex items-center justify-between rounded-xl bg-card border border-border/50 p-4">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Controle de Ciclo Menstrual</Label>
-                <p className="text-[11px] text-muted-foreground">Habilita o módulo de ciclo menstrual</p>
-              </div>
-              <Switch checked={tracksCycle} onCheckedChange={setTracksCycle} />
-            </div>
-
+                {/* Toggle: Ciclo Menstrual */}
+                <div className="flex items-center justify-between rounded-xl bg-card border border-border/50 p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">Controle de Ciclo Menstrual</Label>
+                    <p className="text-[11px] text-muted-foreground">Habilita o módulo de ciclo menstrual</p>
+                  </div>
+                  <Switch checked={tracksCycle} onCheckedChange={setTracksCycle} />
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Delete button above footer */}
+          {/* Delete button */}
           <div className="px-4 pb-2">
             <Button
               variant="outline"
@@ -216,7 +285,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
               onClick={() => setShowDeleteAlert(true)}
             >
               <Trash2 className="w-4 h-4" />
-              Excluir Familiar
+              {isPet ? "Excluir Pet" : "Excluir Familiar"}
             </Button>
           </div>
 

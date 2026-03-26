@@ -58,13 +58,6 @@ const gestaoItems: CardItem[] = [
   { icon: FileText, label: "Exames", subtitle: "Resultados e pedidos", route: "exames" },
 ];
 
-const baseInfoItems: CardItem[] = [
-  { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
-  { icon: HeartPulse, label: "Pressão Arterial", subtitle: "Histórico de PA", route: "__bp__" },
-  { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
-  { icon: Activity, label: "Doenças", subtitle: "Histórico clínico", route: "doencas" },
-];
-
 type ProfileCard = {
   icon: React.ElementType;
   label: string;
@@ -128,18 +121,24 @@ const FamiliarProfile = () => {
     );
   }
 
+  const isPet = (member?.member_type || "human") === "pet";
   const age = member ? calculateAge(member.birth_date) : null;
   const infoParts: string[] = [];
-  if (age !== null) infoParts.push(`${age} anos`);
-  if (member?.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
+  if (age !== null) infoParts.push(isPet ? `${age} anos` : `${age} anos`);
+  if (!isPet && member?.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
+  if (isPet && member?.species) infoParts.push(member.species);
+  if (isPet && member?.breed) infoParts.push(member.breed);
   const infoLine = infoParts.join(" • ");
 
-  const tracksCycle = !!(member as any)?.tracks_menstrual_cycle;
+  const tracksCycle = !isPet && !!member?.tracks_menstrual_cycle;
+
+  // Build info items conditionally
   const infoItems: CardItem[] = [
-    ...baseInfoItems,
-    ...(tracksCycle
-      ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }]
-      : []),
+    { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
+    ...(!isPet ? [{ icon: HeartPulse, label: "Pressão Arterial", subtitle: "Histórico de PA", route: "__bp__" }] : []),
+    { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
+    { icon: Activity, label: "Doenças", subtitle: "Histórico clínico", route: "doencas" },
+    ...(tracksCycle ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }] : []),
   ];
 
   const memberWeight = (member as any)?.weight as number | null ?? null;
@@ -150,11 +149,11 @@ const FamiliarProfile = () => {
     : null;
 
   const profileCards: ProfileCard[] = [
-    { icon: Droplet, label: "Tipo Sanguíneo", value: member?.blood_type || "—", action: "medidas" },
+    ...(!isPet ? [{ icon: Droplet, label: "Tipo Sanguíneo", value: member?.blood_type || "—", action: "medidas" }] : []),
     { icon: Weight, label: "Peso", value: memberWeight ? `${memberWeight} kg` : "— kg", action: "medidas" },
     { icon: Ruler, label: "Altura", value: memberHeight ? `${memberHeight} m` : "— m", action: "medidas" },
-    { icon: Calculator, label: "IMC", value: calculatedBMI || "—", action: "medidas" },
-    { icon: Dumbbell, label: "Atividade Física", value: memberActivity || "—", action: "medidas" },
+    ...(!isPet ? [{ icon: Calculator, label: "IMC", value: calculatedBMI || "—", action: "medidas" }] : []),
+    ...(!isPet ? [{ icon: Dumbbell, label: "Atividade Física", value: memberActivity || "—", action: "medidas" }] : []),
     { icon: LineChart, label: "Evolução Corporal", value: "Histórico", route: "saude" },
   ];
 
@@ -217,7 +216,7 @@ const FamiliarProfile = () => {
           onClick={() => setEditOpen(true)}
           className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
         >
-          <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
+          <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" memberType={member.member_type} />
           <div className="min-w-0 flex-1">
             <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
             <p className="text-sm text-muted-foreground">{member.relationship}</p>
@@ -281,6 +280,7 @@ const FamiliarProfile = () => {
             open={medidasOpen}
             onOpenChange={setMedidasOpen}
             memberId={member.id}
+            memberType={member.member_type}
             currentData={{
               blood_type: member.blood_type,
               weight: memberWeight,

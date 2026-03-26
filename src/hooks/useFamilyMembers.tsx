@@ -13,6 +13,10 @@ export type FamilyMember = {
   cpf: string | null;
   avatar_url: string | null;
   created_at: string;
+  member_type: string | null;
+  species: string | null;
+  breed: string | null;
+  tracks_menstrual_cycle?: boolean;
 };
 
 export type NewFamilyMember = {
@@ -24,6 +28,9 @@ export type NewFamilyMember = {
   phone?: string | null;
   cpf?: string | null;
   avatar_url?: string | null;
+  member_type?: string | null;
+  species?: string | null;
+  breed?: string | null;
 };
 
 export const useFamilyMembers = () => {

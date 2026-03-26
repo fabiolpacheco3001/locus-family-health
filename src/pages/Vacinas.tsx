@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 
 type Vaccine = {
   id: string;
@@ -28,7 +29,7 @@ type Vaccine = {
   created_at: string;
 };
 
-const VACCINE_OPTIONS = [
+const HUMAN_VACCINE_OPTIONS = [
   "BCG",
   "Covid-19",
   "Dengue",
@@ -43,6 +44,18 @@ const VACCINE_OPTIONS = [
   "Poliomielite (VIP/VOP)",
   "Rotavírus",
   "Tríplice Viral (SCR)",
+  "Outra (especificar)",
+];
+
+const PET_VACCINE_OPTIONS = [
+  "V8 / V10 (Polivalente)",
+  "Antirrábica",
+  "Gripe Canina (Tosse dos Canis)",
+  "Giardíase",
+  "Leishmaniose",
+  "Tríplice Felina (V3)",
+  "Quádrupla Felina (V4)",
+  "FeLV (Leucemia Felina)",
   "Outra (especificar)",
 ];
 
@@ -61,6 +74,10 @@ const Vacinas = () => {
   const { user } = useAuth();
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
+  const { members } = useFamilyMembers();
+  const currentMember = members.find((m) => m.id === id);
+  const isPet = (currentMember?.member_type || "human") === "pet";
+  const VACCINE_OPTIONS = isPet ? PET_VACCINE_OPTIONS : HUMAN_VACCINE_OPTIONS;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingVaccine, setEditingVaccine] = useState<Vaccine | null>(null);

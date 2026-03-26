@@ -1,3 +1,4 @@
+import { PawPrint } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface MemberAvatarProps {
@@ -5,16 +6,18 @@ interface MemberAvatarProps {
   name: string;
   size?: "sm" | "md" | "lg";
   className?: string;
+  memberType?: string | null;
 }
 
 const sizeClasses = {
-  sm: { container: "h-10 w-10", text: "text-sm", emoji: "text-xl" },
-  md: { container: "h-12 w-12", text: "text-lg", emoji: "text-2xl" },
-  lg: { container: "h-14 w-14", text: "text-xl", emoji: "text-3xl" },
+  sm: { container: "h-10 w-10", text: "text-sm", emoji: "text-xl", icon: 18 },
+  md: { container: "h-12 w-12", text: "text-lg", emoji: "text-2xl", icon: 22 },
+  lg: { container: "h-14 w-14", text: "text-xl", emoji: "text-3xl", icon: 26 },
 };
 
-const MemberAvatar = ({ avatarUrl, name, size = "md", className = "" }: MemberAvatarProps) => {
+const MemberAvatar = ({ avatarUrl, name, size = "md", className = "", memberType }: MemberAvatarProps) => {
   const s = sizeClasses[size];
+  const isPet = memberType === "pet";
   const initials = (() => {
     const parts = (name ?? "").trim().split(" ").filter(Boolean);
     if (parts.length === 0) return "—";
@@ -33,6 +36,8 @@ const MemberAvatar = ({ avatarUrl, name, size = "md", className = "" }: MemberAv
       <AvatarFallback className="bg-secondary/20 text-secondary font-bold">
         {isEmoji ? (
           <span className={`${s.emoji} flex items-center justify-center w-full h-full`}>{avatarUrl}</span>
+        ) : isPet ? (
+          <PawPrint size={s.icon} />
         ) : (
           <span className={s.text}>{initials}</span>
         )}

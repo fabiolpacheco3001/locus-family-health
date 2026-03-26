@@ -13,7 +13,8 @@ const ordemParentesco: Record<string, number> = {
   "Filho(a)": 3,
   "Pai/Mãe": 4,
   "Irmão(ã)": 5,
-  "Outro": 6,
+  "Pet": 6,
+  "Outro": 7,
 };
 
 const GerenciarFamilia = () => {
@@ -61,7 +62,7 @@ const GerenciarFamilia = () => {
               onClick={() => setEditMember(m)}
               className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
             >
-              <MemberAvatar avatarUrl={m.avatar_url} name={m.name} />
+              <MemberAvatar avatarUrl={m.avatar_url} name={m.name} memberType={m.member_type} />
               <div className="flex flex-col ml-4 min-w-0 flex-1">
                 <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
