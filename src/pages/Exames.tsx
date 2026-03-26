@@ -136,14 +136,18 @@ const Exames = () => {
                 const isOverdue = e.status === "Agendado" && e.exam_date
                   ? isBefore(new Date(e.exam_date), today)
                   : false;
-                const showQuickActions = abaAtiva === 'pendentes' && e.status !== 'Realizado';
+                const quickActionMode = abaAtiva !== 'pendentes' || e.status === 'Pronto'
+                  ? 'none' as const
+                  : e.status === 'Realizado'
+                    ? 'pronto-only' as const
+                    : 'both' as const;
                 return (
                   <ExamSwipeableCard
                     key={e.id}
                     onDelete={() => setDeleteTarget(e.id)}
                     onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
                     onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
-                    showQuickActions={showQuickActions}
+                    quickActionMode={quickActionMode}
                   >
                     <button
                       onClick={() => handleOpenEdit(e)}

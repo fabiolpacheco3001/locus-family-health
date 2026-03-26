@@ -1,17 +1,20 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import { Trash2, CheckCircle, FileCheck } from "lucide-react";
-import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion";
+import { motion, PanInfo, useMotionValue, useTransform, animate } from "framer-motion";
 
-const DELETE_THRESHOLD = -60;
-const ACTION_THRESHOLD = 60;
-const BUTTON_WIDTH = 72;
+const SNAP_THRESHOLD = 50;
+const DELETE_SNAP = -72;
+const SINGLE_ACTION_SNAP = 72;
+const DOUBLE_ACTION_SNAP = 144;
+
+type QuickActionMode = "both" | "pronto-only" | "none";
 
 interface ExamSwipeableCardProps {
   children: ReactNode;
   onDelete: () => void;
   onMarkRealizado: () => void;
   onMarkPronto: () => void;
-  showQuickActions?: boolean;
+  quickActionMode?: QuickActionMode;
 }
 
 const ExamSwipeableCard = ({
@@ -19,24 +22,29 @@ const ExamSwipeableCard = ({
   onDelete,
   onMarkRealizado,
   onMarkPronto,
-  showQuickActions = true,
+  quickActionMode = "both",
 }: ExamSwipeableCardProps) => {
   const x = useMotionValue(0);
-  const [dragging, setDragging] = useState(false);
 
-  // Right side (delete) - opacity when swiping left
   const deleteOpacity = useTransform(x, [-100, -30, 0], [1, 0.6, 0]);
+  const actionsOpacity = useTransform(x, [0, 30, 80], [0, 0.6, 1]);
 
-  // Left side (quick actions) - opacity when swiping right
-  const actionsOpacity = useTransform(x, [0, 30, 140], [0, 0.6, 1]);
+  const rightSnap = quickActionMode === "both" ? DOUBLE_ACTION_SNAP : quickActionMode === "pronto-only" ? SINGLE_ACTION_SNAP : 0;
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    setDragging(false);
-    // We don't auto-trigger anything on drag end - user must click the revealed buttons
+    const offset = info.offset.x;
+
+    if (offset < -SNAP_THRESHOLD) {
+      animate(x, DELETE_SNAP, { type: "spring", stiffness: 400, damping: 30 });
+    } else if (offset > SNAP_THRESHOLD && rightSnap > 0) {
+      animate(x, rightSnap, { type: "spring", stiffness: 400, damping: 30 });
+    } else {
+      animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
+    }
   };
 
-  const handleDragStart = () => {
-    setDragging(true);
+  const resetPosition = () => {
+    animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
   };
 
   return (
@@ -55,6 +63,7 @@ const ExamSwipeableCard = ({
         <button
           onClick={(e) => {
             e.stopPropagation();
+            resetPosition();
             onDelete();
           }}
           className="flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80"
@@ -65,24 +74,28 @@ const ExamSwipeableCard = ({
       </motion.div>
 
       {/* Quick actions (left side, revealed on swipe right) */}
-      {showQuickActions && (
+      {quickActionMode !== "none" && (
         <motion.div
           className="absolute inset-0 flex items-center justify-start rounded-xl overflow-hidden"
           style={{ opacity: actionsOpacity }}
         >
+          {quickActionMode === "both" && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                resetPosition();
+                onMarkRealizado();
+              }}
+              className="flex flex-col items-center justify-center w-[72px] h-full bg-[#F2A97F] text-slate-900 active:opacity-80"
+            >
+              <CheckCircle className="w-6 h-6" />
+              <span className="text-[10px] mt-1 font-semibold">Realizado</span>
+            </button>
+          )}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onMarkRealizado();
-            }}
-            className="flex flex-col items-center justify-center w-[72px] h-full bg-[#F2A97F] text-slate-900 active:opacity-80"
-          >
-            <CheckCircle className="w-6 h-6" />
-            <span className="text-[10px] mt-1 font-semibold">Realizado</span>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
+              resetPosition();
               onMarkPronto();
             }}
             className="flex flex-col items-center justify-center w-[72px] h-full bg-[#1C3333] text-white active:opacity-80"
@@ -95,13 +108,12 @@ const ExamSwipeableCard = ({
 
       {/* Main card content */}
       <motion.div
-        style={{ x }}
+        style={{ x, touchAction: "pan-y", willChange: "transform" }}
         drag="x"
-        dragConstraints={{ left: -80, right: showQuickActions ? 144 : 0 }}
-        dragElastic={{ left: 0.3, right: 0.3 }}
-        onDragStart={handleDragStart}
+        dragConstraints={{ left: DELETE_SNAP - 10, right: rightSnap + 10 }}
+        dragElastic={0.15}
         onDragEnd={handleDragEnd}
-        className="relative z-10"
+        className="relative z-10 cursor-grab active:cursor-grabbing"
       >
         {children}
       </motion.div>
