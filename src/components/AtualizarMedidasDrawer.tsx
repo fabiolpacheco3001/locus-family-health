@@ -51,6 +51,7 @@ const AtualizarMedidasDrawer = ({
 }: AtualizarMedidasDrawerProps) => {
   const isPet = (memberType || "human") === "pet";
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const [bloodType, setBloodType] = useState(currentData.blood_type || "");
