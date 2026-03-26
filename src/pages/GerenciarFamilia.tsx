@@ -23,9 +23,30 @@ const ordemParentesco: Record<string, number> = {
 
 const GerenciarFamilia = () => {
   const { members, isLoading } = useFamilyMembers();
+  const { groupId } = useFamilyGroup();
   const navigate = useNavigate();
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [editMember, setEditMember] = useState<FamilyMember | null>(null);
+
+  // Fetch group members to cross-reference roles
+  const { data: groupMembers = [] } = useQuery({
+    queryKey: ["family_group_members_roles", groupId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("family_group_members" as any)
+        .select("family_member_id, role")
+        .eq("group_id", groupId!);
+      if (error) throw error;
+      return data as unknown as { family_member_id: string | null; role: string }[];
+    },
+    enabled: !!groupId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const roleMap = new Map<string, string>();
+  groupMembers.forEach((gm) => {
+    if (gm.family_member_id) roleMap.set(gm.family_member_id, gm.role);
+  });
 
   const sorted = [...members].sort(
     (a, b) => (ordemParentesco[a.relationship] || 99) - (ordemParentesco[b.relationship] || 99)
