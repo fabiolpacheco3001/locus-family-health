@@ -26,6 +26,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   familyMemberId: string;
   editingConsultation?: Consultation | null;
+  memberType?: string;
 }
 
 const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation }: Props) => {
