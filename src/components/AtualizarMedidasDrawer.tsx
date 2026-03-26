@@ -22,6 +22,7 @@ interface AtualizarMedidasDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   memberId: string;
+  memberType?: string | null;
   currentData: {
     blood_type: string | null;
     weight: number | null;
