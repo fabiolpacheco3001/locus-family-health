@@ -197,6 +197,7 @@ const Home = () => {
                 avatarUrl={members.find(m => m.relationship === 'Titular')?.avatar_url}
                 name={userName}
                 size="md"
+                memberType={members.find(m => m.relationship === 'Titular')?.member_type}
               />
             </div>
             <div>
