@@ -39,6 +39,7 @@ const severityOptions = ["Leve", "Moderada", "Grave"];
 const Alergias = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
