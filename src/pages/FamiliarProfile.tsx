@@ -134,7 +134,7 @@ const FamiliarProfile = () => {
   if (member?.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
-  const tracksCycle = !!(member as any).tracks_menstrual_cycle;
+  const tracksCycle = !!(member as any)?.tracks_menstrual_cycle;
   const infoItems: CardItem[] = [
     ...baseInfoItems,
     ...(tracksCycle
@@ -142,15 +142,15 @@ const FamiliarProfile = () => {
       : []),
   ];
 
-  const memberWeight = (member as any).weight as number | null;
-  const memberHeight = (member as any).height as number | null;
-  const memberActivity = (member as any).physical_activity as string | null;
+  const memberWeight = (member as any)?.weight as number | null ?? null;
+  const memberHeight = (member as any)?.height as number | null ?? null;
+  const memberActivity = (member as any)?.physical_activity as string | null ?? null;
   const calculatedBMI = memberWeight && memberHeight && memberHeight > 0
     ? (memberWeight / (memberHeight * memberHeight)).toFixed(1)
     : null;
 
   const profileCards: ProfileCard[] = [
-    { icon: Droplet, label: "Tipo Sanguíneo", value: member.blood_type || "—", action: "medidas" },
+    { icon: Droplet, label: "Tipo Sanguíneo", value: member?.blood_type || "—", action: "medidas" },
     { icon: Weight, label: "Peso", value: memberWeight ? `${memberWeight} kg` : "— kg", action: "medidas" },
     { icon: Ruler, label: "Altura", value: memberHeight ? `${memberHeight} m` : "— m", action: "medidas" },
     { icon: Calculator, label: "IMC", value: calculatedBMI || "—", action: "medidas" },
