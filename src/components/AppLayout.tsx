@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import BottomNav from "./BottomNav";
+import InviteAcceptInterceptor from "./InviteAcceptInterceptor";
 import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
 import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { useMedications } from "@/hooks/useMedications";
@@ -55,12 +56,14 @@ const AppLayout = () => {
   }, [pathname]);
 
   return (
-    <MobileShell>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
-        <Outlet />
-      </div>
-      <BottomNav />
-    </MobileShell>
+    <InviteAcceptInterceptor>
+      <MobileShell>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
+          <Outlet />
+        </div>
+        <BottomNav />
+      </MobileShell>
+    </InviteAcceptInterceptor>
   );
 };
 

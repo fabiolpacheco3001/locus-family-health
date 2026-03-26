@@ -10,12 +10,16 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import AvatarSelector from "@/components/AvatarSelector";
+import { Crown, User as UserIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const MeusDados = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { members, updateMember } = useFamilyMembers();
+  const { role } = useFamilyGroup();
 
   const titular = members?.find((m) => m.relationship === "Titular");
 
@@ -123,6 +127,22 @@ const MeusDados = () => {
             )}
           </div>
         </button>
+
+        {/* Role Badge */}
+        <div className="flex justify-center mb-2">
+          {role === "admin" ? (
+            <Badge className="bg-[#1C3333] text-white border-none text-xs px-3 py-1 gap-1.5">
+              <Crown size={14} />
+              Admin
+            </Badge>
+          ) : (
+            <Badge className="bg-muted text-muted-foreground border-none text-xs px-3 py-1 gap-1.5">
+              <UserIcon size={14} />
+              Usuário Convidado
+            </Badge>
+          )}
+        </div>
+
         <div className="space-y-1">
           <Label>Nome Completo *</Label>
           <Input
