@@ -274,29 +274,33 @@ const FamiliarProfile = () => {
       </div>
 
       {/* Edit Drawer */}
-      <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
-      <AtualizarMedidasDrawer
-        open={medidasOpen}
-        onOpenChange={setMedidasOpen}
-        memberId={member.id}
-        currentData={{
-          blood_type: member.blood_type,
-          weight: memberWeight,
-          height: memberHeight,
-          physical_activity: memberActivity,
-        }}
-      />
-      <BloodPressureHistoryDrawer
-        open={bpOpen}
-        onOpenChange={setBpOpen}
-        familyMemberId={member.id}
-      />
-      {tracksCycle && (
-        <MenstrualCycleDrawer
-          open={cycleOpen}
-          onOpenChange={setCycleOpen}
-          familyMemberId={member.id}
-        />
+      {member && (
+        <>
+          <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
+          <AtualizarMedidasDrawer
+            open={medidasOpen}
+            onOpenChange={setMedidasOpen}
+            memberId={member.id}
+            currentData={{
+              blood_type: member.blood_type,
+              weight: memberWeight,
+              height: memberHeight,
+              physical_activity: memberActivity,
+            }}
+          />
+          <BloodPressureHistoryDrawer
+            open={bpOpen}
+            onOpenChange={setBpOpen}
+            familyMemberId={member.id}
+          />
+          {tracksCycle && (
+            <MenstrualCycleDrawer
+              open={cycleOpen}
+              onOpenChange={setCycleOpen}
+              familyMemberId={member.id}
+            />
+          )}
+        </>
       )}
     </div>
   );
