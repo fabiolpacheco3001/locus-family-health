@@ -435,6 +435,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               type: "medication",
               scheduled_for: new Date().toISOString(),
               is_read: false,
+              ...(groupId ? { group_id: groupId } : {}),
             };
           });
 
