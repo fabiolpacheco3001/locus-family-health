@@ -56,12 +56,14 @@ const AppLayout = () => {
   }, [pathname]);
 
   return (
-    <MobileShell>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
-        <Outlet />
-      </div>
-      <BottomNav />
-    </MobileShell>
+    <InviteAcceptInterceptor>
+      <MobileShell>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
+          <Outlet />
+        </div>
+        <BottomNav />
+      </MobileShell>
+    </InviteAcceptInterceptor>
   );
 };
 
