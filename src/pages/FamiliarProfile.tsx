@@ -107,7 +107,7 @@ const FamiliarProfile = () => {
     },
   });
 
-  if (error || !member) {
+  if (!isLoading && (error || !member)) {
     return (
       <div className="px-4 pt-6 animate-fade-in">
         <div className="flex items-center gap-3 mb-8">
