@@ -128,7 +128,7 @@ const FamiliarProfile = () => {
     );
   }
 
-  const age = calculateAge(member.birth_date);
+  const age = member ? calculateAge(member.birth_date) : null;
   const infoParts: string[] = [];
   if (age !== null) infoParts.push(`${age} anos`);
   if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
