@@ -73,6 +73,7 @@ type ExtractedMed = {
 
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const { addMedication, updateMedication, deleteMedication, uploadReceita } = useMedications(familyMemberId);
   const { consultations } = useConsultations(familyMemberId);
   const [name, setName] = useState("");

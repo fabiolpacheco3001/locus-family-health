@@ -224,6 +224,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
         ...payload,
         user_id: user.id,
         familiar_id: familyMemberId,
+        ...(groupId ? { group_id: groupId } : {}),
       } as any);
       error = res.error;
     }

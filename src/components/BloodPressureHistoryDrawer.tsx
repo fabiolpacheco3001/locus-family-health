@@ -140,6 +140,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
       measurement_date: form.date ? `${form.date}T12:00:00` : new Date().toISOString(),
       source: "manual",
       notes: form.notes.trim() || null,
+      ...(groupId ? { group_id: groupId } : {}),
     } as any);
     setSaving(false);
 

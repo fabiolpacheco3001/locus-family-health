@@ -101,7 +101,8 @@ const AtualizarMedidasDrawer = ({
           weight: w,
           height: h,
           bmi: bmiVal ? parseFloat(bmiVal.toFixed(1)) : null,
-        });
+          ...(groupId ? { group_id: groupId } : {}),
+        } as any);
       }
     },
     onSuccess: () => {
