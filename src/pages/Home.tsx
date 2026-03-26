@@ -452,7 +452,7 @@ const Home = () => {
             </span>
           </AccordionTrigger>
           <AccordionContent>
-            {isLoading ? (
+            {upcomingLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-20 w-full rounded-xl" />
               </div>

@@ -24,12 +24,13 @@ import {
 import { Button } from "@/components/ui/button";
 import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
+import { useAuth } from "@/hooks/useAuth";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -76,12 +77,14 @@ const FamiliarProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const goBack = useSmartBack();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);
   const [cycleOpen, setCycleOpen] = useState(false);
 
-
+  // Try cache first, fallback to individual query
   const { data: member, isLoading, error } = useQuery({
     queryKey: ["family_member", id],
     queryFn: async () => {
@@ -94,20 +97,15 @@ const FamiliarProfile = () => {
       return data as (FamilyMember & { tracks_menstrual_cycle?: boolean }) | null;
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    initialData: () => {
+      // Reuse cached family_members list to avoid redundant fetch
+      if (!user) return undefined;
+      const cached = queryClient.getQueryData<FamilyMember[]>(["family_members", user.id]);
+      const found = cached?.find((m) => m.id === id);
+      return found ? (found as FamilyMember & { tracks_menstrual_cycle?: boolean }) : undefined;
+    },
   });
-
-  if (isLoading) {
-    return (
-      <div className="px-4 pt-6 space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-10 w-10 rounded-lg" />
-          <Skeleton className="h-6 w-40" />
-        </div>
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-      </div>
-    );
-  }
 
   if (error || !member) {
     return (
