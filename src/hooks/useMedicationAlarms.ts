@@ -210,6 +210,7 @@ export function useMedicationAlarms(medications: Medication[]) {
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
+      clearTimeout(initialTimeout);
       clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
