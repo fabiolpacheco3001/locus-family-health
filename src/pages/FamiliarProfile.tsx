@@ -203,18 +203,28 @@ const FamiliarProfile = () => {
         </div>
         <div className="p-4 pb-8 space-y-6 min-h-[calc(100%+1px)]">
 
-      {/* Identity Card */}
-      <button
-        onClick={() => setEditOpen(true)}
-        className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
-      >
-        <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
-        <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
-          <p className="text-sm text-muted-foreground">{member.relationship}</p>
-          {infoLine && <p className="text-xs text-muted-foreground mt-0.5">{infoLine}</p>}
+      {/* Identity Card - Progressive: skeleton only here */}
+      {isLoading && !member ? (
+        <div className="w-full rounded-xl bg-primary/10 p-5 flex items-center gap-4">
+          <Skeleton className="w-14 h-14 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-20" />
+          </div>
         </div>
-      </button>
+      ) : member ? (
+        <button
+          onClick={() => setEditOpen(true)}
+          className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
+        >
+          <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
+            <p className="text-sm text-muted-foreground">{member.relationship}</p>
+            {infoLine && <p className="text-xs text-muted-foreground mt-0.5">{infoLine}</p>}
+          </div>
+        </button>
+      ) : null}
 
       {/* Prontuário (RES) Button */}
       <button
