@@ -187,24 +187,26 @@ const AtualizarMedidasDrawer = ({
             </div>
           </div>
 
-          {/* Physical Activity */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">
-              Atividade Física
-            </label>
-            <Select value={activity} onValueChange={setActivity}>
-              <SelectTrigger className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none">
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {ACTIVITY_LEVELS.map((al) => (
-                  <SelectItem key={al} value={al}>
-                    {al}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Physical Activity - hidden for pets */}
+          {!isPet && (
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">
+                Atividade Física
+              </label>
+              <Select value={activity} onValueChange={setActivity}>
+                <SelectTrigger className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ACTIVITY_LEVELS.map((al) => (
+                    <SelectItem key={al} value={al}>
+                      {al}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {/* Fixed footer */}
