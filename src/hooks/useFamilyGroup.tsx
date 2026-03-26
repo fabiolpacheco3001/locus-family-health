@@ -34,7 +34,7 @@ export const FamilyGroupProvider = ({ children }: { children: ReactNode }) => {
         .limit(1)
         .single();
       if (error) throw error;
-      return data as { group_id: string; role: AppRole; family_member_id: string | null };
+      return data as unknown as { group_id: string; role: AppRole; family_member_id: string | null };
     },
     enabled: !!user,
     staleTime: 10 * 60 * 1000,
