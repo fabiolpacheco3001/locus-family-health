@@ -6,6 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const bytesToBase64 = (bytes: Uint8Array) => {
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,7 +44,6 @@ serve(async (req) => {
 
 Se não conseguir identificar algum campo, use null para esse campo. Retorne SOMENTE o JSON, sem markdown, sem explicações.`;
 
-    // Download the file and convert to base64
     const fileResponse = await fetch(fileUrl);
     if (!fileResponse.ok) {
       console.error("Failed to download file:", fileResponse.status);
@@ -43,17 +54,36 @@ Se não conseguir identificar algum campo, use null para esse campo. Retorne SOM
     }
 
     const fileBytes = new Uint8Array(await fileResponse.arrayBuffer());
-    const base64 = btoa(String.fromCharCode(...fileBytes));
-
-    const isPdf = fileUrl.toLowerCase().includes(".pdf");
-    const mimeType = isPdf ? "application/pdf" : "image/jpeg";
+    const base64 = bytesToBase64(fileBytes);
+    const lowerUrl = fileUrl.toLowerCase();
+    const isPdf = lowerUrl.includes(".pdf");
+    const mimeType = isPdf
+      ? "application/pdf"
+      : lowerUrl.includes(".png")
+        ? "image/png"
+        : lowerUrl.includes(".webp")
+          ? "image/webp"
+          : "image/jpeg";
 
     const userContent: any[] = [
-      { type: "text", text: "Extraia os dados deste documento de exame médico." },
       {
-        type: "image_url",
-        image_url: { url: `data:${mimeType};base64,${base64}` },
+        type: "text",
+        text: "Extraia os dados deste documento de exame médico.",
       },
+      isPdf
+        ? {
+            type: "file",
+            file: {
+              filename: "exam-document.pdf",
+              file_data: `data:${mimeType};base64,${base64}`,
+            },
+          }
+        : {
+            type: "image_url",
+            image_url: {
+              url: `data:${mimeType};base64,${base64}`,
+            },
+          },
     ];
 
     const response = await fetch(
@@ -133,7 +163,6 @@ Se não conseguir identificar algum campo, use null para esse campo. Retorne SOM
 
     const data = await response.json();
 
-    // Extract from tool call response
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       const extracted = JSON.parse(toolCall.function.arguments);
@@ -142,7 +171,6 @@ Se não conseguir identificar algum campo, use null para esse campo. Retorne SOM
       });
     }
 
-    // Fallback: try to parse content as JSON
     const content = data.choices?.[0]?.message?.content ?? "";
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
