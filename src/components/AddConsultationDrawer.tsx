@@ -133,7 +133,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
-          status: statusValue,
+          status: editingConsultation.status,
         });
         await saveBP(editingConsultation.id);
         toast.success("Consulta atualizada!");
