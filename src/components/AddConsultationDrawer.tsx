@@ -29,7 +29,7 @@ interface Props {
   memberType?: string;
 }
 
-const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation }: Props) => {
+const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation, memberType }: Props) => {
   const { user } = useAuth();
   const { addConsultation, updateConsultation } = useConsultations(familyMemberId);
   const [specialty, setSpecialty] = useState("");
