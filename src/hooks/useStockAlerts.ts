@@ -42,23 +42,25 @@ export function useStockAlerts(medications: Medication[]) {
       if (cancelled) return;
       let hasInserted = false;
 
+      // Batch: fetch all today's stock notifications in ONE query
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data: todayStockNotifs } = await supabase
+        .from("notifications")
+        .select("medication_id, created_at")
+        .eq("user_id", user.id)
+        .eq("type", "stock")
+        .gte("created_at", todayStart.toISOString());
+
+      if (cancelled) return;
+
+      const notifiedMedIds = new Set(
+        (todayStockNotifs ?? []).map((n: any) => n.medication_id),
+      );
+
       for (const med of lowStockMeds) {
         if (cancelled) return;
-
-        const { data: latest } = await supabase
-          .from("notifications")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("type", "stock")
-          .eq("medication_id", med.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        const latestNotification = latest?.[0];
-        const wasAlreadyNotifiedToday =
-          !!latestNotification?.created_at && new Date(latestNotification.created_at).toDateString() === todayKey;
-
-        if (wasAlreadyNotifiedToday) continue;
+        if (notifiedMedIds.has(med.id)) continue;
 
         const memberName = med.family_members?.name ?? "o familiar";
         const notificationInsert = {

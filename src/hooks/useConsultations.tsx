@@ -54,6 +54,7 @@ export const useConsultations = (familyMemberId: string) => {
       return data as Consultation[];
     },
     enabled: !!user && !!familyMemberId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const addConsultation = useMutation({

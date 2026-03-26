@@ -51,6 +51,22 @@ export function useMenstrualAlerts() {
       const today = new Date();
       today.setHours(12, 0, 0, 0);
 
+      // Batch: fetch all today's menstrual notifications in ONE query
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data: todayMenstrualNotifs } = await supabase
+        .from("notifications")
+        .select("family_member_id, created_at")
+        .eq("user_id", user.id)
+        .eq("type", "menstrual")
+        .gte("created_at", todayStart.toISOString());
+
+      if (cancelled) return;
+
+      const notifiedFamiliarIds = new Set(
+        (todayMenstrualNotifs ?? []).map((n: any) => n.family_member_id),
+      );
+
       for (const [familiarId, cycle] of latestByFamiliar) {
         if (cancelled) return;
         if (cycle.alert_advance_days === 0) continue;
@@ -64,21 +80,7 @@ export function useMenstrualAlerts() {
 
         const daysLeft = cycle.alert_advance_days;
 
-        const { data: latest } = await supabase
-          .from("notifications")
-          .select("*")
-          .eq("user_id", user.id)
-          .eq("type", "menstrual")
-          .eq("family_member_id", familiarId)
-          .order("created_at", { ascending: false })
-          .limit(1);
-
-        const latestNotification = latest?.[0];
-        const wasAlreadyNotifiedToday =
-          !!latestNotification?.created_at &&
-          new Date(latestNotification.created_at).toDateString() === todayKey;
-
-        if (wasAlreadyNotifiedToday) continue;
+        if (notifiedFamiliarIds.has(familiarId)) continue;
 
         const { error: insertError } = await supabase.from("notifications").insert({
           user_id: user.id,
