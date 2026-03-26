@@ -37,8 +37,9 @@ const Login = () => {
     }
 
     if (isSignUp) {
-      toast.success("Conta criada! Verifique seu e-mail para confirmar.");
-    } else {
+      toast.success("Conta criada com sucesso!");
+    }
+    {
       // Prefetch critical data before navigating
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
