@@ -216,7 +216,7 @@ const FamiliarProfile = () => {
           onClick={() => setEditOpen(true)}
           className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
         >
-          <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
+          <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" memberType={member.member_type} />
           <div className="min-w-0 flex-1">
             <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
             <p className="text-sm text-muted-foreground">{member.relationship}</p>
