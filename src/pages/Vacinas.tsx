@@ -73,6 +73,7 @@ const formatDate = (dateStr: string) => {
 const Vacinas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
   const { members } = useFamilyMembers();
