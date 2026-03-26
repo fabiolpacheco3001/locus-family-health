@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Trash2, Camera, X, PawPrint } from "lucide-react";
+import { Loader2, Trash2, Camera, X, PawPrint, Crown, User } from "lucide-react";
 import AvatarSelector from "@/components/AvatarSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   member: FamilyMember;
+  memberRole?: string;
 }
 
 const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
@@ -30,7 +31,7 @@ const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const genders = ["Masculino", "Feminino", "Outro", "Prefiro não informar"];
 const speciesOptions = ["Cachorro", "Gato", "Pássaro", "Outro"];
 
-const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
+const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => {
   const { updateMember, deleteMember } = useFamilyMembers();
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -173,6 +174,19 @@ const EditMemberDrawer = ({ open, onOpenChange, member }: Props) => {
             </div>
 
             {renderAvatar()}
+
+            {memberRole === "admin" && (
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[10px] bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-2 py-0.5 rounded-full font-medium leading-none">Admin</span>
+              </div>
+            )}
+            {memberRole === "user" && (
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <User className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium leading-none">Usuário Convidado</span>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <Label>{isPet ? "Nome do Pet *" : "Nome Completo *"}</Label>

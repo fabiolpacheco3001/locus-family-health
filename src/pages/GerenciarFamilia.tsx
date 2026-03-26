@@ -27,6 +27,7 @@ const GerenciarFamilia = () => {
   const navigate = useNavigate();
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [editMember, setEditMember] = useState<FamilyMember | null>(null);
+  const [editMemberRole, setEditMemberRole] = useState<string | undefined>(undefined);
 
   // Fetch group members to cross-reference roles
   const { data: groupMembers = [] } = useQuery({
@@ -59,8 +60,9 @@ const GerenciarFamilia = () => {
       {editMember && (
         <EditMemberDrawer
           open={!!editMember}
-          onOpenChange={(open) => { if (!open) setEditMember(null); }}
+          onOpenChange={(open) => { if (!open) { setEditMember(null); setEditMemberRole(undefined); } }}
           member={editMember}
+          memberRole={editMemberRole}
         />
       )}
 
@@ -100,7 +102,7 @@ const GerenciarFamilia = () => {
             return (
               <div
                 key={m.id}
-                onClick={() => setEditMember(m)}
+                onClick={() => { setEditMember(m); setEditMemberRole(roleMap.get(m.id)); }}
                 className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
               >
                 <MemberAvatar avatarUrl={m.avatar_url} name={m.name} memberType={m.member_type} />
