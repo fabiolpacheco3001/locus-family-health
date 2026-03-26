@@ -181,6 +181,8 @@ const Exames = () => {
                     onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
                     onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
                     quickActionMode={quickActionMode}
+                    isOpen={openCardId === e.id}
+                    onOpenChange={(isOpen) => setOpenCardId(isOpen ? e.id : null)}
                   >
                     <button
                       onClick={() => handleOpenEdit(e)}
