@@ -117,10 +117,8 @@ const GestaoAcessos = () => {
 
       if (error) throw error;
 
-      toast.success("Convite salvo com sucesso!");
+      setSuccessEmail(inviteEmail.trim().toLowerCase());
       queryClient.invalidateQueries({ queryKey: ["group_invites", groupId] });
-      setDrawerOpen(false);
-      resetForm();
     } catch {
       toast.error("Erro ao salvar convite.");
     } finally {
