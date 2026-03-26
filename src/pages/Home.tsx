@@ -34,35 +34,31 @@ const Home = () => {
   const { unreadCount } = useNotifications();
 
   // Upcoming appointments (2 nearest consultations + exams)
-  // Pending consultations count
-  const { data: pendingConsultations = 0 } = useQuery({
-    queryKey: ["pending-consultations-count", user?.id],
+  // Pending counts (consolidated single query)
+  const { data: pendingCounts } = useQuery({
+    queryKey: ["pending-counts", user?.id],
     queryFn: async () => {
-      const { count, error } = await supabase
-        .from("consultations")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id)
-        .eq("status", "Agendada");
-      if (error) throw error;
-      return count ?? 0;
+      const [consultRes, examRes] = await Promise.all([
+        supabase
+          .from("consultations")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("status", "Agendada"),
+        supabase
+          .from("exams")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("status", "Agendado"),
+      ]);
+      if (consultRes.error) throw consultRes.error;
+      if (examRes.error) throw examRes.error;
+      return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0 };
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
-
-  // Pending exams count (only truly pending statuses)
-  const { data: pendingExams = 0 } = useQuery({
-    queryKey: ["pending-exams-count", user?.id],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("exams")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user!.id)
-        .eq("status", "Agendado");
-      if (error) throw error;
-      return count ?? 0;
-    },
-    enabled: !!user,
-  });
+  const pendingConsultations = pendingCounts?.consultations ?? 0;
+  const pendingExams = pendingCounts?.exams ?? 0;
 
   // Derived: total open appointments
   const totalOpenAppointments = pendingConsultations + pendingExams;
