@@ -60,8 +60,9 @@ const GerenciarFamilia = () => {
       {editMember && (
         <EditMemberDrawer
           open={!!editMember}
-          onOpenChange={(open) => { if (!open) setEditMember(null); }}
+          onOpenChange={(open) => { if (!open) { setEditMember(null); setEditMemberRole(undefined); } }}
           member={editMember}
+          memberRole={editMemberRole}
         />
       )}
 
