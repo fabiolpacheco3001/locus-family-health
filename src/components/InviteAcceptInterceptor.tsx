@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,127 +15,181 @@ type PendingInvite = {
   group_name?: string;
 };
 
+type InterceptorState =
+  | { step: "loading" }
+  | { step: "invite"; invite: PendingInvite }
+  | { step: "provisioning" }
+  | { step: "ready" }
+  | { step: "error"; message: string };
+
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1500;
+
 const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   const { groupId, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
 
-  const [checking, setChecking] = useState(true);
-  const [invite, setInvite] = useState<PendingInvite | null>(null);
+  const [state, setState] = useState<InterceptorState>({ step: "loading" });
   const [accepting, setAccepting] = useState(false);
-  const [provisioning, setProvisioning] = useState(false);
+
+  const provisionNewGroup = useCallback(async () => {
+    if (!user) return;
+    setState({ step: "provisioning" });
+    try {
+      const { data: newGroup, error: gErr } = await supabase
+        .from("family_groups")
+        .insert({ created_by: user.id, name: "Minha Família" } as any)
+        .select("id")
+        .single();
+      if (gErr) throw gErr;
+
+      const gId = (newGroup as any).id;
+
+      const { error: mErr } = await supabase
+        .from("family_group_members" as any)
+        .insert({
+          group_id: gId,
+          auth_user_id: user.id,
+          role: "admin",
+          accepted_at: new Date().toISOString(),
+        } as any);
+      if (mErr) throw mErr;
+
+      const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Titular";
+      const { data: newMember, error: fErr } = await supabase
+        .from("family_members")
+        .insert({
+          user_id: user.id,
+          name: displayName,
+          relationship: "Titular",
+          member_type: "human",
+          group_id: gId,
+        })
+        .select("id")
+        .single();
+      if (fErr) throw fErr;
+
+      await supabase
+        .from("family_group_members" as any)
+        .update({ family_member_id: (newMember as any).id } as any)
+        .eq("auth_user_id", user.id)
+        .eq("group_id", gId);
+
+      queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
+      queryClient.invalidateQueries({ queryKey: ["family_members"] });
+      setState({ step: "ready" });
+    } catch {
+      toast.error("Erro ao configurar sua conta. Recarregue a página.");
+      setState({ step: "error", message: "Erro ao configurar conta." });
+    }
+  }, [user, queryClient]);
 
   useEffect(() => {
     if (!user || groupLoading) return;
 
     // User already has a group — nothing to do
     if (groupId) {
-      setChecking(false);
+      setState({ step: "ready" });
       return;
     }
 
-    // Orphan account: check for pending invite
+    // Orphan account: check for pending invite WITH retries
+    let cancelled = false;
+    let retryCount = 0;
+
     const checkInvite = async () => {
       const email = user.email?.toLowerCase();
       if (!email) {
+        // No email — can't match invite, provision directly
         await provisionNewGroup();
         return;
       }
 
-      const { data, error } = await supabase
-        .from("group_invites" as any)
-        .select("id, group_id, role, family_member_id")
-        .eq("email", email)
-        .is("accepted_at", null)
-        .limit(1);
+      setState({ step: "loading" });
 
-      if (error || !data || data.length === 0) {
-        // No invite found → provision new group
-        await provisionNewGroup();
+      while (retryCount < MAX_RETRIES && !cancelled) {
+        const { data, error } = await supabase
+          .from("group_invites" as any)
+          .select("id, group_id, role, family_member_id")
+          .eq("email", email)
+          .is("accepted_at", null)
+          .limit(1);
+
+        if (cancelled) return;
+
+        if (error) {
+          retryCount++;
+          console.warn(`[InviteInterceptor] Invite query attempt ${retryCount} failed:`, error.message);
+          if (retryCount < MAX_RETRIES) {
+            await new Promise(r => setTimeout(r, RETRY_DELAY));
+            continue;
+          }
+          // All retries exhausted — DO NOT auto-provision, show error
+          toast.error("Erro ao verificar convites. Recarregue a página.");
+          setState({ step: "error", message: "Não foi possível verificar convites pendentes." });
+          return;
+        }
+
+        // Query succeeded
+        if (data && data.length > 0) {
+          const inv = (data as unknown as PendingInvite[])[0];
+          // Try to get group name (non-critical)
+          const { data: grp } = await supabase
+            .from("family_groups")
+            .select("name")
+            .eq("id", inv.group_id)
+            .single();
+
+          if (!cancelled) {
+            setState({
+              step: "invite",
+              invite: { ...inv, group_name: (grp as any)?.name ?? "uma família" },
+            });
+          }
+          return;
+        }
+
+        // No invite found — safe to provision
+        if (!cancelled) {
+          await provisionNewGroup();
+        }
         return;
-      }
-
-      const inv = (data as unknown as PendingInvite[])[0];
-
-      // Try to get group name
-      const { data: grp } = await supabase
-        .from("family_groups")
-        .select("name")
-        .eq("id", inv.group_id)
-        .single();
-
-      setInvite({ ...inv, group_name: (grp as any)?.name ?? "uma família" });
-      setChecking(false);
-    };
-
-    const provisionNewGroup = async () => {
-      setProvisioning(true);
-      try {
-        // Create group
-        const { data: newGroup, error: gErr } = await supabase
-          .from("family_groups")
-          .insert({ created_by: user.id, name: "Minha Família" } as any)
-          .select("id")
-          .single();
-
-        if (gErr) throw gErr;
-
-        const gId = (newGroup as any).id;
-
-        // Create membership as admin
-        const { error: mErr } = await supabase
-          .from("family_group_members" as any)
-          .insert({
-            group_id: gId,
-            auth_user_id: user.id,
-            role: "admin",
-            accepted_at: new Date().toISOString(),
-          } as any);
-
-        if (mErr) throw mErr;
-
-        // Create titular family member
-        const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Titular";
-        const { data: newMember, error: fErr } = await supabase
-          .from("family_members")
-          .insert({
-            user_id: user.id,
-            name: displayName,
-            relationship: "Titular",
-            member_type: "human",
-            group_id: gId,
-          })
-          .select("id")
-          .single();
-
-        if (fErr) throw fErr;
-
-        // Link membership to the titular member
-        await supabase
-          .from("family_group_members" as any)
-          .update({ family_member_id: (newMember as any).id } as any)
-          .eq("auth_user_id", user.id)
-          .eq("group_id", gId);
-
-        // Refresh context
-        queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
-        queryClient.invalidateQueries({ queryKey: ["family_members"] });
-      } catch {
-        toast.error("Erro ao configurar sua conta. Recarregue a página.");
-      } finally {
-        setProvisioning(false);
-        setChecking(false);
       }
     };
 
     checkInvite();
-  }, [user, groupId, groupLoading, queryClient]);
+
+    return () => { cancelled = true; };
+  }, [user, groupId, groupLoading, provisionNewGroup]);
 
   const handleAccept = async () => {
-    if (!invite || !user) return;
+    if (state.step !== "invite" || !user) return;
+    const { invite } = state;
     setAccepting(true);
     try {
-      // Insert into family_group_members
+      // Check if already a member (prevent duplicate key error)
+      const { data: existing } = await supabase
+        .from("family_group_members" as any)
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .eq("group_id", invite.group_id)
+        .limit(1);
+
+      if (existing && (existing as any[]).length > 0) {
+        // Already a member — just mark invite as accepted and proceed
+        await supabase
+          .from("group_invites" as any)
+          .update({ accepted_at: new Date().toISOString() } as any)
+          .eq("id", invite.id);
+
+        toast.success("Você já faz parte desta família!");
+        queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
+        queryClient.invalidateQueries({ queryKey: ["family_members"] });
+        setState({ step: "ready" });
+        return;
+      }
+
       const { error: insertErr } = await supabase
         .from("family_group_members" as any)
         .insert({
@@ -148,7 +202,6 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
 
       if (insertErr) throw insertErr;
 
-      // Mark invite as accepted
       await supabase
         .from("group_invites" as any)
         .update({ accepted_at: new Date().toISOString() } as any)
@@ -157,16 +210,26 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
       toast.success("Convite aceito! Bem-vindo à família.");
       queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
       queryClient.invalidateQueries({ queryKey: ["family_members"] });
-      setInvite(null);
-    } catch {
-      toast.error("Erro ao aceitar convite. Tente novamente.");
+      setState({ step: "ready" });
+    } catch (err: any) {
+      const isDuplicate = err?.code === "23505";
+      toast.error(
+        isDuplicate
+          ? "Você já faz parte desta família."
+          : "Erro ao aceitar convite. Contate o administrador."
+      );
     } finally {
       setAccepting(false);
     }
   };
 
-  // Still loading
-  if (groupLoading || checking || provisioning) {
+  const handleRetry = () => {
+    setState({ step: "loading" });
+    queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
+  };
+
+  // Global loader
+  if (state.step === "loading" || state.step === "provisioning" || groupLoading) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#f2f0eb] z-50">
         <img
@@ -178,8 +241,26 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
     );
   }
 
-  // Show invite acceptance screen
-  if (invite) {
+  // Error state with retry
+  if (state.step === "error") {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#f2f0eb] z-50 px-6">
+        <div className="bg-card rounded-2xl shadow-lg border border-border/40 p-8 max-w-sm w-full text-center space-y-6">
+          <p className="text-sm text-muted-foreground">{state.message}</p>
+          <Button
+            onClick={handleRetry}
+            className="w-full h-12 rounded-xl bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold"
+          >
+            Tentar Novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Invite acceptance screen — BLOCKS all other rendering
+  if (state.step === "invite") {
+    const { invite } = state;
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#f2f0eb] z-50 px-6">
         <div className="bg-card rounded-2xl shadow-lg border border-border/40 p-8 max-w-sm w-full text-center space-y-6">
