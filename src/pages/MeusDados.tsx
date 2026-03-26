@@ -10,7 +10,10 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import AvatarSelector from "@/components/AvatarSelector";
+import { Crown, User as UserIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const MeusDados = () => {
   const navigate = useNavigate();
