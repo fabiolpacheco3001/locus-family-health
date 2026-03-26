@@ -95,20 +95,36 @@ const GerenciarFamilia = () => {
             </p>
           )}
 
-          {sorted.map((m) => (
-            <div
-              key={m.id}
-              onClick={() => setEditMember(m)}
-              className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
-            >
-              <MemberAvatar avatarUrl={m.avatar_url} name={m.name} memberType={m.member_type} />
-              <div className="flex flex-col ml-4 min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
+          {sorted.map((m) => {
+            const memberRole = roleMap.get(m.id);
+            return (
+              <div
+                key={m.id}
+                onClick={() => setEditMember(m)}
+                className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
+              >
+                <MemberAvatar avatarUrl={m.avatar_url} name={m.name} memberType={m.member_type} />
+                <div className="flex flex-col ml-4 min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
+                    {memberRole === "admin" && (
+                      <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
+                    {memberRole === "admin" && (
+                      <span className="text-[10px] bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-2 py-0.5 rounded-full font-medium leading-none">Admin</span>
+                    )}
+                    {memberRole === "user" && (
+                      <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium leading-none">Convidado</span>
+                    )}
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
               </div>
-              <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0 ml-2" />
-            </div>
-          ))}
+            );
+          })}
           </div>
         </div>
       </div>
