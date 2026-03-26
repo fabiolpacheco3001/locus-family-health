@@ -17,7 +17,7 @@ const navItems = [
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { members } = useFamilyMembers();
+  const { members, isLoading: membersLoading } = useFamilyMembers();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const isSaudeActive = location.pathname.startsWith("/familiar/");
