@@ -375,7 +375,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         await updateMedication.mutateAsync({
           id: editingMedication.id,
           ...payload,
-          status,
           receita_url: receitaUrl,
         });
         toast.success("Medicamento atualizado!");
