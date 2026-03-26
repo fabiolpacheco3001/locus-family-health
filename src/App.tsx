@@ -117,6 +117,7 @@ const App = () => (
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
+      </FamilyGroupProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
