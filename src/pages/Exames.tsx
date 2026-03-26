@@ -240,26 +240,6 @@ const Exames = () => {
         )}
       </div>
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
-        <AlertDialogContent className="max-w-[320px] w-[90vw] rounded-[24px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir Registro</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir permanentemente este registro? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <Button
-              variant="destructive"
-              onClick={handleConfirmDelete}
-              disabled={deleteExam.isPending}
-            >
-              {deleteExam.isPending ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };
