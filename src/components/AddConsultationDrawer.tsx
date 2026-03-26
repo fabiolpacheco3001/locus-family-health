@@ -32,6 +32,7 @@ interface Props {
 
 const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation, memberType }: Props) => {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const { addConsultation, updateConsultation } = useConsultations(familyMemberId);
   const [specialty, setSpecialty] = useState("");
   const [professionalName, setProfessionalName] = useState("");
