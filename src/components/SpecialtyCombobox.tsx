@@ -16,7 +16,7 @@ const ESPECIALIDADES_MEDICAS = [
   "Infectologista", "Neurologista", "Nutricionista", "Nutrólogo",
   "Odontologista", "Oftalmologista", "Oncologista", "Ortopedista",
   "Otorrinolaringologista", "Pediatra", "Pneumologista", "Psicólogo",
-  "Psiquiatra", "Reumatologista", "Urologista",
+  "Psiquiatra", "Reumatologista", "Urologista", "Veterinário",
 ];
 
 interface Props {

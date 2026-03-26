@@ -109,6 +109,7 @@ const Consultas = () => {
         onOpenChange={handleDrawerChange}
         familyMemberId={id!}
         editingConsultation={editingConsultation}
+        memberType={currentMember?.member_type || 'human'}
       />
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">

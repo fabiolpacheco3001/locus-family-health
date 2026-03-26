@@ -81,8 +81,11 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
         });
     } else {
       resetForm();
+      if (memberType === 'pet') {
+        setSpecialty("Veterinário");
+      }
     }
-  }, [editingConsultation, open]);
+  }, [editingConsultation, open, memberType]);
 
   const resetForm = () => {
     setSpecialty("");
