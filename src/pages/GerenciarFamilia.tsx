@@ -27,6 +27,7 @@ const GerenciarFamilia = () => {
   const navigate = useNavigate();
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [editMember, setEditMember] = useState<FamilyMember | null>(null);
+  const [editMemberRole, setEditMemberRole] = useState<string | undefined>(undefined);
 
   // Fetch group members to cross-reference roles
   const { data: groupMembers = [] } = useQuery({
