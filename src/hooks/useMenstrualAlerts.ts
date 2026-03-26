@@ -14,6 +14,7 @@ const menstrualAlertSessionRuns = new Set<string>();
  */
 export function useMenstrualAlerts() {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   useEffect(() => {
