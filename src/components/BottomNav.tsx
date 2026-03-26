@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Calendar, Activity, Users, Settings, ChevronRight } from "lucide-react";
 import MemberAvatar from "@/components/MemberAvatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
