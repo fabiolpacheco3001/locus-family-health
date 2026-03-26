@@ -35,10 +35,10 @@ const GerenciarFamilia = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("family_group_members" as any)
-        .select("family_member_id, role")
+        .select("family_member_id, role, auth_user_id")
         .eq("group_id", groupId!);
       if (error) throw error;
-      return data as unknown as { family_member_id: string | null; role: string }[];
+      return data as unknown as { family_member_id: string | null; role: string; auth_user_id: string }[];
     },
     enabled: !!groupId,
     staleTime: 5 * 60 * 1000,
