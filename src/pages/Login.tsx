@@ -39,6 +39,46 @@ const Login = () => {
     if (isSignUp) {
       toast.success("Conta criada! Verifique seu e-mail para confirmar.");
     } else {
+      // Prefetch critical data before navigating
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        queryClient.prefetchQuery({
+          queryKey: ["medications", "all"],
+          queryFn: async () => {
+            const { data } = await supabase
+              .from("medications")
+              .select("*, consultations(professional_name, specialty), family_members(name)")
+              .eq("user_id", currentUser.id)
+              .order("created_at", { ascending: false });
+            return data ?? [];
+          },
+          staleTime: 5 * 60 * 1000,
+        });
+        queryClient.prefetchQuery({
+          queryKey: ["family_members", currentUser.id],
+          queryFn: async () => {
+            const { data } = await supabase
+              .from("family_members")
+              .select("*")
+              .is("deleted_at", null)
+              .order("created_at", { ascending: true });
+            return data ?? [];
+          },
+          staleTime: 5 * 60 * 1000,
+        });
+        queryClient.prefetchQuery({
+          queryKey: ["notifications", currentUser.id],
+          queryFn: async () => {
+            const { data } = await supabase
+              .from("notifications")
+              .select("*")
+              .eq("user_id", currentUser.id)
+              .order("created_at", { ascending: false });
+            return data ?? [];
+          },
+          staleTime: 5 * 60 * 1000,
+        });
+      }
       navigate("/home");
     }
   };
