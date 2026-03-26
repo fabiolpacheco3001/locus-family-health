@@ -176,7 +176,7 @@ const Exames = () => {
                 return (
                   <ExamSwipeableCard
                     key={e.id}
-                    onDelete={() => setDeleteTarget(e.id)}
+                    onDelete={() => handleInstantDelete(e.id)}
                     onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
                     onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
                     quickActionMode={quickActionMode}
