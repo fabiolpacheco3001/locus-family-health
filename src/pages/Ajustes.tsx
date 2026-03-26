@@ -69,7 +69,7 @@ const Ajustes = () => {
 
           {/* Profile Card */}
           <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
-            <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" />
+            <MemberAvatar avatarUrl={titular?.avatar_url} name={titular?.name ?? "?"} size="lg" memberType={titular?.member_type} />
             <div>
               <p className="text-base font-semibold text-foreground">{titular?.name ?? "Carregando..."}</p>
               <p className="text-sm text-muted-foreground">Titular / Conta Principal</p>
