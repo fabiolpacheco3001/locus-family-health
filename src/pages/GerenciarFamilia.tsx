@@ -6,6 +6,7 @@ import AddMemberDrawer from "@/components/AddMemberDrawer";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
 import MemberAvatar from "@/components/MemberAvatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ordemParentesco: Record<string, number> = {
   "Titular": 1,
