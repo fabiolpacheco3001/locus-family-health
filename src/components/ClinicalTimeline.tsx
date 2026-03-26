@@ -14,14 +14,14 @@ const typeConfig: Record<ClinicalEvent["type"], { icon: React.ElementType; bg: s
 };
 
 const statusBadge: Record<string, string> = {
-  Agendada: "bg-[#AEE2D4] text-[#1C3333]",
-  Realizada: "bg-[#1C3333] text-white",
-  Cancelada: "bg-red-100 text-red-700",
-  Ativo: "bg-emerald-100 text-emerald-800",
-  Finalizado: "bg-muted text-muted-foreground",
-  Agendado: "bg-[#AEE2D4] text-[#1C3333]",
-  Coletado: "bg-amber-100 text-amber-800",
-  Pronto: "bg-[#1C3333] text-white",
+  Agendada: "bg-blue-50 text-blue-700",
+  Realizada: "bg-slate-100 text-slate-700",
+  Ativo: "bg-green-100 text-green-800",
+  Finalizado: "bg-slate-100 text-slate-700",
+  Agendado: "bg-blue-50 text-blue-700",
+  Coletado: "bg-slate-100 text-slate-700",
+  Pronto: "bg-slate-100 text-slate-700",
+  Concluído: "bg-slate-100 text-slate-700",
 };
 
 const formatDate = (dateStr: string) => {

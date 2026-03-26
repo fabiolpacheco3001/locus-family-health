@@ -18,10 +18,12 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
     queryFn: async (): Promise<ClinicalEvent[]> => {
       const fid = familyMemberId!;
 
+      const now = new Date().toISOString();
+
       const [cRes, mRes, eRes] = await Promise.all([
-        supabase.from("consultations").select("*").eq("family_member_id", fid).neq("status", "Cancelada"),
+        supabase.from("consultations").select("*").eq("family_member_id", fid).neq("status", "Cancelada").lte("consultation_date", now),
         supabase.from("medications").select("*").eq("family_member_id", fid),
-        supabase.from("exams").select("*").eq("family_member_id", fid).neq("status", "Cancelado"),
+        supabase.from("exams").select("*").eq("family_member_id", fid).neq("status", "Cancelado").lte("exam_date", now),
       ]);
 
       if (cRes.error) throw cRes.error;
