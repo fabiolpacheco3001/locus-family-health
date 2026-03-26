@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Trash2, Camera, X, PawPrint } from "lucide-react";
+import { Loader2, Trash2, Camera, X, PawPrint, Crown, User } from "lucide-react";
 import AvatarSelector from "@/components/AvatarSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
