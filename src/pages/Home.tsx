@@ -23,7 +23,7 @@ const Home = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
-  const { members } = useFamilyMembers();
+  const { members, isLoading: membersLoading } = useFamilyMembers();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
 
   // All active medications across family
@@ -560,7 +560,20 @@ const Home = () => {
                 </button>
               ));
             })()}
-            {members.length === 0 && (
+            {membersLoading && members.length === 0 && (
+              <div className="space-y-3 py-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 h-14 px-4 bg-card rounded-xl border border-border/50">
+                    <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-3.5 w-24" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!membersLoading && members.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Nenhum familiar cadastrado.
               </p>

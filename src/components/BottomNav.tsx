@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Calendar, Activity, Users, Settings, ChevronRight } from "lucide-react";
 import MemberAvatar from "@/components/MemberAvatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -17,7 +18,7 @@ const navItems = [
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { members } = useFamilyMembers();
+  const { members, isLoading: membersLoading } = useFamilyMembers();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const isSaudeActive = location.pathname.startsWith("/familiar/");
@@ -92,7 +93,20 @@ const BottomNav = () => {
                 </button>
               ));
             })()}
-            {members.length === 0 && (
+            {membersLoading && members.length === 0 && (
+              <div className="space-y-3 py-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 h-14 px-4 bg-card rounded-xl border border-border/50">
+                    <Skeleton className="w-8 h-8 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-3.5 w-24" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!membersLoading && members.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
                 Nenhum familiar cadastrado.
               </p>
