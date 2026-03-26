@@ -127,7 +127,7 @@ const Prontuario = () => {
           {/* Patient Identity */}
           <div className="rounded-xl bg-card border border-border/50 p-5">
             <div className="flex items-center gap-4 mb-5">
-              <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
+              <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" memberType={(member as any).member_type} />
               <div className="min-w-0 flex-1">
                 <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
                 <p className="text-sm text-muted-foreground">{member.relationship}</p>
