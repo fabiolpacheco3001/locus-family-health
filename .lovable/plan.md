@@ -1,32 +1,29 @@
 
 
-# Diagnóstico: Coroa Ausente no EditMemberDrawer
+# Diagnóstico: Coroa Ausente na Lista de Familiares
 
 ## Causa Raiz
 
-A coroa e a badge "Admin"/"Convidado" foram implementadas apenas em dois lugares:
-1. **Lista de familiares** (`GerenciarFamilia.tsx`, linha 110-111) — ✅ funciona
-2. **Tela Meus Dados** (`MeusDados.tsx`) — ✅ funciona
+O registro do Admin na tabela `family_group_members` tem `family_member_id = NULL`. O código atual constrói um mapa `family_member_id → role`, mas como o valor é nulo, o Admin nunca é encontrado no mapa e a coroa não aparece.
 
-Porém, o **EditMemberDrawer** (o drawer que abre ao clicar num membro) não recebe nenhuma informação de role e não exibe nenhuma badge. É o drawer da screenshot.
+## Solução
 
-## Plano de Correção
+Precisamos de uma segunda via de correspondência: cruzar pelo `auth_user_id` do grupo com o `user_id` dos membros da família.
 
-### Arquivo: `src/components/EditMemberDrawer.tsx`
+### Arquivo: `src/pages/GerenciarFamilia.tsx`
 
-1. Importar `Crown`, `User` do lucide-react e o hook `useFamilyGroup`
-2. Fazer uma query pontual em `family_group_members` para buscar o role vinculado ao `member.id` (via `family_member_id`)
-3. Abaixo do avatar (após `renderAvatar()`), exibir uma badge:
-   - **Admin**: `Crown` amber-500 + tag escura "Admin"
-   - **Convidado**: `User` icon + tag cinza "Usuário Convidado"  
-   - **Sem vínculo** (pet, criança): nenhuma badge
+1. Expandir a query de `family_group_members` para também retornar `auth_user_id`
+2. Construir o `roleMap` com **duas chaves**: `family_member_id` (quando existe) e `auth_user_id` (sempre)
+3. Na hora de buscar o role de cada membro, tentar primeiro por `m.id` (family_member_id) e depois por `m.user_id` (auth_user_id)
 
-### Alternativa mais simples
+```text
+Lookup logic:
+roleMap.get(m.id)              ← match por family_member_id (convidados)
+  || roleMap.get(m.user_id)    ← match por auth_user_id (admin titular)
+```
 
-Passar o `roleMap` já calculado em `GerenciarFamilia.tsx` como prop para o `EditMemberDrawer`, evitando uma query extra. O drawer receberia uma prop `memberRole?: string` e renderizaria a badge condicionalmente.
+### Impacto nos outros pontos que usam roleMap
 
-### Implementação preferida (prop drilling — zero queries extras)
-
-- `GerenciarFamilia.tsx`: ao chamar `setEditMember(m)`, também guardar o role: `setEditMemberRole(roleMap.get(m.id))`
-- `EditMemberDrawer`: nova prop `memberRole?: string`, renderizar badge abaixo do nome no header
+- `EditMemberDrawer`: recebe `memberRole` como prop do pai, então será corrigido automaticamente
+- Nenhum outro arquivo precisa mudar
 
