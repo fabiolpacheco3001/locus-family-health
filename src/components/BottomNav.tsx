@@ -22,6 +22,11 @@ const BottomNav = () => {
 
   const isSaudeActive = location.pathname.startsWith("/familiar/");
 
+  // Intent-to-navigate prefetch: start loading chunk on touch/hover
+  const handlePrefetch = (path: string) => {
+    import("@/App").then(m => m.prefetchByRoute?.[path]?.());
+  };
+
   const handleClick = (path: string) => {
     if (path === "__drawer_saude__") {
       setDrawerOpen(true);
@@ -41,6 +46,8 @@ const BottomNav = () => {
             <button
               key={path}
               onClick={() => handleClick(path)}
+              onTouchStart={() => handlePrefetch(path)}
+              onMouseEnter={() => handlePrefetch(path)}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
