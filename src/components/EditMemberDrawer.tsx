@@ -178,13 +178,13 @@ const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => 
             {memberRole === "admin" && (
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <Crown className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-[10px] bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-2 py-0.5 rounded-full font-medium leading-none">Admin</span>
+                <span className="text-[10px] bg-slate-100/60 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-full font-medium leading-none backdrop-blur-sm">Admin</span>
               </div>
             )}
             {memberRole === "user" && (
               <div className="flex items-center justify-center gap-1.5 mb-1">
                 <User className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium leading-none">Usuário Convidado</span>
+                <span className="text-[10px] bg-slate-100/60 text-muted-foreground border border-slate-200/80 px-2 py-0.5 rounded-full font-medium leading-none backdrop-blur-sm">Usuário Convidado</span>
               </div>
             )}
 

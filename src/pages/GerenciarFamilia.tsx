@@ -117,10 +117,10 @@ const GerenciarFamilia = () => {
                   <div className="flex items-center gap-2 mt-0.5">
                     <p className="text-xs text-muted-foreground truncate">{m.relationship}</p>
                     {memberRole === "admin" && (
-                      <span className="text-[10px] bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-2 py-0.5 rounded-full font-medium leading-none">Admin</span>
+                      <span className="text-[10px] bg-slate-100/60 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-full font-medium leading-none backdrop-blur-sm">Admin</span>
                     )}
                     {memberRole === "user" && (
-                      <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium leading-none">Convidado</span>
+                      <span className="text-[10px] bg-slate-100/60 text-muted-foreground border border-slate-200/80 px-2 py-0.5 rounded-full font-medium leading-none backdrop-blur-sm">Convidado</span>
                     )}
                   </div>
                 </div>
