@@ -14,9 +14,20 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  // Optimistic: try to read cached session from localStorage synchronously
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = localStorage.getItem(`sb-xazlrdwdkafhzwkezfxz-auth-token`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed?.user ?? null;
+      }
+    } catch {}
+    return null;
+  });
   const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  // If we found a cached user, don't block rendering
+  const [loading, setLoading] = useState(!user);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
