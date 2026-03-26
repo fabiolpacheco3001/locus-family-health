@@ -31,6 +31,7 @@ const ExamSwipeableCard = ({
   quickActionMode = "both",
   isOpen,
   onOpenChange,
+  disableDelete = false,
 }: ExamSwipeableCardProps) => {
   const x = useMotionValue(0);
   const sideRef = useRef<"left" | "right" | "center">("center");
