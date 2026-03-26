@@ -120,6 +120,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
       systolic: sys,
       diastolic: dia,
       source: "consultation",
+      ...(groupId ? { group_id: groupId } : {}),
     } as any);
   };
 
