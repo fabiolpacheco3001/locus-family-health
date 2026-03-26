@@ -113,7 +113,7 @@ const ClinicalTimeline = ({ events }: Props) => {
 
       {/* In-App Document Viewer */}
       <Dialog open={!!viewerUrl} onOpenChange={(open) => !open && setViewerUrl(null)}>
-        <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 flex flex-col rounded-xl overflow-hidden">
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 flex flex-col rounded-xl overflow-hidden [&>button]:hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b bg-card">
             <p className="text-sm font-semibold text-foreground">Visualizar Documento</p>
             <Button variant="ghost" size="icon" onClick={() => setViewerUrl(null)}>
