@@ -61,6 +61,7 @@ type ConsultationInfo = {
 
 const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Props) => {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
