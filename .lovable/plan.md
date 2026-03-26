@@ -1,29 +1,18 @@
 
 
-# Diagnóstico: Coroa Ausente na Lista de Familiares
+# Desativar Confirmação de E-mail no Cadastro
 
-## Causa Raiz
+## O que será feito
 
-O registro do Admin na tabela `family_group_members` tem `family_member_id = NULL`. O código atual constrói um mapa `family_member_id → role`, mas como o valor é nulo, o Admin nunca é encontrado no mapa e a coroa não aparece.
+Usar a ferramenta `cloud--configure_auth` para ativar o **auto-confirm** de e-mail, fazendo com que novos usuários possam acessar o app imediatamente após o cadastro, sem precisar verificar o e-mail.
 
-## Solução
+## Mudança no código
 
-Precisamos de uma segunda via de correspondência: cruzar pelo `auth_user_id` do grupo com o `user_id` dos membros da família.
+No `Login.tsx`, remover a mensagem de sucesso que pede para verificar o e-mail e redirecionar direto para `/home` após o cadastro.
 
-### Arquivo: `src/pages/GerenciarFamilia.tsx`
+## Impacto
 
-1. Expandir a query de `family_group_members` para também retornar `auth_user_id`
-2. Construir o `roleMap` com **duas chaves**: `family_member_id` (quando existe) e `auth_user_id` (sempre)
-3. Na hora de buscar o role de cada membro, tentar primeiro por `m.id` (family_member_id) e depois por `m.user_id` (auth_user_id)
-
-```text
-Lookup logic:
-roleMap.get(m.id)              ← match por family_member_id (convidados)
-  || roleMap.get(m.user_id)    ← match por auth_user_id (admin titular)
-```
-
-### Impacto nos outros pontos que usam roleMap
-
-- `EditMemberDrawer`: recebe `memberRole` como prop do pai, então será corrigido automaticamente
-- Nenhum outro arquivo precisa mudar
+- Novos usuários entram direto no app ao criar conta
+- Convites ficam mais fluidos (o convidado cria a conta e já cai no `InviteAcceptInterceptor`)
+- Tradeoff: qualquer e-mail pode ser usado sem validação de propriedade
 
