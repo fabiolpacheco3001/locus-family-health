@@ -47,6 +47,7 @@ const GerenciarFamilia = () => {
   const roleMap = new Map<string, string>();
   groupMembers.forEach((gm) => {
     if (gm.family_member_id) roleMap.set(gm.family_member_id, gm.role);
+    if (gm.auth_user_id) roleMap.set(gm.auth_user_id, gm.role);
   });
 
   const sorted = [...members].sort(
