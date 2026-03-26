@@ -6,9 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
   Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerDescription,
 } from "@/components/ui/drawer";
 import {
@@ -34,7 +31,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   const [name, setName] = useState("");
   const [examDate, setExamDate] = useState("");
   const [location, setLocation] = useState("");
-  const [status, setStatus] = useState("Agendado");
+  const [status, setStatus] = useState("Agendado"); // managed by swipe, not UI
   const [resultDate, setResultDate] = useState("");
   const [consultationId, setConsultationId] = useState("none");
   const [file, setFile] = useState<File | null>(null);
@@ -177,7 +174,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="space-y-1.5">
                 <Label>Data e Hora</Label>
                 <input
@@ -188,20 +185,6 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   max="2099-12-31T23:59"
                   className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Status</Label>
-                <Select value={isCancelled ? "Cancelado" : status} onValueChange={setStatus} disabled={isCancelled}>
-                  <SelectTrigger className="text-[16px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Agendado">Agendado</SelectItem>
-                    <SelectItem value="Realizado">Realizado</SelectItem>
-                    <SelectItem value="Pronto">Pronto</SelectItem>
-                    {isCancelled && <SelectItem value="Cancelado">Cancelado</SelectItem>}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
