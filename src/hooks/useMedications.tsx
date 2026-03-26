@@ -90,6 +90,7 @@ export const useMedications = (familyMemberId?: string) => {
       return data as Medication[];
     },
     enabled: !!user && (!!familyMemberId || true),
+    staleTime: 5 * 60 * 1000,
   });
 
   const addMedication = useMutation({

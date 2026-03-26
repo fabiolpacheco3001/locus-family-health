@@ -42,6 +42,7 @@ export const useFamilyMembers = () => {
       return data as FamilyMember[];
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   const addMember = useMutation({
