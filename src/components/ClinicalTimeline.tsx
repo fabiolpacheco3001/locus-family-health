@@ -88,7 +88,7 @@ const ClinicalTimeline = ({ events }: Props) => {
                   </p>
 
                   {ev.subtitle && (
-                    <p className="text-xs text-muted-foreground">{ev.subtitle}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{ev.subtitle}</p>
                   )}
 
                   {ev.details && (
