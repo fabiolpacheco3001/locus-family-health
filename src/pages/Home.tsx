@@ -64,28 +64,8 @@ const Home = () => {
     enabled: !!user,
   });
 
-  // Total open appointments count (for carousel card — no limit)
-  const { data: totalOpenAppointments = 0 } = useQuery({
-    queryKey: ["total-open-appointments", user?.id],
-    queryFn: async () => {
-      const [consultRes, examRes] = await Promise.all([
-        supabase
-          .from("consultations")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
-          .eq("status", "Agendada"),
-        supabase
-          .from("exams")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
-          .eq("status", "Agendado"),
-      ]);
-      if (consultRes.error) throw consultRes.error;
-      if (examRes.error) throw examRes.error;
-      return (consultRes.count ?? 0) + (examRes.count ?? 0);
-    },
-    enabled: !!user,
-  });
+  // Derived: total open appointments
+  const totalOpenAppointments = pendingConsultations + pendingExams;
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ["upcoming-appointments", user?.id],
