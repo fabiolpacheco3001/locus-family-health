@@ -49,6 +49,7 @@ const Alergias = lazy(importAlergias);
 const Doencas = lazy(importDoencas);
 const Vacinas = lazy(importVacinas);
 const Seguranca = lazy(importSeguranca);
+const GestaoAcessos = lazy(importGestaoAcessos);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
