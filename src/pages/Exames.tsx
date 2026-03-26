@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useExams, Exam } from "@/hooks/useExams";
 import AddExamDrawer from "@/components/AddExamDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import SwipeableCard from "@/components/SwipeableCard";
+import ExamSwipeableCard from "@/components/ExamSwipeableCard";
 import useSmartBack from "@/hooks/useSmartBack";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -33,7 +33,13 @@ const Exames = () => {
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const { exams, isLoading, deleteExam } = useExams(id!);
+  const { exams, isLoading, deleteExam, updateExam } = useExams(id!);
+
+  const handleQuickStatusUpdate = async (examId: string, newStatus: string) => {
+    try {
+      await updateExam.mutateAsync({ id: examId, status: newStatus });
+    } catch { /* handled */ }
+  };
 
   const examesFiltrados = exams.filter(e => {
     if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
@@ -130,8 +136,15 @@ const Exames = () => {
                 const isOverdue = e.status === "Agendado" && e.exam_date
                   ? isBefore(new Date(e.exam_date), today)
                   : false;
+                const showQuickActions = abaAtiva === 'pendentes' && e.status !== 'Realizado';
                 return (
-                  <SwipeableCard key={e.id} onSwipeDelete={() => setDeleteTarget(e.id)}>
+                  <ExamSwipeableCard
+                    key={e.id}
+                    onDelete={() => setDeleteTarget(e.id)}
+                    onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
+                    onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
+                    showQuickActions={showQuickActions}
+                  >
                     <button
                       onClick={() => handleOpenEdit(e)}
                       className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
@@ -183,7 +196,7 @@ const Exames = () => {
                       </div>
                       <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
                     </button>
-                  </SwipeableCard>
+                  </ExamSwipeableCard>
                 );
               })}
             </AnimatePresence>
