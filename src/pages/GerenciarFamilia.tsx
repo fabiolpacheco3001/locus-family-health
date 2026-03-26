@@ -13,7 +13,8 @@ const ordemParentesco: Record<string, number> = {
   "Filho(a)": 3,
   "Pai/Mãe": 4,
   "Irmão(ã)": 5,
-  "Outro": 6,
+  "Pet": 6,
+  "Outro": 7,
 };
 
 const GerenciarFamilia = () => {
