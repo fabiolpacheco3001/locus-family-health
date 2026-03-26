@@ -58,13 +58,6 @@ const gestaoItems: CardItem[] = [
   { icon: FileText, label: "Exames", subtitle: "Resultados e pedidos", route: "exames" },
 ];
 
-const baseInfoItems: CardItem[] = [
-  { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
-  { icon: HeartPulse, label: "Pressão Arterial", subtitle: "Histórico de PA", route: "__bp__" },
-  { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
-  { icon: Activity, label: "Doenças", subtitle: "Histórico clínico", route: "doencas" },
-];
-
 type ProfileCard = {
   icon: React.ElementType;
   label: string;
