@@ -148,7 +148,8 @@ const Vacinas = () => {
         booster_date: form.booster_date || null,
         batch: form.batch.trim() || null,
         side_effects: form.side_effects.trim() || null,
-      });
+        ...(groupId ? { group_id: groupId } : {}),
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
