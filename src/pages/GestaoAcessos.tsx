@@ -325,135 +325,153 @@ const GestaoAcessos = () => {
       {/* FAB */}
       {!drawerOpen && <FixedFAB onClick={() => { resetForm(); setDrawerOpen(true); }} />}
 
-      {/* Invite Drawer */}
-      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+      <Drawer open={drawerOpen} onOpenChange={(open) => { setDrawerOpen(open); if (!open) resetForm(); }}>
         <DrawerContent className="flex flex-col max-h-[90vh]">
-          <DrawerHeader>
-            <DrawerTitle className="flex items-center gap-2">
-              <UserPlus size={20} className="text-primary" />
-              Convidar Pessoa
-            </DrawerTitle>
-            <DrawerDescription>
-              Envie um convite para alguém acessar a conta da família.
-            </DrawerDescription>
-          </DrawerHeader>
+          {successEmail ? (
+            <>
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 overscroll-contain flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <Check size={32} className="text-emerald-600" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-bold text-foreground">Convite gerado com sucesso!</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    O acesso foi liberado no sistema. Agora, avise o convidado para baixar o aplicativo e criar uma conta usando o e-mail:{" "}
+                    <strong className="text-foreground">{successEmail}</strong>
+                  </p>
+                </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain">
-            {/* Email */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">E-mail do Convidado</Label>
-              <Input
-                type="email"
-                placeholder="pessoa@email.com"
-                value={inviteEmail}
-                onChange={e => setInviteEmail(e.target.value)}
-                className={INPUT_CLASSES}
-              />
-            </div>
-
-            {/* Role */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Nível de Acesso</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => setInviteRole("admin")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    inviteRole === "admin"
-                      ? "border-[#1C3333] bg-[#1C3333]/5"
-                      : "border-border bg-card"
-                  }`}
-                >
-                  <Crown size={24} className={inviteRole === "admin" ? "text-[#1C3333]" : "text-muted-foreground"} />
-                  <span className={`text-sm font-semibold ${inviteRole === "admin" ? "text-[#1C3333]" : "text-muted-foreground"}`}>
-                    Admin
-                  </span>
-                  <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                    Vê e edita tudo
-                  </span>
-                </button>
-                <button
-                  onClick={() => setInviteRole("user")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    inviteRole === "user"
-                      ? "border-[#A7D3CB] bg-[#A7D3CB]/10"
-                      : "border-border bg-card"
-                  }`}
-                >
-                  <UserIcon size={24} className={inviteRole === "user" ? "text-[#1C3333]" : "text-muted-foreground"} />
-                  <span className={`text-sm font-semibold ${inviteRole === "user" ? "text-[#1C3333]" : "text-muted-foreground"}`}>
-                    Usuário
-                  </span>
-                  <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                    Só vê o seu perfil
-                  </span>
-                </button>
+                <div className="w-full space-y-3 pt-2">
+                  <Button
+                    onClick={handleShareWhatsApp}
+                    className="w-full rounded-xl h-12 bg-[#25D366] text-white [@media(hover:hover)]:hover:bg-[#25D366]/90 text-sm font-semibold gap-2"
+                  >
+                    <MessageCircle size={20} />
+                    Avisar pelo WhatsApp
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCopyMessage}
+                    className="w-full rounded-xl h-12 text-sm font-semibold gap-2"
+                  >
+                    {copied ? <Check size={18} /> : <Copy size={18} />}
+                    {copied ? "Copiado!" : "Copiar Mensagem"}
+                  </Button>
+                </div>
               </div>
-            </div>
+              <DrawerFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => { setDrawerOpen(false); resetForm(); }}
+                  className="w-full rounded-xl text-muted-foreground"
+                >
+                  Fechar
+                </Button>
+              </DrawerFooter>
+            </>
+          ) : (
+            <>
+              <DrawerHeader>
+                <DrawerTitle className="flex items-center gap-2">
+                  <UserPlus size={20} className="text-primary" />
+                  Convidar Pessoa
+                </DrawerTitle>
+                <DrawerDescription>
+                  Envie um convite para alguém acessar a conta da família.
+                </DrawerDescription>
+              </DrawerHeader>
 
-            {/* Linked Profile (only for User role) */}
-            {inviteRole === "user" && (
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Perfil Vinculado</Label>
-                <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
-                  <SelectTrigger className={INPUT_CLASSES}>
-                    <SelectValue placeholder="Selecione o familiar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {members.map(m => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name} ({m.relationship})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-[11px] text-muted-foreground leading-tight">
-                  Este usuário só poderá ver e editar dados vinculados a este perfil.
-                </p>
+              <div className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain">
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">E-mail do Convidado</Label>
+                  <Input
+                    type="email"
+                    placeholder="pessoa@email.com"
+                    value={inviteEmail}
+                    onChange={e => setInviteEmail(e.target.value)}
+                    className={INPUT_CLASSES}
+                  />
+                </div>
+
+                {/* Role */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Nível de Acesso</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => setInviteRole("admin")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        inviteRole === "admin"
+                          ? "border-[#1C3333] bg-[#1C3333]/5"
+                          : "border-border bg-card"
+                      }`}
+                    >
+                      <Crown size={24} className={inviteRole === "admin" ? "text-[#1C3333]" : "text-muted-foreground"} />
+                      <span className={`text-sm font-semibold ${inviteRole === "admin" ? "text-[#1C3333]" : "text-muted-foreground"}`}>
+                        Admin
+                      </span>
+                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                        Vê e edita tudo
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setInviteRole("user")}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                        inviteRole === "user"
+                          ? "border-[#A7D3CB] bg-[#A7D3CB]/10"
+                          : "border-border bg-card"
+                      }`}
+                    >
+                      <UserIcon size={24} className={inviteRole === "user" ? "text-[#1C3333]" : "text-muted-foreground"} />
+                      <span className={`text-sm font-semibold ${inviteRole === "user" ? "text-[#1C3333]" : "text-muted-foreground"}`}>
+                        Usuário
+                      </span>
+                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                        Só vê o seu perfil
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Linked Profile (only for User role) */}
+                {inviteRole === "user" && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Perfil Vinculado</Label>
+                    <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
+                      <SelectTrigger className={INPUT_CLASSES}>
+                        <SelectValue placeholder="Selecione o familiar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {members.map(m => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name} ({m.relationship})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground leading-tight">
+                      Este usuário só poderá ver e editar dados vinculados a este perfil.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <DrawerFooter className="flex-row gap-3">
-            <DrawerClose asChild>
-              <Button variant="outline" className="flex-1 rounded-xl">Cancelar</Button>
-            </DrawerClose>
-            <Button
-              onClick={handleSendInvite}
-              disabled={saving || !inviteEmail.trim()}
-              className="flex-1 rounded-xl bg-[#1C3333] text-white [@media(hover:hover)]:hover:bg-[#1C3333]/90"
-            >
-              {saving ? <Loader2 className="animate-spin" size={16} /> : "Salvar Convite"}
-            </Button>
-          </DrawerFooter>
+              <DrawerFooter className="flex-row gap-3">
+                <DrawerClose asChild>
+                  <Button variant="outline" className="flex-1 rounded-xl">Cancelar</Button>
+                </DrawerClose>
+                <Button
+                  onClick={handleSendInvite}
+                  disabled={saving || !inviteEmail.trim()}
+                  className="flex-1 rounded-xl bg-[#1C3333] text-white [@media(hover:hover)]:hover:bg-[#1C3333]/90"
+                >
+                  {saving ? <Loader2 className="animate-spin" size={16} /> : "Salvar Convite"}
+                </Button>
+              </DrawerFooter>
+            </>
+          )}
         </DrawerContent>
       </Drawer>
-
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
-        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteTarget?.type === "member"
-                ? "Deseja remover o acesso desta pessoa? Ela não poderá mais entrar na conta da família."
-                : "Deseja cancelar este convite pendente?"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deleteTarget?.type === "member") handleRemoveMember(deleteTarget.id);
-                else if (deleteTarget?.type === "invite") handleDeleteInvite(deleteTarget.id);
-                setDeleteTarget(null);
-              }}
-              className="bg-destructive text-destructive-foreground [@media(hover:hover)]:hover:bg-destructive/90"
-            >
-              Remover
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
