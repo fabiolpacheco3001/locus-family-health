@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useExams, Exam } from "@/hooks/useExams";
 import AddExamDrawer from "@/components/AddExamDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
-import SwipeableCard from "@/components/SwipeableCard";
+import ExamSwipeableCard from "@/components/ExamSwipeableCard";
 import useSmartBack from "@/hooks/useSmartBack";
 import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
