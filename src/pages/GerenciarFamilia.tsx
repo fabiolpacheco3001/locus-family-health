@@ -35,10 +35,10 @@ const GerenciarFamilia = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("family_group_members" as any)
-        .select("family_member_id, role")
+        .select("family_member_id, role, auth_user_id")
         .eq("group_id", groupId!);
       if (error) throw error;
-      return data as unknown as { family_member_id: string | null; role: string }[];
+      return data as unknown as { family_member_id: string | null; role: string; auth_user_id: string }[];
     },
     enabled: !!groupId,
     staleTime: 5 * 60 * 1000,
@@ -47,6 +47,7 @@ const GerenciarFamilia = () => {
   const roleMap = new Map<string, string>();
   groupMembers.forEach((gm) => {
     if (gm.family_member_id) roleMap.set(gm.family_member_id, gm.role);
+    if (gm.auth_user_id) roleMap.set(gm.auth_user_id, gm.role);
   });
 
   const sorted = [...members].sort(
@@ -98,11 +99,11 @@ const GerenciarFamilia = () => {
           )}
 
           {sorted.map((m) => {
-            const memberRole = roleMap.get(m.id);
+            const memberRole = roleMap.get(m.id) || roleMap.get(m.user_id);
             return (
               <div
                 key={m.id}
-                onClick={() => { setEditMember(m); setEditMemberRole(roleMap.get(m.id)); }}
+                onClick={() => { setEditMember(m); setEditMemberRole(roleMap.get(m.id) || roleMap.get(m.user_id)); }}
                 className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
               >
                 <MemberAvatar avatarUrl={m.avatar_url} name={m.name} memberType={m.member_type} />
