@@ -75,7 +75,7 @@ const ClinicalTimeline = ({ events }: Props) => {
                 {/* Card */}
                 <div className="rounded-xl bg-card border border-border/50 p-4">
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="text-sm font-semibold text-foreground leading-snug flex-1">{ev.title}</p>
+                    <p className="text-sm font-semibold text-foreground leading-snug flex-1 line-clamp-2">{ev.title}</p>
                     {badgeClass && (
                       <Badge className={`${badgeClass} text-[10px] shrink-0 border-0`}>
                         {ev.status}
@@ -88,7 +88,7 @@ const ClinicalTimeline = ({ events }: Props) => {
                   </p>
 
                   {ev.subtitle && (
-                    <p className="text-xs text-muted-foreground">{ev.subtitle}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1">{ev.subtitle}</p>
                   )}
 
                   {ev.details && (
@@ -113,7 +113,7 @@ const ClinicalTimeline = ({ events }: Props) => {
 
       {/* In-App Document Viewer */}
       <Dialog open={!!viewerUrl} onOpenChange={(open) => !open && setViewerUrl(null)}>
-        <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 flex flex-col rounded-xl overflow-hidden">
+        <DialogContent className="max-w-[95vw] w-full h-[90vh] p-0 gap-0 flex flex-col rounded-xl overflow-hidden [&>button]:hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b bg-card">
             <p className="text-sm font-semibold text-foreground">Visualizar Documento</p>
             <Button variant="ghost" size="icon" onClick={() => setViewerUrl(null)}>
