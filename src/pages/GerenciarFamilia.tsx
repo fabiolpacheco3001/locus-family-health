@@ -99,11 +99,11 @@ const GerenciarFamilia = () => {
           )}
 
           {sorted.map((m) => {
-            const memberRole = roleMap.get(m.id);
+            const memberRole = roleMap.get(m.id) || roleMap.get(m.user_id);
             return (
               <div
                 key={m.id}
-                onClick={() => { setEditMember(m); setEditMemberRole(roleMap.get(m.id)); }}
+                onClick={() => { setEditMember(m); setEditMemberRole(roleMap.get(m.id) || roleMap.get(m.user_id)); }}
                 className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 cursor-pointer active:bg-muted/30"
               >
                 <MemberAvatar avatarUrl={m.avatar_url} name={m.name} memberType={m.member_type} />
