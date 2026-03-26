@@ -91,7 +91,8 @@ const Doencas = () => {
         family_member_id: id!,
         name,
         category: selectedCategory,
-      });
+        ...(groupId ? { group_id: groupId } : {}),
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
