@@ -14,6 +14,7 @@ const stockAlertSessionRuns = new Set<string>();
  */
 export function useStockAlerts(medications: Medication[]) {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   useEffect(() => {
