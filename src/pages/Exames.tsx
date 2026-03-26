@@ -71,12 +71,34 @@ const Exames = () => {
     setDrawerOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return;
+  const handleInstantDelete = async (examId: string) => {
+    const examToDelete = exams.find(e => e.id === examId);
+    if (!examToDelete) return;
+    const cached = { ...examToDelete };
+    delete (cached as any).consultations;
     try {
-      await deleteExam.mutateAsync(deleteTarget);
+      await deleteExam.mutateAsync(examId);
+      toast("Exame excluído.", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await addExam.mutateAsync({
+                family_member_id: cached.family_member_id,
+                name: cached.name,
+                exam_date: cached.exam_date,
+                location: cached.location,
+                status: cached.status,
+                file_url: cached.file_url,
+                consultation_id: cached.consultation_id,
+              });
+              toast.success("Exame restaurado.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
     } catch { /* handled */ }
-    setDeleteTarget(null);
   };
 
   const handleBack = goBack;
