@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 const Login = () => {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
+  const queryClient = useQueryClient();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
