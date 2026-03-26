@@ -13,6 +13,10 @@ export type FamilyMember = {
   cpf: string | null;
   avatar_url: string | null;
   created_at: string;
+  member_type: string | null;
+  species: string | null;
+  breed: string | null;
+  tracks_menstrual_cycle?: boolean;
 };
 
 export type NewFamilyMember = {
