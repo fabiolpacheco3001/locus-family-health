@@ -133,7 +133,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
-          status: statusValue,
+          status: editingConsultation.status,
         });
         await saveBP(editingConsultation.id);
         toast.success("Consulta atualizada!");
@@ -290,34 +290,16 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 </div>
               </div>
             </div>
-            {isEditing && (
-              <div className="space-y-3">
-                {!isCancelled && (
-                  <div className="space-y-1.5">
-                    <Label>Status</Label>
-                    <Select value={statusValue} onValueChange={setStatusValue}>
-                      <SelectTrigger className="text-[16px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Agendada">Agendada</SelectItem>
-                        <SelectItem value="Realizada">Realizada</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                {!isCancelled && (
-                  <div className="pt-4 border-t border-border">
-                    <Button
-                      variant="outline"
-                      className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
-                      onClick={() => { setCancelReason(""); setShowCancelAlert(true); }}
-                    >
-                      <Ban size={16} className="mr-2" />
-                      Cancelar Consulta
-                    </Button>
-                  </div>
-                )}
+            {isEditing && !isCancelled && (
+              <div className="pt-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                  onClick={() => { setCancelReason(""); setShowCancelAlert(true); }}
+                >
+                  <Ban size={16} className="mr-2" />
+                  Cancelar Consulta
+                </Button>
               </div>
             )}
           </div>

@@ -1,0 +1,141 @@
+import { ReactNode, useCallback, useEffect, useRef } from "react";
+import { Trash2 } from "lucide-react";
+import { motion, PanInfo, useMotionValue, useTransform, animate } from "framer-motion";
+
+const SNAP_THRESHOLD = 50;
+const DELETE_SNAP = -72;
+const ACTION_SNAP = 72;
+
+interface SwipeableActionCardProps {
+  children: ReactNode;
+  onDelete: () => void;
+  /** Leading action (swipe right). If omitted, swipe right is disabled. */
+  leadingAction?: {
+    icon: ReactNode;
+    label: string;
+    bgColor: string;
+    textColor?: string;
+    onAction: () => void;
+  };
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+}
+
+const SwipeableActionCard = ({
+  children,
+  onDelete,
+  leadingAction,
+  isOpen,
+  onOpenChange,
+}: SwipeableActionCardProps) => {
+  const x = useMotionValue(0);
+  const sideRef = useRef<"left" | "right" | "center">("center");
+
+  const deleteOpacity = useTransform(x, [-100, -30, 0], [1, 0.6, 0]);
+  const actionsOpacity = useTransform(x, [0, 30, 80], [0, 0.6, 1]);
+
+  const rightSnap = leadingAction ? ACTION_SNAP : 0;
+
+  const resetPosition = useCallback(() => {
+    animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
+    sideRef.current = "center";
+    onOpenChange?.(false);
+  }, [x, onOpenChange]);
+
+  useEffect(() => {
+    if (isOpen === false && Math.abs(x.get()) > 5) {
+      animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
+      sideRef.current = "center";
+    }
+  }, [isOpen, x]);
+
+  const handleDragStart = () => {
+    const currentX = x.get();
+    if (currentX < -10) sideRef.current = "left";
+    else if (currentX > 10) sideRef.current = "right";
+    else sideRef.current = "center";
+    onOpenChange?.(true);
+  };
+
+  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const offset = info.offset.x;
+    const velocity = info.velocity.x;
+    const startedFrom = sideRef.current;
+
+    if (startedFrom === "left" && offset > 0) { resetPosition(); return; }
+    if (startedFrom === "right" && offset < 0) { resetPosition(); return; }
+
+    if (offset < -SNAP_THRESHOLD || velocity < -500) {
+      animate(x, DELETE_SNAP, { type: "spring", stiffness: 400, damping: 30 });
+      sideRef.current = "left";
+    } else if ((offset > SNAP_THRESHOLD || velocity > 500) && rightSnap > 0) {
+      animate(x, rightSnap, { type: "spring", stiffness: 400, damping: 30 });
+      sideRef.current = "right";
+    } else {
+      resetPosition();
+    }
+  };
+
+  const handleCardClick = () => {
+    if (Math.abs(x.get()) > 5) resetPosition();
+  };
+
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 1, x: 0 }}
+      exit={{ x: -400, opacity: 0, height: 0, marginBottom: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="relative overflow-hidden rounded-xl"
+    >
+      {/* Delete (trailing - swipe left) */}
+      <motion.div
+        className="absolute inset-0 bg-[#F87171] flex items-center justify-end rounded-xl z-[15] pointer-events-none"
+        style={{ opacity: deleteOpacity }}
+      >
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); resetPosition(); onDelete(); }}
+          className="flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 pointer-events-auto"
+        >
+          <Trash2 className="w-6 h-6" />
+          <span className="text-[10px] mt-1 font-medium">Excluir</span>
+        </button>
+      </motion.div>
+
+      {/* Leading action (swipe right) */}
+      {leadingAction && (
+        <motion.div
+          className="absolute inset-0 flex items-center justify-start rounded-xl overflow-hidden z-[15] pointer-events-none"
+          style={{ opacity: actionsOpacity }}
+        >
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); e.preventDefault(); resetPosition(); leadingAction.onAction(); }}
+            className={`flex flex-col items-center justify-center w-[72px] h-full active:opacity-80 pointer-events-auto`}
+            style={{ backgroundColor: leadingAction.bgColor, color: leadingAction.textColor ?? "#fff" }}
+          >
+            {leadingAction.icon}
+            <span className="text-[10px] mt-1 font-semibold">{leadingAction.label}</span>
+          </button>
+        </motion.div>
+      )}
+
+      {/* Main card */}
+      <motion.div
+        style={{ x, touchAction: "pan-y", willChange: "transform" }}
+        drag="x"
+        dragConstraints={{ left: DELETE_SNAP - 10, right: rightSnap + 10 }}
+        dragElastic={0.15}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onClick={handleCardClick}
+        className="relative z-10 cursor-grab active:cursor-grabbing"
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+export default SwipeableActionCard;
