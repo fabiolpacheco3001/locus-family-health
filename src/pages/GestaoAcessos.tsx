@@ -472,6 +472,33 @@ const GestaoAcessos = () => {
           )}
         </DrawerContent>
       </Drawer>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Remoção</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.type === "member"
+                ? "Deseja remover o acesso desta pessoa? Ela não poderá mais entrar na conta da família."
+                : "Deseja cancelar este convite pendente?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget?.type === "member") handleRemoveMember(deleteTarget.id);
+                else if (deleteTarget?.type === "invite") handleDeleteInvite(deleteTarget.id);
+                setDeleteTarget(null);
+              }}
+              className="bg-destructive text-destructive-foreground [@media(hover:hover)]:hover:bg-destructive/90"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
