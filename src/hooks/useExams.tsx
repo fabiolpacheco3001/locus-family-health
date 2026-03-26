@@ -50,7 +50,8 @@ export const useExams = (familyMemberId: string) => {
         .from("exams")
         .select("*, consultations(professional_name, specialty)")
         .eq("family_member_id", familyMemberId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data as Exam[];
     },
