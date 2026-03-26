@@ -75,7 +75,7 @@ const ClinicalTimeline = ({ events }: Props) => {
                 {/* Card */}
                 <div className="rounded-xl bg-card border border-border/50 p-4">
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <p className="text-sm font-semibold text-foreground leading-snug flex-1">{ev.title}</p>
+                    <p className="text-sm font-semibold text-foreground leading-snug flex-1 line-clamp-2">{ev.title}</p>
                     {badgeClass && (
                       <Badge className={`${badgeClass} text-[10px] shrink-0 border-0`}>
                         {ev.status}
