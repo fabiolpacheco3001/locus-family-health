@@ -439,6 +439,54 @@ export type Database = {
           },
         ]
       }
+      group_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          family_member_id: string | null
+          group_id: string
+          id: string
+          invited_by: string
+          role: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          family_member_id?: string | null
+          group_id: string
+          id?: string
+          invited_by: string
+          role?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          family_member_id?: string | null
+          group_id?: string
+          id?: string
+          invited_by?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_invites_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_invites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_measurements: {
         Row: {
           bmi: number | null
@@ -762,6 +810,14 @@ export type Database = {
       decrement_stock: {
         Args: { amount?: number; med_id: string }
         Returns: number
+      }
+      is_group_admin: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { _group_id: string; _user_id: string }
+        Returns: boolean
       }
     }
     Enums: {

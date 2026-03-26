@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText } from "lucide-react";
+import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { supabase } from "@/integrations/supabase/client";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -23,6 +24,7 @@ const menuItems = [
 
 const Ajustes = () => {
   const { signOut, user } = useAuth();
+  const { isAdmin } = useFamilyGroup();
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
@@ -91,6 +93,20 @@ const Ajustes = () => {
                 <ChevronRight size={18} className="text-muted-foreground" />
               </button>
             ))}
+
+            {/* Access Management - Admin only */}
+            {isAdmin && (
+              <button
+                onClick={() => navigate("/gestao-acessos")}
+                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                  <UserCog size={20} className="text-black" />
+                </div>
+                <span className="flex-1 text-left text-sm font-medium text-foreground">Acesso Compartilhado</span>
+                <ChevronRight size={18} className="text-muted-foreground" />
+              </button>
+            )}
 
             {/* Delete Account - danger item */}
             <button
