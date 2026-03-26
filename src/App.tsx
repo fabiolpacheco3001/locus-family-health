@@ -11,23 +11,61 @@ import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
 
 // Lazy-loaded routes (code-split into separate chunks)
-const Agenda = lazy(() => import("./pages/Agenda"));
-const Familia = lazy(() => import("./pages/Familia"));
-const Ajustes = lazy(() => import("./pages/Ajustes"));
-const FamiliarProfile = lazy(() => import("./pages/FamiliarProfile"));
-const Prontuario = lazy(() => import("./pages/Prontuario"));
-const Consultas = lazy(() => import("./pages/Consultas"));
-const Medicamentos = lazy(() => import("./pages/Medicamentos"));
-const MedicamentosGeral = lazy(() => import("./pages/MedicamentosGeral"));
-const Exames = lazy(() => import("./pages/Exames"));
-const Notificacoes = lazy(() => import("./pages/Notificacoes"));
-const MinhaSaude = lazy(() => import("./pages/MinhaSaude"));
-const MeusDados = lazy(() => import("./pages/MeusDados"));
-const GerenciarFamilia = lazy(() => import("./pages/GerenciarFamilia"));
-const Alergias = lazy(() => import("./pages/Alergias"));
-const Doencas = lazy(() => import("./pages/Doencas"));
-const Vacinas = lazy(() => import("./pages/Vacinas"));
-const Seguranca = lazy(() => import("./pages/Seguranca"));
+// Lazy chunk import functions (reused for prefetching)
+const importAgenda = () => import("./pages/Agenda");
+const importFamilia = () => import("./pages/Familia");
+const importAjustes = () => import("./pages/Ajustes");
+const importFamiliarProfile = () => import("./pages/FamiliarProfile");
+const importProntuario = () => import("./pages/Prontuario");
+const importConsultas = () => import("./pages/Consultas");
+const importMedicamentos = () => import("./pages/Medicamentos");
+const importMedicamentosGeral = () => import("./pages/MedicamentosGeral");
+const importExames = () => import("./pages/Exames");
+const importNotificacoes = () => import("./pages/Notificacoes");
+const importMinhaSaude = () => import("./pages/MinhaSaude");
+const importMeusDados = () => import("./pages/MeusDados");
+const importGerenciarFamilia = () => import("./pages/GerenciarFamilia");
+const importAlergias = () => import("./pages/Alergias");
+const importDoencas = () => import("./pages/Doencas");
+const importVacinas = () => import("./pages/Vacinas");
+const importSeguranca = () => import("./pages/Seguranca");
+
+const Agenda = lazy(importAgenda);
+const Familia = lazy(importFamilia);
+const Ajustes = lazy(importAjustes);
+const FamiliarProfile = lazy(importFamiliarProfile);
+const Prontuario = lazy(importProntuario);
+const Consultas = lazy(importConsultas);
+const Medicamentos = lazy(importMedicamentos);
+const MedicamentosGeral = lazy(importMedicamentosGeral);
+const Exames = lazy(importExames);
+const Notificacoes = lazy(importNotificacoes);
+const MinhaSaude = lazy(importMinhaSaude);
+const MeusDados = lazy(importMeusDados);
+const GerenciarFamilia = lazy(importGerenciarFamilia);
+const Alergias = lazy(importAlergias);
+const Doencas = lazy(importDoencas);
+const Vacinas = lazy(importVacinas);
+const Seguranca = lazy(importSeguranca);
+
+// Prefetch functions exported for use by AppLayout and BottomNav
+export const prefetchCriticalChunks = () => {
+  importAgenda();
+  importFamilia();
+  importAjustes();
+  importMinhaSaude();
+  importConsultas();
+  importMedicamentos();
+  importExames();
+};
+
+export const prefetchByRoute: Record<string, () => void> = {
+  "/agenda": importAgenda,
+  "/familia": importFamilia,
+  "__drawer_saude__": importMinhaSaude,
+  "/gerenciar-familia": importGerenciarFamilia,
+  "/ajustes": importAjustes,
+};
 
 const RouteLoader = () => (
   <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#f2f0eb] z-50">

@@ -42,6 +42,14 @@ const AppLayout = () => {
     });
   }, [user, queryClient]);
 
+  // Background prefetch all critical lazy chunks after first paint
+  useEffect(() => {
+    const tid = setTimeout(() => {
+      import("@/App").then(m => m.prefetchCriticalChunks?.());
+    }, 1500);
+    return () => clearTimeout(tid);
+  }, []);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);

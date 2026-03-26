@@ -46,6 +46,8 @@ const BottomNav = () => {
             <button
               key={path}
               onClick={() => handleClick(path)}
+              onTouchStart={() => handlePrefetch(path)}
+              onMouseEnter={() => handlePrefetch(path)}
               className={cn(
                 "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
                 isActive ? "text-primary" : "text-muted-foreground"
