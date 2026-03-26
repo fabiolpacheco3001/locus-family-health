@@ -1,124 +1,113 @@
+# Contexto: Locus Vita (Fase 153 - Execução do Raio-X de Performance PWA / Cold Start)
 
+O Stakeholder APROVOU INTEGRALMENTE o Diagnóstico e o Plano de Ação (6 correções) para o First Contentful Paint e Thread Blocking. A execução deve ser cirúrgica, focando na percepção de velocidade (Progressive Rendering) e liberação da Main Thread.
 
-# Diagnóstico Raio-X: Performance de Carregamento Inicial
+## Autorização de Execução (Siga os 6 passos do seu relatório)
 
-## Resumo Executivo
+Execute as correções rigorosamente conforme o seu plano:
 
-O app sofre de **waterfall de queries sequenciais** e **queries redundantes** que se acumulam no momento da entrada. A cada navegação para uma tela autenticada, o sistema dispara entre **7 e 12 chamadas HTTP ao backend** antes de renderizar conteúdo útil.
+1. **Deferir Cálculo Pesado (Unblock Main Thread):** Em `useMedicationAlarms`, envolva a chamada síncrona `checkAlarms()` e a preparação do catch-up em um `setTimeout` (ex: 100ms a 500ms) para permitir que o navegador faça o "First Paint" da UI antes de travar a thread com cálculos do `date-fns`.
+
+2. **Cold Start Prefetch:** No `AppLayout` (ou onde o state do usuário autenticado é recuperado no mount), dispare o `queryClient.prefetchQuery` para as 3 chaves principais `medications`, `family_members`, `notifications`) caso o cache esteja vazio.
+
+3. **Home Progressive Rendering:** Quebre o `isLoading` unificado. Renderize os "Próximos Compromissos" e "Ações de Hoje" independentemente, permitindo que a seção mais rápida apareça primeiro. O Carrossel deve renderizar sua "casca/shell" imediatamente.
+
+4. **Cache Reuse `FamiliarProfile`):** Em `MinhaSaude` / Perfil do Familiar, altere o fetch individual. Use `queryClient.getQueryData(['family_members', user.id])` para encontrar o familiar. Faça o fetch de rede OBRIGATORIAMENTE apenas como fallback se não achar no cache.
+
+5. **UI Skeleton Isolado `FamiliarProfile`):** Remova o `return <Skeleton>` que bloqueia a página inteira. Renderize a TopBar, o Header e os grids (Alergias, Consultas, etc.) imediatamente. Coloque o Skeleton APENAS no Card de Identidade do familiar caso o dado ainda esteja carregando.
+
+6. **StaleTime Faltante:** Aplique `staleTime: 5 * 60 * 1000` na query `health_measurements`.
+
+## Regras de Execução (Vibe Coding)
+
+ *O objetivo desta refatoração é zerar o tempo de tela branca (First Contentful Paint). A "casca" do aplicativo deve aparecer em menos de 300ms, preenchendo os dados gradativamente sem congelar o scroll do usuário.*  
+  
+********************************  
+  
+Diagnóstico Raio-X: First Contentful Paint e Thread Blocking
+
+## Achados Críticos
+
+### 1. Main Thread Blocking — CONFIRMADO (Impacto: Alto)
+
+O `useMedicationAlarms` executa `checkAlarms()` **sincronamente no mount** (linha 200), ANTES do setTimeout de 60s. Esse loop itera sobre TODOS os medicamentos ativos, chamando `calculateNextDose()` (que faz manipulação de Date com while-loop) para cada um. Com 20+ medicamentos, isso bloqueia a thread principal por dezenas de milissegundos durante o primeiro render.
+
+O catch-up de doses perdidas (linhas 98-150) também roda no mount — ele itera todos os medicamentos, faz cálculos de `Date` e dispara RPCs `decrement_stock` em paralelo. Embora assíncrono, o loop síncrono de preparação dos decrements bloqueia antes do `await`.
+
+### 2. Waterfall de Auth → Queries — CONFIRMADO (Impacto: Alto)
+
+O `useAuth` faz duas chamadas sequenciais ao Supabase Auth (`onAuthStateChange` + `getSession`). Enquanto `loading === true`, nenhum hook com `enabled: !!user` dispara. Isso cria um **waterfall de ~300-500ms** antes de qualquer query de dados começar.
+
+Sequência real no Cold Start do PWA:
+
+```text
+[0ms]   App monta → AuthProvider.getSession() inicia
+[300ms] getSession resolve → user disponível
+[300ms] AppLayout monta → useMedications() dispara
+[300ms] Home monta → useFamilyMembers(), useNotifications(), pending-counts, upcoming
+[600ms] Medications resolve → useMedicationAlarms.checkAlarms() BLOQUEIA thread
+[600ms] useMedicationAlarms catch-up → N RPCs decrement_stock
+[800ms] useStockAlerts → 1 query notifications (batch)
+[800ms] useMenstrualAlerts → 1 query menstrual_cycles + 1 query notifications
+[~1200ms] Dados chegam → Home renderiza conteúdo
+```
+
+### 3. Falha do Prefetch no Cold Start — CONFIRMADO (Impacto: Alto)
+
+O prefetch no `Login.tsx` só roda quando o usuário faz login interativo. No **Cold Start do PWA** (usuário já logado, abre o app), o fluxo vai direto para `/home` via sessão persistida — o prefetch do Login **nunca executa**. Resultado: cache vazio, todas as queries disparam do zero.
+
+### 4. FamiliarProfile sem staleTime — CONFIRMADO (Impacto: Médio)
+
+A query `["family_member", id]` no `FamiliarProfile.tsx` (linha 85) **não tem `staleTime**`. Cada navegação para um perfil refaz a query, mesmo que os dados do familiar já existam no cache de `["family_members", user.id]`. Além disso, essa query busca um membro individual em vez de reutilizar a lista já cacheada.
+
+### 5. Skeleton Bloqueado por `isLoading` Combinado — CONFIRMADO (Impacto: Médio)
+
+Na Home (linha 170): `const isLoading = medsLoading || upcomingLoading;`. Isso faz com que as seções de "Ações de Hoje" e "Próximos Compromissos" mostrem skeleton até que AMBAS as queries resolvam. Se medications resolver em 400ms mas upcoming demorar 800ms, a seção de medicamentos fica presa no skeleton por 400ms extras desnecessários.
+
+### 6. FamiliarProfile bloqueia render inteiro no isLoading — CONFIRMADO (Impacto: Médio)
+
+Linha 99: `if (isLoading) { return <Skeleton ...> }`. O componente inteiro é substituído por 3 skeletons genéricos. O header, os grids de navegação e o layout poderiam ser renderizados imediatamente (são estáticos) enquanto apenas o "Identity Card" mostra skeleton.
 
 ---
 
-## Mapa de Queries por Tela
+## Plano de Ação (6 correções)
 
-### Login -> Home (Pior Caso: ~10 requests paralelos/sequenciais)
+### Correção 1: Defer `checkAlarms` do primeiro tick
 
-```text
-┌─ AppLayout monta ─────────────────────────────────────────┐
-│  1. useMedications()     → GET medications (ALL)          │
-│  2. useMedicationAlarms  → catch-up RPC (N decrements)    │
-│  3. useStockAlerts       → GET notifications (N queries)  │
-│  4. useMenstrualAlerts   → GET menstrual_cycles           │
-│                            GET notifications (N queries)  │
-└───────────────────────────────────────────────────────────┘
-         ↓ (em paralelo)
-┌─ Home monta ──────────────────────────────────────────────┐
-│  5. useMedications()     → GET medications (DUPLICADA!)   │
-│  6. useFamilyMembers()   → GET family_members             │
-│  7. useNotifications()   → GET notifications (ALL)        │
-│  8. pending-counts       → GET consultations (count)      │
-│                            GET exams (count)              │
-│  9. upcoming-appointments→ GET consultations (top 5)      │
-│                            GET exams (top 5)              │
-└───────────────────────────────────────────────────────────┘
-```
+Envolver a chamada `checkAlarms()` na linha 200 do `useMedicationAlarms` em um `setTimeout(checkAlarms, 100)` para liberar a thread principal para o primeiro paint.
 
-### Home -> Minha Saúde (FamiliarProfile) (~3 requests adicionais)
-```text
-│  10. GET family_member (single)                           │
-│  (AppLayout hooks continuam rodando em background)        │
-```
+### Correção 2: Prefetch no AppLayout para Cold Start
 
-### Home -> Exames (~2 requests adicionais)
-```text
-│  11. GET exams (by family_member_id)                      │
-│  12. GET consultations (by family_member_id)              │
-```
+Adicionar lógica no `AppLayout` (ou `AuthProvider`) que detecte sessão já existente e dispare `queryClient.prefetchQuery` para `medications`, `family_members` e `notifications` imediatamente quando `user` ficar disponível — cobrindo o cenário de Cold Start que o prefetch do Login não cobre.
 
----
+### Correção 3: Separar `isLoading` por seção na Home
 
-## Problemas Identificados (por gravidade)
+Substituir `const isLoading = medsLoading || upcomingLoading` por verificações independentes:
 
-### 1. Query de Medicamentos DUPLICADA (Impacto: Alto)
-- `AppLayout` chama `useMedications()` → query key `["medications", "all"]`
-- `Home` chama `useMedications()` novamente → **mesma query key**, mas React Query pode disparar 2x se o timing for ruim
-- **Economia potencial**: 1 request eliminado
+- Seção "Ações de Hoje" → usa `medsLoading`
+- Seção "Próximos Compromissos" → usa `upcomingLoading`
+- Carrossel → renderiza imediatamente com dados do cache ou zeros
 
-### 2. useStockAlerts faz N+1 queries (Impacto: Alto)
-- Para cada medicamento com estoque baixo, faz uma query individual ao `notifications` para verificar se já notificou hoje
-- Com 5 medicamentos ativos de uso contínuo = 5 queries extras ao `notifications`
-- **Solução**: Batch query única filtrando por `type = 'stock'` e `created_at >= today`
+### Correção 4: FamiliarProfile — usar cache da lista de membros
 
-### 3. useMenstrualAlerts faz N+1 queries (Impacto: Médio)
-- Busca todos os ciclos, depois para cada familiar faz query individual ao `notifications`
-- **Solução**: Mesma abordagem batch
+Em vez de fazer uma query individual `["family_member", id]`, usar `queryClient.getQueryData(["family_members", user.id])` para buscar o membro no cache existente, com fallback para query individual. Adicionar `staleTime: 5 * 60 * 1000`.
 
-### 4. useMedicationAlarms catch-up faz N RPCs (Impacto: Médio)
-- Na montagem, para cada medicamento com doses perdidas, faz um RPC `decrement_stock` individual
-- Já usa `Promise.all` (bom), mas cada RPC é um request HTTP separado
-- **Solução possível**: Criar um RPC batch `decrement_stock_batch` que aceita array
+### Correção 5: FamiliarProfile — Progressive Rendering
 
-### 5. Home faz 4 queries para o dashboard (Impacto: Médio)
-- `pending-counts`: 2 queries (consultations count + exams count)
-- `upcoming-appointments`: 2 queries (consultations top 5 + exams top 5)
-- Total: 4 requests só para o dashboard
-- **Solução**: Consolidar em 1-2 queries ou criar uma view/function no backend
+Substituir o `if (isLoading) return <Skeleton>` por um layout que renderize o header e os grids de navegação imediatamente (são estáticos/conhecidos), mostrando skeleton apenas no Identity Card.
 
-### 6. Nenhum prefetch de dados (Impacto: Médio)
-- Ao fazer login, não há prefetch. O usuário vê skeleton por 1-3 segundos
-- **Solução**: Após `signIn` bem-sucedido, prefetch as queries principais antes de navegar
+### Correção 6: MinhaSaude — Adicionar staleTime
 
-### 7. useExams sem staleTime (Impacto: Baixo)
-- `useExams` não define `staleTime`, então refetcha a cada mount/unmount
-- `useConsultations` também não define `staleTime`
-- **Solução**: Adicionar `staleTime: 5 * 60 * 1000` como nos outros hooks
-
----
-
-## Plano de Otimização (6 passos)
-
-### Passo 1: Eliminar query duplicada de medicamentos na Home
-- A Home já recebe os dados do `AppLayout` via React Query cache (mesma query key `["medications", "all"]`)
-- Confirmar que o `staleTime: 5min` está impedindo refetch desnecessário
-- Se não, o problema é timing — garantir que a Home use o cache
-
-### Passo 2: Batch das verificações de notificação (Stock + Menstrual)
-- Em `useStockAlerts`: fazer UMA query `notifications WHERE type='stock' AND created_at >= today` e filtrar localmente
-- Em `useMenstrualAlerts`: fazer UMA query `notifications WHERE type='menstrual' AND created_at >= today` e filtrar localmente
-- **Economia**: de N+1 queries para 1 query cada
-
-### Passo 3: Adicionar staleTime aos hooks faltantes
-- `useExams`: adicionar `staleTime: 5 * 60 * 1000`
-- `useConsultations`: adicionar `staleTime: 5 * 60 * 1000`
-- Previne refetch desnecessário ao navegar entre telas
-
-### Passo 4: Consolidar queries do dashboard da Home
-- Unificar `pending-counts` e `upcoming-appointments` em uma única query que busca ambos
-- Ou ao menos usar `Promise.all` dentro de uma única `queryFn`
-
-### Passo 5: Prefetch após login
-- No `handleSubmit` do Login, após `signIn` bem-sucedido, chamar `queryClient.prefetchQuery` para `medications`, `family_members` e `notifications` antes de navegar para `/home`
-
-### Passo 6: Manter delay de 2s nos alertas de background
-- Já implementado (bom), garantir que não regrediu
+A query `["health_measurements", id]` não tem `staleTime`. Adicionar `staleTime: 5 * 60 * 1000`.
 
 ---
 
 ## Resultado Esperado
 
-| Métrica | Antes | Depois |
-|---------|-------|--------|
-| Requests na entrada (Home) | 10-12 | 5-6 |
-| Tempo até First Paint | 2-3s | < 1s |
-| Requests redundantes | 3-5 | 0 |
-| N+1 queries (alertas) | Sim | Não |
 
+| Métrica                               | Antes    | Depois         |
+| ------------------------------------- | -------- | -------------- |
+| Time to First Content (Home)          | 1.2-2s   | < 500ms        |
+| Time to Interactive (FamiliarProfile) | 1-1.5s   | < 300ms        |
+| Main Thread Block (checkAlarms)       | 50-100ms | 0ms (deferred) |
+| Cold Start penalty (sem prefetch)     | +500ms   | Eliminado      |
