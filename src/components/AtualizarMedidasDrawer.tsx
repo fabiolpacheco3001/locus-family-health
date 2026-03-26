@@ -45,8 +45,10 @@ const AtualizarMedidasDrawer = ({
   open,
   onOpenChange,
   memberId,
+  memberType,
   currentData,
 }: AtualizarMedidasDrawerProps) => {
+  const isPet = (memberType || "human") === "pet";
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
