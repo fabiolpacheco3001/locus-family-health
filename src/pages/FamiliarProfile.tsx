@@ -24,12 +24,13 @@ import {
 import { Button } from "@/components/ui/button";
 import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
+import { useAuth } from "@/hooks/useAuth";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -76,12 +77,14 @@ const FamiliarProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const goBack = useSmartBack();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);
   const [cycleOpen, setCycleOpen] = useState(false);
 
-
+  // Try cache first, fallback to individual query
   const { data: member, isLoading, error } = useQuery({
     queryKey: ["family_member", id],
     queryFn: async () => {
@@ -94,22 +97,17 @@ const FamiliarProfile = () => {
       return data as (FamilyMember & { tracks_menstrual_cycle?: boolean }) | null;
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    initialData: () => {
+      // Reuse cached family_members list to avoid redundant fetch
+      if (!user) return undefined;
+      const cached = queryClient.getQueryData<FamilyMember[]>(["family_members", user.id]);
+      const found = cached?.find((m) => m.id === id);
+      return found ? (found as FamilyMember & { tracks_menstrual_cycle?: boolean }) : undefined;
+    },
   });
 
-  if (isLoading) {
-    return (
-      <div className="px-4 pt-6 space-y-6 animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-10 w-10 rounded-lg" />
-          <Skeleton className="h-6 w-40" />
-        </div>
-        <Skeleton className="h-28 w-full rounded-xl" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-      </div>
-    );
-  }
-
-  if (error || !member) {
+  if (!isLoading && (error || !member)) {
     return (
       <div className="px-4 pt-6 animate-fade-in">
         <div className="flex items-center gap-3 mb-8">
@@ -130,13 +128,13 @@ const FamiliarProfile = () => {
     );
   }
 
-  const age = calculateAge(member.birth_date);
+  const age = member ? calculateAge(member.birth_date) : null;
   const infoParts: string[] = [];
   if (age !== null) infoParts.push(`${age} anos`);
-  if (member.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
+  if (member?.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
   const infoLine = infoParts.join(" • ");
 
-  const tracksCycle = !!(member as any).tracks_menstrual_cycle;
+  const tracksCycle = !!(member as any)?.tracks_menstrual_cycle;
   const infoItems: CardItem[] = [
     ...baseInfoItems,
     ...(tracksCycle
@@ -144,15 +142,15 @@ const FamiliarProfile = () => {
       : []),
   ];
 
-  const memberWeight = (member as any).weight as number | null;
-  const memberHeight = (member as any).height as number | null;
-  const memberActivity = (member as any).physical_activity as string | null;
+  const memberWeight = (member as any)?.weight as number | null ?? null;
+  const memberHeight = (member as any)?.height as number | null ?? null;
+  const memberActivity = (member as any)?.physical_activity as string | null ?? null;
   const calculatedBMI = memberWeight && memberHeight && memberHeight > 0
     ? (memberWeight / (memberHeight * memberHeight)).toFixed(1)
     : null;
 
   const profileCards: ProfileCard[] = [
-    { icon: Droplet, label: "Tipo Sanguíneo", value: member.blood_type || "—", action: "medidas" },
+    { icon: Droplet, label: "Tipo Sanguíneo", value: member?.blood_type || "—", action: "medidas" },
     { icon: Weight, label: "Peso", value: memberWeight ? `${memberWeight} kg` : "— kg", action: "medidas" },
     { icon: Ruler, label: "Altura", value: memberHeight ? `${memberHeight} m` : "— m", action: "medidas" },
     { icon: Calculator, label: "IMC", value: calculatedBMI || "—", action: "medidas" },
@@ -205,18 +203,28 @@ const FamiliarProfile = () => {
         </div>
         <div className="p-4 pb-8 space-y-6 min-h-[calc(100%+1px)]">
 
-      {/* Identity Card */}
-      <button
-        onClick={() => setEditOpen(true)}
-        className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
-      >
-        <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
-        <div className="min-w-0 flex-1">
-          <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
-          <p className="text-sm text-muted-foreground">{member.relationship}</p>
-          {infoLine && <p className="text-xs text-muted-foreground mt-0.5">{infoLine}</p>}
+      {/* Identity Card - Progressive: skeleton only here */}
+      {isLoading && !member ? (
+        <div className="w-full rounded-xl bg-primary/10 p-5 flex items-center gap-4">
+          <Skeleton className="w-14 h-14 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-4 w-20" />
+          </div>
         </div>
-      </button>
+      ) : member ? (
+        <button
+          onClick={() => setEditOpen(true)}
+          className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
+        >
+          <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" />
+          <div className="min-w-0 flex-1">
+            <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
+            <p className="text-sm text-muted-foreground">{member.relationship}</p>
+            {infoLine && <p className="text-xs text-muted-foreground mt-0.5">{infoLine}</p>}
+          </div>
+        </button>
+      ) : null}
 
       {/* Prontuário (RES) Button */}
       <button
@@ -266,29 +274,33 @@ const FamiliarProfile = () => {
       </div>
 
       {/* Edit Drawer */}
-      <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
-      <AtualizarMedidasDrawer
-        open={medidasOpen}
-        onOpenChange={setMedidasOpen}
-        memberId={member.id}
-        currentData={{
-          blood_type: member.blood_type,
-          weight: memberWeight,
-          height: memberHeight,
-          physical_activity: memberActivity,
-        }}
-      />
-      <BloodPressureHistoryDrawer
-        open={bpOpen}
-        onOpenChange={setBpOpen}
-        familyMemberId={member.id}
-      />
-      {tracksCycle && (
-        <MenstrualCycleDrawer
-          open={cycleOpen}
-          onOpenChange={setCycleOpen}
-          familyMemberId={member.id}
-        />
+      {member && (
+        <>
+          <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
+          <AtualizarMedidasDrawer
+            open={medidasOpen}
+            onOpenChange={setMedidasOpen}
+            memberId={member.id}
+            currentData={{
+              blood_type: member.blood_type,
+              weight: memberWeight,
+              height: memberHeight,
+              physical_activity: memberActivity,
+            }}
+          />
+          <BloodPressureHistoryDrawer
+            open={bpOpen}
+            onOpenChange={setBpOpen}
+            familyMemberId={member.id}
+          />
+          {tracksCycle && (
+            <MenstrualCycleDrawer
+              open={cycleOpen}
+              onOpenChange={setCycleOpen}
+              familyMemberId={member.id}
+            />
+          )}
+        </>
       )}
     </div>
   );

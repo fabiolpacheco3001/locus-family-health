@@ -167,7 +167,7 @@ const Home = () => {
       return a.nextDose.getTime() - b.nextDose.getTime();
     });
 
-  const isLoading = medsLoading || upcomingLoading;
+  // Progressive rendering: each section uses its own loading state
 
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = React.useState(0);
@@ -378,7 +378,7 @@ const Home = () => {
             </span>
           </AccordionTrigger>
           <AccordionContent>
-            {isLoading ? (
+            {medsLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-16 w-full rounded-xl" />
                 <Skeleton className="h-16 w-full rounded-xl" />
@@ -452,7 +452,7 @@ const Home = () => {
             </span>
           </AccordionTrigger>
           <AccordionContent>
-            {isLoading ? (
+            {upcomingLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-20 w-full rounded-xl" />
               </div>

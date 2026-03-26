@@ -58,6 +58,7 @@ const MinhaSaude = () => {
       return data || [];
     },
     enabled: !!id && !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   const chartData = measurements
