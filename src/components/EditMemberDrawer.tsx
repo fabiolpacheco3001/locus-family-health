@@ -175,6 +175,19 @@ const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => 
 
             {renderAvatar()}
 
+            {memberRole === "admin" && (
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <Crown className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-[10px] bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-2 py-0.5 rounded-full font-medium leading-none">Admin</span>
+              </div>
+            )}
+            {memberRole === "user" && (
+              <div className="flex items-center justify-center gap-1.5 mb-1">
+                <User className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full font-medium leading-none">Usuário Convidado</span>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label>{isPet ? "Nome do Pet *" : "Nome Completo *"}</Label>
               <Input placeholder={isPet ? "Ex: Rex, Luna..." : "Ex: Maria da Silva"} value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
