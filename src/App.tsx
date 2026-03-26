@@ -68,13 +68,12 @@ export const prefetchByRoute: Record<string, () => void> = {
 };
 
 const RouteLoader = () => (
-  <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#f2f0eb] z-50">
+  <div className="fixed inset-0 flex items-center justify-center bg-[#f2f0eb] z-50">
     <img
       src="/logo-locus-vita.svg"
       alt="Locus Vita"
-      className="w-16 h-16 mb-4 animate-pulse"
+      className="w-20 h-20 animate-breathing"
     />
-    <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
   </div>
 );
 
