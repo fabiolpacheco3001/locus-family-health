@@ -57,6 +57,8 @@ const GestaoAcessos = () => {
   const [inviteRole, setInviteRole] = useState<"admin" | "user">("user");
   const [inviteMemberId, setInviteMemberId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [successEmail, setSuccessEmail] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "member" | "invite"; id: string } | null>(null);
 
   // Fetch active group members
