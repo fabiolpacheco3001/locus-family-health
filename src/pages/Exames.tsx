@@ -37,8 +37,22 @@ const Exames = () => {
   const { exams, isLoading, deleteExam, updateExam } = useExams(id!);
 
   const handleQuickStatusUpdate = async (examId: string, newStatus: string) => {
+    const exam = exams.find(e => e.id === examId);
+    const previousStatus = exam?.status ?? 'Agendado';
     try {
       await updateExam.mutateAsync({ id: examId, status: newStatus });
+      toast(`Exame atualizado para ${newStatus}`, {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await updateExam.mutateAsync({ id: examId, status: previousStatus });
+              toast.success("Status revertido.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
     } catch { /* handled */ }
   };
 
