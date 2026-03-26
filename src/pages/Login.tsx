@@ -7,6 +7,8 @@ import locusvitaLogo from "@/assets/locus-vita-logo.jpeg";
 import { toast } from "sonner";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();

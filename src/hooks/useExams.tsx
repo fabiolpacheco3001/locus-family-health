@@ -55,6 +55,7 @@ export const useExams = (familyMemberId: string) => {
       return data as Exam[];
     },
     enabled: !!user && !!familyMemberId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const addExam = useMutation({
