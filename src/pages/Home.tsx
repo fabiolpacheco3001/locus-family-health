@@ -167,7 +167,7 @@ const Home = () => {
       return a.nextDose.getTime() - b.nextDose.getTime();
     });
 
-  const isLoading = medsLoading || upcomingLoading;
+  // Progressive rendering: each section uses its own loading state
 
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = React.useState(0);
