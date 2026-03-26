@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
@@ -23,6 +24,8 @@ const statusColors: Record<string, string> = {
 const Consultas = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
+  const { members } = useFamilyMembers();
+  const currentMember = members.find((m) => m.id === id);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'proximas' | 'historico'>('proximas');
@@ -106,6 +109,7 @@ const Consultas = () => {
         onOpenChange={handleDrawerChange}
         familyMemberId={id!}
         editingConsultation={editingConsultation}
+        memberType={currentMember?.member_type || 'human'}
       />
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">

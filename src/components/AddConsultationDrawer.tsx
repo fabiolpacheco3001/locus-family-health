@@ -26,9 +26,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   familyMemberId: string;
   editingConsultation?: Consultation | null;
+  memberType?: string;
 }
 
-const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation }: Props) => {
+const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation, memberType }: Props) => {
   const { user } = useAuth();
   const { addConsultation, updateConsultation } = useConsultations(familyMemberId);
   const [specialty, setSpecialty] = useState("");
@@ -80,8 +81,11 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
         });
     } else {
       resetForm();
+      if (memberType === 'pet') {
+        setSpecialty("Veterinário");
+      }
     }
-  }, [editingConsultation, open]);
+  }, [editingConsultation, open, memberType]);
 
   const resetForm = () => {
     setSpecialty("");
