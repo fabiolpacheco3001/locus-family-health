@@ -33,7 +33,13 @@ const Exames = () => {
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const { exams, isLoading, deleteExam } = useExams(id!);
+  const { exams, isLoading, deleteExam, updateExam } = useExams(id!);
+
+  const handleQuickStatusUpdate = async (examId: string, newStatus: string) => {
+    try {
+      await updateExam.mutateAsync({ id: examId, status: newStatus });
+    } catch { /* handled */ }
+  };
 
   const examesFiltrados = exams.filter(e => {
     if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
