@@ -158,6 +158,29 @@ const GestaoAcessos = () => {
     setInviteEmail("");
     setInviteRole("user");
     setInviteMemberId("");
+    setSuccessEmail(null);
+    setCopied(false);
+  };
+
+  const getShareMessage = (email: string) =>
+    `Olá! Liberei o seu acesso ao Locus Vita. 💙 Baixe o aplicativo e crie a sua conta utilizando exatamente este e-mail: ${email} para visualizar o perfil.`;
+
+  const handleCopyMessage = async () => {
+    if (!successEmail) return;
+    try {
+      await navigator.clipboard.writeText(getShareMessage(successEmail));
+      setCopied(true);
+      toast.success("Mensagem copiada!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!successEmail) return;
+    const msg = encodeURIComponent(getShareMessage(successEmail));
+    window.open(`https://wa.me/?text=${msg}`, "_blank");
   };
 
   const isLoading = loadingMembers || loadingInvites;
