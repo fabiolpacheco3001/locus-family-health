@@ -378,7 +378,7 @@ const Home = () => {
             </span>
           </AccordionTrigger>
           <AccordionContent>
-            {isLoading ? (
+            {medsLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-16 w-full rounded-xl" />
                 <Skeleton className="h-16 w-full rounded-xl" />
