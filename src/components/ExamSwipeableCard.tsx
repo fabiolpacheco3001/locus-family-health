@@ -18,6 +18,8 @@ interface ExamSwipeableCardProps {
   quickActionMode?: QuickActionMode;
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  /** When true, swipe-left delete is disabled (non-admin users) */
+  disableDelete?: boolean;
 }
 
 const ExamSwipeableCard = ({
