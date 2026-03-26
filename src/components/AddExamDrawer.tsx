@@ -174,7 +174,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <div className="space-y-1.5">
                 <Label>Data e Hora</Label>
                 <input
@@ -185,20 +185,6 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   max="2099-12-31T23:59"
                   className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
                 />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Status</Label>
-                <Select value={isCancelled ? "Cancelado" : status} onValueChange={setStatus} disabled={isCancelled}>
-                  <SelectTrigger className="text-[16px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Agendado">Agendado</SelectItem>
-                    <SelectItem value="Realizado">Realizado</SelectItem>
-                    <SelectItem value="Pronto">Pronto</SelectItem>
-                    {isCancelled && <SelectItem value="Cancelado">Cancelado</SelectItem>}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
