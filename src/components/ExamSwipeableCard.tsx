@@ -127,7 +127,7 @@ const ExamSwipeableCard = ({
               resetPosition();
               onMarkPronto();
             }}
-            className="flex flex-col items-center justify-center w-[72px] h-full bg-[#1C3333] text-white active:opacity-80 relative z-20"
+            className="flex flex-col items-center justify-center w-[72px] h-full bg-[#1C3333] text-white active:opacity-80 pointer-events-auto"
           >
             <FileCheck className="w-6 h-6" />
             <span className="text-[10px] mt-1 font-semibold">Pronto</span>
