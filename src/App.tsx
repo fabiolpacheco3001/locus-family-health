@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { FamilyGroupProvider } from "@/hooks/useFamilyGroup";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import AppLayout from "./components/AppLayout";
@@ -82,6 +83,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <FamilyGroupProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -115,6 +117,7 @@ const App = () => (
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
+      </FamilyGroupProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

@@ -14,6 +14,7 @@ import {
 import FixedFAB from "@/components/ui/FixedFAB";
 import useSmartBack from "@/hooks/useSmartBack";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ const severityOptions = ["Leve", "Moderada", "Grave"];
 const Alergias = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -83,7 +85,8 @@ const Alergias = () => {
         substance: form.substance.trim(),
         type: form.type,
         severity: form.severity,
-      });
+        ...(groupId ? { group_id: groupId } : {}),
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {

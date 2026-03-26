@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
@@ -60,6 +61,7 @@ type ConsultationInfo = {
 
 const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Props) => {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -138,6 +140,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
       measurement_date: form.date ? `${form.date}T12:00:00` : new Date().toISOString(),
       source: "manual",
       notes: form.notes.trim() || null,
+      ...(groupId ? { group_id: groupId } : {}),
     } as any);
     setSaving(false);
 

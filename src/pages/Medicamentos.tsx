@@ -13,10 +13,12 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 
 const Medicamentos = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
+  const { isAdmin } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
@@ -175,6 +177,7 @@ const Medicamentos = () => {
                   <SwipeableActionCard
                     key={m.id}
                     onDelete={() => handleInstantDelete(m.id)}
+                    disableDelete={!isAdmin}
                     leadingAction={isAtivo ? {
                       icon: <CheckCircle className="w-6 h-6" />,
                       label: "Concluído",

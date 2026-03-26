@@ -16,6 +16,7 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { toast } from "sonner";
 
 interface AtualizarMedidasDrawerProps {
@@ -50,6 +51,7 @@ const AtualizarMedidasDrawer = ({
 }: AtualizarMedidasDrawerProps) => {
   const isPet = (memberType || "human") === "pet";
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const [bloodType, setBloodType] = useState(currentData.blood_type || "");
@@ -99,7 +101,8 @@ const AtualizarMedidasDrawer = ({
           weight: w,
           height: h,
           bmi: bmiVal ? parseFloat(bmiVal.toFixed(1)) : null,
-        });
+          ...(groupId ? { group_id: groupId } : {}),
+        } as any);
       }
     },
     onSuccess: () => {

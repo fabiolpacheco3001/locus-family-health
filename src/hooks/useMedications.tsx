@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useFamilyGroup } from "./useFamilyGroup";
 
 export type Medication = {
   id: string;
@@ -69,6 +70,7 @@ export type UpdateMedication = {
 
 export const useMedications = (familyMemberId?: string) => {
   const { user } = useAuth();
+  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -81,6 +83,10 @@ export const useMedications = (familyMemberId?: string) => {
 
       if (familyMemberId) {
         q = q.eq("family_member_id", familyMemberId);
+      } else if (isAdmin) {
+        q = q.eq("user_id", user!.id);
+      } else if (linkedMemberId) {
+        q = q.eq("family_member_id", linkedMemberId);
       } else {
         q = q.eq("user_id", user!.id);
       }
@@ -97,7 +103,7 @@ export const useMedications = (familyMemberId?: string) => {
     mutationFn: async (medication: NewMedication) => {
       const { data, error } = await supabase
         .from("medications")
-        .insert({ ...medication, user_id: user!.id })
+        .insert({ ...medication, user_id: user!.id, ...(groupId ? { group_id: groupId } : {}) } as any)
         .select()
         .single();
       if (error) throw error;

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAuth } from "./useAuth";
+import { useFamilyGroup } from "./useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays, differenceInDays, parseISO } from "date-fns";
@@ -13,6 +14,7 @@ const menstrualAlertSessionRuns = new Set<string>();
  */
 export function useMenstrualAlerts() {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -89,6 +91,7 @@ export function useMenstrualAlerts() {
           message: `Faltam ${daysLeft} dia${daysLeft > 1 ? "s" : ""} para o seu próximo ciclo menstrual. Prepare-se e cuide-se!`,
           type: "menstrual",
           scheduled_for: new Date().toISOString(),
+          ...(groupId ? { group_id: groupId } : {}),
         } as never);
 
         if (!insertError) {

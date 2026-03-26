@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           family_member_id: string
+          group_id: string | null
           id: string
           severity: string
           substance: string
@@ -27,6 +28,7 @@ export type Database = {
         Insert: {
           created_at?: string
           family_member_id: string
+          group_id?: string | null
           id?: string
           severity?: string
           substance: string
@@ -36,6 +38,7 @@ export type Database = {
         Update: {
           created_at?: string
           family_member_id?: string
+          group_id?: string | null
           id?: string
           severity?: string
           substance?: string
@@ -50,6 +53,13 @@ export type Database = {
             referencedRelation: "family_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "allergies_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       blood_pressure_history: {
@@ -58,6 +68,7 @@ export type Database = {
           created_at: string
           diastolic: number
           familiar_id: string
+          group_id: string | null
           id: string
           measurement_date: string
           notes: string | null
@@ -70,6 +81,7 @@ export type Database = {
           created_at?: string
           diastolic: number
           familiar_id: string
+          group_id?: string | null
           id?: string
           measurement_date?: string
           notes?: string | null
@@ -82,6 +94,7 @@ export type Database = {
           created_at?: string
           diastolic?: number
           familiar_id?: string
+          group_id?: string | null
           id?: string
           measurement_date?: string
           notes?: string | null
@@ -89,7 +102,15 @@ export type Database = {
           systolic?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "blood_pressure_history_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultations: {
         Row: {
@@ -97,6 +118,7 @@ export type Database = {
           consultation_date: string | null
           created_at: string
           family_member_id: string
+          group_id: string | null
           id: string
           professional_name: string | null
           questions: string | null
@@ -111,6 +133,7 @@ export type Database = {
           consultation_date?: string | null
           created_at?: string
           family_member_id: string
+          group_id?: string | null
           id?: string
           professional_name?: string | null
           questions?: string | null
@@ -125,6 +148,7 @@ export type Database = {
           consultation_date?: string | null
           created_at?: string
           family_member_id?: string
+          group_id?: string | null
           id?: string
           professional_name?: string | null
           questions?: string | null
@@ -142,6 +166,13 @@ export type Database = {
             referencedRelation: "family_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "consultations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       diseases: {
@@ -150,6 +181,7 @@ export type Database = {
           created_at: string
           diagnosed_at: string | null
           family_member_id: string
+          group_id: string | null
           id: string
           name: string
           notes: string | null
@@ -160,6 +192,7 @@ export type Database = {
           created_at?: string
           diagnosed_at?: string | null
           family_member_id: string
+          group_id?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -170,6 +203,7 @@ export type Database = {
           created_at?: string
           diagnosed_at?: string | null
           family_member_id?: string
+          group_id?: string | null
           id?: string
           name?: string
           notes?: string | null
@@ -183,6 +217,13 @@ export type Database = {
             referencedRelation: "family_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "diseases_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       exams: {
@@ -193,6 +234,7 @@ export type Database = {
           exam_date: string | null
           family_member_id: string
           file_url: string | null
+          group_id: string | null
           id: string
           location: string | null
           name: string
@@ -207,6 +249,7 @@ export type Database = {
           exam_date?: string | null
           family_member_id: string
           file_url?: string | null
+          group_id?: string | null
           id?: string
           location?: string | null
           name: string
@@ -221,6 +264,7 @@ export type Database = {
           exam_date?: string | null
           family_member_id?: string
           file_url?: string | null
+          group_id?: string | null
           id?: string
           location?: string | null
           name?: string
@@ -243,7 +287,80 @@ export type Database = {
             referencedRelation: "family_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "exams_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      family_group_members: {
+        Row: {
+          accepted_at: string | null
+          auth_user_id: string
+          family_member_id: string | null
+          group_id: string
+          id: string
+          invited_at: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          auth_user_id: string
+          family_member_id?: string | null
+          group_id: string
+          id?: string
+          invited_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          auth_user_id?: string
+          family_member_id?: string | null
+          group_id?: string
+          id?: string
+          invited_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_group_members_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       family_members: {
         Row: {
@@ -255,6 +372,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           gender: string | null
+          group_id: string | null
           height: number | null
           id: string
           member_type: string | null
@@ -276,6 +394,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           gender?: string | null
+          group_id?: string | null
           height?: number | null
           id?: string
           member_type?: string | null
@@ -297,6 +416,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           gender?: string | null
+          group_id?: string | null
           height?: number | null
           id?: string
           member_type?: string | null
@@ -309,13 +429,22 @@ export type Database = {
           user_id?: string
           weight?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "family_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       health_measurements: {
         Row: {
           bmi: number | null
           created_at: string
           family_member_id: string
+          group_id: string | null
           height: number | null
           id: string
           recorded_at: string
@@ -326,6 +455,7 @@ export type Database = {
           bmi?: number | null
           created_at?: string
           family_member_id: string
+          group_id?: string | null
           height?: number | null
           id?: string
           recorded_at?: string
@@ -336,6 +466,7 @@ export type Database = {
           bmi?: number | null
           created_at?: string
           family_member_id?: string
+          group_id?: string | null
           height?: number | null
           id?: string
           recorded_at?: string
@@ -348,6 +479,13 @@ export type Database = {
             columns: ["family_member_id"]
             isOneToOne: false
             referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "health_measurements_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -365,6 +503,7 @@ export type Database = {
           family_member_id: string
           frequency: string | null
           frequency_hours: number | null
+          group_id: string | null
           id: string
           last_stock_decrement: string | null
           medico_prescritor: string | null
@@ -388,6 +527,7 @@ export type Database = {
           family_member_id: string
           frequency?: string | null
           frequency_hours?: number | null
+          group_id?: string | null
           id?: string
           last_stock_decrement?: string | null
           medico_prescritor?: string | null
@@ -411,6 +551,7 @@ export type Database = {
           family_member_id?: string
           frequency?: string | null
           frequency_hours?: number | null
+          group_id?: string | null
           id?: string
           last_stock_decrement?: string | null
           medico_prescritor?: string | null
@@ -437,6 +578,13 @@ export type Database = {
             referencedRelation: "family_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "medications_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       menstrual_cycles: {
@@ -447,6 +595,7 @@ export type Database = {
           end_date: string | null
           familiar_id: string
           flow_intensity: string | null
+          group_id: string | null
           id: string
           notes: string | null
           start_date: string
@@ -460,6 +609,7 @@ export type Database = {
           end_date?: string | null
           familiar_id: string
           flow_intensity?: string | null
+          group_id?: string | null
           id?: string
           notes?: string | null
           start_date: string
@@ -473,19 +623,29 @@ export type Database = {
           end_date?: string | null
           familiar_id?: string
           flow_intensity?: string | null
+          group_id?: string | null
           id?: string
           notes?: string | null
           start_date?: string
           symptoms?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menstrual_cycles_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
           action_url: string | null
           created_at: string | null
           family_member_id: string | null
+          group_id: string | null
           id: string
           is_read: boolean | null
           medication_id: string | null
@@ -499,6 +659,7 @@ export type Database = {
           action_url?: string | null
           created_at?: string | null
           family_member_id?: string | null
+          group_id?: string | null
           id?: string
           is_read?: boolean | null
           medication_id?: string | null
@@ -512,6 +673,7 @@ export type Database = {
           action_url?: string | null
           created_at?: string | null
           family_member_id?: string | null
+          group_id?: string | null
           id?: string
           is_read?: boolean | null
           medication_id?: string | null
@@ -529,6 +691,13 @@ export type Database = {
             referencedRelation: "family_members"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
         ]
       }
       vaccines: {
@@ -538,6 +707,7 @@ export type Database = {
           booster_date: string | null
           created_at: string
           family_member_id: string
+          group_id: string | null
           id: string
           name: string
           side_effects: string | null
@@ -549,6 +719,7 @@ export type Database = {
           booster_date?: string | null
           created_at?: string
           family_member_id: string
+          group_id?: string | null
           id?: string
           name: string
           side_effects?: string | null
@@ -560,6 +731,7 @@ export type Database = {
           booster_date?: string | null
           created_at?: string
           family_member_id?: string
+          group_id?: string | null
           id?: string
           name?: string
           side_effects?: string | null
@@ -571,6 +743,13 @@ export type Database = {
             columns: ["family_member_id"]
             isOneToOne: false
             referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vaccines_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -586,7 +765,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -713,6 +892,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

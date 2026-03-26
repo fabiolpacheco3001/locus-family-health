@@ -19,6 +19,8 @@ interface SwipeableActionCardProps {
   };
   isOpen?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
+  /** When true, swipe-left delete is disabled (non-admin users) */
+  disableDelete?: boolean;
 }
 
 const SwipeableActionCard = ({
@@ -27,6 +29,7 @@ const SwipeableActionCard = ({
   leadingAction,
   isOpen,
   onOpenChange,
+  disableDelete = false,
 }: SwipeableActionCardProps) => {
   const x = useMotionValue(0);
   const sideRef = useRef<"left" | "right" | "center">("center");
@@ -65,7 +68,7 @@ const SwipeableActionCard = ({
     if (startedFrom === "left" && offset > 0) { resetPosition(); return; }
     if (startedFrom === "right" && offset < 0) { resetPosition(); return; }
 
-    if (offset < -SNAP_THRESHOLD || velocity < -500) {
+    if (!disableDelete && (offset < -SNAP_THRESHOLD || velocity < -500)) {
       animate(x, DELETE_SNAP, { type: "spring", stiffness: 400, damping: 30 });
       sideRef.current = "left";
     } else if ((offset > SNAP_THRESHOLD || velocity > 500) && rightSnap > 0) {
@@ -125,7 +128,7 @@ const SwipeableActionCard = ({
       <motion.div
         style={{ x, touchAction: "pan-y", willChange: "transform" }}
         drag="x"
-        dragConstraints={{ left: DELETE_SNAP - 10, right: rightSnap + 10 }}
+        dragConstraints={{ left: disableDelete ? 0 : DELETE_SNAP - 10, right: rightSnap + 10 }}
         dragElastic={0.15}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}

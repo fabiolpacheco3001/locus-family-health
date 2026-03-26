@@ -14,6 +14,7 @@ import {
 import FixedFAB from "@/components/ui/FixedFAB";
 import useSmartBack from "@/hooks/useSmartBack";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -60,6 +61,7 @@ type DrawerMode = "add" | "edit";
 const Doencas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const goBack = useSmartBack();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -91,7 +93,8 @@ const Doencas = () => {
         family_member_id: id!,
         name,
         category: selectedCategory,
-      });
+        ...(groupId ? { group_id: groupId } : {}),
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {

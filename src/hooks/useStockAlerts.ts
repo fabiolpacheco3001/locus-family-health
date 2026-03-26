@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAuth } from "./useAuth";
+import { useFamilyGroup } from "./useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Medication } from "./useMedications";
@@ -13,6 +14,7 @@ const stockAlertSessionRuns = new Set<string>();
  */
 export function useStockAlerts(medications: Medication[]) {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -71,6 +73,7 @@ export function useStockAlerts(medications: Medication[]) {
           message: `Restam apenas ${med.estoque_total} comprimidos para ${memberName}. Lembre-se de comprar uma nova caixa.`,
           type: "stock",
           scheduled_for: new Date().toISOString(),
+          ...(groupId ? { group_id: groupId } : {}),
         };
 
         const { error } = await supabase.from("notifications").insert(notificationInsert as never);

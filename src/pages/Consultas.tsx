@@ -14,6 +14,7 @@ import { format, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 
 const statusColors: Record<string, string> = {
   Agendada: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -24,6 +25,7 @@ const statusColors: Record<string, string> = {
 const Consultas = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
+  const { isAdmin } = useFamilyGroup();
   const { members } = useFamilyMembers();
   const currentMember = members.find((m) => m.id === id);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -168,6 +170,7 @@ const Consultas = () => {
                   <SwipeableActionCard
                     key={c.id}
                     onDelete={() => handleInstantDelete(c.id)}
+                    disableDelete={!isAdmin}
                     leadingAction={isAgendada ? {
                       icon: <CheckCircle className="w-6 h-6" />,
                       label: "Realizada",

@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO, differenceInDays, addDays } from "date-fns";
@@ -109,6 +110,7 @@ const emptyForm: FormState = {
 
 const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -222,6 +224,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
         ...payload,
         user_id: user.id,
         familiar_id: familyMemberId,
+        ...(groupId ? { group_id: groupId } : {}),
       } as any);
       error = res.error;
     }

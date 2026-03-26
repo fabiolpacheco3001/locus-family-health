@@ -13,6 +13,7 @@ import { format, parseISO, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 
 const statusColors: Record<string, string> = {
   Agendado: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -26,6 +27,7 @@ const statusColors: Record<string, string> = {
 const Exames = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
+  const { isAdmin } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
@@ -178,6 +180,7 @@ const Exames = () => {
                   <ExamSwipeableCard
                     key={e.id}
                     onDelete={() => handleInstantDelete(e.id)}
+                    disableDelete={!isAdmin}
                     onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
                     onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
                     quickActionMode={quickActionMode}

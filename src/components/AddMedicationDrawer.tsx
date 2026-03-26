@@ -3,6 +3,7 @@ import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck,
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,6 +73,7 @@ type ExtractedMed = {
 
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const { addMedication, updateMedication, deleteMedication, uploadReceita } = useMedications(familyMemberId);
   const { consultations } = useConsultations(familyMemberId);
   const [name, setName] = useState("");
@@ -433,6 +435,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               type: "medication",
               scheduled_for: new Date().toISOString(),
               is_read: false,
+              ...(groupId ? { group_id: groupId } : {}),
             };
           });
 
@@ -486,7 +489,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             type: "medication",
             scheduled_for: new Date().toISOString(),
             is_read: false,
-          });
+            ...(groupId ? { group_id: groupId } : {}),
+          } as any);
         }
         toast.success("Medicamento adicionado!");
       }

@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { useConsultations, Consultation, NewConsultation } from "@/hooks/useConsultations";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { Activity } from "lucide-react";
 
 interface Props {
@@ -31,6 +32,7 @@ interface Props {
 
 const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingConsultation, memberType }: Props) => {
   const { user } = useAuth();
+  const { groupId } = useFamilyGroup();
   const { addConsultation, updateConsultation } = useConsultations(familyMemberId);
   const [specialty, setSpecialty] = useState("");
   const [professionalName, setProfessionalName] = useState("");
@@ -118,6 +120,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
       systolic: sys,
       diastolic: dia,
       source: "consultation",
+      ...(groupId ? { group_id: groupId } : {}),
     } as any);
   };
 
