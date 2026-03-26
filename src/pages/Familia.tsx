@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import MemberAvatar from "@/components/MemberAvatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Familia = () => {
   const { members, isLoading } = useFamilyMembers();
@@ -16,7 +17,21 @@ const Familia = () => {
         <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-2 -mx-5 px-5">
           <h1 className="text-2xl font-bold text-foreground">Família</h1>
         </div>
-        {members.length === 0 && !isLoading && (
+        {isLoading && members.length === 0 && (
+          <div className="flex flex-col space-y-3 w-full">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="flex items-center p-4 bg-card rounded-xl border border-border/50">
+                <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                <div className="flex flex-col ml-4 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && members.length === 0 && (
           <p className="text-muted-foreground text-sm">
             Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.
           </p>

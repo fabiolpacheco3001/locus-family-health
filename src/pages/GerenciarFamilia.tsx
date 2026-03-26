@@ -6,6 +6,7 @@ import AddMemberDrawer from "@/components/AddMemberDrawer";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
 import MemberAvatar from "@/components/MemberAvatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ordemParentesco: Record<string, number> = {
   "Titular": 1,
@@ -50,7 +51,21 @@ const GerenciarFamilia = () => {
             </button>
             <h1 className="text-lg font-bold text-foreground">Gerenciar Família</h1>
           </div>
-          {members.length === 0 && !isLoading && (
+          {isLoading && members.length === 0 && (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center p-4 bg-card rounded-xl border border-border/50">
+                  <Skeleton className="w-12 h-12 rounded-full shrink-0" />
+                  <div className="flex flex-col ml-4 flex-1 space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isLoading && members.length === 0 && (
             <p className="text-muted-foreground text-sm">
               Toque no botão <span className="font-semibold text-accent-foreground">+</span> para adicionar um membro.
             </p>
