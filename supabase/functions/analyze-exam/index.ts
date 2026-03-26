@@ -32,27 +32,29 @@ serve(async (req) => {
 
 Se não conseguir identificar algum campo, use null para esse campo. Retorne SOMENTE o JSON, sem markdown, sem explicações.`;
 
-    const isPdf = fileUrl.toLowerCase().includes(".pdf");
-
-    const userContent: any[] = [
-      {
-        type: "text",
-        text: "Extraia os dados deste documento de exame médico.",
-      },
-    ];
-
-    if (isPdf) {
-      // For PDFs, send the URL as a file reference
-      userContent.push({
-        type: "file",
-        file: { url: fileUrl },
-      });
-    } else {
-      userContent.push({
-        type: "image_url",
-        image_url: { url: fileUrl },
+    // Download the file and convert to base64
+    const fileResponse = await fetch(fileUrl);
+    if (!fileResponse.ok) {
+      console.error("Failed to download file:", fileResponse.status);
+      return new Response(JSON.stringify({ error: "Não foi possível baixar o arquivo." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const fileBytes = new Uint8Array(await fileResponse.arrayBuffer());
+    const base64 = btoa(String.fromCharCode(...fileBytes));
+
+    const isPdf = fileUrl.toLowerCase().includes(".pdf");
+    const mimeType = isPdf ? "application/pdf" : "image/jpeg";
+
+    const userContent: any[] = [
+      { type: "text", text: "Extraia os dados deste documento de exame médico." },
+      {
+        type: "image_url",
+        image_url: { url: `data:${mimeType};base64,${base64}` },
+      },
+    ];
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
