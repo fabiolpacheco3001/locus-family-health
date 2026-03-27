@@ -31,7 +31,7 @@ export const FamilyGroupProvider = ({ children }: { children: ReactNode }) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("family_group_members" as any)
-        .select("group_id, role, family_member_id")
+        .select("group_id, role, family_member_id, managed_profiles")
         .eq("auth_user_id", user!.id)
         .limit(1)
         .single();
