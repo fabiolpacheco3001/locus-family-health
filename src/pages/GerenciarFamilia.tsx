@@ -23,7 +23,7 @@ const ordemParentesco: Record<string, number> = {
 
 const GerenciarFamilia = () => {
   const { members, isLoading } = useFamilyMembers();
-  const { groupId, isAdmin } = useFamilyGroup();
+  const { groupId, isAdmin, managedProfiles } = useFamilyGroup();
   const navigate = useNavigate();
   const [addDrawerOpen, setAddDrawerOpen] = useState(false);
   const [editMember, setEditMember] = useState<FamilyMember | null>(null);
@@ -105,7 +105,7 @@ const GerenciarFamilia = () => {
 
           {sorted.map((m) => {
             const memberRole = roleMap.get(m.id);
-            const canEdit = isAdmin;
+            const canEdit = isAdmin || (managedProfiles ?? []).includes(m.id);
             return (
               <div
                 key={m.id}

@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { ArrowLeft, Shield, UserPlus, Crown, User as UserIcon, Loader2, Mail, Trash2, Check, Copy, MessageCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Shield, UserPlus, Crown, User as UserIcon, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -32,6 +33,7 @@ type GroupMember = {
   auth_user_id: string;
   role: string;
   family_member_id: string | null;
+  managed_profiles: string[] | null;
   invited_at: string;
   accepted_at: string | null;
 };
@@ -60,7 +62,9 @@ const GestaoAcessos = () => {
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "member" | "invite"; id: string } | null>(null);
-  
+  const [permsMember, setPermsMember] = useState<GroupMember | null>(null);
+  const [permsSelected, setPermsSelected] = useState<string[]>([]);
+  const [permsSaving, setPermsSaving] = useState(false);
 
   // Fetch active group members
   const { data: groupMembers = [], isLoading: loadingMembers } = useQuery({
@@ -68,7 +72,7 @@ const GestaoAcessos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("family_group_members" as any)
-        .select("id, auth_user_id, role, family_member_id, invited_at, accepted_at")
+        .select("id, auth_user_id, role, family_member_id, managed_profiles, invited_at, accepted_at")
         .eq("group_id", groupId!);
       if (error) throw error;
       return (data as unknown as GroupMember[]) ?? [];
@@ -232,7 +236,11 @@ const GestaoAcessos = () => {
                     return (
                       <div
                         key={gm.id}
-                        className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm"
+                        onClick={gm.role === "user" && !isCurrentUser ? () => {
+                          setPermsMember(gm);
+                          setPermsSelected(gm.managed_profiles ?? []);
+                        } : undefined}
+                        className={`flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm ${gm.role === "user" && !isCurrentUser ? "cursor-pointer active:bg-muted/30" : ""}`}
                       >
                         <MemberAvatar
                           avatarUrl={linkedMember?.avatar_url ?? null}
@@ -253,6 +261,14 @@ const GestaoAcessos = () => {
                             {gm.family_member_id ? linkedMember?.relationship : "Todos os perfis"}
                           </p>
                         </div>
+                        {gm.role === "user" && !isCurrentUser && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setPermsMember(gm); setPermsSelected(gm.managed_profiles ?? []); }}
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-accent active:bg-accent/60"
+                          >
+                            <Settings2 size={16} />
+                          </button>
+                        )}
                         <Badge
                           className={
                             gm.role === "admin"
@@ -264,7 +280,7 @@ const GestaoAcessos = () => {
                         </Badge>
                         {!isCurrentUser && (
                           <button
-                            onClick={() => setDeleteTarget({ type: "member", id: gm.id })}
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: "member", id: gm.id }); }}
                             className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-destructive/10 [@media(hover:hover)]:hover:text-destructive active:bg-destructive/10"
                           >
                             <Trash2 size={16} />
@@ -477,6 +493,73 @@ const GestaoAcessos = () => {
               </div>
             </>
           )}
+        </DrawerContent>
+      </Drawer>
+
+      {/* Permissions Drawer */}
+      <Drawer open={!!permsMember} onOpenChange={(open) => { if (!open) setPermsMember(null); }}>
+        <DrawerContent className="flex flex-col max-h-[90vh]">
+          <DrawerHeader>
+            <DrawerTitle className="flex items-center gap-2">
+              <Settings2 size={20} className="text-primary" />
+              Permissões de {members.find(m => m.id === permsMember?.family_member_id)?.name?.split(' ')[0] ?? "Usuário"}
+            </DrawerTitle>
+            <DrawerDescription>
+              Defina quais perfis este usuário pode visualizar e editar.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2 overscroll-contain">
+            {members.map(m => {
+              const isPrimary = m.id === permsMember?.family_member_id;
+              const isChecked = isPrimary || permsSelected.includes(m.id);
+              return (
+                <div key={m.id} className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/40">
+                  <MemberAvatar avatarUrl={m.avatar_url} name={m.name} size="sm" memberType={m.member_type} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
+                    <p className="text-xs text-muted-foreground">{m.relationship}</p>
+                  </div>
+                  <Switch
+                    checked={isChecked}
+                    disabled={isPrimary}
+                    onCheckedChange={(checked) => {
+                      setPermsSelected(prev =>
+                        checked ? [...prev, m.id] : prev.filter(id => id !== m.id)
+                      );
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <DrawerFooter>
+            <Button
+              onClick={async () => {
+                if (!permsMember) return;
+                setPermsSaving(true);
+                try {
+                  // Filter out the primary profile from managed_profiles
+                  const profilesToSave = permsSelected.filter(id => id !== permsMember.family_member_id);
+                  const { error } = await supabase
+                    .from("family_group_members" as any)
+                    .update({ managed_profiles: profilesToSave } as any)
+                    .eq("id", permsMember.id);
+                  if (error) throw error;
+                  toast.success("Permissões atualizadas!");
+                  queryClient.invalidateQueries({ queryKey: ["group_members", groupId] });
+                  setPermsMember(null);
+                } catch {
+                  toast.error("Erro ao salvar permissões.");
+                } finally {
+                  setPermsSaving(false);
+                }
+              }}
+              disabled={permsSaving}
+              className="w-full rounded-xl bg-[#1C3333] text-white [@media(hover:hover)]:hover:bg-[#1C3333]/90"
+            >
+              {permsSaving ? <Loader2 className="animate-spin" size={16} /> : "Salvar Permissões"}
+            </Button>
+          </DrawerFooter>
         </DrawerContent>
       </Drawer>
 

@@ -25,7 +25,7 @@ const Home = () => {
   const navigate = useNavigate();
   const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
   const { members, isLoading: membersLoading } = useFamilyMembers();
-  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles, role } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
 
   const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
@@ -364,11 +364,17 @@ const Home = () => {
       <div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
-            { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
-            { icon: Pill, label: "Medicamentos", action: () => setQuickAction('medicamentos') },
-            { icon: Users, label: "Família", action: () => navigate('/gerenciar-familia', { state: { from: '/home' } }) },
-          ].map(({ icon: Icon, label, action }) => (
+            { icon: Stethoscope, label: "Consultas", key: 'consultas' as const },
+            { icon: FileText, label: "Exames", key: 'exames' as const },
+            { icon: Pill, label: "Medicamentos", key: 'medicamentos' as const },
+            { icon: Users, label: "Família", key: null },
+          ].map(({ icon: Icon, label, key }) => {
+            const action = key === null
+              ? () => navigate('/gerenciar-familia', { state: { from: '/home' } })
+              : role === "user" && linkedMemberId && managedProfiles.length === 0
+                ? () => navigate(`/familiar/${linkedMemberId}/${key}`, { state: { from: '/home' } })
+                : () => setQuickAction(key);
+            return (
             <button
               key={label}
               onClick={action}
@@ -381,7 +387,8 @@ const Home = () => {
                 {label}
               </span>
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -555,7 +562,13 @@ const Home = () => {
               const ordemParentesco: Record<string, number> = {
                 "Titular": 1, "Cônjuge": 2, "Filho(a)": 3, "Pai/Mãe": 4, "Irmão(ã)": 5, "Outro": 6,
               };
-              return [...members].sort((a, b) => {
+              const allowedIds = role === "user" && linkedMemberId
+                ? [linkedMemberId, ...managedProfiles]
+                : null;
+              const filtered = allowedIds
+                ? members.filter(m => allowedIds.includes(m.id))
+                : members;
+              return [...filtered].sort((a, b) => {
                 const pesoA = ordemParentesco[a.relationship] || 99;
                 const pesoB = ordemParentesco[b.relationship] || 99;
                 return pesoA - pesoB;

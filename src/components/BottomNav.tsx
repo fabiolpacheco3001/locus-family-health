@@ -20,7 +20,7 @@ const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { members, isLoading: membersLoading } = useFamilyMembers();
-  const { role, linkedMemberId } = useFamilyGroup();
+  const { role, linkedMemberId, managedProfiles } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const isSaudeActive = location.pathname.startsWith("/familiar/");
@@ -33,7 +33,12 @@ const BottomNav = () => {
   const handleClick = (path: string) => {
     if (path === "__drawer_saude__") {
       if (role === "user" && linkedMemberId) {
-        navigate(`/familiar/${linkedMemberId}`, { state: { from: location.pathname } });
+        // If user has managed_profiles, show drawer to pick; otherwise go direct
+        if (managedProfiles.length > 0) {
+          setDrawerOpen(true);
+        } else {
+          navigate(`/familiar/${linkedMemberId}`, { state: { from: location.pathname } });
+        }
       } else {
         setDrawerOpen(true);
       }
@@ -77,7 +82,14 @@ const BottomNav = () => {
               const ordemParentesco: Record<string, number> = {
                 "Titular": 1, "Cônjuge": 2, "Filho(a)": 3, "Pai/Mãe": 4, "Irmão(ã)": 5, "Outro": 6,
               };
-              return [...members].sort((a, b) => {
+              // For user role, filter to own profile + managed profiles
+              const allowedIds = role === "user" && linkedMemberId
+                ? [linkedMemberId, ...managedProfiles]
+                : null;
+              const filtered = allowedIds
+                ? members.filter(m => allowedIds.includes(m.id))
+                : members;
+              return [...filtered].sort((a, b) => {
                 const pesoA = ordemParentesco[a.relationship] || 99;
                 const pesoB = ordemParentesco[b.relationship] || 99;
                 return pesoA - pesoB;
