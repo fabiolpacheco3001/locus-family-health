@@ -18,6 +18,7 @@ const FamilyGroupContext = createContext<FamilyGroupContextType>({
   groupId: null,
   role: "admin",
   linkedMemberId: null,
+  managedProfiles: [],
   isAdmin: true,
   isLoading: true,
 });
