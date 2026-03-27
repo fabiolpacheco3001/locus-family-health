@@ -254,9 +254,9 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#f2f0eb] z-50">
         <img
-          src="/logo-locus-vita.svg"
+          src="/logo-locus-vita-icon.jpeg"
           alt="Locus Vita"
-          className="w-20 h-20 animate-breathing"
+          className="w-20 h-20 animate-breathing rounded-2xl"
         />
       </div>
     );
@@ -291,8 +291,7 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-foreground">Acesso Liberado!</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Identificamos que o seu e-mail possui acesso liberado à conta familiar de{" "}
-              <strong className="text-foreground">{invite.group_name}</strong> com permissão de{" "}
+              Identificamos que o seu e-mail possui acesso liberado à conta familiar do aplicativo Locus Vita, com permissão de{" "}
               <strong className="text-foreground">
                 {invite.role === "admin" ? "Administrador" : "Usuário"}
               </strong>
