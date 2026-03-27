@@ -14,17 +14,25 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import AvatarSelector from "@/components/AvatarSelector";
 import { Crown, User as UserIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const MeusDados = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { members, updateMember } = useFamilyMembers();
-  const { role } = useFamilyGroup();
+  const { role, linkedMemberId, groupId } = useFamilyGroup();
+  const queryClient = useQueryClient();
 
-  const titular = members?.find((m) => m.relationship === "Titular");
+  // Strictly use linkedMemberId — never fall back to Titular
+  const myProfile = linkedMemberId
+    ? members?.find((m) => m.id === linkedMemberId)
+    : null;
+
+  const authName = user?.user_metadata?.full_name || user?.user_metadata?.name || "";
 
   const initials = (() => {
-    const parts = (titular?.name ?? "").trim().split(" ").filter(Boolean);
+    const parts = (myProfile?.name ?? authName ?? "").trim().split(" ").filter(Boolean);
     if (parts.length === 0) return "—";
     if (parts.length === 1) return parts[0][0].toUpperCase();
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
@@ -37,17 +45,26 @@ const MeusDados = () => {
   const [cpf, setCpf] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (titular) {
-      setName(titular.name || "");
-      setBirthDate(titular.birth_date || "");
-      setGender(titular.gender || "");
-      setPhone(titular.phone || "");
-      setCpf(titular.cpf || "");
-      setAvatarUrl(titular.avatar_url || "");
+    if (myProfile) {
+      setName(myProfile.name || "");
+      setBirthDate(myProfile.birth_date || "");
+      setGender(myProfile.gender || "");
+      setPhone(myProfile.phone || "");
+      setCpf(myProfile.cpf || "");
+      setAvatarUrl(myProfile.avatar_url || "");
+    } else {
+      // No linked profile — prefill only auth name
+      setName(authName);
+      setBirthDate("");
+      setGender("");
+      setPhone("");
+      setCpf("");
+      setAvatarUrl("");
     }
-  }, [titular]);
+  }, [myProfile, authName]);
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, "").substring(0, 11);
@@ -65,25 +82,65 @@ const MeusDados = () => {
   };
 
   const handleSave = async () => {
-    if (!titular) return;
     if (!name.trim()) {
       toast.error("O nome é obrigatório.");
       return;
     }
+
+    setSaving(true);
     try {
-      await updateMember.mutateAsync({
-        id: titular.id,
-        name: name.trim(),
-        birth_date: birthDate || null,
-        gender: gender || null,
-        phone: phone || null,
-        cpf: cpf || null,
-        avatar_url: avatarUrl || null,
-      });
+      if (myProfile) {
+        // Update existing profile
+        await updateMember.mutateAsync({
+          id: myProfile.id,
+          name: name.trim(),
+          birth_date: birthDate || null,
+          gender: gender || null,
+          phone: phone || null,
+          cpf: cpf || null,
+          avatar_url: avatarUrl || null,
+        });
+      } else {
+        // Auto-healing: create profile + link it
+        const { data: newMember, error: insertErr } = await supabase
+          .from("family_members")
+          .insert({
+            user_id: user!.id,
+            group_id: groupId,
+            name: name.trim(),
+            relationship: "Titular",
+            birth_date: birthDate || null,
+            gender: gender || null,
+            phone: phone || null,
+            cpf: cpf || null,
+            avatar_url: avatarUrl || null,
+          } as any)
+          .select("id")
+          .single();
+
+        if (insertErr) throw insertErr;
+
+        // Link to family_group_members
+        const { error: linkErr } = await supabase
+          .from("family_group_members" as any)
+          .update({ family_member_id: newMember.id })
+          .eq("auth_user_id", user!.id)
+          .eq("group_id", groupId!);
+
+        if (linkErr) throw linkErr;
+
+        // Refresh caches
+        queryClient.invalidateQueries({ queryKey: ["family_members"] });
+        queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
+      }
+
       toast.success("Dados atualizados com sucesso!");
       navigate("/ajustes");
-    } catch {
+    } catch (err) {
+      console.error("Erro ao salvar Meus Dados:", err);
       toast.error("Erro ao salvar. Tente novamente.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -234,9 +291,9 @@ const MeusDados = () => {
         <Button
           className="flex-1 bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none"
           onClick={handleSave}
-          disabled={updateMember.isPending}
+          disabled={saving}
         >
-          {updateMember.isPending ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
+          {saving ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
         </Button>
       </div>
 
