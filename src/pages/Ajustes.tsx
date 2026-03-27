@@ -27,10 +27,11 @@ const Ajustes = () => {
   const { isAdmin } = useFamilyGroup();
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
+  const { linkedMemberId } = useFamilyGroup();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const titular = members?.find((m) => m.relationship === "Titular");
+  const myProfile = members?.find((m) => m.id === linkedMemberId) ?? members?.[0];
 
   const handleLogout = async () => {
     await signOut();
