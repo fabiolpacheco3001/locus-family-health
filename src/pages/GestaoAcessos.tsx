@@ -101,11 +101,6 @@ const GestaoAcessos = () => {
 
   const handleSendInvite = async () => {
     if (!inviteEmail.trim() || !groupId || !user) return;
-    if (!inviteMemberId) {
-      toast.error("Selecione o perfil vinculado.");
-      return;
-    }
-
     setSaving(true);
     try {
       const { error } = await supabase.from("group_invites" as any).insert({
