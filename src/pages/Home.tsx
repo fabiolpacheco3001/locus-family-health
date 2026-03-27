@@ -364,11 +364,17 @@ const Home = () => {
       <div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { icon: Stethoscope, label: "Consultas", action: () => setQuickAction('consultas') },
-            { icon: FileText, label: "Exames", action: () => setQuickAction('exames') },
-            { icon: Pill, label: "Medicamentos", action: () => setQuickAction('medicamentos') },
-            { icon: Users, label: "Família", action: () => navigate('/gerenciar-familia', { state: { from: '/home' } }) },
-          ].map(({ icon: Icon, label, action }) => (
+            { icon: Stethoscope, label: "Consultas", key: 'consultas' as const },
+            { icon: FileText, label: "Exames", key: 'exames' as const },
+            { icon: Pill, label: "Medicamentos", key: 'medicamentos' as const },
+            { icon: Users, label: "Família", key: null },
+          ].map(({ icon: Icon, label, key }) => {
+            const action = key === null
+              ? () => navigate('/gerenciar-familia', { state: { from: '/home' } })
+              : role === "user" && linkedMemberId && managedProfiles.length === 0
+                ? () => navigate(`/familiar/${linkedMemberId}/${key}`, { state: { from: '/home' } })
+                : () => setQuickAction(key);
+            return (
             <button
               key={label}
               onClick={action}
