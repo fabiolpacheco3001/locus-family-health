@@ -33,7 +33,12 @@ const BottomNav = () => {
   const handleClick = (path: string) => {
     if (path === "__drawer_saude__") {
       if (role === "user" && linkedMemberId) {
-        navigate(`/familiar/${linkedMemberId}`, { state: { from: location.pathname } });
+        // If user has managed_profiles, show drawer to pick; otherwise go direct
+        if (managedProfiles.length > 0) {
+          setDrawerOpen(true);
+        } else {
+          navigate(`/familiar/${linkedMemberId}`, { state: { from: location.pathname } });
+        }
       } else {
         setDrawerOpen(true);
       }
