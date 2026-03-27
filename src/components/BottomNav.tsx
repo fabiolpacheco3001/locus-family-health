@@ -32,7 +32,11 @@ const BottomNav = () => {
 
   const handleClick = (path: string) => {
     if (path === "__drawer_saude__") {
-      setDrawerOpen(true);
+      if (role === "user" && linkedMemberId) {
+        navigate(`/familiar/${linkedMemberId}`, { state: { from: location.pathname } });
+      } else {
+        setDrawerOpen(true);
+      }
     } else {
       navigate(path);
     }
