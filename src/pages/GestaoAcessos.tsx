@@ -60,8 +60,7 @@ const GestaoAcessos = () => {
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "member" | "invite"; id: string } | null>(null);
-  const [linkTarget, setLinkTarget] = useState<{ memberId: string } | null>(null);
-  const [linkMemberId, setLinkMemberId] = useState("");
+  
 
   // Fetch active group members
   const { data: groupMembers = [], isLoading: loadingMembers } = useQuery({
