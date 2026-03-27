@@ -133,7 +133,7 @@ const Login = () => {
           onClick={() => setIsSignUp(!isSignUp)}
           className="mt-6 text-sm text-muted-foreground hover:text-primary transition-colors text-center"
         >
-          {isSignUp ? "Já tem uma conta? Entrar" : "Criar nova conta familiar"}
+          {isSignUp ? "Já tem uma conta? Entrar" : "Criar sua conta"}
         </button>
       </div>
     </div>
