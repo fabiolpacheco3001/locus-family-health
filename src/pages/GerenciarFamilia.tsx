@@ -44,10 +44,15 @@ const GerenciarFamilia = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Build role map keyed ONLY by family_member_id.
+  // Do NOT fall back to auth_user_id → m.user_id because user_id is the
+  // owner's auth id for ALL members (pets, kids, etc.), which would make
+  // every card show the admin badge.
   const roleMap = new Map<string, string>();
   groupMembers.forEach((gm) => {
-    if (gm.family_member_id) roleMap.set(gm.family_member_id, gm.role);
-    if (gm.auth_user_id) roleMap.set(gm.auth_user_id, gm.role);
+    if (gm.family_member_id) {
+      roleMap.set(gm.family_member_id, gm.role);
+    }
   });
 
   const sorted = [...members].sort(
