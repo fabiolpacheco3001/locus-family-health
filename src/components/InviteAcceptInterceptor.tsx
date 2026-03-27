@@ -212,6 +212,7 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
       queryClient.invalidateQueries({ queryKey: ["family_members"] });
       setState({ step: "ready" });
     } catch (err: any) {
+      console.error("Erro detalhado do Aceite:", err);
       const isDuplicate = err?.code === "23505";
       toast.error(
         isDuplicate
