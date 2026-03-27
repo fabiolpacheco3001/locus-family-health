@@ -158,7 +158,9 @@ const Ajustes = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Alerta de Exclusão de Conta</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir sua conta Locus Vita? Todos os seus dados e os dados de sua família serão apagados permanentemente.
+              {isAdmin
+                ? "Tem certeza que deseja excluir sua conta Locus Vita? Todos os seus dados e os dados de sua família serão apagados permanentemente."
+                : "Tem certeza que deseja excluir sua conta? Você perderá permanentemente o acesso a este grupo familiar e seus dados de login serão removidos."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
