@@ -438,26 +438,26 @@ const GestaoAcessos = () => {
                 </div>
 
                 {/* Linked Profile (only for User role) */}
-                {inviteRole === "user" && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Perfil Vinculado</Label>
-                    <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
-                      <SelectTrigger className={INPUT_CLASSES}>
-                        <SelectValue placeholder="Selecione o familiar..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {members.map(m => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.name} ({m.relationship})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[11px] text-muted-foreground leading-tight">
-                      Este usuário só poderá ver e editar dados vinculados a este perfil.
-                    </p>
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Perfil Vinculado</Label>
+                  <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
+                    <SelectTrigger className={INPUT_CLASSES}>
+                      <SelectValue placeholder="Selecione o familiar..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {members.map(m => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name} ({m.relationship})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-muted-foreground leading-tight">
+                    {inviteRole === "admin"
+                      ? "Selecione quem é esta pessoa na família. (Admins continuam vendo todos os dados)."
+                      : "Este usuário só poderá ver e editar os dados vinculados a este perfil."}
+                  </p>
+                </div>
               </div>
 
               <DrawerFooter className="flex-row gap-3">
