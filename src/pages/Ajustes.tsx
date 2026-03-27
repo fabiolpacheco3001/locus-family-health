@@ -41,13 +41,30 @@ const Ajustes = () => {
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
-      // Soft delete: mark all family members as deleted
-      if (members && members.length > 0) {
-        for (const member of members) {
+      if (isAdmin) {
+        // Admin: soft-delete all family members (cascade)
+        if (members && members.length > 0) {
+          for (const member of members) {
+            await updateMember.mutateAsync({
+              id: member.id,
+              deleted_at: new Date().toISOString(),
+            } as any);
+          }
+        }
+      } else {
+        // User: soft-delete ONLY own linked profile
+        if (linkedMemberId) {
           await updateMember.mutateAsync({
-            id: member.id,
+            id: linkedMemberId,
             deleted_at: new Date().toISOString(),
           } as any);
+        }
+        // Remove own access record from family_group_members
+        if (user?.id) {
+          await supabase
+            .from("family_group_members" as any)
+            .delete()
+            .eq("auth_user_id", user.id);
         }
       }
       await supabase.auth.signOut();
