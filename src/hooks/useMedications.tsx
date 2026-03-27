@@ -83,8 +83,8 @@ export const useMedications = (familyMemberId?: string) => {
 
       if (familyMemberId) {
         q = q.eq("family_member_id", familyMemberId);
-      } else if (isAdmin) {
-        q = q.eq("user_id", user!.id);
+      } else if (isAdmin && groupId) {
+        q = q.eq("group_id", groupId);
       } else if (linkedMemberId) {
         q = q.eq("family_member_id", linkedMemberId);
       } else {

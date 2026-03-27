@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMedications } from "@/hooks/useMedications";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -24,7 +25,10 @@ const Home = () => {
   const navigate = useNavigate();
   const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
   const { members, isLoading: membersLoading } = useFamilyMembers();
+  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
+
+  const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
 
   // All active medications across family
   const { medications, isLoading: medsLoading } = useMedications();
@@ -36,20 +40,23 @@ const Home = () => {
   // Upcoming appointments (2 nearest consultations + exams)
   // Pending counts (consolidated single query)
   const { data: pendingCounts } = useQuery({
-    queryKey: ["pending-counts", user?.id],
+    queryKey: ["pending-counts", groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
-      const [consultRes, examRes] = await Promise.all([
-        supabase
-          .from("consultations")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
-          .eq("status", "Agendada"),
-        supabase
-          .from("exams")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
-          .eq("status", "Agendado"),
-      ]);
+      let cq = supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "Agendada");
+      let eq = supabase.from("exams").select("id", { count: "exact", head: true }).eq("status", "Agendado");
+
+      if (isAdmin && groupId) {
+        cq = cq.eq("group_id", groupId);
+        eq = eq.eq("group_id", groupId);
+      } else if (linkedMemberId) {
+        cq = cq.eq("family_member_id", linkedMemberId);
+        eq = eq.eq("family_member_id", linkedMemberId);
+      } else {
+        cq = cq.eq("user_id", user!.id);
+        eq = eq.eq("user_id", user!.id);
+      }
+
+      const [consultRes, examRes] = await Promise.all([cq, eq]);
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
       return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0 };
@@ -64,24 +71,34 @@ const Home = () => {
   const totalOpenAppointments = pendingConsultations + pendingExams;
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
-    queryKey: ["upcoming-appointments", user?.id],
+    queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
-      const [consultRes, examRes] = await Promise.all([
-        supabase
-          .from("consultations")
-          .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
-          .eq("user_id", user!.id)
-          .in("status", ["Agendada"])
-          .order("consultation_date", { ascending: true })
-          .limit(5),
-        supabase
-          .from("exams")
-          .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
-          .eq("user_id", user!.id)
-          .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
-          .order("exam_date", { ascending: true })
-          .limit(5),
-      ]);
+      let cq = supabase
+        .from("consultations")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
+        .in("status", ["Agendada"])
+        .order("consultation_date", { ascending: true })
+        .limit(5);
+
+      let eq = supabase
+        .from("exams")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
+        .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
+        .order("exam_date", { ascending: true })
+        .limit(5);
+
+      if (isAdmin && groupId) {
+        cq = cq.eq("group_id", groupId);
+        eq = eq.eq("group_id", groupId);
+      } else if (linkedMemberId) {
+        cq = cq.eq("family_member_id", linkedMemberId);
+        eq = eq.eq("family_member_id", linkedMemberId);
+      } else {
+        cq = cq.eq("user_id", user!.id);
+        eq = eq.eq("user_id", user!.id);
+      }
+
+      const [consultRes, examRes] = await Promise.all([cq, eq]);
 
       const items: Array<{
         id: string;
@@ -194,10 +211,10 @@ const Home = () => {
               className="cursor-pointer transition-transform active:scale-95"
             >
               <MemberAvatar
-                avatarUrl={members.find(m => m.relationship === 'Titular')?.avatar_url}
+                avatarUrl={myProfile?.avatar_url}
                 name={userName}
                 size="md"
-                memberType={members.find(m => m.relationship === 'Titular')?.member_type}
+                memberType={myProfile?.member_type}
               />
             </div>
             <div>
