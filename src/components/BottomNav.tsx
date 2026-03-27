@@ -5,6 +5,7 @@ import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 
 const navItems = [
@@ -19,6 +20,7 @@ const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { members, isLoading: membersLoading } = useFamilyMembers();
+  const { role, linkedMemberId } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const isSaudeActive = location.pathname.startsWith("/familiar/");
@@ -30,7 +32,11 @@ const BottomNav = () => {
 
   const handleClick = (path: string) => {
     if (path === "__drawer_saude__") {
-      setDrawerOpen(true);
+      if (role === "user" && linkedMemberId) {
+        navigate(`/familiar/${linkedMemberId}`, { state: { from: location.pathname } });
+      } else {
+        setDrawerOpen(true);
+      }
     } else {
       navigate(path);
     }
