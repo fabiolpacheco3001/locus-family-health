@@ -61,7 +61,9 @@ const GestaoAcessos = () => {
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "member" | "invite"; id: string } | null>(null);
-  
+  const [permsMember, setPermsMember] = useState<GroupMember | null>(null);
+  const [permsSelected, setPermsSelected] = useState<string[]>([]);
+  const [permsSaving, setPermsSaving] = useState(false);
 
   // Fetch active group members
   const { data: groupMembers = [], isLoading: loadingMembers } = useQuery({
