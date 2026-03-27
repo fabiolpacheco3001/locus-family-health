@@ -291,8 +291,7 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-foreground">Acesso Liberado!</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Identificamos que o seu e-mail possui acesso liberado à conta familiar de{" "}
-              <strong className="text-foreground">{invite.group_name}</strong> com permissão de{" "}
+              Identificamos que o seu e-mail possui acesso liberado à conta familiar do aplicativo Locus Vita, com permissão de{" "}
               <strong className="text-foreground">
                 {invite.role === "admin" ? "Administrador" : "Usuário"}
               </strong>
