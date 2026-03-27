@@ -61,7 +61,7 @@ const GerenciarFamilia = () => {
 
   return (
     <>
-      {!addDrawerOpen && !editMember && <FixedFAB onClick={() => setAddDrawerOpen(true)} />}
+      {isAdmin && !addDrawerOpen && !editMember && <FixedFAB onClick={() => setAddDrawerOpen(true)} />}
       <AddMemberDrawer open={addDrawerOpen} onOpenChange={setAddDrawerOpen} />
       {editMember && (
         <EditMemberDrawer
