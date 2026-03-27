@@ -71,24 +71,34 @@ const Home = () => {
   const totalOpenAppointments = pendingConsultations + pendingExams;
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
-    queryKey: ["upcoming-appointments", user?.id],
+    queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
-      const [consultRes, examRes] = await Promise.all([
-        supabase
-          .from("consultations")
-          .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
-          .eq("user_id", user!.id)
-          .in("status", ["Agendada"])
-          .order("consultation_date", { ascending: true })
-          .limit(5),
-        supabase
-          .from("exams")
-          .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
-          .eq("user_id", user!.id)
-          .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
-          .order("exam_date", { ascending: true })
-          .limit(5),
-      ]);
+      let cq = supabase
+        .from("consultations")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
+        .in("status", ["Agendada"])
+        .order("consultation_date", { ascending: true })
+        .limit(5);
+
+      let eq = supabase
+        .from("exams")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
+        .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
+        .order("exam_date", { ascending: true })
+        .limit(5);
+
+      if (isAdmin && groupId) {
+        cq = cq.eq("group_id", groupId);
+        eq = eq.eq("group_id", groupId);
+      } else if (linkedMemberId) {
+        cq = cq.eq("family_member_id", linkedMemberId);
+        eq = eq.eq("family_member_id", linkedMemberId);
+      } else {
+        cq = cq.eq("user_id", user!.id);
+        eq = eq.eq("user_id", user!.id);
+      }
+
+      const [consultRes, examRes] = await Promise.all([cq, eq]);
 
       const items: Array<{
         id: string;
