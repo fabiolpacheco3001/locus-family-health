@@ -89,7 +89,7 @@ const Login = () => {
         {/* Logo */}
         <div className="flex flex-col items-center mb-12">
           <img src={locusvitaLogo} alt="Locus Vita" className="w-40 h-40 object-cover rounded-3xl shadow-md mb-4" />
-          <p className="text-muted-foreground text-sm mt-1">Saúde familiar simplificada</p>
+          <p className="text-muted-foreground text-sm mt-1"><p className="text-muted-foreground text-sm mt-1">Saúde Familiar Simplificada</p></p>
         </div>
 
         {/* Form */}
