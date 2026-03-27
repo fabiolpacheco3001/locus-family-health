@@ -211,10 +211,10 @@ const Home = () => {
               className="cursor-pointer transition-transform active:scale-95"
             >
               <MemberAvatar
-                avatarUrl={members.find(m => m.relationship === 'Titular')?.avatar_url}
+                avatarUrl={myProfile?.avatar_url}
                 name={userName}
                 size="md"
-                memberType={members.find(m => m.relationship === 'Titular')?.member_type}
+                memberType={myProfile?.member_type}
               />
             </div>
             <div>

@@ -35,6 +35,7 @@ const filterLabels: Record<string, string> = {
 
 const Agenda = () => {
   const { user } = useAuth();
+  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const [searchParams] = useSearchParams();
@@ -42,26 +43,36 @@ const Agenda = () => {
   const today = startOfDay(new Date());
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["agenda", user?.id],
+    queryKey: ["agenda", groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
-      const [consultRes, examRes] = await Promise.all([
-        supabase
-          .from("consultations")
-          .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
-          .eq("user_id", user!.id)
-          .neq("status", "Cancelada")
-          .neq("status", "Realizada")
-          .order("consultation_date", { ascending: true }),
-        supabase
-          .from("exams")
-          .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
-          .eq("user_id", user!.id)
-          .neq("status", "Cancelado")
-          .neq("status", "Realizado")
-          .neq("status", "Coletado")
-          .or("status.eq.Agendado")
-          .order("exam_date", { ascending: true }),
-      ]);
+      let cq = supabase
+        .from("consultations")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
+        .neq("status", "Cancelada")
+        .neq("status", "Realizada")
+        .order("consultation_date", { ascending: true });
+
+      let eq = supabase
+        .from("exams")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
+        .neq("status", "Cancelado")
+        .neq("status", "Realizado")
+        .neq("status", "Coletado")
+        .or("status.eq.Agendado")
+        .order("exam_date", { ascending: true });
+
+      if (isAdmin && groupId) {
+        cq = cq.eq("group_id", groupId);
+        eq = eq.eq("group_id", groupId);
+      } else if (linkedMemberId) {
+        cq = cq.eq("family_member_id", linkedMemberId);
+        eq = eq.eq("family_member_id", linkedMemberId);
+      } else {
+        cq = cq.eq("user_id", user!.id);
+        eq = eq.eq("user_id", user!.id);
+      }
+
+      const [consultRes, examRes] = await Promise.all([cq, eq]);
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
