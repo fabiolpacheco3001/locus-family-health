@@ -104,7 +104,7 @@ const GerenciarFamilia = () => {
           )}
 
           {sorted.map((m) => {
-            const memberRole = roleMap.get(m.id) || roleMap.get(m.user_id);
+            const memberRole = roleMap.get(m.id);
             return (
               <div
                 key={m.id}
