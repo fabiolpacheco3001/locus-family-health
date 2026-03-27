@@ -71,7 +71,7 @@ const GestaoAcessos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("family_group_members" as any)
-        .select("id, auth_user_id, role, family_member_id, invited_at, accepted_at")
+        .select("id, auth_user_id, role, family_member_id, managed_profiles, invited_at, accepted_at")
         .eq("group_id", groupId!);
       if (error) throw error;
       return (data as unknown as GroupMember[]) ?? [];
