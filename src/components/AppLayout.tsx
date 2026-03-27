@@ -1,6 +1,7 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import MobileShell from "./MobileShell";
+import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "./BottomNav";
 import InviteAcceptInterceptor from "./InviteAcceptInterceptor";
 import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
@@ -10,6 +11,16 @@ import { useMenstrualAlerts } from "@/hooks/useMenstrualAlerts";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+/** Lightweight inline loader — keeps shell/nav visible while lazy chunk loads */
+const InlineRouteLoader = () => (
+  <div className="px-5 pt-16 space-y-4">
+    <Skeleton className="h-8 w-40" />
+    <Skeleton className="h-24 w-full rounded-xl" />
+    <Skeleton className="h-24 w-full rounded-xl" />
+    <Skeleton className="h-24 w-full rounded-xl" />
+  </div>
+);
 
 const AppLayout = () => {
   const { user } = useAuth();
@@ -59,7 +70,9 @@ const AppLayout = () => {
     <InviteAcceptInterceptor>
       <MobileShell>
         <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
-          <Outlet />
+          <Suspense fallback={<InlineRouteLoader />}>
+            <Outlet />
+          </Suspense>
         </div>
         <BottomNav />
       </MobileShell>

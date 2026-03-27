@@ -90,34 +90,32 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Suspense fallback={<RouteLoader />}>
-            <Routes>
-              <Route path="/" element={<Navigate to="/login" replace />} />
-              <Route path="/login" element={<Login />} />
-              <Route element={<AppLayout />}>
-                <Route path="/home" element={<Home />} />
-                <Route path="/agenda" element={<Agenda />} />
-                <Route path="/familia" element={<Familia />} />
-                <Route path="/ajustes" element={<Ajustes />} />
-                <Route path="/meus-dados" element={<MeusDados />} />
-                <Route path="/gerenciar-familia" element={<GerenciarFamilia />} />
-                <Route path="/familiar/:id/saude" element={<MinhaSaude />} />
-                <Route path="/familiar/:id/prontuario" element={<Prontuario />} />
-                <Route path="/familiar/:id" element={<FamiliarProfile />} />
-                <Route path="/familiar/:id/consultas" element={<Consultas />} />
-                <Route path="/familiar/:id/medicamentos" element={<Medicamentos />} />
-                <Route path="/medicamentos" element={<MedicamentosGeral />} />
-                <Route path="/familiar/:id/exames" element={<Exames />} />
-                <Route path="/familiar/:id/alergias" element={<Alergias />} />
-                <Route path="/familiar/:id/doencas" element={<Doencas />} />
-                <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
-                <Route path="/notificacoes" element={<Notificacoes />} />
-                <Route path="/seguranca" element={<Seguranca />} />
-                <Route path="/gestao-acessos" element={<GestaoAcessos />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
+            <Route element={<AppLayout />}>
+              <Route path="/home" element={<Home />} />
+              <Route path="/agenda" element={<Agenda />} />
+              <Route path="/familia" element={<Familia />} />
+              <Route path="/ajustes" element={<Ajustes />} />
+              <Route path="/meus-dados" element={<MeusDados />} />
+              <Route path="/gerenciar-familia" element={<GerenciarFamilia />} />
+              <Route path="/familiar/:id/saude" element={<MinhaSaude />} />
+              <Route path="/familiar/:id/prontuario" element={<Prontuario />} />
+              <Route path="/familiar/:id" element={<FamiliarProfile />} />
+              <Route path="/familiar/:id/consultas" element={<Consultas />} />
+              <Route path="/familiar/:id/medicamentos" element={<Medicamentos />} />
+              <Route path="/medicamentos" element={<MedicamentosGeral />} />
+              <Route path="/familiar/:id/exames" element={<Exames />} />
+              <Route path="/familiar/:id/alergias" element={<Alergias />} />
+              <Route path="/familiar/:id/doencas" element={<Doencas />} />
+              <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
+              <Route path="/notificacoes" element={<Notificacoes />} />
+              <Route path="/seguranca" element={<Seguranca />} />
+              <Route path="/gestao-acessos" element={<GestaoAcessos />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
       </FamilyGroupProvider>

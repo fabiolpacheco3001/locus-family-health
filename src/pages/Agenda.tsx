@@ -124,6 +124,7 @@ const Agenda = () => {
       return merged;
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   const filteredItems = React.useMemo(() => {
