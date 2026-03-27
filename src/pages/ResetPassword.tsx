@@ -73,7 +73,21 @@ const ResetPassword = () => {
     navigate("/home");
   };
 
-  if (!isRecovery) {
+  if (status === "pending") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
+        <div className="flex-1 flex flex-col items-center justify-center px-8 animate-fade-in">
+          <img src={locusvitaLogo} alt="Locus Vita" className="w-24 h-24 object-cover rounded-2xl shadow-md mb-6" />
+          <Loader2 className="animate-spin text-muted-foreground" size={28} />
+          <p className="text-muted-foreground text-sm text-center mt-4">
+            Validando link de recuperação...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "invalid") {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
         <div className="flex-1 flex flex-col items-center justify-center px-8 animate-fade-in">
