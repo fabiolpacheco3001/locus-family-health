@@ -46,6 +46,7 @@ export const FamilyGroupProvider = ({ children }: { children: ReactNode }) => {
     groupId: (query.data as any)?.group_id ?? null,
     role: ((query.data as any)?.role as AppRole) ?? "admin",
     linkedMemberId: (query.data as any)?.family_member_id ?? null,
+    managedProfiles: (query.data as any)?.managed_profiles ?? [],
     isAdmin: ((query.data as any)?.role ?? "admin") === "admin",
     isLoading: query.isLoading,
   }), [query.data, query.isLoading]);
