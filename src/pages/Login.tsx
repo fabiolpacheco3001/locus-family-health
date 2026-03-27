@@ -10,16 +10,33 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+type ViewMode = "login" | "signup" | "forgot";
+
 const Login = () => {
   const navigate = useNavigate();
   const { signIn, signUp } = useAuth();
   const queryClient = useQueryClient();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Digite seu e-mail.");
+      return;
+    }
+    setLoading(true);
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    toast.success("Se este e-mail estiver cadastrado, você receberá um link de recuperação em instantes.");
+    setViewMode("login");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
