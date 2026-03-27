@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Shield, UserPlus, Crown, User as UserIcon, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Link2 } from "lucide-react";
+import { ArrowLeft, Shield, UserPlus, Crown, User as UserIcon, Loader2, Mail, Trash2, Check, Copy, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,8 +60,7 @@ const GestaoAcessos = () => {
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "member" | "invite"; id: string } | null>(null);
-  const [linkTarget, setLinkTarget] = useState<{ memberId: string } | null>(null);
-  const [linkMemberId, setLinkMemberId] = useState("");
+  
 
   // Fetch active group members
   const { data: groupMembers = [], isLoading: loadingMembers } = useQuery({
@@ -102,11 +101,6 @@ const GestaoAcessos = () => {
 
   const handleSendInvite = async () => {
     if (!inviteEmail.trim() || !groupId || !user) return;
-    if (!inviteMemberId) {
-      toast.error("Selecione o perfil vinculado.");
-      return;
-    }
-
     setSaving(true);
     try {
       const { error } = await supabase.from("group_invites" as any).insert({
@@ -250,15 +244,6 @@ const GestaoAcessos = () => {
                         </p>
                         {isCurrentUser && (
                           <span className="text-[10px] text-muted-foreground font-medium">(Você)</span>
-                        )}
-                        {!linkedMember && (
-                          <button
-                            onClick={() => { setLinkTarget({ memberId: gm.id }); setLinkMemberId(""); }}
-                            className="w-6 h-6 flex items-center justify-center rounded-full text-primary [@media(hover:hover)]:hover:bg-primary/10 active:bg-primary/10"
-                            title="Vincular perfil"
-                          >
-                            <Link2 size={14} />
-                          </button>
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
@@ -446,27 +431,27 @@ const GestaoAcessos = () => {
                   </div>
                 </div>
 
-                {/* Linked Profile (only for User role) */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Perfil Vinculado</Label>
-                  <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
-                    <SelectTrigger className={INPUT_CLASSES}>
-                      <SelectValue placeholder="Selecione o familiar..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {members.map(m => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name} ({m.relationship})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[11px] text-muted-foreground leading-tight">
-                    {inviteRole === "admin"
-                      ? "Selecione quem é esta pessoa na família. (Admins continuam vendo todos os dados)."
-                      : "Este usuário só poderá ver e editar os dados vinculados a este perfil."}
-                  </p>
-                </div>
+                {/* Linked Profile (optional — auto-created on accept if empty) */}
+                {inviteRole === "user" && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Perfil Vinculado (opcional)</Label>
+                    <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
+                      <SelectTrigger className={INPUT_CLASSES}>
+                        <SelectValue placeholder="Selecione o familiar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {members.map(m => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name} ({m.relationship})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground leading-tight">
+                      Se não selecionar, um perfil será criado automaticamente quando o convidado aceitar.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <DrawerFooter className="flex-row gap-3">
@@ -513,55 +498,7 @@ const GestaoAcessos = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Link Profile Dialog */}
-      <AlertDialog open={!!linkTarget} onOpenChange={() => setLinkTarget(null)}>
-        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Vincular Perfil</AlertDialogTitle>
-            <AlertDialogDescription>
-              Selecione qual membro da família corresponde a esta pessoa.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="px-1 pb-2">
-            <Select value={linkMemberId} onValueChange={setLinkMemberId}>
-              <SelectTrigger className={INPUT_CLASSES}>
-                <SelectValue placeholder="Selecione o familiar..." />
-              </SelectTrigger>
-              <SelectContent>
-                {members.map(m => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name} ({m.relationship})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={!linkMemberId}
-              onClick={async () => {
-                if (!linkTarget || !linkMemberId) return;
-                try {
-                  const { error } = await supabase
-                    .from("family_group_members" as any)
-                    .update({ family_member_id: linkMemberId } as any)
-                    .eq("id", linkTarget.memberId);
-                  if (error) throw error;
-                  toast.success("Perfil vinculado com sucesso!");
-                  queryClient.invalidateQueries({ queryKey: ["group_members", groupId] });
-                } catch {
-                  toast.error("Erro ao vincular perfil.");
-                }
-                setLinkTarget(null);
-              }}
-              className="bg-primary text-primary-foreground [@media(hover:hover)]:hover:bg-primary/90"
-            >
-              Vincular
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      
     </div>
   );
 };
