@@ -93,6 +93,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
+            <Route path="/reset-password" element={<Suspense fallback={<RouteLoader />}><ResetPassword /></Suspense>} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<Home />} />
               <Route path="/agenda" element={<Agenda />} />
