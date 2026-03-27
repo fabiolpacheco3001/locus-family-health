@@ -32,6 +32,7 @@ type GroupMember = {
   auth_user_id: string;
   role: string;
   family_member_id: string | null;
+  managed_profiles: string[] | null;
   invited_at: string;
   accepted_at: string | null;
 };
