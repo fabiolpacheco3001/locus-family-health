@@ -13,19 +13,35 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(false);
+  // Start as "pending" — we assume recovery until proven otherwise
+  const [status, setStatus] = useState<"pending" | "recovery" | "invalid">("pending");
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        setIsRecovery(true);
+        setStatus("recovery");
       }
     });
 
-    // Check if already in recovery mode from URL hash
+    // Check URL for recovery indicators (hash-based or PKCE code)
     const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
+    const params = new URLSearchParams(window.location.search);
+    const hasRecoveryHash = hash.includes("type=recovery");
+    const hasPkceCode = params.has("code");
+
+    if (hasRecoveryHash || hasPkceCode) {
+      // If PKCE code present, Supabase client will exchange it automatically
+      // and fire PASSWORD_RECOVERY event. Set a timeout as fallback.
+      const timeout = setTimeout(() => {
+        setStatus((prev) => (prev === "pending" ? "invalid" : prev));
+      }, 8000);
+      return () => {
+        subscription.unsubscribe();
+        clearTimeout(timeout);
+      };
+    } else {
+      // No recovery params at all — invalid link
+      setStatus("invalid");
     }
 
     return () => subscription.unsubscribe();
