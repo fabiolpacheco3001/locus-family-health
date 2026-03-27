@@ -9,6 +9,7 @@ interface FamilyGroupContextType {
   groupId: string | null;
   role: AppRole;
   linkedMemberId: string | null;
+  managedProfiles: string[];
   isAdmin: boolean;
   isLoading: boolean;
 }
