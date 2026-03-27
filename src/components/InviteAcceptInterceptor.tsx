@@ -4,7 +4,7 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, PartyPopper } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 type PendingInvite = {
@@ -286,13 +286,13 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-[#f2f0eb] z-50 px-6">
         <div className="bg-card rounded-2xl shadow-lg border border-border/40 p-8 max-w-sm w-full text-center space-y-6">
           <div className="w-16 h-16 rounded-full bg-[#A7D3CB]/20 flex items-center justify-center mx-auto">
-            <PartyPopper size={32} className="text-[#1C3333]" />
+            <ShieldCheck size={32} className="text-[#A7D3CB]" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-foreground">Você foi convidado!</h2>
+            <h2 className="text-xl font-bold text-foreground">Acesso Liberado!</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Você recebeu um convite para participar da família{" "}
-              <strong className="text-foreground">{invite.group_name}</strong> como{" "}
+              Identificamos que o seu e-mail possui acesso liberado à conta familiar de{" "}
+              <strong className="text-foreground">{invite.group_name}</strong> com permissão de{" "}
               <strong className="text-foreground">
                 {invite.role === "admin" ? "Administrador" : "Usuário"}
               </strong>
@@ -307,10 +307,7 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
             {accepting ? (
               <Loader2 className="animate-spin" size={20} />
             ) : (
-              <>
-                <Users size={18} className="mr-2" />
-                Aceitar Convite
-              </>
+              "Acessar Conta Familiar"
             )}
           </Button>
         </div>
