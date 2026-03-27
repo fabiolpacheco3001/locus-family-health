@@ -496,6 +496,73 @@ const GestaoAcessos = () => {
         </DrawerContent>
       </Drawer>
 
+      {/* Permissions Drawer */}
+      <Drawer open={!!permsMember} onOpenChange={(open) => { if (!open) setPermsMember(null); }}>
+        <DrawerContent className="flex flex-col max-h-[90vh]">
+          <DrawerHeader>
+            <DrawerTitle className="flex items-center gap-2">
+              <Settings2 size={20} className="text-primary" />
+              Permissões de {members.find(m => m.id === permsMember?.family_member_id)?.name?.split(' ')[0] ?? "Usuário"}
+            </DrawerTitle>
+            <DrawerDescription>
+              Defina quais perfis este usuário pode visualizar e editar.
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-2 overscroll-contain">
+            {members.map(m => {
+              const isPrimary = m.id === permsMember?.family_member_id;
+              const isChecked = isPrimary || permsSelected.includes(m.id);
+              return (
+                <div key={m.id} className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/40">
+                  <MemberAvatar avatarUrl={m.avatar_url} name={m.name} size="sm" memberType={m.member_type} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{m.name}</p>
+                    <p className="text-xs text-muted-foreground">{m.relationship}</p>
+                  </div>
+                  <Switch
+                    checked={isChecked}
+                    disabled={isPrimary}
+                    onCheckedChange={(checked) => {
+                      setPermsSelected(prev =>
+                        checked ? [...prev, m.id] : prev.filter(id => id !== m.id)
+                      );
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+          <DrawerFooter>
+            <Button
+              onClick={async () => {
+                if (!permsMember) return;
+                setPermsSaving(true);
+                try {
+                  // Filter out the primary profile from managed_profiles
+                  const profilesToSave = permsSelected.filter(id => id !== permsMember.family_member_id);
+                  const { error } = await supabase
+                    .from("family_group_members" as any)
+                    .update({ managed_profiles: profilesToSave } as any)
+                    .eq("id", permsMember.id);
+                  if (error) throw error;
+                  toast.success("Permissões atualizadas!");
+                  queryClient.invalidateQueries({ queryKey: ["group_members", groupId] });
+                  setPermsMember(null);
+                } catch {
+                  toast.error("Erro ao salvar permissões.");
+                } finally {
+                  setPermsSaving(false);
+                }
+              }}
+              disabled={permsSaving}
+              className="w-full rounded-xl bg-[#1C3333] text-white [@media(hover:hover)]:hover:bg-[#1C3333]/90"
+            >
+              {permsSaving ? <Loader2 className="animate-spin" size={16} /> : "Salvar Permissões"}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
