@@ -100,8 +100,8 @@ const GestaoAcessos = () => {
 
   const handleSendInvite = async () => {
     if (!inviteEmail.trim() || !groupId || !user) return;
-    if (inviteRole === "user" && !inviteMemberId) {
-      toast.error("Selecione o perfil vinculado para usuários.");
+    if (!inviteMemberId) {
+      toast.error("Selecione o perfil vinculado.");
       return;
     }
 
