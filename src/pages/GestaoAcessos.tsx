@@ -111,7 +111,7 @@ const GestaoAcessos = () => {
         group_id: groupId,
         email: inviteEmail.trim().toLowerCase(),
         role: inviteRole,
-        family_member_id: inviteRole === "user" ? inviteMemberId : null,
+        family_member_id: inviteMemberId || null,
         invited_by: user.id,
       } as any);
 
