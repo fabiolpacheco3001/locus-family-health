@@ -184,7 +184,7 @@ const GestaoAcessos = () => {
   const isLoading = loadingMembers || loadingInvites;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="fixed top-0 left-0 right-0 bottom-0 flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md">
         <div className="flex items-center gap-3 px-4 py-4">
