@@ -201,7 +201,8 @@ const GestaoAcessos = () => {
         </div>
       </div>
 
-      <div className="px-4 pb-32 space-y-6">
+      <div className="flex-1 overflow-y-auto overscroll-y-auto">
+      <div className="px-4 pb-28 space-y-6 min-h-[calc(100%+1px)]">
         {/* Section: Active Members */}
         <div>
           <div className="flex items-center gap-2 mb-3 mt-2">
