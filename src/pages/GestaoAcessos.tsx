@@ -235,7 +235,11 @@ const GestaoAcessos = () => {
                     return (
                       <div
                         key={gm.id}
-                        className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm"
+                        onClick={gm.role === "user" && !isCurrentUser ? () => {
+                          setPermsMember(gm);
+                          setPermsSelected(gm.managed_profiles ?? []);
+                        } : undefined}
+                        className={`flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm ${gm.role === "user" && !isCurrentUser ? "cursor-pointer active:bg-muted/30" : ""}`}
                       >
                         <MemberAvatar
                           avatarUrl={linkedMember?.avatar_url ?? null}
@@ -256,6 +260,14 @@ const GestaoAcessos = () => {
                             {gm.family_member_id ? linkedMember?.relationship : "Todos os perfis"}
                           </p>
                         </div>
+                        {gm.role === "user" && !isCurrentUser && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setPermsMember(gm); setPermsSelected(gm.managed_profiles ?? []); }}
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-accent active:bg-accent/60"
+                          >
+                            <Settings2 size={16} />
+                          </button>
+                        )}
                         <Badge
                           className={
                             gm.role === "admin"
@@ -267,7 +279,7 @@ const GestaoAcessos = () => {
                         </Badge>
                         {!isCurrentUser && (
                           <button
-                            onClick={() => setDeleteTarget({ type: "member", id: gm.id })}
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: "member", id: gm.id }); }}
                             className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-destructive/10 [@media(hover:hover)]:hover:text-destructive active:bg-destructive/10"
                           >
                             <Trash2 size={16} />
