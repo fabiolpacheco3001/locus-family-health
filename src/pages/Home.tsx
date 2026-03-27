@@ -25,7 +25,7 @@ const Home = () => {
   const navigate = useNavigate();
   const userName = (user?.user_metadata?.full_name || "Usuário").split(' ')[0];
   const { members, isLoading: membersLoading } = useFamilyMembers();
-  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles, role } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
 
   const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
