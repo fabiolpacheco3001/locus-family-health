@@ -190,13 +190,33 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
         return;
       }
 
+      // Auto-provision profile if invite has no linked family_member_id
+      let finalMemberId = invite.family_member_id;
+
+      if (!finalMemberId) {
+        const displayName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Familiar";
+        const { data: newMember, error: profileErr } = await supabase
+          .from("family_members")
+          .insert({
+            user_id: user.id,
+            name: displayName,
+            relationship: "Familiar",
+            member_type: "human",
+            group_id: invite.group_id,
+          })
+          .select("id")
+          .single();
+        if (profileErr) throw profileErr;
+        finalMemberId = (newMember as any).id;
+      }
+
       const { error: insertErr } = await supabase
         .from("family_group_members" as any)
         .insert({
           group_id: invite.group_id,
           auth_user_id: user.id,
           role: invite.role,
-          family_member_id: invite.family_member_id,
+          family_member_id: finalMemberId,
           accepted_at: new Date().toISOString(),
         } as any);
 

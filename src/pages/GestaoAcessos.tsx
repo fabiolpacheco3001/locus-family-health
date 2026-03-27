@@ -498,55 +498,7 @@ const GestaoAcessos = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Link Profile Dialog */}
-      <AlertDialog open={!!linkTarget} onOpenChange={() => setLinkTarget(null)}>
-        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Vincular Perfil</AlertDialogTitle>
-            <AlertDialogDescription>
-              Selecione qual membro da família corresponde a esta pessoa.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="px-1 pb-2">
-            <Select value={linkMemberId} onValueChange={setLinkMemberId}>
-              <SelectTrigger className={INPUT_CLASSES}>
-                <SelectValue placeholder="Selecione o familiar..." />
-              </SelectTrigger>
-              <SelectContent>
-                {members.map(m => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name} ({m.relationship})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={!linkMemberId}
-              onClick={async () => {
-                if (!linkTarget || !linkMemberId) return;
-                try {
-                  const { error } = await supabase
-                    .from("family_group_members" as any)
-                    .update({ family_member_id: linkMemberId } as any)
-                    .eq("id", linkTarget.memberId);
-                  if (error) throw error;
-                  toast.success("Perfil vinculado com sucesso!");
-                  queryClient.invalidateQueries({ queryKey: ["group_members", groupId] });
-                } catch {
-                  toast.error("Erro ao vincular perfil.");
-                }
-                setLinkTarget(null);
-              }}
-              className="bg-primary text-primary-foreground [@media(hover:hover)]:hover:bg-primary/90"
-            >
-              Vincular
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      
     </div>
   );
 };
