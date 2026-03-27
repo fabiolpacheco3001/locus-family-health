@@ -387,7 +387,8 @@ const Home = () => {
                 {label}
               </span>
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 
