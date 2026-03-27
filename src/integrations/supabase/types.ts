@@ -807,6 +807,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_group_access: { Args: { _group_id: string }; Returns: boolean }
       decrement_stock: {
         Args: { amount?: number; med_id: string }
         Returns: number
