@@ -12,6 +12,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+/** Lightweight inline loader — keeps shell/nav visible while lazy chunk loads */
+const InlineRouteLoader = () => (
+  <div className="px-5 pt-16 space-y-4">
+    <Skeleton className="h-8 w-40" />
+    <Skeleton className="h-24 w-full rounded-xl" />
+    <Skeleton className="h-24 w-full rounded-xl" />
+    <Skeleton className="h-24 w-full rounded-xl" />
+  </div>
+);
+
 const AppLayout = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
