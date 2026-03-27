@@ -379,7 +379,7 @@ const GestaoAcessos = () => {
                 </DrawerDescription>
               </DrawerHeader>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain">
+              <div className="flex-1 overflow-y-auto p-4 space-y-5 overscroll-contain pb-32">
                 {/* Email */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">E-mail do Convidado</Label>
@@ -389,6 +389,7 @@ const GestaoAcessos = () => {
                     value={inviteEmail}
                     onChange={e => setInviteEmail(e.target.value)}
                     className={INPUT_CLASSES}
+                    onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 300)}
                   />
                 </div>
 
@@ -452,20 +453,21 @@ const GestaoAcessos = () => {
                     </p>
                   </div>
                 )}
-              </div>
 
-              <DrawerFooter className="flex-row gap-3">
-                <DrawerClose asChild>
-                  <Button variant="outline" className="flex-1 rounded-xl">Cancelar</Button>
-                </DrawerClose>
-                <Button
-                  onClick={handleSendInvite}
-                  disabled={saving || !inviteEmail.trim()}
-                  className="flex-1 rounded-xl bg-[#1C3333] text-white [@media(hover:hover)]:hover:bg-[#1C3333]/90"
-                >
-                  {saving ? <Loader2 className="animate-spin" size={16} /> : "Salvar Convite"}
-                </Button>
-              </DrawerFooter>
+                {/* Action buttons inside scrollable area for iOS keyboard */}
+                <div className="flex gap-3 pt-2">
+                  <DrawerClose asChild>
+                    <Button variant="outline" className="flex-1 rounded-xl">Cancelar</Button>
+                  </DrawerClose>
+                  <Button
+                    onClick={handleSendInvite}
+                    disabled={saving || !inviteEmail.trim()}
+                    className="flex-1 rounded-xl bg-[#1C3333] text-white [@media(hover:hover)]:hover:bg-[#1C3333]/90"
+                  >
+                    {saving ? <Loader2 className="animate-spin" size={16} /> : "Salvar Convite"}
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </DrawerContent>
