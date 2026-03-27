@@ -36,9 +36,7 @@ const Login = () => {
       return;
     }
 
-    if (isSignUp) {
-      toast.success("Conta criada com sucesso!");
-    }
+    // Auto-confirm ativo: sem mensagem de e-mail, fluxo segue silenciosamente
 
     {
       // Prefetch critical data before navigating
