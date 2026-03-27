@@ -1,6 +1,7 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import MobileShell from "./MobileShell";
+import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "./BottomNav";
 import InviteAcceptInterceptor from "./InviteAcceptInterceptor";
 import { useMedicationAlarms } from "@/hooks/useMedicationAlarms";
