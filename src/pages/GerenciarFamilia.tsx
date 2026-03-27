@@ -105,7 +105,7 @@ const GerenciarFamilia = () => {
 
           {sorted.map((m) => {
             const memberRole = roleMap.get(m.id);
-            const canEdit = isAdmin || (useFamilyGroupCtx.managedProfiles ?? []).includes(m.id);
+            const canEdit = isAdmin || (managedProfiles ?? []).includes(m.id);
             return (
               <div
                 key={m.id}
