@@ -555,7 +555,13 @@ const Home = () => {
               const ordemParentesco: Record<string, number> = {
                 "Titular": 1, "Cônjuge": 2, "Filho(a)": 3, "Pai/Mãe": 4, "Irmão(ã)": 5, "Outro": 6,
               };
-              return [...members].sort((a, b) => {
+              const allowedIds = role === "user" && linkedMemberId
+                ? [linkedMemberId, ...managedProfiles]
+                : null;
+              const filtered = allowedIds
+                ? members.filter(m => allowedIds.includes(m.id))
+                : members;
+              return [...filtered].sort((a, b) => {
                 const pesoA = ordemParentesco[a.relationship] || 99;
                 const pesoB = ordemParentesco[b.relationship] || 99;
                 return pesoA - pesoB;
