@@ -321,6 +321,8 @@ const GestaoAcessos = () => {
             <strong className="text-foreground">Usuário:</strong> acesso limitado ao perfil vinculado (só vê e edita seus próprios dados).
           </p>
         </div>
+        </div>
+      </div>
       </div>
 
       {/* FAB */}
