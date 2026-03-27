@@ -185,144 +185,146 @@ const GestaoAcessos = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md">
-        <div className="flex items-center gap-3 px-4 py-4">
-          <button
-            onClick={goBack}
-            className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
-          >
-            <ArrowLeft size={22} className="text-foreground" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Shield size={20} className="text-primary" />
-            <h1 className="text-lg font-bold text-foreground">Gestão de Acessos</h1>
-          </div>
-        </div>
-      </div>
-
+      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto overscroll-y-auto">
-      <div className="px-4 pb-28 space-y-6 min-h-[calc(100%+1px)]">
-        {/* Section: Active Members */}
-        <div>
-          <div className="flex items-center gap-2 mb-3 mt-2">
-            <Crown size={18} className="text-primary" />
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Membros com Acesso</h2>
+        <div className="min-h-[calc(100%+1px)]">
+          {/* Header */}
+          <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md">
+            <div className="flex items-center gap-3 px-4 py-4">
+              <button
+                onClick={goBack}
+                className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
+              >
+                <ArrowLeft size={22} className="text-foreground" />
+              </button>
+              <div className="flex items-center gap-2">
+                <Shield size={20} className="text-primary" />
+                <h1 className="text-lg font-bold text-foreground">Gestão de Acessos</h1>
+              </div>
+            </div>
           </div>
 
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2].map(i => (
-                <div key={i} className="flex items-center p-4 bg-card rounded-xl border border-border/50">
-                  <Skeleton className="w-10 h-10 rounded-full shrink-0" />
-                  <div className="flex flex-col ml-3 flex-1 space-y-2">
-                    <Skeleton className="h-4 w-28" />
-                    <Skeleton className="h-3 w-20" />
-                  </div>
+          <div className="px-4 pb-28 space-y-6">
+            {/* Section: Active Members */}
+            <div>
+              <div className="flex items-center gap-2 mb-3 mt-2">
+                <Crown size={18} className="text-primary" />
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Membros com Acesso</h2>
+              </div>
+
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2].map(i => (
+                    <div key={i} className="flex items-center p-4 bg-card rounded-xl border border-border/50">
+                      <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                      <div className="flex flex-col ml-3 flex-1 space-y-2">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {groupMembers.map(gm => {
-                const linkedMember = members.find(m => m.id === gm.family_member_id);
-                const isCurrentUser = gm.auth_user_id === user?.id;
-                return (
-                  <div
-                    key={gm.id}
-                    className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm"
-                  >
-                    <MemberAvatar
-                      avatarUrl={linkedMember?.avatar_url ?? null}
-                      name={linkedMember?.name ?? "?"}
-                      size="md"
-                      memberType={linkedMember?.member_type}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-foreground truncate">
-                          {linkedMember?.name ?? "Sem perfil vinculado"}
-                        </p>
-                        {isCurrentUser && (
-                          <span className="text-[10px] text-muted-foreground font-medium">(Você)</span>
+              ) : (
+                <div className="space-y-3">
+                  {groupMembers.map(gm => {
+                    const linkedMember = members.find(m => m.id === gm.family_member_id);
+                    const isCurrentUser = gm.auth_user_id === user?.id;
+                    return (
+                      <div
+                        key={gm.id}
+                        className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm"
+                      >
+                        <MemberAvatar
+                          avatarUrl={linkedMember?.avatar_url ?? null}
+                          name={linkedMember?.name ?? "?"}
+                          size="md"
+                          memberType={linkedMember?.member_type}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-foreground truncate">
+                              {linkedMember?.name ?? "Sem perfil vinculado"}
+                            </p>
+                            {isCurrentUser && (
+                              <span className="text-[10px] text-muted-foreground font-medium">(Você)</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {gm.family_member_id ? linkedMember?.relationship : "Todos os perfis"}
+                          </p>
+                        </div>
+                        <Badge
+                          className={
+                            gm.role === "admin"
+                              ? "bg-[#1C3333] text-white border-none text-[10px] px-2"
+                              : "bg-[#AEE2D4] text-slate-800 border-none text-[10px] px-2"
+                          }
+                        >
+                          {gm.role === "admin" ? "Admin" : "Usuário"}
+                        </Badge>
+                        {!isCurrentUser && (
+                          <button
+                            onClick={() => setDeleteTarget({ type: "member", id: gm.id })}
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-destructive/10 [@media(hover:hover)]:hover:text-destructive active:bg-destructive/10"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {gm.family_member_id ? linkedMember?.relationship : "Todos os perfis"}
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        gm.role === "admin"
-                          ? "bg-[#1C3333] text-white border-none text-[10px] px-2"
-                          : "bg-[#AEE2D4] text-slate-800 border-none text-[10px] px-2"
-                      }
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Section: Pending Invites */}
+            {pendingInvites.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <Mail size={18} className="text-primary" />
+                  <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Convites Pendentes</h2>
+                </div>
+                <div className="space-y-3">
+                  {pendingInvites.map(inv => (
+                    <div
+                      key={inv.id}
+                      className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm"
                     >
-                      {gm.role === "admin" ? "Admin" : "Usuário"}
-                    </Badge>
-                    {!isCurrentUser && (
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <Mail size={18} className="text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{inv.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {inv.family_member_id ? `Perfil: ${getMemberName(inv.family_member_id)}` : "Acesso total"}
+                        </p>
+                      </div>
+                      <Badge className="bg-amber-100 text-amber-800 border-none text-[10px] px-2">
+                        {inv.role === "admin" ? "Admin" : "Usuário"}
+                      </Badge>
                       <button
-                        onClick={() => setDeleteTarget({ type: "member", id: gm.id })}
+                        onClick={() => setDeleteTarget({ type: "invite", id: inv.id })}
                         className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-destructive/10 [@media(hover:hover)]:hover:text-destructive active:bg-destructive/10"
                       >
                         <Trash2 size={16} />
                       </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Section: Pending Invites */}
-        {pendingInvites.length > 0 && (
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <Mail size={18} className="text-primary" />
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Convites Pendentes</h2>
-            </div>
-            <div className="space-y-3">
-              {pendingInvites.map(inv => (
-                <div
-                  key={inv.id}
-                  className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm"
-                >
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <Mail size={18} className="text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{inv.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {inv.family_member_id ? `Perfil: ${getMemberName(inv.family_member_id)}` : "Acesso total"}
-                    </p>
-                  </div>
-                  <Badge className="bg-amber-100 text-amber-800 border-none text-[10px] px-2">
-                    {inv.role === "admin" ? "Admin" : "Usuário"}
-                  </Badge>
-                  <button
-                    onClick={() => setDeleteTarget({ type: "invite", id: inv.id })}
-                    className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-destructive/10 [@media(hover:hover)]:hover:text-destructive active:bg-destructive/10"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+            )}
+
+            {/* Info Banner */}
+            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex flex-col space-y-2">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Admin:</strong> acesso completo a todos os perfis e dados da família.
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Usuário:</strong> acesso limitado ao perfil vinculado (só vê e edita seus próprios dados).
+              </p>
             </div>
           </div>
-        )}
-
-        {/* Info Banner */}
-        <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex flex-col space-y-2">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Admin:</strong> acesso completo a todos os perfis e dados da família.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            <strong className="text-foreground">Usuário:</strong> acesso limitado ao perfil vinculado (só vê e edita seus próprios dados).
-          </p>
         </div>
-        </div>
-      </div>
       </div>
 
       {/* FAB */}
