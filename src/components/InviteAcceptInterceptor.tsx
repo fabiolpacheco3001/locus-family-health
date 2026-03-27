@@ -4,7 +4,7 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, PartyPopper } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 type PendingInvite = {
