@@ -13,19 +13,35 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isRecovery, setIsRecovery] = useState(false);
+  // Start as "pending" — we assume recovery until proven otherwise
+  const [status, setStatus] = useState<"pending" | "recovery" | "invalid">("pending");
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
-        setIsRecovery(true);
+        setStatus("recovery");
       }
     });
 
-    // Check if already in recovery mode from URL hash
+    // Check URL for recovery indicators (hash-based or PKCE code)
     const hash = window.location.hash;
-    if (hash.includes("type=recovery")) {
-      setIsRecovery(true);
+    const params = new URLSearchParams(window.location.search);
+    const hasRecoveryHash = hash.includes("type=recovery");
+    const hasPkceCode = params.has("code");
+
+    if (hasRecoveryHash || hasPkceCode) {
+      // If PKCE code present, Supabase client will exchange it automatically
+      // and fire PASSWORD_RECOVERY event. Set a timeout as fallback.
+      const timeout = setTimeout(() => {
+        setStatus((prev) => (prev === "pending" ? "invalid" : prev));
+      }, 8000);
+      return () => {
+        subscription.unsubscribe();
+        clearTimeout(timeout);
+      };
+    } else {
+      // No recovery params at all — invalid link
+      setStatus("invalid");
     }
 
     return () => subscription.unsubscribe();
@@ -57,7 +73,21 @@ const ResetPassword = () => {
     navigate("/home");
   };
 
-  if (!isRecovery) {
+  if (status === "pending") {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
+        <div className="flex-1 flex flex-col items-center justify-center px-8 animate-fade-in">
+          <img src={locusvitaLogo} alt="Locus Vita" className="w-24 h-24 object-cover rounded-2xl shadow-md mb-6" />
+          <Loader2 className="animate-spin text-muted-foreground" size={28} />
+          <p className="text-muted-foreground text-sm text-center mt-4">
+            Validando link de recuperação...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "invalid") {
     return (
       <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
         <div className="flex-1 flex flex-col items-center justify-center px-8 animate-fade-in">
