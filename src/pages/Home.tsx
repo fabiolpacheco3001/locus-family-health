@@ -40,20 +40,23 @@ const Home = () => {
   // Upcoming appointments (2 nearest consultations + exams)
   // Pending counts (consolidated single query)
   const { data: pendingCounts } = useQuery({
-    queryKey: ["pending-counts", user?.id],
+    queryKey: ["pending-counts", groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
-      const [consultRes, examRes] = await Promise.all([
-        supabase
-          .from("consultations")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
-          .eq("status", "Agendada"),
-        supabase
-          .from("exams")
-          .select("id", { count: "exact", head: true })
-          .eq("user_id", user!.id)
-          .eq("status", "Agendado"),
-      ]);
+      let cq = supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "Agendada");
+      let eq = supabase.from("exams").select("id", { count: "exact", head: true }).eq("status", "Agendado");
+
+      if (isAdmin && groupId) {
+        cq = cq.eq("group_id", groupId);
+        eq = eq.eq("group_id", groupId);
+      } else if (linkedMemberId) {
+        cq = cq.eq("family_member_id", linkedMemberId);
+        eq = eq.eq("family_member_id", linkedMemberId);
+      } else {
+        cq = cq.eq("user_id", user!.id);
+        eq = eq.eq("user_id", user!.id);
+      }
+
+      const [consultRes, examRes] = await Promise.all([cq, eq]);
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
       return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0 };
