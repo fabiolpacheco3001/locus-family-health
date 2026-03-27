@@ -60,7 +60,9 @@ const AppLayout = () => {
     <InviteAcceptInterceptor>
       <MobileShell>
         <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
-          <Outlet />
+          <Suspense fallback={<InlineRouteLoader />}>
+            <Outlet />
+          </Suspense>
         </div>
         <BottomNav />
       </MobileShell>
