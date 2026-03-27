@@ -251,6 +251,15 @@ const GestaoAcessos = () => {
                         {isCurrentUser && (
                           <span className="text-[10px] text-muted-foreground font-medium">(Você)</span>
                         )}
+                        {!linkedMember && (
+                          <button
+                            onClick={() => { setLinkTarget({ memberId: gm.id }); setLinkMemberId(""); }}
+                            className="w-6 h-6 flex items-center justify-center rounded-full text-primary [@media(hover:hover)]:hover:bg-primary/10 active:bg-primary/10"
+                            title="Vincular perfil"
+                          >
+                            <Link2 size={14} />
+                          </button>
+                        )}
                       </div>
                       <p className="text-xs text-muted-foreground truncate">
                         {gm.family_member_id ? linkedMember?.relationship : "Todos os perfis"}
