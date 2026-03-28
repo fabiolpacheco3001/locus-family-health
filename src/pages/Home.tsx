@@ -40,7 +40,7 @@ const Home = () => {
   // Upcoming appointments (2 nearest consultations + exams)
   // Pending counts (consolidated single query)
   const { data: pendingCounts } = useQuery({
-    queryKey: ["pending-counts", groupId, isAdmin, linkedMemberId],
+    queryKey: ["pending-counts", groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
       let cq = supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "Agendada");
       let eq = supabase.from("exams").select("id", { count: "exact", head: true }).eq("status", "Agendado");
