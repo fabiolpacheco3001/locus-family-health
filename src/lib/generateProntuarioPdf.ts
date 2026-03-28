@@ -205,6 +205,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       body: data.diseases.map((d) => [d.name, d.category]),
       theme: "grid",
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
+      styles: { valign: "middle" as const },
       bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
       didDrawPage: () => { drawHeader(); },
     });
