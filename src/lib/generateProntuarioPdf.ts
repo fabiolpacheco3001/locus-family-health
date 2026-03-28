@@ -43,7 +43,9 @@ const fmtDate = (iso: string) => {
 
 const fmtMonthYear = (iso: string) => {
   try {
-    return format(parseISO(iso), "MMMM yyyy", { locale: ptBR });
+    const d = parseISO(iso);
+    const m = format(d, "MMM", { locale: ptBR }).replace(".", "");
+    return m.charAt(0).toUpperCase() + m.slice(1) + "/" + format(d, "yy");
   } catch {
     return "";
   }
