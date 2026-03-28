@@ -68,6 +68,7 @@ const GestaoAcessos = () => {
   const [permsMember, setPermsMember] = useState<GroupMember | null>(null);
   const [permsSelected, setPermsSelected] = useState<string[]>([]);
   const [permsSaving, setPermsSaving] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   // Fetch active group members
   const { data: groupMembers = [], isLoading: loadingMembers } = useQuery({
