@@ -39,7 +39,9 @@ export const FamilyGroupProvider = ({ children }: { children: ReactNode }) => {
       return data as unknown as { group_id: string; role: AppRole; family_member_id: string | null; managed_profiles: string[] | null };
     },
     enabled: !!user,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const value = useMemo<FamilyGroupContextType>(() => ({
