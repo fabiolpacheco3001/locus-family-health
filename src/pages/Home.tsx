@@ -130,6 +130,7 @@ const Home = () => {
           familyMemberId: c.family_member_id,
           isOverdue: false,
           consultationType: c.type,
+          isPet: (c.family_members?.member_type || "human") === "pet",
         });
       });
 
