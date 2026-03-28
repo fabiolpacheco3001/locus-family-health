@@ -107,12 +107,11 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
                 <div className="flex-1 min-w-0 space-y-0.5">
                   <p className="text-sm font-medium text-foreground">{r.routine_type}</p>
                   <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
-                  {nextStr && (
+                  {recurrenceLabel && (
                     <p className="text-[10px] text-muted-foreground">
-                      Próximo: <span className="capitalize">{nextStr}</span>
+                      🔁 {recurrenceLabel}
                     </p>
                   )}
-                  {r.notes && (
                     <p className="text-[10px] text-muted-foreground truncate">{r.notes}</p>
                   )}
                 </div>
