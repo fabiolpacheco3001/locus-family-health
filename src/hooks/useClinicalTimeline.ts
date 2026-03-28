@@ -10,6 +10,7 @@ export type ClinicalEvent = {
   details: string | null;
   fileUrl: string | null;
   status: string | null;
+  reason: string | null;
 };
 
 export const useClinicalTimeline = (familyMemberId: string | undefined) => {
