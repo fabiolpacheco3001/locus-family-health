@@ -207,10 +207,10 @@ const PetRotinas = () => {
                     leadingAction={
                       status !== "Realizado"
                         ? {
-                            icon: <Check className="w-6 h-6" />,
+                            icon: <CheckCircle className="w-5 h-5" />,
                             label: "Realizado",
                             bgColor: "#F2A97F",
-                            textColor: "#1e293b",
+                            textColor: "#1a1a1a",
                             onAction: () => handleComplete(r.id),
                           }
                         : undefined
