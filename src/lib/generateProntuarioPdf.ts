@@ -258,13 +258,14 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       body: tableBody,
       theme: "grid",
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 8 },
+      styles: { valign: "middle" as const },
       bodyStyles: { fontSize: 8, textColor: PRIMARY_COLOR },
       columnStyles: {
         0: { cellWidth: 22 },
         1: { cellWidth: 20 },
-        2: { cellWidth: contentW * 0.25 },
-        3: { cellWidth: contentW * 0.25 },
-        4: { cellWidth: contentW - 22 - 20 - contentW * 0.25 - contentW * 0.25 },
+        2: { cellWidth: contentW * 0.22 },
+        3: { cellWidth: contentW * 0.35 },
+        4: { cellWidth: contentW - 22 - 20 - contentW * 0.22 - contentW * 0.35 },
       },
       didParseCell: (hookData: any) => {
         if (hookData.section === "body" && sectionRows.has(hookData.row.index)) {
