@@ -92,6 +92,13 @@ const Home = () => {
         .order("exam_date", { ascending: true })
         .limit(5);
 
+      let pq = supabase
+        .from("pet_routines")
+        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members(name, member_type)")
+        .eq("status", "Agendado")
+        .order("date_performed", { ascending: true })
+        .limit(5);
+
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
@@ -99,12 +106,14 @@ const Home = () => {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
+        pq = pq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
+        pq = pq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes] = await Promise.all([cq, eq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
 
       const items: Array<{
         id: string;
@@ -112,7 +121,7 @@ const Home = () => {
         subtitle: string;
         date: string | null;
         memberName: string;
-        kind: "consultation" | "exam";
+        kind: "consultation" | "exam" | "pet_routine";
         familyMemberId: string;
         isOverdue: boolean;
         consultationType?: string | null;
@@ -122,7 +131,6 @@ const Home = () => {
       const now = new Date();
       (consultRes.data ?? []).forEach((c: any) => {
         const dateStr = c.consultation_date;
-        // Skip past appointments for "Próximos 5"
         if (dateStr && new Date(dateStr) <= now) return;
         items.push({
           id: c.id,
@@ -141,7 +149,6 @@ const Home = () => {
       (examRes.data ?? []).forEach((e: any) => {
         const isRealizado = e.status === "Realizado" || e.status === "Coletado";
         const displayDate = isRealizado ? e.result_date : e.exam_date;
-        // Skip past exams
         if (e.status === "Agendado" && e.exam_date && isBefore(new Date(e.exam_date), startOfDay(now))) return;
         items.push({
           id: e.id,
@@ -156,6 +163,22 @@ const Home = () => {
         });
       });
 
+      (petRes.data ?? []).forEach((p: any) => {
+        const dateStr = p.date_performed;
+        if (dateStr && isBefore(new Date(dateStr + 'T12:00:00'), startOfDay(now))) return;
+        items.push({
+          id: p.id,
+          title: p.routine_type,
+          subtitle: p.notes || "Rotina Pet",
+          date: dateStr,
+          memberName: p.family_members?.name ?? "Pet",
+          kind: "pet_routine",
+          familyMemberId: p.family_member_id,
+          isOverdue: false,
+          isPet: true,
+        });
+      });
+
       items.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
@@ -163,6 +186,34 @@ const Home = () => {
       });
 
       return items.slice(0, 5);
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Pet routines for today (Ações de Hoje)
+  const { data: todayPetRoutines = [] } = useQuery({
+    queryKey: ["today-pet-routines", groupId, isAdmin, linkedMemberId, managedProfiles],
+    queryFn: async () => {
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      let pq = supabase
+        .from("pet_routines")
+        .select("id, family_member_id, routine_type, date_performed, status, notes, family_members(name, member_type)")
+        .eq("date_performed", todayStr)
+        .eq("status", "Agendado");
+
+      if (isAdmin && groupId) {
+        // no group_id on pet_routines, rely on RLS
+      } else if (linkedMemberId) {
+        const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
+        pq = pq.in("family_member_id", allowedIds);
+      } else {
+        pq = pq.eq("user_id", user!.id);
+      }
+
+      const { data, error } = await pq;
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
