@@ -111,9 +111,9 @@ const Doencas = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diseases", id] });
       closeDrawer();
-      toast.success("Doença registrada com sucesso");
+      toast.success("Condição de saúde registrada com sucesso");
     },
-    onError: () => toast.error("Erro ao registrar doença"),
+    onError: () => toast.error("Erro ao registrar condição de saúde"),
   });
 
   const updateMutation = useMutation({
@@ -128,9 +128,9 @@ const Doencas = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diseases", id] });
       closeDrawer();
-      toast.success("Doença atualizada com sucesso");
+      toast.success("Condição de saúde atualizada com sucesso");
     },
-    onError: () => toast.error("Erro ao atualizar doença"),
+    onError: () => toast.error("Erro ao atualizar condição de saúde"),
   });
 
   const deleteMutation = useMutation({
@@ -144,9 +144,9 @@ const Doencas = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diseases", id] });
       closeDrawer();
-      toast.success("Doença excluída com sucesso");
+      toast.success("Condição de saúde excluída com sucesso");
     },
-    onError: () => toast.error("Erro ao excluir doença"),
+    onError: () => toast.error("Erro ao excluir condição de saúde"),
   });
 
   const openAdd = () => {
@@ -203,7 +203,7 @@ const Doencas = () => {
   const handleConfirm = () => {
     const name = isCustom ? customDiseaseName.trim() : selectedDisease;
     if (!name) {
-      toast.error("Selecione ou digite uma doença");
+      toast.error("Selecione ou digite uma condição de saúde");
       return;
     }
     if (drawerMode === "edit") {
@@ -214,7 +214,7 @@ const Doencas = () => {
   };
 
   const handleDelete = () => {
-    if (window.confirm("Tem certeza que deseja excluir esta doença?")) {
+    if (window.confirm("Tem certeza que deseja excluir esta condição de saúde?")) {
       deleteMutation.mutate();
     }
   };
@@ -230,7 +230,7 @@ const Doencas = () => {
           <DrawerHeader>
             <DrawerTitle>
               {drawerMode === "edit"
-                ? "Editar Doença"
+                ? "Editar Condição de Saúde"
                 : step === 1
                 ? "Selecione o Grupo"
                 : selectedCategory}
@@ -317,7 +317,7 @@ const Doencas = () => {
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft size={22} />
           </Button>
-          <h1 className="text-lg font-bold text-foreground flex-1">Doenças</h1>
+          <h1 className="text-lg font-bold text-foreground flex-1">Condições de Saúde</h1>
         </div>
 
         {isLoading ? (
@@ -331,7 +331,7 @@ const Doencas = () => {
             <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
               <Activity className="text-black" size={28} />
             </div>
-            <p className="text-foreground font-semibold mb-1">Nenhuma doença registrada</p>
+            <p className="text-foreground font-semibold mb-1">Nenhuma condição de saúde registrada</p>
             <p className="text-muted-foreground text-sm">Toque no botão + para adicionar.</p>
           </div>
         ) : (
