@@ -35,7 +35,7 @@ const filterLabels: Record<string, string> = {
 
 const Agenda = () => {
   const { user } = useAuth();
-  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const [searchParams] = useSearchParams();
@@ -43,7 +43,7 @@ const Agenda = () => {
   const today = startOfDay(new Date());
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["agenda", groupId, isAdmin, linkedMemberId],
+    queryKey: ["agenda", groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
@@ -65,8 +65,9 @@ const Agenda = () => {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
       } else if (linkedMemberId) {
-        cq = cq.eq("family_member_id", linkedMemberId);
-        eq = eq.eq("family_member_id", linkedMemberId);
+        const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
+        cq = cq.in("family_member_id", allowedIds);
+        eq = eq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
