@@ -189,7 +189,7 @@ const Medicamentos = () => {
                   <SwipeableActionCard
                     key={m.id}
                     onDelete={() => handleInstantDelete(m.id)}
-                    disableDelete={!isAdmin}
+                    disableDelete={!isAdmin && !managedProfiles.includes(id!)}
                     leadingAction={isAtivo ? {
                       icon: <CheckCircle className="w-6 h-6" />,
                       label: "Concluído",
