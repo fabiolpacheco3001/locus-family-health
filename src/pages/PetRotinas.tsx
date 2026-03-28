@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import AddPetRoutineDrawer from "@/components/AddPetRoutineDrawer";
+import EditPetRoutineDrawer from "@/components/EditPetRoutineDrawer";
 
 const ROUTINE_ICONS: Record<string, React.ElementType> = {
   Banho: Droplets,
