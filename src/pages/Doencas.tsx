@@ -406,7 +406,7 @@ const Doencas = () => {
                   onDelete={() => handleInstantDelete(d.id)}
                   isOpen={openCardId === d.id}
                   onOpenChange={(isOpen) => setOpenCardId(isOpen ? d.id : null)}
-                  disableDelete={!isAdmin}
+                  disableDelete={!isAdmin && !managedProfiles.includes(id!)}
                   leadingAction={
                     isSuperadoTab
                       ? {

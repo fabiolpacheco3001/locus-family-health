@@ -192,7 +192,7 @@ const Exames = () => {
                   <ExamSwipeableCard
                     key={e.id}
                     onDelete={() => handleInstantDelete(e.id)}
-                    disableDelete={!isAdmin}
+                    disableDelete={!isAdmin && !managedProfiles.includes(id!)}
                     onMarkRealizado={() => handleQuickStatusUpdate(e.id, 'Realizado')}
                     onMarkPronto={() => handleQuickStatusUpdate(e.id, 'Pronto')}
                     quickActionMode={quickActionMode}
