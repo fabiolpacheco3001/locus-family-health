@@ -28,7 +28,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
-import PetRoutines from "@/components/PetRoutines";
+
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
 import { useAuth } from "@/hooks/useAuth";
