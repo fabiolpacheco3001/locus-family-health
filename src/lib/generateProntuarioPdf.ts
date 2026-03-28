@@ -204,7 +204,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Doença", "Categoria"]],
+      head: [["Diagnóstico", "Categoria"]],
       body: data.diseases.map((d) => [d.name, d.category]),
       theme: "grid",
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
