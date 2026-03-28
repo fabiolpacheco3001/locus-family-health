@@ -115,6 +115,7 @@ const Agenda = () => {
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
+          isPet: (e.family_members?.member_type || "human") === "pet",
         };
       });
 
