@@ -97,7 +97,7 @@ export const useFamilyMembers = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["family_members"] });
+      queryClient.invalidateQueries({ queryKey: ["family_members", user?.id] });
     },
   });
 
