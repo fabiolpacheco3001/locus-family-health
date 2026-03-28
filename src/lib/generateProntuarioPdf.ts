@@ -63,7 +63,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 15;
   const contentW = pageW - margin * 2;
-  const headerH = 28;
+  const headerH = 23;
   const footerH = 12;
   let y = 0;
 
@@ -76,13 +76,13 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     // Try to draw logo if available
     if (data.logoBase64) {
       try {
-        doc.addImage(data.logoBase64, "JPEG", margin, 3, 16, 16);
+        doc.addImage(data.logoBase64, "JPEG", margin, 4, 14, 14);
       } catch {
         // fallback: no logo
       }
     }
 
-    const textX = data.logoBase64 ? margin + 19 : margin;
+    const textX = data.logoBase64 ? margin + 17 : margin;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(255, 255, 255);
@@ -146,7 +146,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
   autoTable(doc, {
     startY: y,
-    margin: { left: margin, right: margin },
+    margin: { left: margin, right: margin, top: headerH + 6 },
     body: [
       ["Nome", "Idade", "Tipo Sanguíneo"],
       [data.member.name, age !== null ? `${age} anos` : "—", data.member.blood_type || "—"],
@@ -179,7 +179,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   } else {
     autoTable(doc, {
       startY: y,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: headerH + 6 },
       head: [["Substância", "Gravidade"]],
       body: data.allergies.map((a) => [a.substance, a.severity]),
       theme: "grid",
@@ -203,7 +203,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   } else {
     autoTable(doc, {
       startY: y,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: headerH + 6 },
       head: [["Diagnóstico", "Categoria"]],
       body: data.diseases.map((d) => [d.name, d.category]),
       theme: "grid",
@@ -257,7 +257,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
     autoTable(doc, {
       startY: y,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: headerH + 6 },
       head: [["Data", "Tipo", "Título", "Detalhes", "Motivo"]],
       body: tableBody,
       theme: "grid",
