@@ -200,7 +200,7 @@ const GestaoAcessos = () => {
           <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md">
             <div className="flex items-center gap-3 px-4 py-4">
               <button
-                onClick={goBack}
+                onClick={() => navigate("/ajustes")}
                 className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
               >
                 <ArrowLeft size={22} className="text-foreground" />
