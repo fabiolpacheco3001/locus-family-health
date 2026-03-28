@@ -232,8 +232,11 @@ const Agenda = () => {
           <div className="flex flex-col space-y-3">
             {filteredItems.map((item) => {
               const isExam = item.kind === "exam";
-              const Icon = isExam ? FileText : Stethoscope;
-              const route = isExam
+              const isPetRoutine = item.kind === "pet_routine";
+              const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+              const route = isPetRoutine
+                ? `/familiar/${item.family_member_id}/rotinas-pet`
+                : isExam
                 ? `/familiar/${item.family_member_id}/exames`
                 : `/familiar/${item.family_member_id}/consultas`;
 
@@ -279,12 +282,17 @@ const Agenda = () => {
                           Atrasado
                         </Badge>
                       )}
+                      {isPetRoutine && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#A7D3CB]/30 text-[#1C3333] border-none">
+                          Rotina Pet
+                        </Badge>
+                      )}
                       {isExam && (
                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#FFF4A3] text-slate-800 border-none">
                            Exame
                         </Badge>
                       )}
-                      {!isExam && (
+                      {!isExam && !isPetRoutine && (
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 border-none ${
