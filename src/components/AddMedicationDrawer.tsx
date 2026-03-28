@@ -88,6 +88,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [medicoPrescritor, setMedicoPrescritor] = useState("");
   const [estoqueTotal, setEstoqueTotal] = useState("");
   const [estoqueMinimo, setEstoqueMinimo] = useState("");
+  const [reason, setReason] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [receitaFile, setReceitaFile] = useState<File | null>(null);
   const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
