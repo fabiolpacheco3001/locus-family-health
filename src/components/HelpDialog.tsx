@@ -26,7 +26,7 @@ const faqItems = [
   {
     question: "Onde encontro o histórico de exames?",
     answer:
-      "Na aba 'Minha Saúde', selecione o familiar desejado no topo da tela e, em seguida, toque no card 'Exames'.",
+      "Na aba 'Minha Saúde', "Na aba 'Minha Saúde', selecione o usuário desejado no topo da tela e, em seguida, toque no card 'Exames'.", no topo da tela e, em seguida, toque no card 'Exames'.",
   },
   {
     question: "Posso compartilhar o acesso com outra pessoa?",

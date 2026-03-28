@@ -70,7 +70,7 @@ export function useStockAlerts(medications: Medication[]) {
         if (cancelled) return;
         if (notifiedMedIds.has(med.id)) continue;
 
-        const memberName = med.family_members?.name ?? "o familiar";
+        const memberName = med.family_members?.name ?? "o usuário";
         const notificationInsert = {
           user_id: user.id,
           family_member_id: med.family_member_id,

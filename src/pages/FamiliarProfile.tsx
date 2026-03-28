@@ -130,7 +130,7 @@ const FamiliarProfile = () => {
           <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
             <AlertCircle className="text-destructive" size={28} />
           </div>
-          <p className="text-foreground font-semibold mb-1">Familiar não encontrado</p>
+          <p className="text-foreground font-semibold mb-1"><p className="text-foreground font-semibold mb-1">Usuário não encontrado</p></p>
           <p className="text-muted-foreground text-sm mb-6">Este perfil pode ter sido removido ou você não tem acesso.</p>
           <Button onClick={() => navigate("/home")}>Voltar para Home</Button>
         </div>

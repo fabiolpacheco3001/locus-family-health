@@ -122,7 +122,7 @@ const Agenda = () => {
           date: displayDate,
           type: null,
           status: normalizedStatus,
-          memberName: e.family_members?.name ?? "Familiar",
+          memberName: e.family_members?.name ?? "Usuário",
           kind: "exam",
           isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
           isPet: (e.family_members?.member_type || "human") === "pet",

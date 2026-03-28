@@ -156,7 +156,7 @@ const Home = () => {
           title: isRealizado ? `Buscar Resultado` : e.name,
           subtitle: isRealizado ? e.name : (e.location ?? "Exame"),
           date: displayDate,
-          memberName: e.family_members?.name ?? "Familiar",
+          memberName: e.family_members?.name ?? "Usuário",
           kind: "exam",
           familyMemberId: e.family_member_id,
           isOverdue: false,
