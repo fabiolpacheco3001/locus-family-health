@@ -565,16 +565,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
               {/* ═══════ BLOCO 1: Origem e Documentação (com moldura) ═══════ */}
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
-                {/* Vincular Consulta */}
-                <div className="space-y-1.5">
-                  <Label>Vincular Consulta</Label>
-                  <ConsultationCombobox
-                    familyMemberId={familyMemberId}
-                    value={consultationId}
-                    onValueChange={handleConsultationChange}
-                  />
-                </div>
-
                 {/* Receita Médica - Upload + IA */}
                 <div className="space-y-3">
                   <Label>Receita Médica (PDF ou Imagem)</Label>
@@ -659,6 +649,16 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     value={medicoPrescritor}
                     onChange={(e) => setMedicoPrescritor(e.target.value)}
                     className="text-[16px]"
+                  />
+                </div>
+
+                {/* Vincular Consulta */}
+                <div className="space-y-1.5">
+                  <Label>Vincular Consulta</Label>
+                  <ConsultationCombobox
+                    familyMemberId={familyMemberId}
+                    value={consultationId}
+                    onValueChange={handleConsultationChange}
                   />
                 </div>
               </div>
