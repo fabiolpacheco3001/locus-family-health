@@ -35,7 +35,7 @@ const filterLabels: Record<string, string> = {
 
 const Agenda = () => {
   const { user } = useAuth();
-  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const [searchParams] = useSearchParams();
