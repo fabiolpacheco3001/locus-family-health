@@ -838,6 +838,47 @@ export type Database = {
           },
         ]
       }
+      pet_routines: {
+        Row: {
+          created_at: string
+          date_performed: string
+          family_member_id: string
+          id: string
+          next_due_date: string | null
+          notes: string | null
+          routine_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_performed: string
+          family_member_id: string
+          id?: string
+          next_due_date?: string | null
+          notes?: string | null
+          routine_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_performed?: string
+          family_member_id?: string
+          id?: string
+          next_due_date?: string | null
+          notes?: string | null
+          routine_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_routines_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppressed_emails: {
         Row: {
           created_at: string
