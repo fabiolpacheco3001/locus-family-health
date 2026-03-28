@@ -112,6 +112,8 @@ export const useMedications = (familyMemberId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["medications"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
     },
   });
 
