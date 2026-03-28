@@ -672,7 +672,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
                 <div className="space-y-1.5">
                   <Label>Motivo do Tratamento</Label>
-                  <ReasonCombobox value={reason} onChange={setReason} groupId={groupId} />
+                  <ReasonCombobox value={reason} onChange={setReason} groupId={groupId} familyMemberId={familyMemberId} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
