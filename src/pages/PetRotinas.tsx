@@ -17,7 +17,7 @@ import AddPetRoutineDrawer from "@/components/AddPetRoutineDrawer";
 import EditPetRoutineDrawer from "@/components/EditPetRoutineDrawer";
 
 const ROUTINE_ICONS: Record<string, React.ElementType> = {
-  Banho: Droplets,
+  Banho: ShowerHead,
   Tosa: Scissors,
   Antipulgas: Bug,
   Vermífugo: Pill,
