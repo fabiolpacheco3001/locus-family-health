@@ -33,7 +33,7 @@ const MinhaSaude = () => {
   const { id } = useParams<{ id: string }>();
   const { members } = useFamilyMembers();
   const { user } = useAuth();
-  const { isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
+  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const goBack = useSmartBack();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -42,6 +42,7 @@ const MinhaSaude = () => {
   const [graficoAtivo, setGraficoAtivo] = useState<"peso" | "altura">("peso");
 
   useEffect(() => {
+    if (groupLoading) return;
     if (!isAdmin && id) {
       const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
       if (!allowedIds.includes(id)) {

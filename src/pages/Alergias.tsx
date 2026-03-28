@@ -38,12 +38,13 @@ const severityOptions = ["Leve", "Moderada", "Grave"];
 const Alergias = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const goBack = useSmartBack();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (groupLoading) return;
     if (!isAdmin && id) {
       const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
       if (!allowedIds.includes(id)) {
@@ -51,7 +52,7 @@ const Alergias = () => {
         navigate("/home", { replace: true });
       }
     }
-  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState<Allergy | null>(null);
   const [form, setForm] = useState({ substance: "", type: "Medicamento", severity: "Leve" });

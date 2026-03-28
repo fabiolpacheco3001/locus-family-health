@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useSmartBack from "@/hooks/useSmartBack";
 import {
@@ -31,6 +31,8 @@ import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { toast } from "sonner";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -71,7 +73,19 @@ const FamiliarProfile = () => {
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const { user } = useAuth();
+  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (groupLoading) return;
+    if (!isAdmin && id) {
+      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
+      if (!allowedIds.includes(id)) {
+        toast.error("Acesso negado");
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);

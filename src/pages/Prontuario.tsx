@@ -28,10 +28,11 @@ const Prontuario = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
-  const { isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
+  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
 
   useEffect(() => {
+    if (groupLoading) return;
     if (!isAdmin && id) {
       const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
       if (!allowedIds.includes(id)) {
@@ -39,7 +40,7 @@ const Prontuario = () => {
         navigate("/home", { replace: true });
       }
     }
-  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ["family_member", id],
