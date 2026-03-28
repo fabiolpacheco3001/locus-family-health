@@ -216,7 +216,13 @@ const PetRotinas = () => {
                         : undefined
                     }
                   >
-                    <div className="bg-card rounded-xl border border-border/50 px-4 py-3 flex items-center gap-3">
+                    <div
+                      onClick={() => {
+                        if (openCardId === r.id) return;
+                        setEditRoutine(r);
+                      }}
+                      className="bg-card rounded-xl border border-border/50 px-4 py-3 flex items-center gap-3 cursor-pointer active:bg-muted/50 transition-colors"
+                    >
                       <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center flex-shrink-0">
                         <Icon className="text-black" size={18} />
                       </div>
