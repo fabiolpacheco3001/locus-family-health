@@ -146,7 +146,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
   autoTable(doc, {
     startY: y,
-    margin: { left: margin, right: margin },
+    margin: { left: margin, right: margin, top: headerH + 6 },
     body: [
       ["Nome", "Idade", "Tipo Sanguíneo"],
       [data.member.name, age !== null ? `${age} anos` : "—", data.member.blood_type || "—"],
