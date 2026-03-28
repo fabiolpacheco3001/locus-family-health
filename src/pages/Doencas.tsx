@@ -128,9 +128,9 @@ const Doencas = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diseases", id] });
       closeDrawer();
-      toast.success("Doença atualizada com sucesso");
+      toast.success("Condição de saúde atualizada com sucesso");
     },
-    onError: () => toast.error("Erro ao atualizar doença"),
+    onError: () => toast.error("Erro ao atualizar condição de saúde"),
   });
 
   const deleteMutation = useMutation({
