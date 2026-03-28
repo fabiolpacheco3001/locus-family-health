@@ -99,7 +99,7 @@ const Agenda = () => {
           date: dateStr,
           type: c.type,
           status: c.status,
-          memberName: c.family_members?.name ?? "Familiar",
+          memberName: c.family_members?.name ?? "Usuário",
           kind: "consultation",
           isOverdue: c.status === "Agendada" && dateStr ? isBefore(parseISO(dateStr), new Date()) : false,
           isPet: (c.family_members?.member_type || "human") === "pet",
