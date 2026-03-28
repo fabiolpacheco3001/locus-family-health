@@ -181,6 +181,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       body: data.allergies.map((a) => [a.substance, a.severity]),
       theme: "grid",
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
+      styles: { valign: "middle" as const },
       bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
       columnStyles: { 0: { cellWidth: contentW * 0.65 }, 1: { cellWidth: contentW * 0.35 } },
       didDrawPage: () => { drawHeader(); },
