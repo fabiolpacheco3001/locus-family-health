@@ -847,6 +847,7 @@ export type Database = {
           next_due_date: string | null
           notes: string | null
           routine_type: string
+          status: string
           user_id: string
         }
         Insert: {
@@ -857,6 +858,7 @@ export type Database = {
           next_due_date?: string | null
           notes?: string | null
           routine_type: string
+          status?: string
           user_id: string
         }
         Update: {
@@ -867,6 +869,7 @@ export type Database = {
           next_due_date?: string | null
           notes?: string | null
           routine_type?: string
+          status?: string
           user_id?: string
         }
         Relationships: [
