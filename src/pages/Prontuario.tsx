@@ -152,7 +152,8 @@ const Prontuario = () => {
       const yyyy = now.getFullYear();
       const hh = String(now.getHours()).padStart(2, "0");
       const min = String(now.getMinutes()).padStart(2, "0");
-      const fileName = `Prontuario_${member!.name.replace(/\s+/g, "_")}_${dd}${mm}${yyyy}_${hh}${min}.pdf`;
+      const ss = String(now.getSeconds()).padStart(2, "0");
+      const fileName = `RES_${member!.name.replace(/\s+/g, "_")}_${dd}${mm}${yyyy}_${hh}${min}${ss}.pdf`;
 
       if (navigator.share) {
         const file = new File([blob], fileName, { type: "application/pdf" });
