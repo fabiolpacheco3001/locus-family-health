@@ -73,7 +73,7 @@ const Ajuda = () => {
           </div>
 
           {/* FAQ Cards */}
-          <div className="flex flex-col gap-3 justify-start h-fit pb-24">
+          <div className="flex flex-col gap-3 justify-start h-fit pb-8">
             {filteredItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <SearchX size={40} className="mb-3 opacity-50" />
