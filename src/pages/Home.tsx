@@ -295,15 +295,29 @@ const Home = () => {
               <h1 className="text-2xl font-bold text-white">Olá, {userName}!</h1>
             </div>
           </div>
-          <button
-            onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
-            className="relative p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
-          >
-            <Bell size={24} className="text-white" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-[#1C3333]" />
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => toast.info("Em breve: Busque funcionalidades ou agende compromissos via Chat Conversacional com IA!")}
+              className="p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
+            >
+              <Search size={22} className="text-white" />
+            </button>
+            <button
+              onClick={() => setHelpOpen(true)}
+              className="p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
+            >
+              <HelpCircle size={22} className="text-white" />
+            </button>
+            <button
+              onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
+              className="relative p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
+            >
+              <Bell size={22} className="text-white" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-[#1C3333]" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
