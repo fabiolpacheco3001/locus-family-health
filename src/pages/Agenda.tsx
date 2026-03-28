@@ -25,6 +25,7 @@ type AgendaItem = {
   memberName: string;
   kind: "consultation" | "exam";
   isOverdue: boolean;
+  isPet: boolean;
 };
 
 const filterLabels: Record<string, string> = {
