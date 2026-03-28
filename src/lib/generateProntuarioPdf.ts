@@ -231,7 +231,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
           eventTypeLabel[ev.type] || ev.type,
           ev.title,
           [ev.subtitle, ev.details].filter(Boolean).join(" — ") || "—",
-          "", // reason placeholder handled below
+          ev.reason || "—",
         ]);
       }
     }
