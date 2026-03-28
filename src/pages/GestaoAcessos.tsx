@@ -215,6 +215,8 @@ const GestaoAcessos = () => {
               >
                 <Info size={20} className="text-muted-foreground" />
               </button>
+            </div>
+          </div>
 
           <div className="px-4 pb-28 space-y-6">
             {/* Section: Active Members */}
