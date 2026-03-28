@@ -134,7 +134,7 @@ const Ajustes = () => {
               <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
                 <Trash2 size={20} className="text-destructive" />
               </div>
-              <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Minha Conta</span>
+              <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Conta</span>
               <ChevronRight size={18} className="text-destructive/50" />
             </button>
           </div>
