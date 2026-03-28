@@ -148,7 +148,7 @@ const Prontuario = () => {
     }
   };
 
-
+  if (isLoading || groupLoading) {
     return (
       <div className="px-4 pt-6 space-y-6 animate-fade-in">
         <Skeleton className="h-10 w-40" />
