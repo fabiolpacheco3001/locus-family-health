@@ -72,6 +72,7 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
           details: null,
           fileUrl: e.file_url || null,
           status: e.status,
+          reason: null,
         });
       });
 
