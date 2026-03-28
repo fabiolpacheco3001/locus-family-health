@@ -51,7 +51,7 @@ type Invite = {
 };
 
 const GestaoAcessos = () => {
-  const goBack = useSmartBack();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
   const { members } = useFamilyMembers();
