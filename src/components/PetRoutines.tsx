@@ -89,9 +89,11 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
           {routines.map((r) => {
             const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
             const dateStr = format(parseISO(r.date_performed + "T12:00:00"), "dd MMM yyyy", { locale: ptBR });
-            const nextStr = r.next_due_date
-              ? format(parseISO(r.next_due_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })
-              : null;
+            const recurrenceLabels: Record<string, string> = {
+              weekly: "Semanal", biweekly: "Quinzenal", monthly: "Mensal",
+              quarterly: "Trimestral", semiannually: "Semestral", annually: "Anual",
+            };
+            const recurrenceLabel = recurrenceLabels[(r as any).recurrence] || null;
 
             return (
               <button
