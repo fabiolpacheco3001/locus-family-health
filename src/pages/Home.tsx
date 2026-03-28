@@ -713,7 +713,7 @@ const Home = () => {
         </DrawerContent>
       </Drawer>
       </div>
-      <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      
     </div>
   );
 };
