@@ -4,6 +4,15 @@ import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const ordemParentesco: Record<string, number> = {
+  "Titular": 1,
+  "Cônjuge": 2,
+  "Filho(a)": 3,
+  "Pai/Mãe": 4,
+  "Irmão(ã)": 5,
+  "Outro": 6,
+};
+
 const Familia = () => {
   const { members, isLoading } = useFamilyMembers();
   const navigate = useNavigate();
@@ -39,16 +48,7 @@ const Familia = () => {
 
         {members.length > 0 && (
           <div className="flex flex-col space-y-3 w-full">
-            {(() => {
-              const ordemParentesco: Record<string, number> = {
-                "Titular": 1,
-                "Cônjuge": 2,
-                "Filho(a)": 3,
-                "Pai/Mãe": 4,
-                "Irmão(ã)": 5,
-                "Outro": 6,
-              };
-              return [...members].sort((a, b) => {
+            {[...members].sort((a, b) => {
                 const pesoA = ordemParentesco[a.relationship] || 99;
                 const pesoB = ordemParentesco[b.relationship] || 99;
                 return pesoA - pesoB;
@@ -65,8 +65,7 @@ const Familia = () => {
                   </div>
                   <ChevronRight className="text-muted-foreground ml-auto shrink-0" size={20} />
                 </button>
-              ));
-            })()}
+              ))}
           </div>
         )}
         </div>

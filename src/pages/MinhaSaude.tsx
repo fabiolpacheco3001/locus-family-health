@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Activity, Plus, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,22 +27,33 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 
 const MinhaSaude = () => {
   const { id } = useParams<{ id: string }>();
   const { members } = useFamilyMembers();
   const { user } = useAuth();
+  const { isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const goBack = useSmartBack();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
   const [graficoAtivo, setGraficoAtivo] = useState<"peso" | "altura">("peso");
 
   useEffect(() => {
+    if (!isAdmin && id) {
+      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
+      if (!allowedIds.includes(id)) {
+        toast.error("Acesso negado");
+        navigate("/home", { replace: true });
+        return;
+      }
+    }
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
     const scrollContainer = document.querySelector('.overflow-y-auto');
     if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-  }, []);
+  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
   const member = members.find((m) => m.id === id);
 
@@ -106,7 +117,8 @@ const MinhaSaude = () => {
     const { error } = await supabase
       .from("health_measurements")
       .delete()
-      .eq("id", measurementId);
+      .eq("id", measurementId)
+      .eq("user_id", user!.id);
     if (error) {
       toast.error("Erro ao excluir registro.");
       return;

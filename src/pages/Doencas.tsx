@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Activity, ChevronRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,9 +60,20 @@ type DrawerMode = "add" | "edit";
 const Doencas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { groupId } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const goBack = useSmartBack();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!isAdmin && id) {
+      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
+      if (!allowedIds.includes(id)) {
+        toast.error("Acesso negado");
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("add");
   const [step, setStep] = useState<1 | 2>(1);
