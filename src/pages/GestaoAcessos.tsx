@@ -595,6 +595,23 @@ const GestaoAcessos = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Info Dialog */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
+          <DialogHeader>
+            <DialogTitle>Níveis de Acesso</DialogTitle>
+            <DialogDescription className="space-y-3 pt-2">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Admin:</strong> acesso completo a todos os perfis e dados da família.
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Usuário:</strong> acesso limitado ao perfil vinculado (só vê e edita seus próprios dados e os perfis que gerencia).
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
       
     </div>
   );
