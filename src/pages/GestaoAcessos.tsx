@@ -466,7 +466,7 @@ const GestaoAcessos = () => {
                     <Label className="text-sm font-medium">Perfil Vinculado (opcional)</Label>
                     <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
                       <SelectTrigger className={INPUT_CLASSES}>
-                        <SelectValue placeholder="<SelectValue placeholder="Selecione o usuário..." />" />
+                        <SelectValue placeholder="Selecione o usuário..." /> placeholder="Selecione o usuário..." />" />
                       </SelectTrigger>
                       <SelectContent>
                         {members.map(m => (
