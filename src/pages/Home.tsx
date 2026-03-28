@@ -468,14 +468,35 @@ const Home = () => {
                 <Skeleton className="h-16 w-full rounded-xl" />
                 <Skeleton className="h-16 w-full rounded-xl" />
               </div>
-            ) : medsWithNextDose.length === 0 ? (
+            ) : medsWithNextDose.length === 0 && todayPetRoutines.length === 0 ? (
               <Card className="border-border/50 bg-muted/30">
                 <CardContent className="p-4 text-center">
-                  <p className="text-sm text-muted-foreground">Nenhum medicamento ativo no momento.</p>
+                  <p className="text-sm text-muted-foreground">Nenhuma ação para hoje.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="flex flex-col space-y-2">
+                {/* Pet routines for today */}
+                {todayPetRoutines.map((p: any) => (
+                  <button
+                    key={`pet-${p.id}`}
+                    onClick={() => navigate(`/familiar/${p.family_member_id}/rotinas-pet`, { state: { from: "/home" } })}
+                    className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                      <PawPrint className="text-black" size={16} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {p.routine_type}
+                        <span className="font-normal text-muted-foreground"> · {p.family_members?.name ?? "Pet"} 🐾</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">Rotina agendada para hoje</p>
+                    </div>
+                    <ChevronRight size={16} className="text-black shrink-0" />
+                  </button>
+                ))}
+                {/* Medications */}
                 {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
                   const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
                   const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
