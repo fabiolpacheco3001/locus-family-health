@@ -73,7 +73,7 @@ const Home = () => {
   const pendingExams = pendingCounts?.exams ?? 0;
 
   // Derived: total open appointments
-  const totalOpenAppointments = pendingConsultations + pendingExams;
+  const totalOpenAppointments = pendingConsultations + pendingExams + (pendingCounts?.petRoutines ?? 0);
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId, managedProfiles],
