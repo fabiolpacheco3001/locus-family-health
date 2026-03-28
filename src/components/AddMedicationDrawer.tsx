@@ -415,7 +415,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             .select("name")
             .eq("id", familyMemberId)
             .single();
-          const memberName = member?.name ?? "Familiar";
+          const memberName = member?.name ?? "Usuário";
           const firstName = memberName.split(" ")[0];
 
           const notifInserts = validMeds.map((m) => {
@@ -467,7 +467,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             .select("name")
             .eq("id", familyMemberId)
             .single();
-          const memberName = member?.name ?? "Familiar";
+          const memberName = member?.name ?? "Usuário";
           const startStr = parsedDate.date
             ? format(new Date(parsedDate.date + "T12:00:00"), "dd/MM/yyyy")
             : "";

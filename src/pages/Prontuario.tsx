@@ -199,7 +199,7 @@ const Prontuario = () => {
   if (!member) {
     return (
       <div className="px-4 pt-6 text-center py-16">
-        <p className="text-foreground font-semibold">Familiar não encontrado</p>
+        <p className="text-foreground font-semibold"><p className="text-foreground font-semibold">Usuário não encontrado</p></p>
         <Button className="mt-4" onClick={() => navigate("/home")}>Voltar</Button>
       </div>
     );

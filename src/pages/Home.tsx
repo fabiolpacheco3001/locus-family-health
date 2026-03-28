@@ -138,7 +138,7 @@ const Home = () => {
           title: c.specialty,
           subtitle: c.professional_name ? `com ${c.professional_name}` : "Consulta",
           date: dateStr,
-          memberName: c.family_members?.name ?? "Familiar",
+          memberName: c.family_members?.name ?? "Usuário",
           kind: "consultation",
           familyMemberId: c.family_member_id,
           isOverdue: false,
@@ -156,7 +156,7 @@ const Home = () => {
           title: isRealizado ? `Buscar Resultado` : e.name,
           subtitle: isRealizado ? e.name : (e.location ?? "Exame"),
           date: displayDate,
-          memberName: e.family_members?.name ?? "Familiar",
+          memberName: e.family_members?.name ?? "Usuário",
           kind: "exam",
           familyMemberId: e.family_member_id,
           isOverdue: false,
@@ -706,7 +706,7 @@ const Home = () => {
             )}
             {!membersLoading && members.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum familiar cadastrado.
+                Nenhum usuário cadastrado.
               </p>
             )}
           </div>

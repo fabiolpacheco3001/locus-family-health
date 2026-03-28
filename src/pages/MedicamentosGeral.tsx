@@ -48,7 +48,7 @@ const MedicamentosGeral = () => {
              <Pill className="text-black" size={28} />
           </div>
           <p className="text-foreground font-semibold mb-1">Nenhum medicamento ativo</p>
-          <p className="text-muted-foreground text-sm">Seus familiares não possuem medicamentos ativos.</p>
+          <p className="text-muted-foreground text-sm"><p className="text-muted-foreground text-sm">Nenhum usuário possui medicamentos ativos.</p></p>
         </div>
       ) : (
         <div className="flex flex-col space-y-3">
