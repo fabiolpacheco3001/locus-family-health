@@ -70,7 +70,7 @@ export type UpdateMedication = {
 
 export const useMedications = (familyMemberId?: string) => {
   const { user } = useAuth();
-  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const query = useQuery({
