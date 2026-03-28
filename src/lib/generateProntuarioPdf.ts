@@ -193,7 +193,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   }
 
   // ── Bloco 3: Doenças Crônicas ──
-  sectionTitle("Doenças Crônicas");
+  sectionTitle("Diagnósticos Ativos");
   if (data.diseases.length === 0) {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
