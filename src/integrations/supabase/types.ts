@@ -846,6 +846,7 @@ export type Database = {
           id: string
           next_due_date: string | null
           notes: string | null
+          recurrence: string | null
           routine_type: string
           status: string
           user_id: string
@@ -857,6 +858,7 @@ export type Database = {
           id?: string
           next_due_date?: string | null
           notes?: string | null
+          recurrence?: string | null
           routine_type: string
           status?: string
           user_id: string
@@ -868,6 +870,7 @@ export type Database = {
           id?: string
           next_due_date?: string | null
           notes?: string | null
+          recurrence?: string | null
           routine_type?: string
           status?: string
           user_id?: string
