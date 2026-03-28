@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import useSmartBack from "@/hooks/useSmartBack";
-import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock } from "lucide-react";
+import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +12,19 @@ import ClinicalTimeline from "@/components/ClinicalTimeline";
 import { useClinicalTimeline } from "@/hooks/useClinicalTimeline";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { generateProntuarioPdf } from "@/lib/generateProntuarioPdf";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const calculateAge = (birthDate: string | null): number | null => {
   if (!birthDate) return null;
@@ -28,8 +40,11 @@ const Prontuario = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
+  const [showPrivacyAlert, setShowPrivacyAlert] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (groupLoading) return;
@@ -82,7 +97,58 @@ const Prontuario = () => {
     enabled: !!id,
   });
 
-  if (isLoading) {
+  const handleExport = async () => {
+    setShowPrivacyAlert(false);
+    setExporting(true);
+    try {
+      const blob = generateProntuarioPdf({
+        member: {
+          name: member!.name,
+          birth_date: member!.birth_date,
+          blood_type: member!.blood_type,
+          weight: member!.weight,
+          height: member!.height,
+        },
+        allergies: (allergies || []).map((a) => ({ substance: a.substance, severity: a.severity })),
+        diseases: (diseases || []).map((d) => ({ name: d.name, category: d.category })),
+        timeline,
+        emitterName: user?.user_metadata?.name || user?.email || "Usuário",
+      });
+
+      const fileName = `Prontuario_${member!.name.replace(/\s+/g, "_")}.pdf`;
+
+      if (navigator.share) {
+        const file = new File([blob], fileName, { type: "application/pdf" });
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Prontuário Médico",
+            text: "Segue o resumo de saúde exportado do Locus Vita.",
+          });
+          return;
+        } catch (shareErr: any) {
+          if (shareErr?.name === "AbortError") return;
+          // fallback to download
+        }
+      }
+
+      // Fallback download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF gerado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar o PDF.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+
     return (
       <div className="px-4 pt-6 space-y-6 animate-fade-in">
         <Skeleton className="h-10 w-40" />
@@ -126,7 +192,34 @@ const Prontuario = () => {
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Prontuário (RES)</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={exporting || timelineLoading}
+          onClick={() => setShowPrivacyAlert(true)}
+        >
+          <Share2 size={20} className="text-primary" />
+        </Button>
       </div>
+
+      {/* LGPD Privacy Alert */}
+      <AlertDialog open={showPrivacyAlert} onOpenChange={setShowPrivacyAlert}>
+        <AlertDialogContent className="rounded-xl mx-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Lock size={18} className="text-destructive" />
+              Atenção: Dados Sensíveis
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              O documento a seguir contém informações médicas confidenciais. Você é o único responsável pelo compartilhamento seguro destes dados. Deseja prosseguir?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExport}>Gerar Documento</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="p-4 pb-8 space-y-5">
