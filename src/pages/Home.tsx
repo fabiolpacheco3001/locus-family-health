@@ -303,7 +303,7 @@ const Home = () => {
               <Search size={22} className="text-white" />
             </button>
             <button
-              onClick={() => setHelpOpen(true)}
+              onClick={() => navigate("/ajuda")}
               className="p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
             >
               <HelpCircle size={22} className="text-white" />
