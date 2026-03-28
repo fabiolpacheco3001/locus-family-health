@@ -1,0 +1,1 @@
+ALTER TABLE public.pet_routines ADD COLUMN status text NOT NULL DEFAULT 'Agendado';
