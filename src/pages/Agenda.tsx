@@ -62,19 +62,28 @@ const Agenda = () => {
         .or("status.eq.Agendado")
         .order("exam_date", { ascending: true });
 
+      let pq = supabase
+        .from("pet_routines")
+        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members(name, member_type)")
+        .eq("status", "Agendado")
+        .order("date_performed", { ascending: true });
+
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
+        // pet_routines uses family_member join for group filtering
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
+        pq = pq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
+        pq = pq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes] = await Promise.all([cq, eq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
