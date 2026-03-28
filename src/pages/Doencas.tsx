@@ -144,9 +144,9 @@ const Doencas = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["diseases", id] });
       closeDrawer();
-      toast.success("Doença excluída com sucesso");
+      toast.success("Condição de saúde excluída com sucesso");
     },
-    onError: () => toast.error("Erro ao excluir doença"),
+    onError: () => toast.error("Erro ao excluir condição de saúde"),
   });
 
   const openAdd = () => {
