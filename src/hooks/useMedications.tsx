@@ -96,7 +96,7 @@ export const useMedications = (familyMemberId?: string) => {
       if (error) throw error;
       return data as Medication[];
     },
-    enabled: !!user && (!!familyMemberId || true),
+    enabled: !!user && !groupLoading,
     staleTime: 5 * 60 * 1000,
   });
 
