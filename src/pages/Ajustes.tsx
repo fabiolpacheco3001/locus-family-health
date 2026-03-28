@@ -121,7 +121,7 @@ const Ajustes = () => {
                 <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
                   <UserCog size={20} className="text-black" />
                 </div>
-                <span className="flex-1 text-left text-sm font-medium text-foreground">Acesso Compartilhado</span>
+                <span className="flex-1 text-left text-sm font-medium text-foreground">Gestão de Acessos</span>
                 <ChevronRight size={18} className="text-muted-foreground" />
               </button>
             )}
