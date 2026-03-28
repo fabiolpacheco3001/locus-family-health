@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon, Infinity, PawPrint } from "lucide-react";
+import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon, Infinity, PawPrint, Search, HelpCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -16,6 +16,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import MemberAvatar from "@/components/MemberAvatar";
+import HelpDialog from "@/components/HelpDialog";
+import { toast } from "sonner";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
@@ -27,6 +29,7 @@ const Home = () => {
   const { members, isLoading: membersLoading } = useFamilyMembers();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, role } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
+  const [helpOpen, setHelpOpen] = React.useState(false);
 
   const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
 
@@ -292,15 +295,29 @@ const Home = () => {
               <h1 className="text-2xl font-bold text-white">Olá, {userName}!</h1>
             </div>
           </div>
-          <button
-            onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
-            className="relative p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
-          >
-            <Bell size={24} className="text-white" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-[#1C3333]" />
-            )}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => toast.info("Em breve: Busque funcionalidades ou agende compromissos via Chat Conversacional com IA!")}
+              className="p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
+            >
+              <Search size={22} className="text-white" />
+            </button>
+            <button
+              onClick={() => setHelpOpen(true)}
+              className="p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
+            >
+              <HelpCircle size={22} className="text-white" />
+            </button>
+            <button
+              onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
+              className="relative p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
+            >
+              <Bell size={22} className="text-white" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-[#1C3333]" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -696,6 +713,7 @@ const Home = () => {
         </DrawerContent>
       </Drawer>
       </div>
+      <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 };
