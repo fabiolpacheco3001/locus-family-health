@@ -231,9 +231,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     // Build table body with section rows
     const tableBody: (string[])[] = [];
     for (const [monthYear, events] of grouped) {
-      // Section header row
-      const label = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
-      tableBody.push([label, "", "", "", ""]);
+      tableBody.push([monthYear, "", "", "", ""]);
       for (const ev of events) {
         tableBody.push([
           fmtDate(ev.date),
