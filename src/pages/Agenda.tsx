@@ -129,7 +129,24 @@ const Agenda = () => {
         };
       });
 
-      const merged = [...consultations, ...exams];
+      const petRoutines: AgendaItem[] = (petRes.data ?? []).map((p: any) => {
+        const dateStr = p.date_performed;
+        return {
+          id: p.id,
+          family_member_id: p.family_member_id,
+          title: p.routine_type,
+          subtitle: p.notes || null,
+          date: dateStr,
+          type: "pet_routine",
+          status: p.status === "Realizado" ? "Realizado" : "Agendado",
+          memberName: p.family_members?.name ?? "Pet",
+          kind: "pet_routine" as const,
+          isOverdue: dateStr ? isBefore(new Date(dateStr + 'T12:00:00'), today) : false,
+          isPet: true,
+        };
+      });
+
+      const merged = [...consultations, ...exams, ...petRoutines];
       merged.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
