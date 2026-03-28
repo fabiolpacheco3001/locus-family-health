@@ -38,6 +38,7 @@ const PetRotinas = () => {
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [editRoutine, setEditRoutine] = useState<any | null>(null);
   const undoRef = useRef<{ id: string; timeout: ReturnType<typeof setTimeout> } | null>(null);
 
   useEffect(() => {
