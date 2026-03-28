@@ -112,6 +112,7 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
                       🔁 {recurrenceLabel}
                     </p>
                   )}
+                  {r.notes && (
                     <p className="text-[10px] text-muted-foreground truncate">{r.notes}</p>
                   )}
                 </div>
