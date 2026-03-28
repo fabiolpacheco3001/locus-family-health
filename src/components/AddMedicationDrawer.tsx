@@ -415,7 +415,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             .select("name")
             .eq("id", familyMemberId)
             .single();
-          const memberName = member?.name ?? "Familiar";
+          const memberName = member?.name ?? "Usuário";
           const firstName = memberName.split(" ")[0];
 
           const notifInserts = validMeds.map((m) => {
