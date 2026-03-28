@@ -15,12 +15,14 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   groupId?: string | null;
+  familyMemberId?: string | null;
   placeholder?: string;
 }
 
-const ReasonCombobox = ({ value, onChange, groupId, placeholder = "Ex: Dor e Febre" }: Props) => {
+const ReasonCombobox = ({ value, onChange, groupId, familyMemberId, placeholder = "Ex: Dor e Febre" }: Props) => {
   const [open, setOpen] = useState(false);
   const [historicReasons, setHistoricReasons] = useState<string[]>([]);
+  const [activeDiseases, setActiveDiseases] = useState<string[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -40,12 +42,38 @@ const ReasonCombobox = ({ value, onChange, groupId, placeholder = "Ex: Dor e Feb
     fetchReasons();
   }, [groupId]);
 
-  const suggestions = useMemo(() => {
-    const all = [...DEFAULT_REASONS, ...historicReasons];
-    const unique = [...new Set(all.map((s) => s.trim()))];
-    if (!value.trim()) return unique;
-    return unique.filter((s) => s.toLowerCase().includes(value.toLowerCase()));
-  }, [historicReasons, value]);
+  useEffect(() => {
+    if (!familyMemberId) return;
+    const fetchDiseases = async () => {
+      const { data } = await supabase
+        .from("diseases")
+        .select("name, notes")
+        .eq("family_member_id", familyMemberId)
+        .order("name");
+
+      if (data) {
+        const active = data
+          .filter((d: any) => d.notes !== "superado")
+          .map((d: any) => d.name as string);
+        setActiveDiseases([...new Set(active)]);
+      }
+    };
+    fetchDiseases();
+  }, [familyMemberId]);
+
+  const { diseaseOptions, defaultOptions } = useMemo(() => {
+    const allDefaults = [...DEFAULT_REASONS, ...historicReasons];
+    const uniqueDefaults = [...new Set(allDefaults.map((s) => s.trim()))];
+    const filterFn = (s: string) =>
+      !value.trim() || s.toLowerCase().includes(value.toLowerCase());
+
+    return {
+      diseaseOptions: activeDiseases.filter(filterFn),
+      defaultOptions: uniqueDefaults.filter(filterFn),
+    };
+  }, [historicReasons, activeDiseases, value]);
+
+  const hasResults = diseaseOptions.length > 0 || defaultOptions.length > 0;
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -74,23 +102,46 @@ const ReasonCombobox = ({ value, onChange, groupId, placeholder = "Ex: Dor e Feb
         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
       </div>
 
-      {open && suggestions.length > 0 && (
+      {open && hasResults && (
         <ul className="absolute z-50 w-full mt-1 bg-popover border border-border rounded-md shadow-lg max-h-48 overflow-y-auto no-scrollbar">
-          {suggestions.map((reason) => (
-            <li
-              key={reason}
-              onClick={() => {
-                onChange(reason);
-                setOpen(false);
-              }}
-              className={cn(
-                "px-3 py-2 text-sm cursor-pointer hover:bg-accent transition-colors",
-                reason === value && "bg-accent/50"
-              )}
-            >
-              {reason}
-            </li>
-          ))}
+          {diseaseOptions.length > 0 && (
+            <>
+              <li className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide bg-muted/40 pointer-events-none">
+                Diagnósticos do Paciente
+              </li>
+              {diseaseOptions.map((reason) => (
+                <li
+                  key={`disease-${reason}`}
+                  onClick={() => { onChange(reason); setOpen(false); }}
+                  className={cn(
+                    "px-3 py-2 text-sm cursor-pointer hover:bg-accent transition-colors",
+                    reason === value && "bg-accent/50"
+                  )}
+                >
+                  {reason}
+                </li>
+              ))}
+            </>
+          )}
+          {defaultOptions.length > 0 && (
+            <>
+              <li className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide bg-muted/40 pointer-events-none">
+                Motivos Comuns
+              </li>
+              {defaultOptions.map((reason) => (
+                <li
+                  key={`default-${reason}`}
+                  onClick={() => { onChange(reason); setOpen(false); }}
+                  className={cn(
+                    "px-3 py-2 text-sm cursor-pointer hover:bg-accent transition-colors",
+                    reason === value && "bg-accent/50"
+                  )}
+                >
+                  {reason}
+                </li>
+              ))}
+            </>
+          )}
         </ul>
       )}
     </div>
