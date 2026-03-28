@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import useSmartBack from "@/hooks/useSmartBack";
-import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock } from "lucide-react";
+import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +12,19 @@ import ClinicalTimeline from "@/components/ClinicalTimeline";
 import { useClinicalTimeline } from "@/hooks/useClinicalTimeline";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { generateProntuarioPdf } from "@/lib/generateProntuarioPdf";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const calculateAge = (birthDate: string | null): number | null => {
   if (!birthDate) return null;
