@@ -209,7 +209,7 @@ const PetRotinas = () => {
           <ArrowLeft size={22} className="text-foreground" />
         </button>
         <div className="flex items-center gap-2">
-          <Droplets className="w-5 h-5 text-primary" />
+          <ShowerHead className="w-5 h-5 text-primary" />
           <h1 className="text-lg font-semibold text-foreground">Rotina e Higiene</h1>
         </div>
         {member && (
