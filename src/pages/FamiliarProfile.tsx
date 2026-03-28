@@ -263,6 +263,13 @@ const FamiliarProfile = () => {
       <SectionTitle icon={ShieldAlert} title="Informações de Saúde" />
       {renderCardGrid(infoItems)}
 
+      {/* Pet Routines - only for pets */}
+      {isPet && member && (
+        <div className="mt-8">
+          <PetRoutines familyMemberId={member.id} />
+        </div>
+      )}
+
       {/* Group 3: Perfil de Saúde */}
       <SectionTitle icon={UserCircle} title="Perfil de Saúde" />
       <div className="grid grid-cols-3 gap-3">
