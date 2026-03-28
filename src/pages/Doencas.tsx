@@ -331,7 +331,7 @@ const Doencas = () => {
             <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
               <Activity className="text-black" size={28} />
             </div>
-            <p className="text-foreground font-semibold mb-1">Nenhuma doença registrada</p>
+            <p className="text-foreground font-semibold mb-1">Nenhuma condição de saúde registrada</p>
             <p className="text-muted-foreground text-sm">Toque no botão + para adicionar.</p>
           </div>
         ) : (
