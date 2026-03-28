@@ -138,7 +138,7 @@ const Home = () => {
           title: c.specialty,
           subtitle: c.professional_name ? `com ${c.professional_name}` : "Consulta",
           date: dateStr,
-          memberName: c.family_members?.name ?? "Familiar",
+          memberName: c.family_members?.name ?? "Usuário",
           kind: "consultation",
           familyMemberId: c.family_member_id,
           isOverdue: false,
