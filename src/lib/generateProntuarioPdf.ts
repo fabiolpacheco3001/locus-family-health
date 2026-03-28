@@ -139,21 +139,26 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
 
 
+  const bmiLabel = bmi ? `${bmi}` : "—";
+
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-    head: [["Nome", "Idade", "Tipo Sanguíneo"], ["Peso", "Altura", "IMC"]],
     body: [
+      ["Nome", "Idade", "Tipo Sanguíneo"],
       [data.member.name, age !== null ? `${age} anos` : "—", data.member.blood_type || "—"],
-      [w ? `${w} kg` : "—", h ? `${(h * 100).toFixed(0)} cm` : "—", bmi || "—"],
+      ["Peso", "Altura", "IMC"],
+      [w ? `${w} kg` : "—", h ? `${(h * 100).toFixed(0)} cm` : "—", bmiLabel],
     ],
     theme: "grid",
-    headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
+    styles: { valign: "middle" as const },
     bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
     didParseCell: (hookData: any) => {
-      // Make second header row look like a sub-header
-      if (hookData.section === "head" && hookData.row.index === 1) {
-        hookData.cell.styles.fillColor = [50, 80, 80];
+      if (hookData.section === "body" && (hookData.row.index === 0 || hookData.row.index === 2)) {
+        hookData.cell.styles.fillColor = PRIMARY_COLOR;
+        hookData.cell.styles.textColor = [255, 255, 255];
+        hookData.cell.styles.fontStyle = "bold";
+        hookData.cell.styles.fontSize = 9;
       }
     },
     didDrawPage: () => { drawHeader(); },
