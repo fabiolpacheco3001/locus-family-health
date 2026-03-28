@@ -70,11 +70,11 @@ export type UpdateMedication = {
 
 export const useMedications = (familyMemberId?: string) => {
   const { user } = useAuth();
-  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["medications", familyMemberId ?? "all"],
+    queryKey: ["medications", familyMemberId ?? "all", groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
       let q = supabase
         .from("medications")
@@ -96,7 +96,7 @@ export const useMedications = (familyMemberId?: string) => {
       if (error) throw error;
       return data as Medication[];
     },
-    enabled: !!user && (!!familyMemberId || true),
+    enabled: !!user && !groupLoading,
     staleTime: 5 * 60 * 1000,
   });
 
