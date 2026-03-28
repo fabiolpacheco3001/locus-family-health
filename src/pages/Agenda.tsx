@@ -92,6 +92,7 @@ const Agenda = () => {
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
           isOverdue: c.status === "Agendada" && dateStr ? isBefore(parseISO(dateStr), new Date()) : false,
+          isPet: (c.family_members?.member_type || "human") === "pet",
         };
       });
 
