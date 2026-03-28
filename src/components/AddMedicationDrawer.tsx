@@ -670,6 +670,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   <MedicationAutocomplete value={name} onChange={setName} />
                 </div>
 
+                <div className="space-y-1.5">
+                  <Label>Motivo do Tratamento</Label>
+                  <ReasonCombobox value={reason} onChange={setReason} groupId={groupId} />
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Dosagem</Label>
