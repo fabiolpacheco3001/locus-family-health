@@ -148,6 +148,7 @@ const Home = () => {
           kind: "exam",
           familyMemberId: e.family_member_id,
           isOverdue: false,
+          isPet: (e.family_members?.member_type || "human") === "pet",
         });
       });
 
