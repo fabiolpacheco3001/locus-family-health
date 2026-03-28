@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useRef } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { motion, PanInfo, useMotionValue, useTransform, animate } from "framer-motion";
 
