@@ -203,7 +203,7 @@ const Doencas = () => {
   const handleConfirm = () => {
     const name = isCustom ? customDiseaseName.trim() : selectedDisease;
     if (!name) {
-      toast.error("Selecione ou digite uma doença");
+      toast.error("Selecione ou digite uma condição de saúde");
       return;
     }
     if (drawerMode === "edit") {
