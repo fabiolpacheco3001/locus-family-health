@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { ArrowLeft, Shield, UserPlus, Crown, User as UserIcon, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Settings2 } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Shield, UserPlus, Crown, User as UserIcon, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Settings2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +17,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import useSmartBack from "@/hooks/useSmartBack";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
@@ -48,7 +51,7 @@ type Invite = {
 };
 
 const GestaoAcessos = () => {
-  const goBack = useSmartBack();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
   const { members } = useFamilyMembers();
@@ -65,6 +68,7 @@ const GestaoAcessos = () => {
   const [permsMember, setPermsMember] = useState<GroupMember | null>(null);
   const [permsSelected, setPermsSelected] = useState<string[]>([]);
   const [permsSaving, setPermsSaving] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   // Fetch active group members
   const { data: groupMembers = [], isLoading: loadingMembers } = useQuery({
@@ -190,21 +194,27 @@ const GestaoAcessos = () => {
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto overscroll-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-y-auto no-scrollbar">
         <div className="min-h-[calc(100%+1px)]">
           {/* Header */}
           <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md">
             <div className="flex items-center gap-3 px-4 py-4">
               <button
-                onClick={goBack}
+                onClick={() => navigate("/ajustes")}
                 className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
               >
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1">
                 <Shield size={20} className="text-primary" />
                 <h1 className="text-lg font-bold text-foreground">Gestão de Acessos</h1>
               </div>
+              <button
+                onClick={() => setInfoOpen(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
+              >
+                <Info size={20} className="text-muted-foreground" />
+              </button>
             </div>
           </div>
 
@@ -334,15 +344,6 @@ const GestaoAcessos = () => {
               </div>
             )}
 
-            {/* Info Banner */}
-            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex flex-col space-y-2">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <strong className="text-foreground">Admin:</strong> acesso completo a todos os perfis e dados da família.
-              </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <strong className="text-foreground">Usuário:</strong> acesso limitado ao perfil vinculado (só vê e edita seus próprios dados).
-              </p>
-            </div>
           </div>
         </div>
       </div>
@@ -593,6 +594,23 @@ const GestaoAcessos = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Info Dialog */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
+          <DialogHeader>
+            <DialogTitle>Níveis de Acesso</DialogTitle>
+            <DialogDescription className="space-y-3 pt-2">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Admin:</strong> acesso completo a todos os perfis e dados da família.
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                <strong className="text-foreground">Usuário:</strong> acesso limitado ao perfil vinculado (só vê e edita seus próprios dados e os perfis que gerencia).
+              </p>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
 
       
     </div>
