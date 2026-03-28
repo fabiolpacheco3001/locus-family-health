@@ -194,7 +194,7 @@ const GestaoAcessos = () => {
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto overscroll-y-auto">
+      <div className="flex-1 overflow-y-auto overscroll-y-auto no-scrollbar">
         <div className="min-h-[calc(100%+1px)]">
           {/* Header */}
           <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md">
