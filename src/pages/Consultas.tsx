@@ -25,7 +25,8 @@ const statusColors: Record<string, string> = {
 const Consultas = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
-  const { isAdmin } = useFamilyGroup();
+  const navigate = useNavigate();
+  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const { members } = useFamilyMembers();
   const currentMember = members.find((m) => m.id === id);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -33,6 +34,17 @@ const Consultas = () => {
   const [abaAtiva, setAbaAtiva] = useState<'proximas' | 'historico'>('proximas');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const { consultations, isLoading, addConsultation, updateConsultation, deleteConsultation } = useConsultations(id!);
+
+  useEffect(() => {
+    if (groupLoading) return;
+    if (!isAdmin && id) {
+      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
+      if (!allowedIds.includes(id)) {
+        toast.error("Acesso negado");
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
   const consultasFiltradas = consultations.filter(c => {
     if (abaAtiva === 'proximas') return c.status === 'Agendada';

@@ -79,6 +79,7 @@ const Vacinas = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (groupLoading) return;
     if (!isAdmin && id) {
       const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
       if (!allowedIds.includes(id)) {
@@ -86,7 +87,7 @@ const Vacinas = () => {
         navigate("/home", { replace: true });
       }
     }
-  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
   const { members } = useFamilyMembers();
   const currentMember = members.find((m) => m.id === id);
   const isPet = (currentMember?.member_type || "human") === "pet";

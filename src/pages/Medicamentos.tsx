@@ -18,12 +18,24 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 const Medicamentos = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
-  const { isAdmin } = useFamilyGroup();
+  const navigate = useNavigate();
+  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const { medications, isLoading, addMedication, updateMedication, deleteMedication } = useMedications(id!);
+
+  useEffect(() => {
+    if (groupLoading) return;
+    if (!isAdmin && id) {
+      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
+      if (!allowedIds.includes(id)) {
+        toast.error("Acesso negado");
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
   const medicamentosFiltrados = medications.filter(med => {
     if (abaAtiva === 'ativos') return med.status === 'Ativo';

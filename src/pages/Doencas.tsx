@@ -66,6 +66,7 @@ const Doencas = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (groupLoading) return;
     if (!isAdmin && id) {
       const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
       if (!allowedIds.includes(id)) {
@@ -73,7 +74,7 @@ const Doencas = () => {
         navigate("/home", { replace: true });
       }
     }
-  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerMode, setDrawerMode] = useState<DrawerMode>("add");
   const [step, setStep] = useState<1 | 2>(1);
