@@ -82,7 +82,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       }
     }
 
-    const textX = data.logoBase64 ? margin + 19 : margin;
+    const textX = data.logoBase64 ? margin + 17 : margin;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(255, 255, 255);
