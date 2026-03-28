@@ -12,6 +12,7 @@ import {
   UserCircle,
   Ban,
   Droplets,
+  PawPrint,
   Syringe,
   Activity,
   Droplet,
