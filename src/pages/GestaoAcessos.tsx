@@ -205,12 +205,16 @@ const GestaoAcessos = () => {
               >
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1">
                 <Shield size={20} className="text-primary" />
                 <h1 className="text-lg font-bold text-foreground">Gestão de Acessos</h1>
               </div>
-            </div>
-          </div>
+              <button
+                onClick={() => setInfoOpen(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
+              >
+                <Info size={20} className="text-muted-foreground" />
+              </button>
 
           <div className="px-4 pb-28 space-y-6">
             {/* Section: Active Members */}
