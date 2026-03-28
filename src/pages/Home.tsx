@@ -40,7 +40,7 @@ const Home = () => {
   // Upcoming appointments (2 nearest consultations + exams)
   // Pending counts (consolidated single query)
   const { data: pendingCounts } = useQuery({
-    queryKey: ["pending-counts", groupId, isAdmin, linkedMemberId],
+    queryKey: ["pending-counts", groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
       let cq = supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "Agendada");
       let eq = supabase.from("exams").select("id", { count: "exact", head: true }).eq("status", "Agendado");
@@ -49,8 +49,9 @@ const Home = () => {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
       } else if (linkedMemberId) {
-        cq = cq.eq("family_member_id", linkedMemberId);
-        eq = eq.eq("family_member_id", linkedMemberId);
+        const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
+        cq = cq.in("family_member_id", allowedIds);
+        eq = eq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
@@ -71,7 +72,7 @@ const Home = () => {
   const totalOpenAppointments = pendingConsultations + pendingExams;
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
-    queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId],
+    queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
@@ -91,8 +92,9 @@ const Home = () => {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
       } else if (linkedMemberId) {
-        cq = cq.eq("family_member_id", linkedMemberId);
-        eq = eq.eq("family_member_id", linkedMemberId);
+        const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
+        cq = cq.in("family_member_id", allowedIds);
+        eq = eq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);

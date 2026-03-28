@@ -70,7 +70,7 @@ export type UpdateMedication = {
 
 export const useMedications = (familyMemberId?: string) => {
   const { user } = useAuth();
-  const { groupId, isAdmin, linkedMemberId } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const query = useQuery({
@@ -86,7 +86,8 @@ export const useMedications = (familyMemberId?: string) => {
       } else if (isAdmin && groupId) {
         q = q.eq("group_id", groupId);
       } else if (linkedMemberId) {
-        q = q.eq("family_member_id", linkedMemberId);
+        const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
+        q = q.in("family_member_id", allowedIds);
       } else {
         q = q.eq("user_id", user!.id);
       }
