@@ -240,7 +240,7 @@ const Agenda = () => {
                           {(() => { const p = item.memberName.trim().split(' ').filter(Boolean); return p.length <= 1 ? (p[0]?.[0] ?? '').toUpperCase() : `${p[0][0]}${p[p.length-1][0]}`.toUpperCase(); })()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs text-muted-foreground truncate">{item.memberName}{(item as any).isPet ? " 🐾" : ""}</span>
+                      <span className="text-xs text-muted-foreground truncate">{item.memberName}{item.isPet ? " 🐾" : ""}</span>
                     </div>
                     <p className="text-sm text-foreground truncate">
                       {item.title}
