@@ -89,9 +89,11 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
           {routines.map((r) => {
             const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
             const dateStr = format(parseISO(r.date_performed + "T12:00:00"), "dd MMM yyyy", { locale: ptBR });
-            const nextStr = r.next_due_date
-              ? format(parseISO(r.next_due_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })
-              : null;
+            const recurrenceLabels: Record<string, string> = {
+              weekly: "Semanal", biweekly: "Quinzenal", monthly: "Mensal",
+              quarterly: "Trimestral", semiannually: "Semestral", annually: "Anual",
+            };
+            const recurrenceLabel = recurrenceLabels[(r as any).recurrence] || null;
 
             return (
               <button
@@ -105,9 +107,9 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
                 <div className="flex-1 min-w-0 space-y-0.5">
                   <p className="text-sm font-medium text-foreground">{r.routine_type}</p>
                   <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
-                  {nextStr && (
+                  {recurrenceLabel && (
                     <p className="text-[10px] text-muted-foreground">
-                      Próximo: <span className="capitalize">{nextStr}</span>
+                      🔁 {recurrenceLabel}
                     </p>
                   )}
                   {r.notes && (

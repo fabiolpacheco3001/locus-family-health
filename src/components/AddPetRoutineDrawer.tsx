@@ -15,6 +15,16 @@ import {
 
 const ROUTINE_TYPES = ["Banho", "Tosa", "Antipulgas", "Vermífugo", "Outro"];
 
+const RECURRENCE_OPTIONS = [
+  { value: "none", label: "Não se repete" },
+  { value: "weekly", label: "Semanal" },
+  { value: "biweekly", label: "Quinzenal" },
+  { value: "monthly", label: "Mensal" },
+  { value: "quarterly", label: "A cada 3 meses" },
+  { value: "semiannually", label: "A cada 6 meses" },
+  { value: "annually", label: "Anual" },
+];
+
 interface AddPetRoutineDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,14 +39,14 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
   const [datePerformed, setDatePerformed] = useState(today);
-  const [nextDueDate, setNextDueDate] = useState("");
+  const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
   const resetForm = () => {
     setRoutineType("Banho");
     setCustomType("");
     setDatePerformed(today);
-    setNextDueDate("");
+    setRecurrence("none");
     setNotes("");
   };
 
@@ -48,8 +58,9 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
         user_id: user!.id,
         routine_type: type,
         date_performed: datePerformed,
-        next_due_date: nextDueDate || null,
+        next_due_date: null,
         notes: notes.trim() || null,
+        recurrence: recurrence,
       });
       if (error) throw error;
     },
@@ -97,7 +108,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
             </div>
           )}
 
-          {/* Datas */}
+          {/* Data + Repetição */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Data Realização</label>
@@ -110,13 +121,16 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Próximo (opc.)</label>
-              <input
-                type="date"
-                value={nextDueDate}
-                onChange={(e) => setNextDueDate(e.target.value)}
+              <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
+              <select
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
-              />
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 
