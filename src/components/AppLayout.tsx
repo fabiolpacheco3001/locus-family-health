@@ -48,10 +48,7 @@ const AppLayout = () => {
       const { data } = await supabase.from("family_members").select("*").eq("user_id", user.id).is("deleted_at", null).order("created_at");
       return data ?? [];
     });
-    prefetchIfEmpty(["notifications", user.id], async () => {
-      const { data } = await supabase.from("notifications").select("*").eq("user_id", user.id).order("scheduled_for", { ascending: false });
-      return data ?? [];
-    });
+    // Notifications prefetch removed — useNotifications handles its own group-aware fetch
   }, [user, queryClient]);
 
   // Background prefetch all critical lazy chunks after first paint

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useFamilyGroup } from "./useFamilyGroup";
 
 export type Notification = {
   id: string;
@@ -17,20 +18,32 @@ export type Notification = {
 
 export const useNotifications = () => {
   const { user } = useAuth();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["notifications", user?.id],
+    queryKey: ["notifications", user?.id, groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("notifications")
         .select("*")
-        .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
+
+      if (isAdmin && groupId) {
+        // RLS handles group-level visibility; no user_id filter needed
+        // But we still need some filter to scope — RLS does the work
+      } else if (!isAdmin && linkedMemberId) {
+        const allowedIds = [linkedMemberId, ...(managedProfiles || [])].filter(Boolean);
+        q = q.in("family_member_id", allowedIds);
+      } else {
+        q = q.eq("user_id", user!.id);
+      }
+
+      const { data, error } = await q;
       if (error) throw error;
       return data as Notification[];
     },
-    enabled: !!user,
+    enabled: !!user && !groupLoading,
     staleTime: 5 * 60 * 1000,
   });
 
