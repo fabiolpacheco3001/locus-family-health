@@ -257,7 +257,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
     autoTable(doc, {
       startY: y,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: headerH + 6 },
       head: [["Data", "Tipo", "Título", "Detalhes", "Motivo"]],
       body: tableBody,
       theme: "grid",
