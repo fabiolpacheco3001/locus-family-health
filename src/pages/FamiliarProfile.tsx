@@ -264,11 +264,23 @@ const FamiliarProfile = () => {
       <SectionTitle icon={ShieldAlert} title="Informações de Saúde" />
       {renderCardGrid(infoItems)}
 
-      {/* Pet Routines - only for pets */}
+      {/* Group 3: Cuidados com o Pet - only for pets */}
       {isPet && member && (
-        <div className="mt-8">
-          <PetRoutines familyMemberId={member.id} />
-        </div>
+        <>
+          <SectionTitle icon={PawPrint} title="Cuidados com o Pet" />
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => navigate(`/familiar/${id}/rotinas-pet`)}
+              className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
+            >
+              <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
+                <Droplets className="text-black" size={22} />
+              </div>
+              <p className="text-xs font-semibold text-foreground">Rotina e Higiene</p>
+              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Banho, tosa e mais</p>
+            </button>
+          </div>
+        </>
       )}
 
       {/* Group 3: Perfil de Saúde */}
