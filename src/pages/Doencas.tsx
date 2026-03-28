@@ -214,7 +214,7 @@ const Doencas = () => {
   };
 
   const handleDelete = () => {
-    if (window.confirm("Tem certeza que deseja excluir esta doença?")) {
+    if (window.confirm("Tem certeza que deseja excluir esta condição de saúde?")) {
       deleteMutation.mutate();
     }
   };
