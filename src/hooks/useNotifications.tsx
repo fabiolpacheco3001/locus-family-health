@@ -98,11 +98,16 @@ export const useNotifications = () => {
 
   const clearAllNotifications = useMutation({
     mutationFn: async () => {
+      const allIds = (query.data ?? []).map((n) => n.id);
+      if (allIds.length === 0) return;
       const { error } = await supabase
         .from("notifications")
         .delete()
-        .eq("user_id", user!.id);
-      if (error) throw error;
+        .in("id", allIds);
+      if (error) {
+        console.error("clearAllNotifications RLS/error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
