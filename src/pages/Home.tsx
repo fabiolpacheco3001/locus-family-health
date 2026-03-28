@@ -572,8 +572,11 @@ const Home = () => {
               <div className="flex flex-col space-y-2">
                 {upcoming.map((item) => {
                   const isExam = item.kind === "exam";
-                  const Icon = isExam ? FileText : Stethoscope;
-                  const route = isExam
+                  const isPetRoutine = item.kind === "pet_routine";
+                  const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+                  const route = isPetRoutine
+                    ? `/familiar/${item.familyMemberId}/rotinas-pet`
+                    : isExam
                     ? `/familiar/${item.familyMemberId}/exames`
                     : `/familiar/${item.familyMemberId}/consultas`;
 
@@ -595,7 +598,9 @@ const Home = () => {
                             </Badge>
                           )}
                           <Badge className={`text-[10px] px-1.5 py-0 shrink-0 border-none ${
-                            isExam
+                            isPetRoutine
+                              ? "bg-[#A7D3CB]/30 text-[#1C3333]"
+                              : isExam
                               ? "bg-[#FFF4A3] text-black"
                               : item.consultationType === "Retorno"
                               ? "bg-[#A0C4D7] text-slate-800"
@@ -603,7 +608,7 @@ const Home = () => {
                               ? "bg-[#F87171] text-white"
                               : "bg-[#DCC5F1] text-black"
                           }`}>
-                            {isExam ? "Exame" : item.consultationType === "Retorno" ? "Retorno" : item.consultationType === "Emergência" ? "Emergência" : "Consulta"}
+                            {isPetRoutine ? "Rotina Pet" : isExam ? "Exame" : item.consultationType === "Retorno" ? "Retorno" : item.consultationType === "Emergência" ? "Emergência" : "Consulta"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">
