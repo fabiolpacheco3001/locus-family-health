@@ -43,7 +43,7 @@ const Agenda = () => {
   const today = startOfDay(new Date());
 
   const { data: items = [], isLoading } = useQuery({
-    queryKey: ["agenda", groupId, isAdmin, linkedMemberId],
+    queryKey: ["agenda", groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
