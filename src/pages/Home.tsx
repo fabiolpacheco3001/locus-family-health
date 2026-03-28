@@ -538,7 +538,7 @@ const Home = () => {
                                 { locale: ptBR }
                               )
                             : "Sem data"}{" "}
-                          — {item.memberName}{(item as any).isPet ? " 🐾" : ""}
+                          — {item.memberName}{item.isPet ? " 🐾" : ""}
                         </p>
                       </div>
                       <ChevronRight size={16} className="text-black shrink-0" />
