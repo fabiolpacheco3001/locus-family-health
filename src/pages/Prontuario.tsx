@@ -192,7 +192,34 @@ const Prontuario = () => {
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Prontuário (RES)</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={exporting || timelineLoading}
+          onClick={() => setShowPrivacyAlert(true)}
+        >
+          <Share2 size={20} className="text-primary" />
+        </Button>
       </div>
+
+      {/* LGPD Privacy Alert */}
+      <AlertDialog open={showPrivacyAlert} onOpenChange={setShowPrivacyAlert}>
+        <AlertDialogContent className="rounded-xl mx-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Lock size={18} className="text-destructive" />
+              Atenção: Dados Sensíveis
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              O documento a seguir contém informações médicas confidenciais. Você é o único responsável pelo compartilhamento seguro destes dados. Deseja prosseguir?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleExport}>Gerar Documento</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="p-4 pb-8 space-y-5">
