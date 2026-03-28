@@ -154,7 +154,7 @@ const FamiliarProfile = () => {
     { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
     ...(!isPet ? [{ icon: HeartPulse, label: "Pressão Arterial", subtitle: "Histórico de PA", route: "__bp__" }] : []),
     { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
-    { icon: Activity, label: "Condições de Saúde", subtitle: "Histórico clínico", route: "doencas" },
+    { icon: Activity, label: "Diagnósticos Ativos", subtitle: "Histórico clínico", route: "doencas" },
     ...(tracksCycle ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }] : []),
   ];
 
