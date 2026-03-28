@@ -31,7 +31,8 @@ const NotificationCard = ({ notification, onRead }: NotificationCardProps) => {
   const isUnread = !notification.is_read;
   const [expanded, setExpanded] = useState(false);
 
-  const handleToggle = () => {
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const willExpand = !expanded;
     setExpanded(willExpand);
     if (willExpand && isUnread) {
