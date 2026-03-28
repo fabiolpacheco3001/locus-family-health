@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, BellOff, CheckCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications } from "@/hooks/useNotifications";
 import { AnimatePresence } from "framer-motion";
 import NotificationCard from "@/components/NotificationCard";
+import SwipeableActionCard from "@/components/SwipeableActionCard";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,10 +25,50 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Notificacoes = () => {
   const navigate = useNavigate();
-  const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, deleteNotification, clearAllNotifications } = useNotifications();
+  const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, clearAllNotifications } = useNotifications();
+  const queryClient = useQueryClient();
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
+
+  const handleInstantDelete = async (notificationId: string) => {
+    const toDelete = notifications.find(n => n.id === notificationId);
+    if (!toDelete) return;
+    const cached = { ...toDelete };
+    try {
+      const { error } = await supabase.from("notifications").delete().eq("id", notificationId);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
+      toast("Notificação excluída.", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              const { error: restoreError } = await supabase.from("notifications").insert({
+                user_id: cached.user_id,
+                family_member_id: cached.family_member_id,
+                title: cached.title,
+                message: cached.message,
+                type: cached.type,
+                is_read: cached.is_read,
+                action_url: cached.action_url,
+                scheduled_for: cached.scheduled_for,
+              });
+              if (restoreError) throw restoreError;
+              queryClient.invalidateQueries({ queryKey: ["notifications"] });
+              queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
+              toast.success("Notificação restaurada.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
+    } catch { /* handled */ }
+  };
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
@@ -105,12 +148,18 @@ const Notificacoes = () => {
         ) : (
           <AnimatePresence mode="popLayout">
             {notifications.map((n) => (
-              <NotificationCard
-                key={n.id}
-                notification={n}
-                onRead={(id) => markAsRead.mutate(id)}
-                onDelete={(id) => deleteNotification.mutate(id)}
-              />
+              <div key={n.id} className="mb-2">
+                <SwipeableActionCard
+                  onDelete={() => handleInstantDelete(n.id)}
+                  isOpen={openCardId === n.id}
+                  onOpenChange={(open) => setOpenCardId(open ? n.id : null)}
+                >
+                  <NotificationCard
+                    notification={n}
+                    onRead={(id) => markAsRead.mutate(id)}
+                  />
+                </SwipeableActionCard>
+              </div>
             ))}
           </AnimatePresence>
         )}
