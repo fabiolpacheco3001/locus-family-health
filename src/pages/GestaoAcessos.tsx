@@ -278,13 +278,17 @@ const GestaoAcessos = () => {
                         >
                           {gm.role === "admin" ? "Admin" : "Usuário"}
                         </Badge>
-                        {!isCurrentUser && (
+                        {!isCurrentUser ? (
                           <button
                             onClick={(e) => { e.stopPropagation(); setDeleteTarget({ type: "member", id: gm.id }); }}
                             className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-destructive/10 [@media(hover:hover)]:hover:text-destructive active:bg-destructive/10"
                           >
                             <Trash2 size={16} />
                           </button>
+                        ) : (
+                          <div className="w-8 h-8 flex items-center justify-center opacity-0">
+                            <Trash2 size={16} />
+                          </div>
                         )}
                       </div>
                     );
