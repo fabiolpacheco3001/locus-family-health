@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Droplets, Scissors, Bug, Pill, HelpCircle, Plus, Check } from "lucide-react";
+import { ArrowLeft, ShowerHead, Scissors, Bug, Pill, HelpCircle, Plus, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,7 @@ import AddPetRoutineDrawer from "@/components/AddPetRoutineDrawer";
 import EditPetRoutineDrawer from "@/components/EditPetRoutineDrawer";
 
 const ROUTINE_ICONS: Record<string, React.ElementType> = {
-  Banho: Droplets,
+  Banho: ShowerHead,
   Tosa: Scissors,
   Antipulgas: Bug,
   Vermífugo: Pill,
@@ -209,7 +209,7 @@ const PetRotinas = () => {
           <ArrowLeft size={22} className="text-foreground" />
         </button>
         <div className="flex items-center gap-2">
-          <Droplets className="w-5 h-5 text-primary" />
+          <ShowerHead className="w-5 h-5 text-primary" />
           <h1 className="text-lg font-semibold text-foreground">Rotina e Higiene</h1>
         </div>
         {member && (
@@ -244,7 +244,7 @@ const PetRotinas = () => {
           {filteredRoutines.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
-                <Droplets className="text-black" size={28} />
+                <ShowerHead className="text-black" size={28} />
               </div>
               <p className="text-foreground font-semibold mb-1">
                 {abaAtiva === "ativas" ? "Nenhuma rotina ativa" : "Nenhum histórico encontrado"}
