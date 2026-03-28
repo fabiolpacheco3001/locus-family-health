@@ -142,7 +142,8 @@ const Prontuario = () => {
         allergies: (allergies || []).map((a) => ({ substance: a.substance, severity: a.severity })),
         diseases: (diseases || []).map((d) => ({ name: d.name, category: d.category })),
         timeline,
-        emitterName: user?.user_metadata?.name || user?.email || "Usuário",
+        emitterName: emitterProfile || user?.user_metadata?.name || user?.email || "Usuário",
+        logoBase64,
       });
 
       const fileName = `Prontuario_${member!.name.replace(/\s+/g, "_")}.pdf`;
