@@ -55,27 +55,6 @@ export function useMenstrualAlerts() {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      // Group-wide dedup: check by family_member_id + type, not user_id
-      let dedupQuery = supabase
-        .from("notifications")
-        .select("family_member_id")
-        .eq("type", "menstrual")
-        .gte("created_at", todayStart.toISOString());
-
-      if (groupId) {
-        dedupQuery = dedupQuery.eq("group_id", groupId);
-      } else {
-        dedupQuery = dedupQuery.eq("user_id", user.id);
-      }
-
-      const { data: todayMenstrualNotifs } = await dedupQuery;
-
-      if (cancelled) return;
-
-      const notifiedFamiliarIds = new Set(
-        (todayMenstrualNotifs ?? []).map((n: any) => n.family_member_id),
-      );
-
       for (const [familiarId, cycle] of latestByFamiliar) {
         if (cancelled) return;
         if (cycle.alert_advance_days === 0) continue;
@@ -89,7 +68,24 @@ export function useMenstrualAlerts() {
 
         const daysLeft = cycle.alert_advance_days;
 
-        if (notifiedFamiliarIds.has(familiarId)) continue;
+        // Per-familiar dedup: check if menstrual notification already exists TODAY
+        let dedupQuery = supabase
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("type", "menstrual")
+          .eq("family_member_id", familiarId)
+          .gte("created_at", todayStart.toISOString());
+
+        if (groupId) {
+          dedupQuery = dedupQuery.eq("group_id", groupId);
+        } else {
+          dedupQuery = dedupQuery.eq("user_id", user.id);
+        }
+
+        const { count } = await dedupQuery;
+
+        if (cancelled) return;
+        if ((count ?? 0) > 0) continue;
 
         const { error: insertError } = await supabase.from("notifications").insert({
           user_id: user.id,

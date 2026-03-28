@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX } from "lucide-react";
+import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -73,7 +73,7 @@ const Ajuda = () => {
           </div>
 
           {/* FAQ Cards */}
-          <div className="flex flex-col gap-3 justify-start h-fit pb-24">
+          <div className="flex flex-col gap-3 justify-start h-fit pb-8">
             {filteredItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <SearchX size={40} className="mb-3 opacity-50" />
@@ -122,6 +122,19 @@ const Ajuda = () => {
                 );
               })
             )}
+          </div>
+
+          {/* Support Contact */}
+          <div className="flex flex-col items-center gap-3 pt-4 pb-24">
+            <div className="w-16 h-px bg-border/60" />
+            <p className="text-sm text-muted-foreground">Ainda não encontrou o que precisava?</p>
+            <a
+              href="mailto:suporte@locusvita.com.br?subject=Suporte Locus Vita"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/30 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
+            >
+              <Mail size={16} />
+              Falar com o Suporte
+            </a>
           </div>
         </div>
       </div>

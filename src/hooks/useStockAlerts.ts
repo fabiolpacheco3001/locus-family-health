@@ -45,33 +45,30 @@ export function useStockAlerts(medications: Medication[]) {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      // Group-wide dedup: check by medication_id + type, not user_id
-      let dedupQuery = supabase
-        .from("notifications")
-        .select("medication_id")
-        .eq("type", "stock")
-        .gte("created_at", todayStart.toISOString());
-
-      if (groupId) {
-        dedupQuery = dedupQuery.eq("group_id", groupId);
-      } else {
-        dedupQuery = dedupQuery.eq("user_id", user.id);
-      }
-
-      const { data: todayStockNotifs } = await dedupQuery;
-
-      if (cancelled) return;
-
-      const notifiedMedIds = new Set(
-        (todayStockNotifs ?? []).map((n: any) => n.medication_id),
-      );
-
       for (const med of lowStockMeds) {
         if (cancelled) return;
-        if (notifiedMedIds.has(med.id)) continue;
+
+        // Per-medication dedup: check if notification already exists TODAY
+        let dedupQuery = supabase
+          .from("notifications")
+          .select("id", { count: "exact", head: true })
+          .eq("type", "stock")
+          .eq("medication_id", med.id)
+          .gte("created_at", todayStart.toISOString());
+
+        if (groupId) {
+          dedupQuery = dedupQuery.eq("group_id", groupId);
+        } else {
+          dedupQuery = dedupQuery.eq("user_id", user.id);
+        }
+
+        const { count } = await dedupQuery;
+
+        if (cancelled) return;
+        if ((count ?? 0) > 0) continue;
 
         const memberName = med.family_members?.name ?? "o usuário";
-        const notificationInsert = {
+        const { error } = await supabase.from("notifications").insert({
           user_id: user.id,
           family_member_id: med.family_member_id,
           medication_id: med.id,
@@ -80,9 +77,7 @@ export function useStockAlerts(medications: Medication[]) {
           type: "stock",
           scheduled_for: new Date().toISOString(),
           ...(groupId ? { group_id: groupId } : {}),
-        };
-
-        const { error } = await supabase.from("notifications").insert(notificationInsert as never);
+        } as never);
 
         if (!error) {
           hasInserted = true;
