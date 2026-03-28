@@ -95,7 +95,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
           <DrawerTitle>Editar Rotina</DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 space-y-4 overscroll-contain">
           <div>
             <label className="text-sm font-medium text-foreground mb-1 block">Tipo de Cuidado</label>
             <select

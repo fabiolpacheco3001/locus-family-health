@@ -84,7 +84,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
           <DrawerTitle>Registrar Rotina</DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 space-y-4 overscroll-contain">
           {/* Tipo */}
           <div>
             <label className="text-sm font-medium text-foreground mb-1 block">Tipo de Cuidado</label>

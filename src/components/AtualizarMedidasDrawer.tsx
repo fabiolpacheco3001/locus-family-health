@@ -123,7 +123,7 @@ const AtualizarMedidasDrawer = ({
           <DrawerTitle>Atualizar Medidas</DrawerTitle>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 space-y-4 overscroll-contain no-scrollbar">
           {/* Blood Type - hidden for pets */}
           {!isPet && (
             <div>
