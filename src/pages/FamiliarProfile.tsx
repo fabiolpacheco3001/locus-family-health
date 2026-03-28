@@ -28,6 +28,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
+import PetRoutines from "@/components/PetRoutines";
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
 import { useAuth } from "@/hooks/useAuth";
@@ -261,6 +262,13 @@ const FamiliarProfile = () => {
       {/* Group 2: Informações de Saúde */}
       <SectionTitle icon={ShieldAlert} title="Informações de Saúde" />
       {renderCardGrid(infoItems)}
+
+      {/* Pet Routines - only for pets */}
+      {isPet && member && (
+        <div className="mt-8">
+          <PetRoutines familyMemberId={member.id} />
+        </div>
+      )}
 
       {/* Group 3: Perfil de Saúde */}
       <SectionTitle icon={UserCircle} title="Perfil de Saúde" />
