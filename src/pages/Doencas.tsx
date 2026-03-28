@@ -175,7 +175,7 @@ const Doencas = () => {
   const handleInstantDelete = async (diseaseId: string) => {
     const toDelete = diseases.find((d) => d.id === diseaseId);
     if (!toDelete) return;
-    const cached = { ...toDelete };
+  const cached = { ...toDelete } as any;
     try {
       await supabase.from("diseases").delete().eq("id", diseaseId);
       queryClient.invalidateQueries({ queryKey: ["diseases", id] });
@@ -184,7 +184,7 @@ const Doencas = () => {
           label: "Desfazer",
           onClick: async () => {
             await supabase.from("diseases").insert({
-              user_id: cached.user_id ?? user!.id,
+              user_id: user!.id,
               family_member_id: id!,
               name: cached.name,
               category: cached.category,
