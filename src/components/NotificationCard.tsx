@@ -50,6 +50,7 @@ const NotificationCard = ({ notification, onRead }: NotificationCardProps) => {
     >
       {/* Header - always visible */}
       <button
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={handleToggle}
         className="flex items-center gap-3 p-4 w-full text-left"
       >
