@@ -104,7 +104,9 @@ const SwipeableActionCard = ({
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); resetPosition(); onDelete(); }}
-          className="flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 pointer-events-auto"
+          className={`flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 ${openSide === "left" ? "pointer-events-auto" : "pointer-events-none"}`}
+          aria-hidden={openSide !== "left"}
+          tabIndex={openSide === "left" ? 0 : -1}
         >
           <Trash2 className="w-6 h-6" />
           <span className="text-[10px] mt-1 font-medium">Excluir</span>
