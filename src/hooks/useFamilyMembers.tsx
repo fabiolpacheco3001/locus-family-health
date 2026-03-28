@@ -52,7 +52,9 @@ export const useFamilyMembers = () => {
       return data as FamilyMember[];
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const addMember = useMutation({
