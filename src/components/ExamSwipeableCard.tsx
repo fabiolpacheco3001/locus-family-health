@@ -45,6 +45,7 @@ const ExamSwipeableCard = ({
   const resetPosition = useCallback(() => {
     animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
     sideRef.current = "center";
+    setOpenSide("center");
     onOpenChange?.(false);
   }, [x, onOpenChange]);
 
