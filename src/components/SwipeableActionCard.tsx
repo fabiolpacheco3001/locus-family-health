@@ -51,6 +51,7 @@ const SwipeableActionCard = ({
     if (isOpen === false && Math.abs(x.get()) > 5) {
       animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
       sideRef.current = "center";
+      setOpenSide("center");
     }
   }, [isOpen, x]);
 
