@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useEffect, useRef } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { motion, PanInfo, useMotionValue, useTransform, animate } from "framer-motion";
 
@@ -33,6 +33,7 @@ const SwipeableActionCard = ({
 }: SwipeableActionCardProps) => {
   const x = useMotionValue(0);
   const sideRef = useRef<"left" | "right" | "center">("center");
+  const [openSide, setOpenSide] = useState<"left" | "right" | "center">("center");
 
   const deleteOpacity = useTransform(x, [-100, -30, 0], [1, 0.6, 0]);
   const actionsOpacity = useTransform(x, [0, 30, 80], [0, 0.6, 1]);
@@ -42,6 +43,7 @@ const SwipeableActionCard = ({
   const resetPosition = useCallback(() => {
     animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
     sideRef.current = "center";
+    setOpenSide("center");
     onOpenChange?.(false);
   }, [x, onOpenChange]);
 
@@ -49,6 +51,7 @@ const SwipeableActionCard = ({
     if (isOpen === false && Math.abs(x.get()) > 5) {
       animate(x, 0, { type: "spring", stiffness: 500, damping: 35 });
       sideRef.current = "center";
+      setOpenSide("center");
     }
   }, [isOpen, x]);
 
@@ -71,9 +74,11 @@ const SwipeableActionCard = ({
     if (!disableDelete && (offset < -SNAP_THRESHOLD || velocity < -500)) {
       animate(x, DELETE_SNAP, { type: "spring", stiffness: 400, damping: 30 });
       sideRef.current = "left";
+      setOpenSide("left");
     } else if ((offset > SNAP_THRESHOLD || velocity > 500) && rightSnap > 0) {
       animate(x, rightSnap, { type: "spring", stiffness: 400, damping: 30 });
       sideRef.current = "right";
+      setOpenSide("right");
     } else {
       resetPosition();
     }
@@ -99,7 +104,9 @@ const SwipeableActionCard = ({
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); resetPosition(); onDelete(); }}
-          className="flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 pointer-events-auto"
+          className={`flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 ${openSide === "left" ? "pointer-events-auto" : "pointer-events-none"}`}
+          aria-hidden={openSide !== "left"}
+          tabIndex={openSide === "left" ? 0 : -1}
         >
           <Trash2 className="w-6 h-6" />
           <span className="text-[10px] mt-1 font-medium">Excluir</span>
@@ -115,8 +122,10 @@ const SwipeableActionCard = ({
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); e.preventDefault(); resetPosition(); leadingAction.onAction(); }}
-            className={`flex flex-col items-center justify-center w-[72px] h-full active:opacity-80 pointer-events-auto`}
+            className={`flex flex-col items-center justify-center w-[72px] h-full active:opacity-80 ${openSide === "right" ? "pointer-events-auto" : "pointer-events-none"}`}
             style={{ backgroundColor: leadingAction.bgColor, color: leadingAction.textColor ?? "#fff" }}
+            aria-hidden={openSide !== "right"}
+            tabIndex={openSide === "right" ? 0 : -1}
           >
             {leadingAction.icon}
             <span className="text-[10px] mt-1 font-semibold">{leadingAction.label}</span>
