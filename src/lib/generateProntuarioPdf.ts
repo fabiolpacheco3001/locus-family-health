@@ -84,12 +84,15 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
     const textX = data.logoBase64 ? margin + 19 : margin;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
+    doc.setFontSize(12);
     doc.setTextColor(255, 255, 255);
-    doc.text("Locus Vita — Resumo de Saúde", textX, 10);
+    doc.text("Locus Vita - Saúde Familiar Simplificada", textX, 9);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(`Emitido em ${emissionDate} por ${data.emitterName}`, textX, 17);
+    doc.setFontSize(9);
+    doc.text("Prontuário (RES) - Resumo Eletrônico de Saúde", textX, 15);
+    doc.setFontSize(7);
+    doc.setTextColor(200, 210, 210);
+    doc.text(`Emitido em ${emissionDate} por ${data.emitterName}`, textX, 21);
   };
 
   const drawFooter = (pageNum: number, totalPages: number) => {
