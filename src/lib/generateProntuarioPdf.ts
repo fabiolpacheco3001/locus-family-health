@@ -74,7 +74,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     // Try to draw logo if available
     if (data.logoBase64) {
       try {
-        doc.addImage(data.logoBase64, "PNG", margin, 3, 16, 16);
+        doc.addImage(data.logoBase64, "JPEG", margin, 3, 16, 16);
       } catch {
         // fallback: no logo
       }
