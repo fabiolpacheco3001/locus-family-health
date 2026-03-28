@@ -148,11 +148,20 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin },
-    head: [["Nome", "Idade", "Tipo Sanguíneo"]],
-    body: [idRow1, ["Peso", "Altura", "IMC"], idRow2],
+    head: [["Nome", "Idade", "Tipo Sanguíneo"], ["Peso", "Altura", "IMC"]],
+    body: [
+      [data.member.name, age !== null ? `${age} anos` : "—", data.member.blood_type || "—"],
+      [w ? `${w} kg` : "—", h ? `${(h * 100).toFixed(0)} cm` : "—", bmi || "—"],
+    ],
     theme: "grid",
     headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
     bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
+    didParseCell: (hookData: any) => {
+      // Make second header row look like a sub-header
+      if (hookData.section === "head" && hookData.row.index === 1) {
+        hookData.cell.styles.fillColor = [50, 80, 80];
+      }
+    },
     didDrawPage: () => { drawHeader(); },
   });
   y = (doc as any).lastAutoTable.finalY + 6;
