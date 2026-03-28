@@ -65,8 +65,7 @@ const Familia = () => {
                   </div>
                   <ChevronRight className="text-muted-foreground ml-auto shrink-0" size={20} />
                 </button>
-              ));
-            })()}
+              ))}
           </div>
         )}
         </div>
