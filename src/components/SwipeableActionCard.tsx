@@ -122,8 +122,10 @@ const SwipeableActionCard = ({
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); e.preventDefault(); resetPosition(); leadingAction.onAction(); }}
-            className={`flex flex-col items-center justify-center w-[72px] h-full active:opacity-80 pointer-events-auto`}
+            className={`flex flex-col items-center justify-center w-[72px] h-full active:opacity-80 ${openSide === "right" ? "pointer-events-auto" : "pointer-events-none"}`}
             style={{ backgroundColor: leadingAction.bgColor, color: leadingAction.textColor ?? "#fff" }}
+            aria-hidden={openSide !== "right"}
+            tabIndex={openSide === "right" ? 0 : -1}
           >
             {leadingAction.icon}
             <span className="text-[10px] mt-1 font-semibold">{leadingAction.label}</span>
