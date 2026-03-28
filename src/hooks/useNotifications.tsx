@@ -65,12 +65,16 @@ export const useNotifications = () => {
 
   const markAllAsRead = useMutation({
     mutationFn: async () => {
+      const unreadIds = (query.data ?? []).filter((n) => !n.is_read).map((n) => n.id);
+      if (unreadIds.length === 0) return;
       const { error } = await supabase
         .from("notifications")
         .update({ is_read: true })
-        .eq("user_id", user!.id)
-        .eq("is_read", false);
-      if (error) throw error;
+        .in("id", unreadIds);
+      if (error) {
+        console.error("markAllAsRead RLS/error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
