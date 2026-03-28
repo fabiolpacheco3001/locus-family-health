@@ -63,7 +63,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 15;
   const contentW = pageW - margin * 2;
-  const headerH = 22;
+  const headerH = 28;
   const footerH = 12;
   let y = 0;
 
@@ -84,12 +84,15 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
     const textX = data.logoBase64 ? margin + 19 : margin;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
+    doc.setFontSize(12);
     doc.setTextColor(255, 255, 255);
-    doc.text("Locus Vita — Resumo de Saúde", textX, 10);
+    doc.text("Locus Vita - Saúde Familiar Simplificada", textX, 9);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text(`Emitido em ${emissionDate} por ${data.emitterName}`, textX, 17);
+    doc.setFontSize(9);
+    doc.text("Prontuário (RES) - Resumo Eletrônico de Saúde", textX, 15);
+    doc.setFontSize(7);
+    doc.setTextColor(200, 210, 210);
+    doc.text(`Emitido em ${emissionDate} por ${data.emitterName}`, textX, 21);
   };
 
   const drawFooter = (pageNum: number, totalPages: number) => {
@@ -190,7 +193,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   }
 
   // ── Bloco 3: Doenças Crônicas ──
-  sectionTitle("Doenças Crônicas");
+  sectionTitle("Diagnósticos Ativos");
   if (data.diseases.length === 0) {
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
@@ -201,7 +204,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Doença", "Categoria"]],
+      head: [["Diagnóstico", "Categoria"]],
       body: data.diseases.map((d) => [d.name, d.category]),
       theme: "grid",
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
