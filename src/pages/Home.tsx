@@ -29,7 +29,7 @@ const Home = () => {
   const { members, isLoading: membersLoading } = useFamilyMembers();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, role } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
-  const [helpOpen, setHelpOpen] = React.useState(false);
+  
 
   const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
 
