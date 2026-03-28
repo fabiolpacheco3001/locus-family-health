@@ -124,6 +124,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setEstoqueTotal(editingMedication.estoque_total?.toString() ?? "");
       setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
       setExistingReceitaUrl(editingMedication.receita_url ?? null);
+      setReason((editingMedication as any).reason ?? "");
       setReceitaFile(null);
       setExtractedMeds([]);
       setCurrentMedIndex(0);
