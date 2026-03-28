@@ -230,7 +230,7 @@ const Doencas = () => {
           <DrawerHeader>
             <DrawerTitle>
               {drawerMode === "edit"
-                ? "Editar Doença"
+                ? "Editar Condição de Saúde"
                 : step === 1
                 ? "Selecione o Grupo"
                 : selectedCategory}
