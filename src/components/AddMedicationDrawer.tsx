@@ -324,6 +324,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       medico_prescritor: medicoPrescritor.trim() || null,
       estoque_total: estTotalNum,
       estoque_minimo: estMinNum,
+      reason: reason.trim() || null,
     };
   };
 
