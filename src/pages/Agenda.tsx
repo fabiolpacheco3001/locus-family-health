@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText, X, ArrowLeft } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useSmartBack from "@/hooks/useSmartBack";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,7 +23,7 @@ type AgendaItem = {
   type: string | null;
   status: string;
   memberName: string;
-  kind: "consultation" | "exam";
+  kind: "consultation" | "exam" | "pet_routine";
   isOverdue: boolean;
   isPet: boolean;
 };
@@ -62,22 +62,32 @@ const Agenda = () => {
         .or("status.eq.Agendado")
         .order("exam_date", { ascending: true });
 
+      let pq = supabase
+        .from("pet_routines")
+        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members(name, member_type)")
+        .eq("status", "Agendado")
+        .order("date_performed", { ascending: true });
+
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
+        // pet_routines uses family_member join for group filtering
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
+        pq = pq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
+        pq = pq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes] = await Promise.all([cq, eq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
+      if (petRes.error) throw petRes.error;
 
       const consultations: AgendaItem[] = (consultRes.data ?? []).map((c: any) => {
         const dateStr = c.consultation_date;
@@ -119,7 +129,24 @@ const Agenda = () => {
         };
       });
 
-      const merged = [...consultations, ...exams];
+      const petRoutines: AgendaItem[] = (petRes.data ?? []).map((p: any) => {
+        const dateStr = p.date_performed;
+        return {
+          id: p.id,
+          family_member_id: p.family_member_id,
+          title: p.routine_type,
+          subtitle: p.notes || null,
+          date: dateStr,
+          type: "pet_routine",
+          status: p.status === "Realizado" ? "Realizado" : "Agendado",
+          memberName: p.family_members?.name ?? "Pet",
+          kind: "pet_routine" as const,
+          isOverdue: dateStr ? isBefore(new Date(dateStr + 'T12:00:00'), today) : false,
+          isPet: true,
+        };
+      });
+
+      const merged = [...consultations, ...exams, ...petRoutines];
       merged.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
@@ -205,8 +232,11 @@ const Agenda = () => {
           <div className="flex flex-col space-y-3">
             {filteredItems.map((item) => {
               const isExam = item.kind === "exam";
-              const Icon = isExam ? FileText : Stethoscope;
-              const route = isExam
+              const isPetRoutine = item.kind === "pet_routine";
+              const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+              const route = isPetRoutine
+                ? `/familiar/${item.family_member_id}/rotinas-pet`
+                : isExam
                 ? `/familiar/${item.family_member_id}/exames`
                 : `/familiar/${item.family_member_id}/consultas`;
 
@@ -252,12 +282,17 @@ const Agenda = () => {
                           Atrasado
                         </Badge>
                       )}
+                      {isPetRoutine && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#A7D3CB]/30 text-[#1C3333] border-none">
+                          Rotina Pet
+                        </Badge>
+                      )}
                       {isExam && (
                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#FFF4A3] text-slate-800 border-none">
                            Exame
                         </Badge>
                       )}
-                      {!isExam && (
+                      {!isExam && !isPetRoutine && (
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 border-none ${

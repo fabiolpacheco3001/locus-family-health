@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon, Infinity } from "lucide-react";
+import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon, Infinity, PawPrint } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -44,6 +44,7 @@ const Home = () => {
     queryFn: async () => {
       let cq = supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "Agendada");
       let eq = supabase.from("exams").select("id", { count: "exact", head: true }).eq("status", "Agendado");
+      let pq = supabase.from("pet_routines").select("id", { count: "exact", head: true }).eq("status", "Agendado");
 
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
@@ -52,15 +53,18 @@ const Home = () => {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
+        pq = pq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
+        pq = pq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes] = await Promise.all([cq, eq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
-      return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0 };
+      if (petRes.error) throw petRes.error;
+      return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0, petRoutines: petRes.count ?? 0 };
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
@@ -69,7 +73,7 @@ const Home = () => {
   const pendingExams = pendingCounts?.exams ?? 0;
 
   // Derived: total open appointments
-  const totalOpenAppointments = pendingConsultations + pendingExams;
+  const totalOpenAppointments = pendingConsultations + pendingExams + (pendingCounts?.petRoutines ?? 0);
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
     queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId, managedProfiles],
@@ -88,6 +92,13 @@ const Home = () => {
         .order("exam_date", { ascending: true })
         .limit(5);
 
+      let pq = supabase
+        .from("pet_routines")
+        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members(name, member_type)")
+        .eq("status", "Agendado")
+        .order("date_performed", { ascending: true })
+        .limit(5);
+
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
@@ -95,12 +106,14 @@ const Home = () => {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
+        pq = pq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
+        pq = pq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes] = await Promise.all([cq, eq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
 
       const items: Array<{
         id: string;
@@ -108,7 +121,7 @@ const Home = () => {
         subtitle: string;
         date: string | null;
         memberName: string;
-        kind: "consultation" | "exam";
+        kind: "consultation" | "exam" | "pet_routine";
         familyMemberId: string;
         isOverdue: boolean;
         consultationType?: string | null;
@@ -118,7 +131,6 @@ const Home = () => {
       const now = new Date();
       (consultRes.data ?? []).forEach((c: any) => {
         const dateStr = c.consultation_date;
-        // Skip past appointments for "Próximos 5"
         if (dateStr && new Date(dateStr) <= now) return;
         items.push({
           id: c.id,
@@ -137,7 +149,6 @@ const Home = () => {
       (examRes.data ?? []).forEach((e: any) => {
         const isRealizado = e.status === "Realizado" || e.status === "Coletado";
         const displayDate = isRealizado ? e.result_date : e.exam_date;
-        // Skip past exams
         if (e.status === "Agendado" && e.exam_date && isBefore(new Date(e.exam_date), startOfDay(now))) return;
         items.push({
           id: e.id,
@@ -152,6 +163,22 @@ const Home = () => {
         });
       });
 
+      (petRes.data ?? []).forEach((p: any) => {
+        const dateStr = p.date_performed;
+        if (dateStr && isBefore(new Date(dateStr + 'T12:00:00'), startOfDay(now))) return;
+        items.push({
+          id: p.id,
+          title: p.routine_type,
+          subtitle: p.notes || "Rotina Pet",
+          date: dateStr,
+          memberName: p.family_members?.name ?? "Pet",
+          kind: "pet_routine",
+          familyMemberId: p.family_member_id,
+          isOverdue: false,
+          isPet: true,
+        });
+      });
+
       items.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
@@ -159,6 +186,34 @@ const Home = () => {
       });
 
       return items.slice(0, 5);
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Pet routines for today (Ações de Hoje)
+  const { data: todayPetRoutines = [] } = useQuery({
+    queryKey: ["today-pet-routines", groupId, isAdmin, linkedMemberId, managedProfiles],
+    queryFn: async () => {
+      const todayStr = format(new Date(), "yyyy-MM-dd");
+      let pq = supabase
+        .from("pet_routines")
+        .select("id, family_member_id, routine_type, date_performed, status, notes, family_members(name, member_type)")
+        .eq("date_performed", todayStr)
+        .eq("status", "Agendado");
+
+      if (isAdmin && groupId) {
+        // no group_id on pet_routines, rely on RLS
+      } else if (linkedMemberId) {
+        const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
+        pq = pq.in("family_member_id", allowedIds);
+      } else {
+        pq = pq.eq("user_id", user!.id);
+      }
+
+      const { data, error } = await pq;
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
@@ -413,14 +468,35 @@ const Home = () => {
                 <Skeleton className="h-16 w-full rounded-xl" />
                 <Skeleton className="h-16 w-full rounded-xl" />
               </div>
-            ) : medsWithNextDose.length === 0 ? (
+            ) : medsWithNextDose.length === 0 && todayPetRoutines.length === 0 ? (
               <Card className="border-border/50 bg-muted/30">
                 <CardContent className="p-4 text-center">
-                  <p className="text-sm text-muted-foreground">Nenhum medicamento ativo no momento.</p>
+                  <p className="text-sm text-muted-foreground">Nenhuma ação para hoje.</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="flex flex-col space-y-2">
+                {/* Pet routines for today */}
+                {todayPetRoutines.map((p: any) => (
+                  <button
+                    key={`pet-${p.id}`}
+                    onClick={() => navigate(`/familiar/${p.family_member_id}/rotinas-pet`, { state: { from: "/home" } })}
+                    className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                      <PawPrint className="text-black" size={16} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {p.routine_type}
+                        <span className="font-normal text-muted-foreground"> · {p.family_members?.name ?? "Pet"} 🐾</span>
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">Rotina agendada para hoje</p>
+                    </div>
+                    <ChevronRight size={16} className="text-black shrink-0" />
+                  </button>
+                ))}
+                {/* Medications */}
                 {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
                   const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
                   const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
@@ -496,8 +572,11 @@ const Home = () => {
               <div className="flex flex-col space-y-2">
                 {upcoming.map((item) => {
                   const isExam = item.kind === "exam";
-                  const Icon = isExam ? FileText : Stethoscope;
-                  const route = isExam
+                  const isPetRoutine = item.kind === "pet_routine";
+                  const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+                  const route = isPetRoutine
+                    ? `/familiar/${item.familyMemberId}/rotinas-pet`
+                    : isExam
                     ? `/familiar/${item.familyMemberId}/exames`
                     : `/familiar/${item.familyMemberId}/consultas`;
 
@@ -519,7 +598,9 @@ const Home = () => {
                             </Badge>
                           )}
                           <Badge className={`text-[10px] px-1.5 py-0 shrink-0 border-none ${
-                            isExam
+                            isPetRoutine
+                              ? "bg-[#A7D3CB]/30 text-[#1C3333]"
+                              : isExam
                               ? "bg-[#FFF4A3] text-black"
                               : item.consultationType === "Retorno"
                               ? "bg-[#A0C4D7] text-slate-800"
@@ -527,7 +608,7 @@ const Home = () => {
                               ? "bg-[#F87171] text-white"
                               : "bg-[#DCC5F1] text-black"
                           }`}>
-                            {isExam ? "Exame" : item.consultationType === "Retorno" ? "Retorno" : item.consultationType === "Emergência" ? "Emergência" : "Consulta"}
+                            {isPetRoutine ? "Rotina Pet" : isExam ? "Exame" : item.consultationType === "Retorno" ? "Retorno" : item.consultationType === "Emergência" ? "Emergência" : "Consulta"}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">

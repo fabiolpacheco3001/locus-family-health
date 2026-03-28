@@ -77,6 +77,10 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
     onSuccess: () => {
       toast.success("Rotina atualizada!");
       queryClient.invalidateQueries({ queryKey: ["pet_routines", routine?.family_member_id] });
+      queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["today-pet-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
       onOpenChange(false);
     },
     onError: () => toast.error("Erro ao atualizar rotina."),
