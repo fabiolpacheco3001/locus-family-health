@@ -244,7 +244,7 @@ const PetRotinas = () => {
           {filteredRoutines.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
-                <Droplets className="text-black" size={28} />
+                <ShowerHead className="text-black" size={28} />
               </div>
               <p className="text-foreground font-semibold mb-1">
                 {abaAtiva === "ativas" ? "Nenhuma rotina ativa" : "Nenhum histórico encontrado"}
