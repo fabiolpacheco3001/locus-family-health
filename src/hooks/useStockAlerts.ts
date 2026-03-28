@@ -9,8 +9,7 @@ const stockAlertSessionRuns = new Set<string>();
 
 /**
  * Checks continuous-use medications for low stock and creates
- * at most one stock notification per medication per day.
- * Receives medications externally to avoid duplicate useQuery calls.
+ * at most one stock notification per medication per day (group-wide dedup).
  */
 export function useStockAlerts(medications: Medication[]) {
   const { user } = useAuth();
@@ -39,20 +38,27 @@ export function useStockAlerts(medications: Medication[]) {
 
     let cancelled = false;
 
-    // Delay 2s to not block first paint
     const timer = setTimeout(async () => {
       if (cancelled) return;
       let hasInserted = false;
 
-      // Batch: fetch all today's stock notifications in ONE query
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
-      const { data: todayStockNotifs } = await supabase
+
+      // Group-wide dedup: check by medication_id + type, not user_id
+      let dedupQuery = supabase
         .from("notifications")
-        .select("medication_id, created_at")
-        .eq("user_id", user.id)
+        .select("medication_id")
         .eq("type", "stock")
         .gte("created_at", todayStart.toISOString());
+
+      if (groupId) {
+        dedupQuery = dedupQuery.eq("group_id", groupId);
+      } else {
+        dedupQuery = dedupQuery.eq("user_id", user.id);
+      }
+
+      const { data: todayStockNotifs } = await dedupQuery;
 
       if (cancelled) return;
 
@@ -93,5 +99,5 @@ export function useStockAlerts(medications: Medication[]) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [user, medications, queryClient]);
+  }, [user, medications, queryClient, groupId]);
 }

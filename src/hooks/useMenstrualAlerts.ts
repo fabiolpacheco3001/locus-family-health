@@ -10,7 +10,7 @@ const menstrualAlertSessionRuns = new Set<string>();
 
 /**
  * Checks menstrual cycles and creates advance notifications
- * for upcoming periods. At most one notification per familiar per day.
+ * for upcoming periods. Group-wide dedup by family_member_id + type per day.
  */
 export function useMenstrualAlerts() {
   const { user } = useAuth();
@@ -28,7 +28,6 @@ export function useMenstrualAlerts() {
 
     let cancelled = false;
 
-    // Delay 2s to not block first paint
     const timer = setTimeout(async () => {
       if (cancelled) return;
 
@@ -53,15 +52,23 @@ export function useMenstrualAlerts() {
       const today = new Date();
       today.setHours(12, 0, 0, 0);
 
-      // Batch: fetch all today's menstrual notifications in ONE query
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
-      const { data: todayMenstrualNotifs } = await supabase
+
+      // Group-wide dedup: check by family_member_id + type, not user_id
+      let dedupQuery = supabase
         .from("notifications")
-        .select("family_member_id, created_at")
-        .eq("user_id", user.id)
+        .select("family_member_id")
         .eq("type", "menstrual")
         .gte("created_at", todayStart.toISOString());
+
+      if (groupId) {
+        dedupQuery = dedupQuery.eq("group_id", groupId);
+      } else {
+        dedupQuery = dedupQuery.eq("user_id", user.id);
+      }
+
+      const { data: todayMenstrualNotifs } = await dedupQuery;
 
       if (cancelled) return;
 
@@ -109,5 +116,5 @@ export function useMenstrualAlerts() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [user, queryClient]);
+  }, [user, queryClient, groupId]);
 }
