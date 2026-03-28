@@ -16,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import MemberAvatar from "@/components/MemberAvatar";
-import HelpDialog from "@/components/HelpDialog";
+
 import { toast } from "sonner";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -29,7 +29,7 @@ const Home = () => {
   const { members, isLoading: membersLoading } = useFamilyMembers();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, role } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
-  const [helpOpen, setHelpOpen] = React.useState(false);
+  
 
   const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
 
@@ -303,7 +303,7 @@ const Home = () => {
               <Search size={22} className="text-white" />
             </button>
             <button
-              onClick={() => setHelpOpen(true)}
+              onClick={() => navigate("/ajuda")}
               className="p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
             >
               <HelpCircle size={22} className="text-white" />
@@ -713,7 +713,7 @@ const Home = () => {
         </DrawerContent>
       </Drawer>
       </div>
-      <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
+      
     </div>
   );
 };

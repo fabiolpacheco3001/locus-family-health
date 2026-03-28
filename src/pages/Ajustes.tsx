@@ -19,7 +19,7 @@ const menuItems = [
   { icon: Bell, label: "Notificações", path: "/notificacoes" },
   { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
   { icon: FileText, label: "Política de Privacidade", path: null },
-  { icon: HelpCircle, label: "Ajuda e Suporte", path: null },
+  { icon: HelpCircle, label: "Ajuda e Suporte", path: "/ajuda" },
 ];
 
 const Ajustes = () => {

@@ -33,6 +33,7 @@ const importVacinas = () => import("./pages/Vacinas");
 const importSeguranca = () => import("./pages/Seguranca");
 const importGestaoAcessos = () => import("./pages/GestaoAcessos");
 const importPetRotinas = () => import("./pages/PetRotinas");
+const importAjuda = () => import("./pages/Ajuda");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
@@ -53,6 +54,7 @@ const Vacinas = lazy(importVacinas);
 const Seguranca = lazy(importSeguranca);
 const GestaoAcessos = lazy(importGestaoAcessos);
 const PetRotinas = lazy(importPetRotinas);
+const Ajuda = lazy(importAjuda);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
@@ -115,6 +117,7 @@ const App = () => (
               <Route path="/familiar/:id/doencas" element={<Doencas />} />
               <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
               <Route path="/familiar/:id/rotinas-pet" element={<PetRotinas />} />
+              <Route path="/ajuda" element={<Ajuda />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
               <Route path="/seguranca" element={<Seguranca />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
