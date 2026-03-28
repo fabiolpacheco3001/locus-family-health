@@ -32,6 +32,7 @@ const importDoencas = () => import("./pages/Doencas");
 const importVacinas = () => import("./pages/Vacinas");
 const importSeguranca = () => import("./pages/Seguranca");
 const importGestaoAcessos = () => import("./pages/GestaoAcessos");
+const importPetRotinas = () => import("./pages/PetRotinas");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
