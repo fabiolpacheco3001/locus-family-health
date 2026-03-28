@@ -51,6 +51,10 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
     onSuccess: () => {
       toast.success("Registro excluído!");
       queryClient.invalidateQueries({ queryKey: ["pet_routines", familyMemberId] });
+      queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["today-pet-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
     },
     onError: () => toast.error("Erro ao excluir registro."),
   });
