@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Clear all cached queries on sign-out to prevent stale RBAC state
         if (_event === "SIGNED_OUT") {
+          queryClient.removeQueries();
           queryClient.clear();
         }
       }
