@@ -35,6 +35,7 @@ const ExamSwipeableCard = ({
 }: ExamSwipeableCardProps) => {
   const x = useMotionValue(0);
   const sideRef = useRef<"left" | "right" | "center">("center");
+  const [openSide, setOpenSide] = useState<"left" | "right" | "center">("center");
 
   const deleteOpacity = useTransform(x, [-100, -30, 0], [1, 0.6, 0]);
   const actionsOpacity = useTransform(x, [0, 30, 80], [0, 0.6, 1]);
