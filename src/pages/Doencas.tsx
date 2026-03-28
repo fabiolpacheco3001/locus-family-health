@@ -317,7 +317,7 @@ const Doencas = () => {
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft size={22} />
           </Button>
-          <h1 className="text-lg font-bold text-foreground flex-1"></h1>
+          <h1 className="text-lg font-bold text-foreground flex-1">Diagnósticos Ativos</h1>
         </div>
 
         {isLoading ? (
