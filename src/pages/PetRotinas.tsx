@@ -267,6 +267,12 @@ const PetRotinas = () => {
         onOpenChange={setDrawerOpen}
         familyMemberId={id!}
       />
+
+      <EditPetRoutineDrawer
+        open={!!editRoutine}
+        onOpenChange={(open) => { if (!open) setEditRoutine(null); }}
+        routine={editRoutine}
+      />
     </div>
   );
 };
