@@ -19,19 +19,19 @@ interface HelpDialogProps {
 
 const faqItems = [
   {
-    question: "Como configurar um familiar como Pet?",
+    question: "Como adiciono um Pet à família?",
     answer:
-      'Vá em Mais > Família, edite o perfil do familiar e ative a opção "Este perfil é um Pet?".',
+      "Na aba 'Família' no menu inferior, toque no botão de adicionar (+) e preencha os dados do seu animalzinho. Lembre-se: o perfil já deve ser criado como Pet desde o início, não é possível transformar um perfil de pessoa em Pet depois.",
   },
   {
     question: "Onde encontro o histórico de exames?",
     answer:
-      'Na tela principal (Minha Saúde), selecione o familiar e clique no Card "Exames".',
+      "Na aba 'Minha Saúde', selecione o familiar desejado no topo da tela e, em seguida, toque no card 'Exames'.",
   },
   {
     question: "Posso compartilhar o acesso com outra pessoa?",
     answer:
-      'Sim. Vá em Mais > Ajustes e use a opção "Gestão de Acessos" para enviar um convite.',
+      "Sim. Acesse a aba 'Ajustes' no menu inferior e toque em 'Gestão de Acessos' para convidar outros membros e configurar o que eles podem ver e editar.",
   },
 ];
 
