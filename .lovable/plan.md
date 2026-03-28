@@ -1,41 +1,63 @@
 
+## Diagnóstico confirmado
 
-## Diagnóstico: Medicamentos = 0 para Admin Lívia
+Sim, o problema ainda pode acontecer mesmo com `stopPropagation()` no `NotificationCard`.
 
-### Causa Raiz
+A causa real não está no `Chevron` em si, mas no componente global de swipe:
 
-O hook `useMedications` tem uma **race condition** entre o carregamento dos dados do grupo (`useFamilyGroup`) e a execução da query.
+- Em `SwipeableActionCard.tsx`, a camada de ação vermelha fica **por cima** do card (`z-[15]`), enquanto o conteúdo principal fica em `z-10`.
+- O container da ação usa `pointer-events-none`, mas o botão interno de excluir continua com `pointer-events-auto` o tempo todo.
+- Como esse botão invisível ocupa a faixa direita de `72px`, um toque no `Chevron`/seta pode acertar essa área invisível e disparar `onDelete()` em vez de expandir.
+- O mesmo padrão existe também em `ExamSwipeableCard.tsx`, então a correção precisa ser global, não só nas notificações.
 
-1. `useFamilyGroup` inicia com defaults: `groupId: null`, `isAdmin: true`
-2. `useMedications` executa imediatamente. Como `isAdmin && groupId` = `true && null` = `false`, cai no `else` (linha 92): `.eq("user_id", user.id)`
-3. Lívia não criou nenhum medicamento, então retorna `[]`
-4. A `queryKey` é `["medications", "all"]` -- **não inclui `groupId` nem `isAdmin`**
-5. Quando `useFamilyGroup` resolve com o `groupId` correto, o React Query **não refaz a query** porque a key não mudou e `staleTime` é 5 minutos
+## Plano de correção
 
-A request capturada na rede confirma: `&user_id=eq.0e81b4b9...` retornando `[]`.
+### 1. Corrigir a captura de clique nas ações ocultas
+Atualizar `SwipeableActionCard.tsx` e `ExamSwipeableCard.tsx` para que os botões de ação só aceitem clique quando o card estiver realmente aberto no lado correspondente.
 
-### Correção
+Implementação prevista:
+- calcular se a ação está “ativa” com base em `x` / `sideRef`
+- aplicar `pointer-events-none` no botão quando a ação estiver fechada
+- opcionalmente esconder também via `aria-hidden`/`tabIndex` quando fechado
 
-**Arquivo: `src/hooks/useMedications.tsx`**
+Resultado esperado:
+- toque no `Chevron` expande/recolhe
+- delete só acontece após swipe left real ou clique no botão revelado
 
-1. Incluir `groupId`, `isAdmin`, `linkedMemberId` na `queryKey` para que a query seja re-executada quando o contexto do grupo carregar
-2. Condicionar `enabled` para aguardar o carregamento do grupo (`!isLoading` do `useFamilyGroup`)
+### 2. Preservar a física atual do swipe
+Não alterar:
+- threshold
+- snap em `-72 / +72`
+- single-open state
+- comportamento premium de voltar ao centro
 
-```typescript
-// Antes
-queryKey: ["medications", familyMemberId ?? "all"],
-enabled: !!user && (!!familyMemberId || true),
+Ou seja: corrigir apenas a interação de ponteiro, sem mexer na UX do arraste.
 
-// Depois
-queryKey: ["medications", familyMemberId ?? "all", groupId, isAdmin, linkedMemberId],
-enabled: !!user && !groupLoading,
-```
+### 3. Validar os pontos impactados
+Revisar o uso do componente compartilhado nas telas:
+- `Notificacoes.tsx`
+- `Consultas.tsx`
+- `Medicamentos.tsx`
+- `PetRotinas.tsx`
+- `Exames.tsx` (via `ExamSwipeableCard`)
 
-Onde `groupLoading` vem de `useFamilyGroup()` (campo `isLoading`).
+### 4. Validação funcional após ajuste
+Vou considerar como correto quando:
+- tocar no header/seta da notificação apenas expande
+- tocar no card aberto apenas fecha/resetta o swipe
+- excluir só dispara por swipe left + botão revelado
+- nenhuma regressão acontece em consultas, medicamentos, exames e rotinas pet
 
-Isso garante que a query só executa após o RBAC resolver, e que qualquer mudança no contexto do grupo dispara uma nova busca.
+## Arquivos-alvo
+- `src/components/SwipeableActionCard.tsx`
+- `src/components/ExamSwipeableCard.tsx`
+- validação de integração em:
+  - `src/components/NotificationCard.tsx`
+  - `src/pages/Notificacoes.tsx`
+  - `src/pages/Consultas.tsx`
+  - `src/pages/Medicamentos.tsx`
+  - `src/pages/PetRotinas.tsx`
+  - `src/pages/Exames.tsx`
 
-### Impacto
-
-Correção cirúrgica em um único arquivo. Nenhuma alteração visual. O carrossel e a lista de medicamentos passarão a refletir os dados corretos para admins que não criaram os registros.
-
+## Observação importante
+O ajuste anterior atacou o sintoma (`stopPropagation`), mas não a causa estrutural: o botão destrutivo invisível continua clicável por cima do card. A correção certa é bloquear interação nas ações ocultas até o swipe abrir de verdade.
