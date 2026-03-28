@@ -58,6 +58,7 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
           details: m.medico_prescritor ? `Prescrito por Dr(a). ${m.medico_prescritor}` : null,
           fileUrl: m.receita_url || null,
           status: m.status,
+          reason: (m as any).reason || null,
         });
       });
 
