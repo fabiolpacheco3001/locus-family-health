@@ -80,11 +80,26 @@ const PetRotinas = () => {
 
   const completeMutation = useMutation({
     mutationFn: async (routineId: string) => {
+      // Find the routine to check for next_due_date
+      const routine = routines.find((r) => r.id === routineId);
       const { error } = await supabase
         .from("pet_routines")
         .update({ status: "Realizado" } as any)
         .eq("id", routineId);
       if (error) throw error;
+
+      // Auto-recurrence: if next_due_date exists, create a new "Agendado" routine
+      if (routine?.next_due_date) {
+        await supabase.from("pet_routines").insert({
+          family_member_id: routine.family_member_id,
+          user_id: routine.user_id,
+          routine_type: routine.routine_type,
+          date_performed: routine.next_due_date,
+          next_due_date: null,
+          notes: routine.notes,
+          status: "Agendado",
+        } as any);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pet_routines", id] });
