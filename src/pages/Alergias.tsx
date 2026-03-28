@@ -52,7 +52,6 @@ const Alergias = () => {
       }
     }
   }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
-  const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingAllergy, setEditingAllergy] = useState<Allergy | null>(null);
   const [form, setForm] = useState({ substance: "", type: "Medicamento", severity: "Leve" });
