@@ -87,6 +87,7 @@ const Agenda = () => {
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
+      if (petRes.error) throw petRes.error;
 
       const consultations: AgendaItem[] = (consultRes.data ?? []).map((c: any) => {
         const dateStr = c.consultation_date;
