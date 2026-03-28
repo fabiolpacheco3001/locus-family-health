@@ -76,14 +76,14 @@ const Home = () => {
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
-        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name, member_type)")
         .in("status", ["Agendada"])
         .order("consultation_date", { ascending: true })
         .limit(5);
 
       let eq = supabase
         .from("exams")
-        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name, member_type)")
         .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
         .order("exam_date", { ascending: true })
         .limit(5);
@@ -112,6 +112,7 @@ const Home = () => {
         familyMemberId: string;
         isOverdue: boolean;
         consultationType?: string | null;
+        isPet: boolean;
       }> = [];
 
       const now = new Date();
@@ -129,6 +130,7 @@ const Home = () => {
           familyMemberId: c.family_member_id,
           isOverdue: false,
           consultationType: c.type,
+          isPet: (c.family_members?.member_type || "human") === "pet",
         });
       });
 
@@ -146,6 +148,7 @@ const Home = () => {
           kind: "exam",
           familyMemberId: e.family_member_id,
           isOverdue: false,
+          isPet: (e.family_members?.member_type || "human") === "pet",
         });
       });
 
@@ -535,7 +538,7 @@ const Home = () => {
                                 { locale: ptBR }
                               )
                             : "Sem data"}{" "}
-                          — {item.memberName}
+                          — {item.memberName}{item.isPet ? " 🐾" : ""}
                         </p>
                       </div>
                       <ChevronRight size={16} className="text-black shrink-0" />

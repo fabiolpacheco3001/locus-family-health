@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import AddPetRoutineDrawer from "@/components/AddPetRoutineDrawer";
+import EditPetRoutineDrawer from "@/components/EditPetRoutineDrawer";
 
 const ROUTINE_ICONS: Record<string, React.ElementType> = {
   Banho: Droplets,
@@ -37,6 +38,7 @@ const PetRotinas = () => {
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [editRoutine, setEditRoutine] = useState<any | null>(null);
   const undoRef = useRef<{ id: string; timeout: ReturnType<typeof setTimeout> } | null>(null);
 
   useEffect(() => {
@@ -80,11 +82,26 @@ const PetRotinas = () => {
 
   const completeMutation = useMutation({
     mutationFn: async (routineId: string) => {
+      // Find the routine to check for next_due_date
+      const routine = routines.find((r) => r.id === routineId);
       const { error } = await supabase
         .from("pet_routines")
         .update({ status: "Realizado" } as any)
         .eq("id", routineId);
       if (error) throw error;
+
+      // Auto-recurrence: if next_due_date exists, create a new "Agendado" routine
+      if (routine?.next_due_date) {
+        await supabase.from("pet_routines").insert({
+          family_member_id: routine.family_member_id,
+          user_id: routine.user_id,
+          routine_type: routine.routine_type,
+          date_performed: routine.next_due_date,
+          next_due_date: null,
+          notes: routine.notes,
+          status: "Agendado",
+        } as any);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pet_routines", id] });
@@ -199,7 +216,13 @@ const PetRotinas = () => {
                         : undefined
                     }
                   >
-                    <div className="bg-card rounded-xl border border-border/50 px-4 py-3 flex items-center gap-3">
+                    <div
+                      onClick={() => {
+                        if (openCardId === r.id) return;
+                        setEditRoutine(r);
+                      }}
+                      className="bg-card rounded-xl border border-border/50 px-4 py-3 flex items-center gap-3 cursor-pointer active:bg-muted/50 transition-colors"
+                    >
                       <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center flex-shrink-0">
                         <Icon className="text-black" size={18} />
                       </div>
@@ -230,7 +253,7 @@ const PetRotinas = () => {
       </div>
 
       {/* FAB */}
-      {!drawerOpen && (
+      {!drawerOpen && !editRoutine && (
         <button
           onClick={() => setDrawerOpen(true)}
           className="fixed right-6 bottom-24 z-40 w-14 h-14 rounded-full bg-[#F2A97F] hover:bg-[#ff9b66] text-slate-900 shadow-lg flex items-center justify-center transition-none"
@@ -243,6 +266,12 @@ const PetRotinas = () => {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         familyMemberId={id!}
+      />
+
+      <EditPetRoutineDrawer
+        open={!!editRoutine}
+        onOpenChange={(open) => { if (!open) setEditRoutine(null); }}
+        routine={editRoutine}
       />
     </div>
   );

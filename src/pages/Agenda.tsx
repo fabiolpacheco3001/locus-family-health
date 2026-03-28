@@ -25,6 +25,7 @@ type AgendaItem = {
   memberName: string;
   kind: "consultation" | "exam";
   isOverdue: boolean;
+  isPet: boolean;
 };
 
 const filterLabels: Record<string, string> = {
@@ -47,14 +48,14 @@ const Agenda = () => {
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
-        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name)")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name, member_type)")
         .neq("status", "Cancelada")
         .neq("status", "Realizada")
         .order("consultation_date", { ascending: true });
 
       let eq = supabase
         .from("exams")
-        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name)")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name, member_type)")
         .neq("status", "Cancelado")
         .neq("status", "Realizado")
         .neq("status", "Coletado")
@@ -91,6 +92,7 @@ const Agenda = () => {
           memberName: c.family_members?.name ?? "Familiar",
           kind: "consultation",
           isOverdue: c.status === "Agendada" && dateStr ? isBefore(parseISO(dateStr), new Date()) : false,
+          isPet: (c.family_members?.member_type || "human") === "pet",
         };
       });
 
@@ -113,6 +115,7 @@ const Agenda = () => {
           memberName: e.family_members?.name ?? "Familiar",
           kind: "exam",
           isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
+          isPet: (e.family_members?.member_type || "human") === "pet",
         };
       });
 
@@ -237,7 +240,7 @@ const Agenda = () => {
                           {(() => { const p = item.memberName.trim().split(' ').filter(Boolean); return p.length <= 1 ? (p[0]?.[0] ?? '').toUpperCase() : `${p[0][0]}${p[p.length-1][0]}`.toUpperCase(); })()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs text-muted-foreground truncate">{item.memberName}</span>
+                      <span className="text-xs text-muted-foreground truncate">{item.memberName}{item.isPet ? " 🐾" : ""}</span>
                     </div>
                     <p className="text-sm text-foreground truncate">
                       {item.title}

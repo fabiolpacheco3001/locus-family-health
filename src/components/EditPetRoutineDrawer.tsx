@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,62 +14,73 @@ import {
 
 const ROUTINE_TYPES = ["Banho", "Tosa", "Antipulgas", "Vermífugo", "Outro"];
 
-interface AddPetRoutineDrawerProps {
+interface EditPetRoutineDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  familyMemberId: string;
+  routine: {
+    id: string;
+    family_member_id: string;
+    routine_type: string;
+    date_performed: string;
+    next_due_date: string | null;
+    notes: string | null;
+    status: string;
+  } | null;
 }
 
-const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRoutineDrawerProps) => {
-  const { user } = useAuth();
+const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDrawerProps) => {
   const queryClient = useQueryClient();
-  const today = new Date().toISOString().split("T")[0];
 
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
-  const [datePerformed, setDatePerformed] = useState(today);
+  const [datePerformed, setDatePerformed] = useState("");
   const [nextDueDate, setNextDueDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  const resetForm = () => {
-    setRoutineType("Banho");
-    setCustomType("");
-    setDatePerformed(today);
-    setNextDueDate("");
-    setNotes("");
-  };
+  useEffect(() => {
+    if (routine && open) {
+      const isKnown = ROUTINE_TYPES.includes(routine.routine_type);
+      setRoutineType(isKnown ? routine.routine_type : "Outro");
+      setCustomType(isKnown ? "" : routine.routine_type);
+      setDatePerformed(routine.date_performed);
+      setNextDueDate(routine.next_due_date || "");
+      setNotes(routine.notes || "");
+    }
+  }, [routine, open]);
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!routine) return;
       const type = routineType === "Outro" ? (customType.trim() || "Outro") : routineType;
-      const { error } = await supabase.from("pet_routines").insert({
-        family_member_id: familyMemberId,
-        user_id: user!.id,
-        routine_type: type,
-        date_performed: datePerformed,
-        next_due_date: nextDueDate || null,
-        notes: notes.trim() || null,
-      });
+      const { error } = await supabase
+        .from("pet_routines")
+        .update({
+          routine_type: type,
+          date_performed: datePerformed,
+          next_due_date: nextDueDate || null,
+          notes: notes.trim() || null,
+        } as any)
+        .eq("id", routine.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Rotina registrada!");
-      queryClient.invalidateQueries({ queryKey: ["pet_routines", familyMemberId] });
+      toast.success("Rotina atualizada!");
+      queryClient.invalidateQueries({ queryKey: ["pet_routines", routine?.family_member_id] });
       onOpenChange(false);
-      resetForm();
     },
-    onError: () => toast.error("Erro ao salvar rotina."),
+    onError: () => toast.error("Erro ao atualizar rotina."),
   });
+
+  if (!routine) return null;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="flex flex-col max-h-[90vh]">
         <DrawerHeader>
-          <DrawerTitle>Registrar Rotina</DrawerTitle>
+          <DrawerTitle>Editar Rotina</DrawerTitle>
         </DrawerHeader>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain">
-          {/* Tipo */}
           <div>
             <label className="text-sm font-medium text-foreground mb-1 block">Tipo de Cuidado</label>
             <select
@@ -97,7 +107,6 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
             </div>
           )}
 
-          {/* Datas */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Data Realização</label>
@@ -105,7 +114,6 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
                 type="date"
                 value={datePerformed}
                 onChange={(e) => setDatePerformed(e.target.value)}
-                max={today}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
               />
             </div>
@@ -120,7 +128,6 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
             </div>
           </div>
 
-          {/* Notas */}
           <div>
             <label className="text-sm font-medium text-foreground mb-1 block">Observações (opc.)</label>
             <Textarea
@@ -144,7 +151,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
             disabled={!datePerformed || mutation.isPending}
             className="w-full"
           >
-            {mutation.isPending ? "Salvando..." : "Salvar"}
+            {mutation.isPending ? "Salvando..." : "Salvar Alterações"}
           </Button>
         </DrawerFooter>
       </DrawerContent>
@@ -152,4 +159,4 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
   );
 };
 
-export default AddPetRoutineDrawer;
+export default EditPetRoutineDrawer;
