@@ -179,7 +179,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   } else {
     autoTable(doc, {
       startY: y,
-      margin: { left: margin, right: margin },
+      margin: { left: margin, right: margin, top: headerH + 6 },
       head: [["Substância", "Gravidade"]],
       body: data.allergies.map((a) => [a.substance, a.severity]),
       theme: "grid",
