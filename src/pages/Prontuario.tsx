@@ -11,6 +11,8 @@ import MemberAvatar from "@/components/MemberAvatar";
 import ClinicalTimeline from "@/components/ClinicalTimeline";
 import { useClinicalTimeline } from "@/hooks/useClinicalTimeline";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { toast } from "sonner";
 
 const calculateAge = (birthDate: string | null): number | null => {
   if (!birthDate) return null;
@@ -26,7 +28,18 @@ const Prontuario = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
+  const { isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
+
+  useEffect(() => {
+    if (!isAdmin && id) {
+      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
+      if (!allowedIds.includes(id)) {
+        toast.error("Acesso negado");
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
   const { data: member, isLoading } = useQuery({
     queryKey: ["family_member", id],

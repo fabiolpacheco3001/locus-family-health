@@ -116,7 +116,8 @@ const MinhaSaude = () => {
     const { error } = await supabase
       .from("health_measurements")
       .delete()
-      .eq("id", measurementId);
+      .eq("id", measurementId)
+      .eq("user_id", user!.id);
     if (error) {
       toast.error("Erro ao excluir registro.");
       return;
