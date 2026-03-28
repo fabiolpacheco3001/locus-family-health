@@ -706,7 +706,7 @@ const Home = () => {
             )}
             {!membersLoading && members.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">
-                Nenhum familiar cadastrado.
+                Nenhum usuário cadastrado.
               </p>
             )}
           </div>
