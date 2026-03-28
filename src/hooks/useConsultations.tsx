@@ -107,6 +107,9 @@ export const useConsultations = (familyMemberId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["consultations", familyMemberId] });
+      queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
     },
   });
 
