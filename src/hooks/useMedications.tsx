@@ -84,7 +84,7 @@ export const useMedications = (familyMemberId?: string) => {
       if (familyMemberId) {
         q = q.eq("family_member_id", familyMemberId);
       } else if (isAdmin && groupId) {
-        q = q.eq("group_id", groupId);
+        // Don't filter by group_id (may be null on old rows); RLS handles access via family_members.group_id
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         q = q.in("family_member_id", allowedIds);

@@ -47,8 +47,7 @@ const Home = () => {
       let pq = supabase.from("pet_routines").select("id", { count: "exact", head: true }).eq("status", "Agendado");
 
       if (isAdmin && groupId) {
-        cq = cq.eq("group_id", groupId);
-        eq = eq.eq("group_id", groupId);
+        // Don't filter by group_id (may be null on old rows); RLS handles access
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
@@ -100,8 +99,7 @@ const Home = () => {
         .limit(5);
 
       if (isAdmin && groupId) {
-        cq = cq.eq("group_id", groupId);
-        eq = eq.eq("group_id", groupId);
+        // Don't filter by group_id (may be null on old rows); RLS handles access
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
