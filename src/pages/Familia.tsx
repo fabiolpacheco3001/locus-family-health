@@ -4,6 +4,15 @@ import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const ordemParentesco: Record<string, number> = {
+  "Titular": 1,
+  "Cônjuge": 2,
+  "Filho(a)": 3,
+  "Pai/Mãe": 4,
+  "Irmão(ã)": 5,
+  "Outro": 6,
+};
+
 const Familia = () => {
   const { members, isLoading } = useFamilyMembers();
   const navigate = useNavigate();

@@ -162,7 +162,7 @@ const Home = () => {
   });
 
   // Build list of active meds with their next dose
-  const medsWithNextDose = activeMeds
+  const medsWithNextDose = React.useMemo(() => activeMeds
     .map((med) => {
       const dateOnly = med.start_date?.slice(0, 10);
       let startDateISO: string | null = null;
@@ -184,7 +184,7 @@ const Home = () => {
       if (!a.nextDose) return 1;
       if (!b.nextDose) return -1;
       return a.nextDose.getTime() - b.nextDose.getTime();
-    });
+    }), [activeMeds]);
 
   // Progressive rendering: each section uses its own loading state
 
