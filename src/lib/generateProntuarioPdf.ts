@@ -63,7 +63,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 15;
   const contentW = pageW - margin * 2;
-  const headerH = 28;
+  const headerH = 23;
   const footerH = 12;
   let y = 0;
 
