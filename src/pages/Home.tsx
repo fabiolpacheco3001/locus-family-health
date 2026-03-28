@@ -72,7 +72,7 @@ const Home = () => {
   const totalOpenAppointments = pendingConsultations + pendingExams;
 
   const { data: upcoming = [], isLoading: upcomingLoading } = useQuery({
-    queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId],
+    queryKey: ["upcoming-appointments", groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
