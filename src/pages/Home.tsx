@@ -44,6 +44,7 @@ const Home = () => {
     queryFn: async () => {
       let cq = supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "Agendada");
       let eq = supabase.from("exams").select("id", { count: "exact", head: true }).eq("status", "Agendado");
+      let pq = supabase.from("pet_routines").select("id", { count: "exact", head: true }).eq("status", "Agendado");
 
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
@@ -52,15 +53,18 @@ const Home = () => {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
+        pq = pq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
+        pq = pq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes] = await Promise.all([cq, eq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
-      return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0 };
+      if (petRes.error) throw petRes.error;
+      return { consultations: consultRes.count ?? 0, exams: examRes.count ?? 0, petRoutines: petRes.count ?? 0 };
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
