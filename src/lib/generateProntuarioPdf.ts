@@ -134,16 +134,8 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
   const h = data.member.height;
   const bmi = w && h && h > 0 ? (w / (h * h)).toFixed(1) : null;
 
-  const idRow1 = [
-    data.member.name,
-    age !== null ? `${age} anos` : "—",
-    data.member.blood_type || "—",
-  ];
-  const idRow2 = [
-    w ? `${w} kg` : "—",
-    h ? `${(h * 100).toFixed(0)} cm` : "—",
-    bmi || "—",
-  ];
+
+
 
   autoTable(doc, {
     startY: y,
