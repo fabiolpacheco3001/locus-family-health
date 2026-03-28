@@ -344,15 +344,6 @@ const GestaoAcessos = () => {
               </div>
             )}
 
-            {/* Info Banner */}
-            <div className="bg-primary/5 rounded-xl p-4 border border-primary/10 flex flex-col space-y-2">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <strong className="text-foreground">Admin:</strong> acesso completo a todos os perfis e dados da família.
-              </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <strong className="text-foreground">Usuário:</strong> acesso limitado ao perfil vinculado (só vê e edita seus próprios dados).
-              </p>
-            </div>
           </div>
         </div>
       </div>
