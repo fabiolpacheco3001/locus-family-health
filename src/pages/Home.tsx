@@ -49,8 +49,9 @@ const Home = () => {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
       } else if (linkedMemberId) {
-        cq = cq.eq("family_member_id", linkedMemberId);
-        eq = eq.eq("family_member_id", linkedMemberId);
+        const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
+        cq = cq.in("family_member_id", allowedIds);
+        eq = eq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
