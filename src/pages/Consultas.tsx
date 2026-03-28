@@ -182,7 +182,7 @@ const Consultas = () => {
                   <SwipeableActionCard
                     key={c.id}
                     onDelete={() => handleInstantDelete(c.id)}
-                    disableDelete={!isAdmin}
+                    disableDelete={!isAdmin && !managedProfiles.includes(id!)}
                     leadingAction={isAgendada ? {
                       icon: <CheckCircle className="w-6 h-6" />,
                       label: "Realizada",
