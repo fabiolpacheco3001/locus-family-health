@@ -31,7 +31,8 @@ const NotificationCard = ({ notification, onRead }: NotificationCardProps) => {
   const isUnread = !notification.is_read;
   const [expanded, setExpanded] = useState(false);
 
-  const handleToggle = () => {
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const willExpand = !expanded;
     setExpanded(willExpand);
     if (willExpand && isUnread) {
@@ -49,6 +50,7 @@ const NotificationCard = ({ notification, onRead }: NotificationCardProps) => {
     >
       {/* Header - always visible */}
       <button
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={handleToggle}
         className="flex items-center gap-3 p-4 w-full text-left"
       >
