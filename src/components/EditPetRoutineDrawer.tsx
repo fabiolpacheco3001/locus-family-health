@@ -14,6 +14,16 @@ import {
 
 const ROUTINE_TYPES = ["Banho", "Tosa", "Antipulgas", "Vermífugo", "Outro"];
 
+const RECURRENCE_OPTIONS = [
+  { value: "none", label: "Não se repete" },
+  { value: "weekly", label: "Semanal" },
+  { value: "biweekly", label: "Quinzenal" },
+  { value: "monthly", label: "Mensal" },
+  { value: "quarterly", label: "A cada 3 meses" },
+  { value: "semiannually", label: "A cada 6 meses" },
+  { value: "annually", label: "Anual" },
+];
+
 interface EditPetRoutineDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -25,6 +35,7 @@ interface EditPetRoutineDrawerProps {
     next_due_date: string | null;
     notes: string | null;
     status: string;
+    recurrence?: string;
   } | null;
 }
 
@@ -34,7 +45,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
   const [datePerformed, setDatePerformed] = useState("");
-  const [nextDueDate, setNextDueDate] = useState("");
+  const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -43,7 +54,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
       setRoutineType(isKnown ? routine.routine_type : "Outro");
       setCustomType(isKnown ? "" : routine.routine_type);
       setDatePerformed(routine.date_performed);
-      setNextDueDate(routine.next_due_date || "");
+      setRecurrence(routine.recurrence || "none");
       setNotes(routine.notes || "");
     }
   }, [routine, open]);
@@ -57,8 +68,8 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
         .update({
           routine_type: type,
           date_performed: datePerformed,
-          next_due_date: nextDueDate || null,
           notes: notes.trim() || null,
+          recurrence: recurrence,
         } as any)
         .eq("id", routine.id);
       if (error) throw error;
@@ -118,13 +129,16 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Próximo (opc.)</label>
-              <input
-                type="date"
-                value={nextDueDate}
-                onChange={(e) => setNextDueDate(e.target.value)}
+              <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
+              <select
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
-              />
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 

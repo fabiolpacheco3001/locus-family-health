@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Droplets, Scissors, Bug, Pill, HelpCircle, Plus, CheckCircle } from "lucide-react";
+import { ArrowLeft, Droplets, Scissors, Bug, Pill, HelpCircle, Plus, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import useSmartBack from "@/hooks/useSmartBack";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addWeeks, addMonths, addYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { AnimatePresence } from "framer-motion";
@@ -28,6 +28,30 @@ const STATUS_BADGE: Record<string, { bg: string; text: string; label: string }> 
   Realizado: { bg: "bg-[#F2A97F]", text: "text-slate-900", label: "Realizado" },
 };
 
+const RECURRENCE_LABELS: Record<string, string> = {
+  weekly: "Semanal",
+  biweekly: "Quinzenal",
+  monthly: "Mensal",
+  quarterly: "Trimestral",
+  semiannually: "Semestral",
+  annually: "Anual",
+};
+
+function calcNextDate(dateStr: string, recurrence: string): string {
+  const base = parseISO(dateStr + "T12:00:00");
+  let next: Date;
+  switch (recurrence) {
+    case "weekly": next = addWeeks(base, 1); break;
+    case "biweekly": next = addWeeks(base, 2); break;
+    case "monthly": next = addMonths(base, 1); break;
+    case "quarterly": next = addMonths(base, 3); break;
+    case "semiannually": next = addMonths(base, 6); break;
+    case "annually": next = addYears(base, 1); break;
+    default: return dateStr;
+  }
+  return format(next, "yyyy-MM-dd");
+}
+
 const PetRotinas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -39,6 +63,7 @@ const PetRotinas = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [editRoutine, setEditRoutine] = useState<any | null>(null);
+  const [abaAtiva, setAbaAtiva] = useState<"ativas" | "concluidas">("ativas");
   const undoRef = useRef<{ id: string; timeout: ReturnType<typeof setTimeout> } | null>(null);
 
   useEffect(() => {
@@ -69,6 +94,12 @@ const PetRotinas = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  const filteredRoutines = routines.filter((r) => {
+    const status = (r as any).status || "Agendado";
+    if (abaAtiva === "ativas") return status !== "Realizado";
+    return status === "Realizado";
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (routineId: string) => {
       const { error } = await supabase.from("pet_routines").delete().eq("id", routineId);
@@ -82,7 +113,6 @@ const PetRotinas = () => {
 
   const completeMutation = useMutation({
     mutationFn: async (routineId: string) => {
-      // Find the routine to check for next_due_date
       const routine = routines.find((r) => r.id === routineId);
       const { error } = await supabase
         .from("pet_routines")
@@ -90,16 +120,19 @@ const PetRotinas = () => {
         .eq("id", routineId);
       if (error) throw error;
 
-      // Auto-recurrence: if next_due_date exists, create a new "Agendado" routine
-      if (routine?.next_due_date) {
+      // Auto-recurrence based on recurrence field
+      const recurrence = (routine as any)?.recurrence;
+      if (routine && recurrence && recurrence !== "none") {
+        const nextDate = calcNextDate(routine.date_performed, recurrence);
         await supabase.from("pet_routines").insert({
           family_member_id: routine.family_member_id,
           user_id: routine.user_id,
           routine_type: routine.routine_type,
-          date_performed: routine.next_due_date,
+          date_performed: nextDate,
           next_due_date: null,
           notes: routine.notes,
           status: "Agendado",
+          recurrence: recurrence,
         } as any);
       }
     },
@@ -110,7 +143,6 @@ const PetRotinas = () => {
   });
 
   const handleDelete = (routineId: string) => {
-    // Optimistic removal via cache
     const prev = queryClient.getQueryData<any[]>(["pet_routines", id]);
     queryClient.setQueryData(
       ["pet_routines", id],
@@ -181,20 +213,46 @@ const PetRotinas = () => {
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="p-4 pb-8 space-y-3 min-h-[calc(100%+1px)]">
-          {routines.length === 0 ? (
-            <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
-              <p className="text-sm text-muted-foreground text-center">
-                Nenhum registro de rotina ainda. Adicione banhos, tosas e vermífugos.
+          {/* Segmented Tabs */}
+          <div className="flex p-1 bg-slate-100 rounded-xl">
+            <button
+              onClick={() => setAbaAtiva("ativas")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === "ativas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Ativas
+            </button>
+            <button
+              onClick={() => setAbaAtiva("concluidas")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                abaAtiva === "concluidas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Concluídas
+            </button>
+          </div>
+
+          {filteredRoutines.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+                <Droplets className="text-black" size={28} />
+              </div>
+              <p className="text-foreground font-semibold mb-1">
+                {abaAtiva === "ativas" ? "Nenhuma rotina ativa" : "Nenhum histórico encontrado"}
+              </p>
+              <p className="text-muted-foreground text-sm">
+                {abaAtiva === "ativas"
+                  ? "Toque no botão abaixo para adicionar."
+                  : "Rotinas concluídas aparecerão aqui."}
               </p>
             </div>
           ) : (
             <AnimatePresence mode="popLayout">
-              {routines.map((r) => {
+              {filteredRoutines.map((r) => {
                 const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
                 const dateStr = format(parseISO(r.date_performed + "T12:00:00"), "dd MMM yyyy", { locale: ptBR });
-                const nextStr = r.next_due_date
-                  ? format(parseISO(r.next_due_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })
-                  : null;
+                const recurrenceLabel = RECURRENCE_LABELS[(r as any).recurrence] || null;
                 const status = (r as any).status || "Agendado";
                 const badge = STATUS_BADGE[status] || STATUS_BADGE.Agendado;
 
@@ -207,7 +265,7 @@ const PetRotinas = () => {
                     leadingAction={
                       status !== "Realizado"
                         ? {
-                            icon: <CheckCircle className="w-5 h-5" />,
+                            icon: <Check className="w-5 h-5" />,
                             label: "Realizado",
                             bgColor: "#F2A97F",
                             textColor: "#1a1a1a",
@@ -234,9 +292,9 @@ const PetRotinas = () => {
                           </span>
                         </div>
                         <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
-                        {nextStr && (
+                        {recurrenceLabel && (
                           <p className="text-[10px] text-muted-foreground">
-                            Próximo: <span className="capitalize">{nextStr}</span>
+                            🔁 {recurrenceLabel}
                           </p>
                         )}
                         {r.notes && (
