@@ -73,7 +73,19 @@ const FamiliarProfile = () => {
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const { user } = useAuth();
+  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (groupLoading) return;
+    if (!isAdmin && id) {
+      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
+      if (!allowedIds.includes(id)) {
+        toast.error("Acesso negado");
+        navigate("/home", { replace: true });
+      }
+    }
+  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);

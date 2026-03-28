@@ -60,7 +60,7 @@ type DrawerMode = "add" | "edit";
 const Doencas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
+  const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const goBack = useSmartBack();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
