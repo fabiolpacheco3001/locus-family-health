@@ -9,7 +9,6 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerFooter,
 } from "@/components/ui/drawer";
 import FixedFAB from "@/components/ui/FixedFAB";
 import useSmartBack from "@/hooks/useSmartBack";
