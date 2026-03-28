@@ -74,7 +74,7 @@ export const useMedications = (familyMemberId?: string) => {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ["medications", familyMemberId ?? "all"],
+    queryKey: ["medications", familyMemberId ?? "all", groupId, isAdmin, linkedMemberId],
     queryFn: async () => {
       let q = supabase
         .from("medications")
