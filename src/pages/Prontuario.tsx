@@ -40,8 +40,11 @@ const Prontuario = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
+  const [showPrivacyAlert, setShowPrivacyAlert] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (groupLoading) return;
