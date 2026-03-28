@@ -97,7 +97,58 @@ const Prontuario = () => {
     enabled: !!id,
   });
 
-  if (isLoading) {
+  const handleExport = async () => {
+    setShowPrivacyAlert(false);
+    setExporting(true);
+    try {
+      const blob = generateProntuarioPdf({
+        member: {
+          name: member!.name,
+          birth_date: member!.birth_date,
+          blood_type: member!.blood_type,
+          weight: member!.weight,
+          height: member!.height,
+        },
+        allergies: (allergies || []).map((a) => ({ substance: a.substance, severity: a.severity })),
+        diseases: (diseases || []).map((d) => ({ name: d.name, category: d.category })),
+        timeline,
+        emitterName: user?.user_metadata?.name || user?.email || "Usuário",
+      });
+
+      const fileName = `Prontuario_${member!.name.replace(/\s+/g, "_")}.pdf`;
+
+      if (navigator.share) {
+        const file = new File([blob], fileName, { type: "application/pdf" });
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Prontuário Médico",
+            text: "Segue o resumo de saúde exportado do Locus Vita.",
+          });
+          return;
+        } catch (shareErr: any) {
+          if (shareErr?.name === "AbortError") return;
+          // fallback to download
+        }
+      }
+
+      // Fallback download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF gerado com sucesso!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar o PDF.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+
     return (
       <div className="px-4 pt-6 space-y-6 animate-fade-in">
         <Skeleton className="h-10 w-40" />
