@@ -379,7 +379,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             <DrawerDescription>Informe os dados do ciclo menstrual.</DrawerDescription>
           </DrawerHeader>
 
-          <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-24 space-y-4 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Início do Sangramento *</Label>

@@ -91,7 +91,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
           <DrawerDescription>Preencha os dados abaixo para adicionar.</DrawerDescription>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 space-y-4 overscroll-contain no-scrollbar">
           {/* Segmented Control: Pessoa / Pet */}
           <div className="flex rounded-lg border border-border overflow-hidden">
             <button
