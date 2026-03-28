@@ -112,6 +112,7 @@ const Home = () => {
         familyMemberId: string;
         isOverdue: boolean;
         consultationType?: string | null;
+        isPet: boolean;
       }> = [];
 
       const now = new Date();
