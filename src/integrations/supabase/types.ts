@@ -646,6 +646,7 @@ export type Database = {
           last_stock_decrement: string | null
           medico_prescritor: string | null
           name: string
+          reason: string | null
           receita_url: string | null
           start_date: string | null
           start_time: string | null
@@ -670,6 +671,7 @@ export type Database = {
           last_stock_decrement?: string | null
           medico_prescritor?: string | null
           name: string
+          reason?: string | null
           receita_url?: string | null
           start_date?: string | null
           start_time?: string | null
@@ -694,6 +696,7 @@ export type Database = {
           last_stock_decrement?: string | null
           medico_prescritor?: string | null
           name?: string
+          reason?: string | null
           receita_url?: string | null
           start_date?: string | null
           start_time?: string | null

@@ -10,6 +10,7 @@ export type ClinicalEvent = {
   details: string | null;
   fileUrl: string | null;
   status: string | null;
+  reason: string | null;
 };
 
 export const useClinicalTimeline = (familyMemberId: string | undefined) => {
@@ -42,6 +43,7 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
           details: c.symptoms || null,
           fileUrl: null,
           status: c.status,
+          reason: null,
         });
       });
 
@@ -56,6 +58,7 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
           details: m.medico_prescritor ? `Prescrito por Dr(a). ${m.medico_prescritor}` : null,
           fileUrl: m.receita_url || null,
           status: m.status,
+          reason: (m as any).reason || null,
         });
       });
 
@@ -69,6 +72,7 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
           details: null,
           fileUrl: e.file_url || null,
           status: e.status,
+          reason: null,
         });
       });
 

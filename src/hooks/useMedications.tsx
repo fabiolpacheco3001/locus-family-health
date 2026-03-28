@@ -23,6 +23,7 @@ export type Medication = {
   estoque_total: number | null;
   estoque_minimo: number | null;
   receita_url: string | null;
+  reason: string | null;
   last_stock_decrement: string | null;
   created_at: string;
   consultations?: { professional_name: string | null; specialty: string } | null;
@@ -46,6 +47,7 @@ export type NewMedication = {
   estoque_total?: number | null;
   estoque_minimo?: number | null;
   receita_url?: string | null;
+  reason?: string | null;
 };
 
 export type UpdateMedication = {
@@ -66,6 +68,7 @@ export type UpdateMedication = {
   estoque_total?: number | null;
   estoque_minimo?: number | null;
   receita_url?: string | null;
+  reason?: string | null;
 };
 
 export const useMedications = (familyMemberId?: string) => {

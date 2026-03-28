@@ -45,6 +45,36 @@ const Prontuario = () => {
   const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
   const [showPrivacyAlert, setShowPrivacyAlert] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [logoBase64, setLogoBase64] = useState<string | undefined>(undefined);
+
+  // Load logo as base64 for PDF
+  useEffect(() => {
+    fetch("/logo-locus-vita.svg")
+      .then((r) => r.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoBase64(reader.result as string);
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Fetch emitter's display name from family_members (own profile)
+  const { data: emitterProfile } = useQuery({
+    queryKey: ["emitter_profile", user?.id],
+    queryFn: async () => {
+      if (linkedMemberId) {
+        const { data } = await supabase
+          .from("family_members")
+          .select("name")
+          .eq("id", linkedMemberId)
+          .maybeSingle();
+        return data?.name || null;
+      }
+      return null;
+    },
+    enabled: !!user && !!linkedMemberId,
+  });
 
   useEffect(() => {
     if (groupLoading) return;
@@ -112,7 +142,8 @@ const Prontuario = () => {
         allergies: (allergies || []).map((a) => ({ substance: a.substance, severity: a.severity })),
         diseases: (diseases || []).map((d) => ({ name: d.name, category: d.category })),
         timeline,
-        emitterName: user?.user_metadata?.name || user?.email || "Usuário",
+        emitterName: emitterProfile || user?.user_metadata?.name || user?.email || "Usuário",
+        logoBase64,
       });
 
       const fileName = `Prontuario_${member!.name.replace(/\s+/g, "_")}.pdf`;

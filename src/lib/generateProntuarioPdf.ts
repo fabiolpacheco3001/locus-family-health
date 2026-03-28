@@ -16,10 +16,11 @@ interface ProntuarioData {
   diseases: { name: string; category: string }[];
   timeline: ClinicalEvent[];
   emitterName: string;
+  logoBase64?: string;
 }
 
-const PRIMARY_COLOR: [number, number, number] = [28, 51, 51]; // #1C3333
-const ACCENT_COLOR: [number, number, number] = [242, 169, 127]; // #F2A97F
+const PRIMARY_COLOR: [number, number, number] = [28, 51, 51];
+const ACCENT_COLOR: [number, number, number] = [242, 169, 127];
 const MUTED_COLOR: [number, number, number] = [120, 120, 120];
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -34,10 +35,17 @@ const calculateAge = (birthDate: string | null): number | null => {
 
 const fmtDate = (iso: string) => {
   try {
-    const d = parseISO(iso);
-    return format(d, "dd MMM yyyy", { locale: ptBR });
+    return format(parseISO(iso), "dd MMM yyyy", { locale: ptBR });
   } catch {
     return iso;
+  }
+};
+
+const fmtMonthYear = (iso: string) => {
+  try {
+    return format(parseISO(iso), "MMMM yyyy", { locale: ptBR });
+  } catch {
+    return "";
   }
 };
 
@@ -59,17 +67,27 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
 
   const emissionDate = format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
 
-  // ---- Header / Footer helpers ----
   const drawHeader = () => {
     doc.setFillColor(...PRIMARY_COLOR);
     doc.rect(0, 0, pageW, headerH, "F");
+
+    // Try to draw logo if available
+    if (data.logoBase64) {
+      try {
+        doc.addImage(data.logoBase64, "PNG", margin, 3, 16, 16);
+      } catch {
+        // fallback: no logo
+      }
+    }
+
+    const textX = data.logoBase64 ? margin + 19 : margin;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
     doc.setTextColor(255, 255, 255);
-    doc.text("♥  Locus Vita — Resumo de Saúde", margin, 10);
+    doc.text("Locus Vita — Resumo de Saúde", textX, 10);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text(`Emitido em ${emissionDate} por ${data.emitterName}`, margin, 17);
+    doc.text(`Emitido em ${emissionDate} por ${data.emitterName}`, textX, 17);
   };
 
   const drawFooter = (pageNum: number, totalPages: number) => {
@@ -81,7 +99,6 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     doc.text("Documento confidencial — uso exclusivo do paciente", margin, pageH - 4);
   };
 
-  // ---- Section title helper ----
   const sectionTitle = (title: string) => {
     if (y + 14 > pageH - footerH - 10) {
       doc.addPage();
@@ -105,33 +122,43 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     }
   };
 
-  // ---- Page 1 ----
+  // ── Page 1 ──
   drawHeader();
   y = headerH + 10;
 
-  // Bloco 1 — Identificação
+  // ── Bloco 1: Identificação em 3 colunas ──
   sectionTitle("Identificação do Paciente");
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-  doc.setTextColor(...PRIMARY_COLOR);
 
   const age = calculateAge(data.member.birth_date);
-  const idLines = [
-    `Nome: ${data.member.name}`,
-    age !== null ? `Idade: ${age} anos` : null,
-    data.member.blood_type ? `Tipo Sanguíneo: ${data.member.blood_type}` : null,
-    data.member.weight ? `Peso: ${data.member.weight} kg` : null,
-    data.member.height ? `Altura: ${(data.member.height * 100).toFixed(0)} cm` : null,
-  ].filter(Boolean) as string[];
+  const w = data.member.weight;
+  const h = data.member.height;
+  const bmi = w && h && h > 0 ? (w / (h * h)).toFixed(1) : null;
 
-  idLines.forEach((line) => {
-    ensureSpace(6);
-    doc.text(line, margin + 2, y);
-    y += 5.5;
+
+
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: margin, right: margin },
+    head: [["Nome", "Idade", "Tipo Sanguíneo"], ["Peso", "Altura", "IMC"]],
+    body: [
+      [data.member.name, age !== null ? `${age} anos` : "—", data.member.blood_type || "—"],
+      [w ? `${w} kg` : "—", h ? `${(h * 100).toFixed(0)} cm` : "—", bmi || "—"],
+    ],
+    theme: "grid",
+    headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
+    bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
+    didParseCell: (hookData: any) => {
+      // Make second header row look like a sub-header
+      if (hookData.section === "head" && hookData.row.index === 1) {
+        hookData.cell.styles.fillColor = [50, 80, 80];
+      }
+    },
+    didDrawPage: () => { drawHeader(); },
   });
-  y += 4;
+  y = (doc as any).lastAutoTable.finalY + 6;
 
-  // Bloco 2 — Alergias
+  // ── Bloco 2: Alergias ──
   sectionTitle("Alergias e Restrições");
   if (data.allergies.length === 0) {
     doc.setFont("helvetica", "italic");
@@ -149,14 +176,12 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
       bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
       columnStyles: { 0: { cellWidth: contentW * 0.65 }, 1: { cellWidth: contentW * 0.35 } },
-      didDrawPage: () => {
-        drawHeader();
-      },
+      didDrawPage: () => { drawHeader(); },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
-  // Bloco 3 — Doenças crônicas
+  // ── Bloco 3: Doenças Crônicas ──
   sectionTitle("Doenças Crônicas");
   if (data.diseases.length === 0) {
     doc.setFont("helvetica", "italic");
@@ -173,14 +198,12 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       theme: "grid",
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 9 },
       bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
-      didDrawPage: () => {
-        drawHeader();
-      },
+      didDrawPage: () => { drawHeader(); },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
-  // Bloco 4 — Timeline Clínica
+  // ── Bloco 4: Histórico Clínico agrupado por Mês/Ano ──
   sectionTitle("Histórico Clínico");
   if (data.timeline.length === 0) {
     doc.setFont("helvetica", "italic");
@@ -189,33 +212,70 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     doc.text("Nenhum registro clínico encontrado.", margin + 2, y);
     y += 8;
   } else {
+    // Group by month/year
+    const grouped = new Map<string, ClinicalEvent[]>();
+    for (const ev of data.timeline) {
+      const key = fmtMonthYear(ev.date);
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(ev);
+    }
+
+    // Build table body with section rows
+    const tableBody: (string[])[] = [];
+    for (const [monthYear, events] of grouped) {
+      // Section header row
+      const label = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
+      tableBody.push([label, "", "", "", ""]);
+      for (const ev of events) {
+        tableBody.push([
+          fmtDate(ev.date),
+          eventTypeLabel[ev.type] || ev.type,
+          ev.title,
+          [ev.subtitle, ev.details].filter(Boolean).join(" — ") || "—",
+          ev.reason || "—",
+        ]);
+      }
+    }
+
+    // Track section header indices
+    let rowIdx = 0;
+    const sectionRows = new Set<number>();
+    for (const [, events] of grouped) {
+      sectionRows.add(rowIdx);
+      rowIdx += 1 + events.length;
+    }
+
     autoTable(doc, {
       startY: y,
       margin: { left: margin, right: margin },
-      head: [["Data", "Tipo", "Título", "Detalhes"]],
-      body: data.timeline.map((ev) => [
-        fmtDate(ev.date),
-        eventTypeLabel[ev.type] || ev.type,
-        ev.title,
-        [ev.subtitle, ev.details].filter(Boolean).join(" — ") || "—",
-      ]),
+      head: [["Data", "Tipo", "Título", "Detalhes", "Motivo"]],
+      body: tableBody,
       theme: "grid",
       headStyles: { fillColor: PRIMARY_COLOR, fontSize: 8 },
       bodyStyles: { fontSize: 8, textColor: PRIMARY_COLOR },
       columnStyles: {
-        0: { cellWidth: 24 },
-        1: { cellWidth: 22 },
-        2: { cellWidth: contentW * 0.35 },
-        3: { cellWidth: contentW - 24 - 22 - contentW * 0.35 },
+        0: { cellWidth: 22 },
+        1: { cellWidth: 20 },
+        2: { cellWidth: contentW * 0.25 },
+        3: { cellWidth: contentW * 0.25 },
+        4: { cellWidth: contentW - 22 - 20 - contentW * 0.25 - contentW * 0.25 },
       },
-      didDrawPage: () => {
-        drawHeader();
+      didParseCell: (hookData: any) => {
+        if (hookData.section === "body" && sectionRows.has(hookData.row.index)) {
+          hookData.cell.styles.fillColor = [232, 220, 205];
+          hookData.cell.styles.fontStyle = "bold";
+          hookData.cell.styles.textColor = PRIMARY_COLOR;
+          if (hookData.column.index > 0) {
+            hookData.cell.text = [];
+          }
+        }
       },
+      didDrawPage: () => { drawHeader(); },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   }
 
-  // ---- Draw footers on all pages ----
+  // ── Draw footers on all pages ──
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import MedicationAutocomplete from "@/components/MedicationAutocomplete";
+import ReasonCombobox from "@/components/ReasonCombobox";
 import ConsultationCombobox from "@/components/ConsultationCombobox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -87,6 +88,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [medicoPrescritor, setMedicoPrescritor] = useState("");
   const [estoqueTotal, setEstoqueTotal] = useState("");
   const [estoqueMinimo, setEstoqueMinimo] = useState("");
+  const [reason, setReason] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [receitaFile, setReceitaFile] = useState<File | null>(null);
   const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
@@ -122,6 +124,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setEstoqueTotal(editingMedication.estoque_total?.toString() ?? "");
       setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
       setExistingReceitaUrl(editingMedication.receita_url ?? null);
+      setReason((editingMedication as any).reason ?? "");
       setReceitaFile(null);
       setExtractedMeds([]);
       setCurrentMedIndex(0);
@@ -142,6 +145,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setMedicoPrescritor("");
     setEstoqueTotal("");
     setEstoqueMinimo("");
+    setReason("");
     setReceitaFile(null);
     setExistingReceitaUrl(null);
     setExtractedMeds([]);
@@ -320,6 +324,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       medico_prescritor: medicoPrescritor.trim() || null,
       estoque_total: estTotalNum,
       estoque_minimo: estMinNum,
+      reason: reason.trim() || null,
     };
   };
 
@@ -663,6 +668,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="space-y-1.5">
                   <Label>Nome do Medicamento *</Label>
                   <MedicationAutocomplete value={name} onChange={setName} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Motivo do Tratamento</Label>
+                  <ReasonCombobox value={reason} onChange={setReason} groupId={groupId} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
