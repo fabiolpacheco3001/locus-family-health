@@ -279,9 +279,16 @@ const Vacinas = () => {
 
       // CPF validation: compare mock CPF with member's CPF
       const memberCpf = currentMember?.cpf?.replace(/\D/g, "") ?? "";
+
+      // Fail-closed: block if member has no CPF registered
+      if (!memberCpf) {
+        toast.error("Erro: Cadastre o CPF deste familiar antes de importar documentos do SUS.");
+        return;
+      }
+
       const pdfCpf = MOCK_CPF_FROM_PDF.replace(/\D/g, "");
 
-      if (memberCpf && pdfCpf && memberCpf !== pdfCpf) {
+      if (pdfCpf && memberCpf !== pdfCpf) {
         toast.error("Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado.");
         return;
       }

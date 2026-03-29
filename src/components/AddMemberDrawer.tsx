@@ -32,8 +32,25 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
   const [gender, setGender] = useState("");
   const [species, setSpecies] = useState("");
   const [breed, setBreed] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [phone, setPhone] = useState("");
 
   const isPet = memberType === "pet";
+
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, "").substring(0, 11);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const formatCpf = (value: string) => {
+    const digits = value.replace(/\D/g, "").substring(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  };
 
   const resetForm = () => {
     setMemberType("human");
@@ -44,6 +61,8 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
     setGender("");
     setSpecies("");
     setBreed("");
+    setCpf("");
+    setPhone("");
   };
 
   const handleSave = async () => {
@@ -69,6 +88,8 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
       member_type: memberType,
       species: isPet ? species : null,
       breed: isPet ? (breed.trim() || null) : null,
+      cpf: isPet ? null : (cpf || null),
+      phone: isPet ? null : (phone || null),
     };
 
     try {
@@ -204,6 +225,30 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Grid: CPF + Telefone */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>CPF</Label>
+                  <Input
+                    type="text"
+                    placeholder="000.000.000-00"
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCpf(e.target.value))}
+                    className="w-full max-w-full box-border min-w-0 text-[16px]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Telefone</Label>
+                  <Input
+                    type="tel"
+                    placeholder="(11) 99999-9999"
+                    value={phone}
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
+                    className="w-full max-w-full box-border min-w-0 text-[16px]"
+                  />
                 </div>
               </div>
             </>

@@ -43,6 +43,7 @@ const MeusDados = () => {
   const [gender, setGender] = useState("");
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
+  const [bloodType, setBloodType] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
@@ -54,6 +55,7 @@ const MeusDados = () => {
       setGender(myProfile.gender || "");
       setPhone(myProfile.phone || "");
       setCpf(myProfile.cpf || "");
+      setBloodType(myProfile.blood_type || "");
       setAvatarUrl(myProfile.avatar_url || "");
     } else {
       // No linked profile — prefill only auth name
@@ -62,6 +64,7 @@ const MeusDados = () => {
       setGender("");
       setPhone("");
       setCpf("");
+      setBloodType("");
       setAvatarUrl("");
     }
   }, [myProfile, authName]);
@@ -99,6 +102,7 @@ const MeusDados = () => {
           phone: phone || null,
           cpf: cpf || null,
           avatar_url: avatarUrl || null,
+          blood_type: bloodType || null,
         });
       } else {
         // Auto-healing: create profile + link it
@@ -114,6 +118,7 @@ const MeusDados = () => {
             phone: phone || null,
             cpf: cpf || null,
             avatar_url: avatarUrl || null,
+            blood_type: bloodType || null,
           } as any)
           .select("id")
           .single();
@@ -221,7 +226,7 @@ const MeusDados = () => {
           <p className="text-xs text-muted-foreground">Este é seu e-mail de login e não pode ser alterado aqui.</p>
         </div>
 
-        {/* Grid: Nascimento + Gênero */}
+        {/* Grid: Nascimento + Parentesco */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label>Nascimento</Label>
@@ -238,6 +243,19 @@ const MeusDados = () => {
           </div>
 
           <div className="space-y-1">
+            <Label>Parentesco</Label>
+            <Input
+              value="Titular"
+              readOnly
+              disabled
+              className="w-full max-w-full box-border min-w-0 text-[16px] bg-muted cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* Grid: Gênero + Tipo Sanguíneo */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
             <Label>Gênero</Label>
             <Select value={gender} onValueChange={setGender}>
               <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
@@ -248,6 +266,20 @@ const MeusDados = () => {
                 <SelectItem value="Feminino">Feminino</SelectItem>
                 <SelectItem value="Outro">Outro</SelectItem>
                 <SelectItem value="Prefiro não informar">Prefiro não informar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Tipo Sanguíneo</Label>
+            <Select value={bloodType} onValueChange={setBloodType}>
+              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bt) => (
+                  <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
