@@ -10,16 +10,7 @@ import EditMemberDrawer from "@/components/EditMemberDrawer";
 import FixedFAB from "@/components/ui/FixedFAB";
 import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const ordemParentesco: Record<string, number> = {
-  "Titular": 1,
-  "Cônjuge": 2,
-  "Filho(a)": 3,
-  "Pai/Mãe": 4,
-  "Irmão(ã)": 5,
-  "Pet": 6,
-  "Outro": 7,
-};
+import { sortFamilyMembers } from "@/lib/sortFamilyMembers";
 
 const GerenciarFamilia = () => {
   const { members, isLoading } = useFamilyMembers();
