@@ -162,6 +162,11 @@ const Vacinas = () => {
       booster_date: v.booster_date ?? "",
       batch: v.batch ?? "",
       side_effects: v.side_effects ?? "",
+      details: v.details ?? "",
+      dose_type: v.dose_type ?? "",
+      facility: v.facility ?? "",
+      city: v.city ?? "",
+      state: v.state ?? "",
     });
     setFormDrawerOpen(true);
   };
