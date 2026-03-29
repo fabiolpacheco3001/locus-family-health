@@ -39,9 +39,13 @@ const Medicamentos = () => {
     }
   }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
-  const medicamentosFiltrados = medications.filter(med => {
+  const medicamentosFiltrados = [...medications.filter(med => {
     if (abaAtiva === 'ativos') return med.status === 'Ativo';
     return med.status === 'Concluído';
+  })].sort((a, b) => {
+    const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+    const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
   const handleOpenEdit = (m: Medication) => {
