@@ -260,11 +260,19 @@ const Vacinas = () => {
 
     setUploading(true);
     try {
-      const filePath = `${user.id}/${Date.now()}_${file.name}`;
-      const { error } = await supabase.storage
+      const safeName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9._-]/g, "");
+      const filePath = `${user.id}/${Date.now()}_${safeName}`;
+      const { error: uploadError } = await supabase.storage
         .from("vaccine_documents")
         .upload(filePath, file);
-      if (error) throw error;
+      if (uploadError) {
+        toast.error(`Erro no Upload: ${uploadError.message}`);
+        return;
+      }
 
       // Simulate OCR processing + CPF validation
       await new Promise((r) => setTimeout(r, 1500));
