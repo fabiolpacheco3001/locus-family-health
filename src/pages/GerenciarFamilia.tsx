@@ -46,9 +46,7 @@ const GerenciarFamilia = () => {
     }
   });
 
-  const sorted = [...members].sort(
-    (a, b) => (ordemParentesco[a.relationship] || 99) - (ordemParentesco[b.relationship] || 99)
-  );
+  const sorted = sortFamilyMembers(members, roleMap);
 
   return (
     <>

@@ -40,11 +40,7 @@ const Familia = () => {
 
         {members.length > 0 && (
           <div className="flex flex-col space-y-3 w-full">
-            {[...members].sort((a, b) => {
-                const pesoA = ordemParentesco[a.relationship] || 99;
-                const pesoB = ordemParentesco[b.relationship] || 99;
-                return pesoA - pesoB;
-              }).map((m) => (
+            {sortFamilyMembers(members).map((m) => (
                 <button
                   key={m.id}
                   onClick={() => navigate(`/familiar/${m.id}`)}

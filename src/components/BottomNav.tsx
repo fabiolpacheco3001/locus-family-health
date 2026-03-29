@@ -5,6 +5,7 @@ import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { sortFamilyMembers } from "@/lib/sortFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 
