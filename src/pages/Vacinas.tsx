@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Syringe, ChevronRight, Trash2, FileUp, PenLine } from "lucide-react";
+import { ArrowLeft, Syringe, ChevronRight, Trash2, FileUp, PenLine, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
