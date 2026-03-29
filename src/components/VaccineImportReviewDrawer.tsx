@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -30,9 +30,12 @@ const VaccineImportReviewDrawer = ({
   onConfirm,
   isPending,
 }: Props) => {
-  const [selected, setSelected] = useState<Set<number>>(
-    () => new Set(vaccines.map((_, i) => i))
-  );
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+
+  // Reset selection when vaccines change
+  useEffect(() => {
+    setSelected(new Set(vaccines.map((_, i) => i)));
+  }, [vaccines]);
 
   const toggle = (idx: number) => {
     setSelected((prev) => {
@@ -41,6 +44,14 @@ const VaccineImportReviewDrawer = ({
       else next.add(idx);
       return next;
     });
+  };
+
+  const toggleAll = () => {
+    if (selected.size === vaccines.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(vaccines.map((_, i) => i)));
+    }
   };
 
   const count = selected.size;
@@ -58,14 +69,23 @@ const VaccineImportReviewDrawer = ({
   return (
     <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
       <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
-        <DrawerHeader>
-          <DrawerTitle>Revisão de Importação de Vacinas</DrawerTitle>
+        <DrawerHeader className="pb-2">
+          <DrawerTitle>Revisão de Importação</DrawerTitle>
+          <p className="text-sm text-muted-foreground">
+            {vaccines.length} vacina{vaccines.length !== 1 ? "s" : ""} encontrada{vaccines.length !== 1 ? "s" : ""}. Desmarque as que não deseja importar.
+          </p>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 overscroll-contain no-scrollbar">
-          <p className="text-sm text-muted-foreground mb-2">
-            Desmarque as vacinas que não deseja importar:
-          </p>
+        <div className="px-4 pb-2">
+          <button
+            onClick={toggleAll}
+            className="text-xs font-medium text-primary"
+          >
+            {selected.size === vaccines.length ? "Desmarcar todas" : "Selecionar todas"}
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 pb-2 space-y-2 overscroll-contain no-scrollbar max-h-[50dvh]">
           {vaccines.map((v, i) => (
             <label
               key={i}
@@ -74,15 +94,17 @@ const VaccineImportReviewDrawer = ({
               <Checkbox
                 checked={selected.has(i)}
                 onCheckedChange={() => toggle(i)}
-                className="mt-0.5"
+                className="mt-0.5 shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">
+                <p className="text-sm font-semibold text-foreground leading-tight">
+                  {v.name}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {v.dose_label}
                 </p>
-                <p className="text-xs text-muted-foreground">{v.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Data: {formatDate(v.applied_date)}
+                <p className="text-xs text-muted-foreground">
+                  {formatDate(v.applied_date)}
                 </p>
               </div>
             </label>
