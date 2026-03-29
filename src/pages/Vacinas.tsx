@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Syringe, ChevronRight, Trash2, FileUp, PenLine, ArrowUpDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -326,7 +327,8 @@ const Vacinas = () => {
 
       setImportVaccines(result.vaccines);
       setReviewOpen(true);
-    } catch {
+    } catch (error) {
+      console.error("Erro no Parser:", error);
       toast.error("Erro ao processar o arquivo. Tente novamente.");
     } finally {
       setUploading(false);
@@ -638,19 +640,21 @@ const Vacinas = () => {
           </Button>
           <h1 className="text-lg font-bold text-foreground flex-1">Vacinas</h1>
           {vaccines.length > 1 && (
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSortDesc((prev) => !prev)}
-                className="shrink-0"
-              >
-                <ArrowUpDown size={18} />
-              </Button>
-              <span className="absolute -bottom-5 right-0 text-[10px] text-muted-foreground whitespace-nowrap">
-                {sortDesc ? "Recentes" : "Antigos"}
-              </span>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0">
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setSortDesc(true)}>
+                  Mais recentes primeiro
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortDesc(false)}>
+                  Mais antigos primeiro
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 

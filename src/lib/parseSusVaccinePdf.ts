@@ -1,8 +1,11 @@
 import * as pdfjsLib from "pdfjs-dist";
 import type { ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
 
-// Use the bundled worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
+// Use local worker bundled with the package
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface ParsedSusResult {
   cpf: string | null;
@@ -36,15 +39,17 @@ const HEADER_LABELS: { key: string; patterns: RegExp[] }[] = [
 
 type ColumnBounds = Record<string, { start: number; end: number }>;
 
-// ── Extract raw text (flat) for CPF detection ─────────────────────────────
-async function extractFlatText(buffer: ArrayBuffer): Promise<string> {
+// ── Single-pass extraction: flat text + tabular rows ──────────────────────
+async function extractAll(buffer: ArrayBuffer): Promise<{ flatText: string; tableRows: TableRow[] }> {
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-  const pages: string[] = [];
+  const textPages: string[] = [];
+  const allRows: TableRow[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
 
+    // ── Flat text (for CPF detection) ──
     const rows = new Map<number, { x: number; text: string }[]>();
     for (const item of content.items) {
       if (!("str" in item) || !("transform" in item)) continue;
@@ -55,42 +60,26 @@ async function extractFlatText(buffer: ArrayBuffer): Promise<string> {
       if (!rows.has(y)) rows.set(y, []);
       rows.get(y)!.push({ x, text: textItem.str });
     }
-
-    const sortedYs = [...rows.keys()].sort((a, b) => b - a);
+    const sortedFlatYs = [...rows.keys()].sort((a, b) => b - a);
     const lines: string[] = [];
-    for (const y of sortedYs) {
+    for (const y of sortedFlatYs) {
       const row = rows.get(y)!;
       row.sort((a, b) => a.x - b.x);
       lines.push(row.map((r) => r.text).join(" "));
     }
-    pages.push(lines.join("\n"));
-  }
+    textPages.push(lines.join("\n"));
 
-  return pages.join("\n\n");
-}
-
-// ── Extract tabular rows with X-coordinates ───────────────────────────────
-async function extractTableRows(buffer: ArrayBuffer): Promise<TableRow[]> {
-  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-  const allRows: TableRow[] = [];
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-
+    // ── Tabular rows (for column-based extraction) ──
     const rowMap = new Map<number, TextCell[]>();
     for (const item of content.items) {
       if (!("str" in item) || !("transform" in item)) continue;
       const textItem = item as { str: string; transform: number[] };
       if (!textItem.str.trim()) continue;
-      // Group by Y with 4px tolerance (pdfjs Y is bottom-up)
       const y = Math.round(textItem.transform[5] / 4) * 4;
       const x = textItem.transform[4];
       if (!rowMap.has(y)) rowMap.set(y, []);
       rowMap.get(y)!.push({ x, text: textItem.str.trim() });
     }
-
-    // Sort rows top-to-bottom (higher Y = higher on page in pdfjs)
     const sortedYs = [...rowMap.keys()].sort((a, b) => b - a);
     for (const y of sortedYs) {
       const cells = rowMap.get(y)!;
@@ -99,7 +88,7 @@ async function extractTableRows(buffer: ArrayBuffer): Promise<TableRow[]> {
     }
   }
 
-  return allRows;
+  return { flatText: textPages.join("\n\n"), tableRows: allRows };
 }
 
 // ── Detect column boundaries from header rows ─────────────────────────────
@@ -398,11 +387,8 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
 export async function parseSusVaccinePdf(file: File): Promise<ParsedSusResult> {
   const buffer = await file.arrayBuffer();
 
-  // Run both extractions in parallel
-  const [flatText, tableRows] = await Promise.all([
-    extractFlatText(buffer),
-    extractTableRows(buffer),
-  ]);
+  // Single-pass extraction: avoids detached ArrayBuffer issues
+  const { flatText, tableRows } = await extractAll(buffer);
 
   console.log("FULL PDF TEXT:", flatText);
 
