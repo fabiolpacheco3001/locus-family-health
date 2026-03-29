@@ -60,10 +60,11 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
         user_id: user!.id,
         routine_type: type,
         date_performed: datePerformed,
+        time_performed: timePerformed || null,
         next_due_date: null,
         notes: notes.trim() || null,
         recurrence: recurrence,
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {

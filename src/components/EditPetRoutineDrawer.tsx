@@ -70,6 +70,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
         .update({
           routine_type: type,
           date_performed: datePerformed,
+          time_performed: timePerformed || null,
           notes: notes.trim() || null,
           recurrence: recurrence,
         } as any)
