@@ -105,6 +105,8 @@ const Consultas = () => {
                 type: cached.type,
                 symptoms: cached.symptoms,
                 questions: cached.questions,
+                status: cached.status,
+                cancel_reason: cached.cancel_reason,
               });
               toast.success("Consulta restaurada.");
             } catch { /* handled */ }

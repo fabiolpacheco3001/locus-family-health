@@ -189,6 +189,7 @@ const Doencas = () => {
               name: cached.name,
               category: cached.category,
               notes: cached.notes,
+              diagnosed_at: cached.diagnosed_at,
               ...(groupId ? { group_id: groupId } : {}),
             } as any);
             queryClient.invalidateQueries({ queryKey: ["diseases", id] });
