@@ -1,8 +1,11 @@
 import * as pdfjsLib from "pdfjs-dist";
 import type { ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
 
-// Use the bundled worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs`;
+// Use local worker bundled with the package
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 interface ParsedSusResult {
   cpf: string | null;
