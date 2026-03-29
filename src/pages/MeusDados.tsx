@@ -118,6 +118,7 @@ const MeusDados = () => {
             phone: phone || null,
             cpf: cpf || null,
             avatar_url: avatarUrl || null,
+            blood_type: bloodType || null,
           } as any)
           .select("id")
           .single();
