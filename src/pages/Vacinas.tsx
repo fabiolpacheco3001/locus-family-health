@@ -128,6 +128,19 @@ const Vacinas = () => {
   const isCustom = form.name === "Outra (especificar)";
   const { ufs, cities, loadingCities } = useIbgeLocations(form.state);
 
+  // Auto-match IBGE city name (PDF comes UPPERCASE without accents)
+  const normalizeStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  useEffect(() => {
+    if (!form.city || !cities.length || loadingCities) return;
+    // If the city already matches exactly an IBGE name, do nothing
+    if (cities.some((c) => c.nome === form.city)) return;
+    // Try normalized match
+    const match = cities.find((c) => normalizeStr(c.nome) === normalizeStr(form.city));
+    if (match) {
+      setForm((prev) => ({ ...prev, city: match.nome }));
+    }
+  }, [cities, form.city, loadingCities]);
+
   const { data: vaccines = [], isLoading } = useQuery({
     queryKey: ["vaccines", id],
     queryFn: async () => {
@@ -546,9 +559,9 @@ const Vacinas = () => {
               </div>
             </div>
 
-            {/* Linha 3: Fabricante/Detalhes (100%) */}
+            {/* Linha 3: Informações Adicionais (100%) */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Fabricante / Detalhes</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Informações Adicionais</label>
               <input
                 type="text"
                 placeholder="Ex: Pfizer, Coronavac..."

@@ -131,7 +131,7 @@ function detectColumns(rows: TableRow[]): ColumnBounds {
 function getCellForColumn(cells: TextCell[], col: { start: number; end: number } | undefined): string {
   if (!col) return "";
   // Find cells whose X falls within the column range (with tolerance)
-  const tolerance = 15;
+  const tolerance = 8;
   const matches = cells.filter(
     (c) => c.x >= col.start - tolerance && c.x <= col.end + tolerance
   );
@@ -353,15 +353,18 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     // Clean facility
     const cleanFacility = facility.trim() || undefined;
 
-    // Clean batch
-    const cleanBatch = batch.trim() || undefined;
+    // Clean batch — keep only first word (strip strategy text like "Rotina")
+    const cleanBatch = (batch.trim().split(/\s+/)[0]) || undefined;
 
     // Apply Smart Mapping
     const mapped = mapVaccineToStandard(fullName);
 
+    // Clean details — remove residual dates
+    const cleanDetails = mapped.details.toUpperCase().replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '').replace(/\s+/g, ' ').trim();
+
     vaccines.push({
       name: mapped.standardName,
-      details: mapped.details.toUpperCase().trim(),
+      details: cleanDetails || undefined,
       dose_label: doseLabel || undefined,
       applied_date: isoDate,
       batch: cleanBatch,
