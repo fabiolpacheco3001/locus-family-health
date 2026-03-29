@@ -226,7 +226,7 @@ const MeusDados = () => {
           <p className="text-xs text-muted-foreground">Este é seu e-mail de login e não pode ser alterado aqui.</p>
         </div>
 
-        {/* Grid: Nascimento + Gênero */}
+        {/* Grid: Nascimento + Parentesco */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label>Nascimento</Label>
@@ -243,6 +243,19 @@ const MeusDados = () => {
           </div>
 
           <div className="space-y-1">
+            <Label>Parentesco</Label>
+            <Input
+              value="Titular"
+              readOnly
+              disabled
+              className="w-full max-w-full box-border min-w-0 text-[16px] bg-muted cursor-not-allowed"
+            />
+          </div>
+        </div>
+
+        {/* Grid: Gênero + Tipo Sanguíneo */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
             <Label>Gênero</Label>
             <Select value={gender} onValueChange={setGender}>
               <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
@@ -253,6 +266,20 @@ const MeusDados = () => {
                 <SelectItem value="Feminino">Feminino</SelectItem>
                 <SelectItem value="Outro">Outro</SelectItem>
                 <SelectItem value="Prefiro não informar">Prefiro não informar</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Tipo Sanguíneo</Label>
+            <Select value={bloodType} onValueChange={setBloodType}>
+              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bt) => (
+                  <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
