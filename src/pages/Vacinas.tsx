@@ -20,6 +20,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import VaccineImportReviewDrawer, { type ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
+import { parseSusVaccinePdf } from "@/lib/parseSusVaccinePdf";
 
 type Vaccine = {
   id: string;
