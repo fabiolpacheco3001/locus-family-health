@@ -106,6 +106,8 @@ const Exames = () => {
                 status: cached.status,
                 file_url: cached.file_url,
                 consultation_id: cached.consultation_id,
+                cancel_reason: cached.cancel_reason,
+                result_date: cached.result_date,
               });
               toast.success("Exame restaurado.");
             } catch { /* handled */ }

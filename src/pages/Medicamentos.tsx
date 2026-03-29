@@ -107,6 +107,8 @@ const Medicamentos = () => {
                 estoque_total: cached.estoque_total,
                 estoque_minimo: cached.estoque_minimo,
                 receita_url: cached.receita_url,
+                status: cached.status,
+                reason: cached.reason,
               });
               toast.success("Medicamento restaurado.");
             } catch { /* handled */ }
