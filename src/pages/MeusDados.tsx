@@ -102,6 +102,7 @@ const MeusDados = () => {
           phone: phone || null,
           cpf: cpf || null,
           avatar_url: avatarUrl || null,
+          blood_type: bloodType || null,
         });
       } else {
         // Auto-healing: create profile + link it
