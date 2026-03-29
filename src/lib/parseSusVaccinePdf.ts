@@ -6,6 +6,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 interface ParsedSusResult {
   cpf: string | null;
+  allCpfCandidates: string[];
   vaccines: ImportedVaccine[];
 }
 
