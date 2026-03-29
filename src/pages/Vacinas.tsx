@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import VaccineImportReviewDrawer, { type ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
 import { parseSusVaccinePdf } from "@/lib/parseSusVaccinePdf";
+import { useIbgeLocations } from "@/hooks/useIbgeLocations";
 
 type Vaccine = {
   id: string;
@@ -37,10 +38,6 @@ type Vaccine = {
   created_at: string;
 };
 
-const UF_OPTIONS = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
-  "PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
-];
 
 const HUMAN_VACCINE_OPTIONS = [
   "BCG",
@@ -127,6 +124,7 @@ const Vacinas = () => {
   });
 
   const isCustom = form.name === "Outra (especificar)";
+  const { ufs, cities, loadingCities } = useIbgeLocations(form.state);
 
   const { data: vaccines = [], isLoading } = useQuery({
     queryKey: ["vaccines", id],
@@ -475,9 +473,9 @@ const Vacinas = () => {
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
-            {/* Linha 1: Vacina + Detalhes */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            {/* Linha 1: Vacina (70%) + Dose (30%) */}
+            <div className="flex gap-4">
+              <div className="w-[70%]">
                 <label className="text-sm font-medium text-foreground mb-1 block">Vacina</label>
                 <select
                   value={form.name}
@@ -490,15 +488,20 @@ const Vacinas = () => {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Fabricante/Detalhes</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Pfizer, Coronavac..."
-                  value={form.details}
-                  onChange={(e) => setForm({ ...form, details: e.target.value })}
+              <div className="w-[30%]">
+                <label className="text-sm font-medium text-foreground mb-1 block">Dose</label>
+                <select
+                  value={form.dose_type}
+                  onChange={(e) => setForm({ ...form, dose_type: e.target.value })}
                   className={INPUT_CLASSES}
-                />
+                >
+                  <option value="">Dose...</option>
+                  <option value="1ª Dose">1ª Dose</option>
+                  <option value="2ª Dose">2ª Dose</option>
+                  <option value="3ª Dose">3ª Dose</option>
+                  <option value="Dose Única">Única</option>
+                  <option value="Reforço">Reforço</option>
+                </select>
               </div>
             </div>
 
@@ -507,7 +510,7 @@ const Vacinas = () => {
                 <label className="text-sm font-medium text-foreground mb-1 block">Nome da Vacina</label>
                 <input
                   type="text"
-                  placeholder="Ex: Pfizer COVID-19, Coronavac..."
+                  placeholder="Ex: Febre Tifoide, Herpes Zóster..."
                   value={form.customName}
                   onChange={(e) => setForm({ ...form, customName: e.target.value })}
                   className={INPUT_CLASSES}
@@ -515,9 +518,9 @@ const Vacinas = () => {
               </div>
             )}
 
-            {/* Linha 2: Data + Dose */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+            {/* Linha 2: Data (50%) + Lote (50%) */}
+            <div className="flex gap-4">
+              <div className="w-[50%]">
                 <label className="text-sm font-medium text-foreground mb-1 block">Data da aplicação</label>
                 <input
                   type="date"
@@ -528,26 +531,7 @@ const Vacinas = () => {
                   className={INPUT_CLASSES}
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Dose</label>
-                <select
-                  value={form.dose_type}
-                  onChange={(e) => setForm({ ...form, dose_type: e.target.value })}
-                  className={INPUT_CLASSES}
-                >
-                  <option value="">Selecione...</option>
-                  <option value="1ª Dose">1ª Dose</option>
-                  <option value="2ª Dose">2ª Dose</option>
-                  <option value="3ª Dose">3ª Dose</option>
-                  <option value="Dose Única">Dose Única</option>
-                  <option value="Reforço">Reforço</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Linha 3: Lote + Estabelecimento */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+              <div className="w-[50%]">
                 <label className="text-sm font-medium text-foreground mb-1 block">Lote</label>
                 <input
                   type="text"
@@ -557,46 +541,64 @@ const Vacinas = () => {
                   className={INPUT_CLASSES}
                 />
               </div>
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Estabelecimento</label>
-                <input
-                  type="text"
-                  placeholder="Ex: UBS Centro"
-                  value={form.facility}
-                  onChange={(e) => setForm({ ...form, facility: e.target.value })}
-                  className={INPUT_CLASSES}
-                />
-              </div>
             </div>
 
-            {/* Linha 4: Município + UF */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Município</label>
-                <input
-                  type="text"
-                  placeholder="Ex: São Paulo"
-                  value={form.city}
-                  onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className={INPUT_CLASSES}
-                />
-              </div>
-              <div>
+            {/* Linha 3: Fabricante/Detalhes (100%) */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Fabricante / Detalhes</label>
+              <input
+                type="text"
+                placeholder="Ex: Pfizer, Coronavac..."
+                value={form.details}
+                onChange={(e) => setForm({ ...form, details: e.target.value })}
+                className={INPUT_CLASSES}
+              />
+            </div>
+
+            {/* Linha 4: UF (30%) + Município (70%) */}
+            <div className="flex gap-4">
+              <div className="w-[30%]">
                 <label className="text-sm font-medium text-foreground mb-1 block">UF</label>
                 <select
                   value={form.state}
-                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  onChange={(e) => setForm({ ...form, state: e.target.value, city: "" })}
                   className={INPUT_CLASSES}
                 >
                   <option value="">UF...</option>
-                  {UF_OPTIONS.map((uf) => (
-                    <option key={uf} value={uf}>{uf}</option>
+                  {ufs.map((uf) => (
+                    <option key={uf.sigla} value={uf.sigla}>{uf.sigla}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-[70%]">
+                <label className="text-sm font-medium text-foreground mb-1 block">Município</label>
+                <select
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className={INPUT_CLASSES}
+                  disabled={!form.state || loadingCities}
+                >
+                  <option value="">{loadingCities ? "Carregando..." : "Selecione..."}</option>
+                  {cities.map((c) => (
+                    <option key={c.id} value={c.nome}>{c.nome}</option>
                   ))}
                 </select>
               </div>
             </div>
 
-            {/* Linha 5: Efeitos Colaterais */}
+            {/* Linha 5: Estabelecimento (100%) */}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1 block">Estabelecimento de Saúde</label>
+              <input
+                type="text"
+                placeholder="Ex: UBS Centro"
+                value={form.facility}
+                onChange={(e) => setForm({ ...form, facility: e.target.value })}
+                className={INPUT_CLASSES}
+              />
+            </div>
+
+            {/* Linha 6: Efeitos Colaterais */}
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Efeitos colaterais</label>
               <textarea

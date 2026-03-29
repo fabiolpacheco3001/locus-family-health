@@ -155,13 +155,18 @@ const VACCINE_MAP: { pattern: RegExp; standardName: string }[] = [
 ];
 
 export function mapVaccineToStandard(rawName: string): { standardName: string; details: string } {
-  const details = rawName.trim();
+  const rawTrimmed = rawName.trim();
   for (const entry of VACCINE_MAP) {
-    if (entry.pattern.test(rawName)) {
-      return { standardName: entry.standardName, details };
+    if (entry.pattern.test(rawTrimmed)) {
+      // Remove the standard name from details to avoid redundancy
+      const cleanDetails = rawTrimmed
+        .replace(new RegExp(entry.standardName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '')
+        .replace(/^[\s\-–,]+|[\s\-–,]+$/g, '')
+        .trim();
+      return { standardName: entry.standardName, details: cleanDetails || rawTrimmed };
     }
   }
-  return { standardName: "Outra (especificar)", details };
+  return { standardName: "Outra (especificar)", details: rawTrimmed };
 }
 
 // ── Expanded extraction (batch, facility, city, state) ─────────────────────
