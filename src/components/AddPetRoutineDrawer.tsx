@@ -47,6 +47,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
     setRoutineType("Banho");
     setCustomType("");
     setDatePerformed(today);
+    setTimePerformed("");
     setRecurrence("none");
     setNotes("");
   };
