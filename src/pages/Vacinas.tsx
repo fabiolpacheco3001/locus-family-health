@@ -364,6 +364,12 @@ const Vacinas = () => {
         family_member_id: id,
         name: v.name,
         applied_date: v.applied_date,
+        details: v.details || null,
+        dose_type: v.dose_label || null,
+        batch: v.batch || null,
+        facility: v.facility || null,
+        city: v.city || null,
+        state: v.state || null,
         ...(groupId ? { group_id: groupId } : {}),
       }));
 
