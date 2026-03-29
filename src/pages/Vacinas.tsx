@@ -109,6 +109,7 @@ const Vacinas = () => {
   const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
   const [formDrawerOpen, setFormDrawerOpen] = useState(false);
   const [editingVaccine, setEditingVaccine] = useState<Vaccine | null>(null);
+  const [sortDesc, setSortDesc] = useState(true);
   const [form, setForm] = useState({
     name: "",
     customName: "",
