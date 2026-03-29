@@ -43,6 +43,7 @@ const Agenda = () => {
   const [searchParams] = useSearchParams();
   const currentFilter = searchParams.get("filter");
   const today = startOfDay(new Date());
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["agenda", groupId, isAdmin, linkedMemberId, managedProfiles],
