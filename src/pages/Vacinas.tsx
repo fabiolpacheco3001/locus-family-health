@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Syringe, ChevronRight, Trash2, FileUp, PenLine } from "lucide-react";
+import { ArrowLeft, Syringe, ChevronRight, Trash2, FileUp, PenLine, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -109,6 +109,7 @@ const Vacinas = () => {
   const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
   const [formDrawerOpen, setFormDrawerOpen] = useState(false);
   const [editingVaccine, setEditingVaccine] = useState<Vaccine | null>(null);
+  const [sortDesc, setSortDesc] = useState(true);
   const [form, setForm] = useState({
     name: "",
     customName: "",
@@ -495,12 +496,12 @@ const Vacinas = () => {
                   onChange={(e) => setForm({ ...form, dose_type: e.target.value })}
                   className={INPUT_CLASSES}
                 >
-                  <option value="">Dose...</option>
+                  <option value="">Selecione...</option>
                   <option value="1ª Dose">1ª Dose</option>
                   <option value="2ª Dose">2ª Dose</option>
                   <option value="3ª Dose">3ª Dose</option>
-                  <option value="Dose Única">Única</option>
                   <option value="Reforço">Reforço</option>
+                  <option value="Única">Única</option>
                 </select>
               </div>
             </div>
@@ -636,6 +637,21 @@ const Vacinas = () => {
             <ArrowLeft size={22} />
           </Button>
           <h1 className="text-lg font-bold text-foreground flex-1">Vacinas</h1>
+          {vaccines.length > 1 && (
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSortDesc((prev) => !prev)}
+                className="shrink-0"
+              >
+                <ArrowUpDown size={18} />
+              </Button>
+              <span className="absolute -bottom-5 right-0 text-[10px] text-muted-foreground whitespace-nowrap">
+                {sortDesc ? "Recentes" : "Antigos"}
+              </span>
+            </div>
+          )}
         </div>
 
         {isLoading ? (
@@ -654,7 +670,11 @@ const Vacinas = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {vaccines.map((v) => (
+            {[...vaccines].sort((a, b) => {
+              const dateA = a.applied_date || a.created_at;
+              const dateB = b.applied_date || b.created_at;
+              return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+            }).map((v) => (
               <button
                 key={v.id}
                 onClick={() => openEdit(v)}
