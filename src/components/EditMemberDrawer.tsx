@@ -101,6 +101,8 @@ const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => 
         avatar_url: avatarUrl || null,
         species: isPet ? species : null,
         breed: isPet ? (breed.trim() || null) : null,
+        cpf: isPet ? null : (cpf || null),
+        phone: isPet ? null : (phone || null),
       };
       await updateMember.mutateAsync(payload);
 
