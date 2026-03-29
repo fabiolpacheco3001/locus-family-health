@@ -131,15 +131,17 @@ function normalizeSpaces(value: string): string {
 }
 
 function sanitizeVaccineName(value: string): string {
-  return normalizeSpaces(
-    value
-      .replace(/\bRefor[çc]o\b/gi, "")
-      .replace(/\bDose\s*[Úú]nica\b/gi, "")
-      .replace(/\b\d+ª\s*Dose\b/gi, "")
-      .replace(/\bDose\s*\d+\b/gi, "")
-      .replace(/\b\d\/\d\b/g, "")
-      .replace(/\b\d+º\b/g, "")
-  );
+  let cleaned = value
+    // Guilhotina: corta tudo antes e incluindo palavras-chave demográficas/headers
+    .replace(/.*(?:UF\b|Munic[ií]pio|Sexo|MASCULINO|FEMININO|BRASILEIRO|BRASILEIRA|VACINAÇÃO COVID-19|VACINAS\s*SOROS|DILUENTES ADMINISTRADOS|Naturalidade|Nome da M[ãa]e|Data de Nascimento|Nome Completo)\s*/ig, '')
+    // Remove dose labels do nome
+    .replace(/\bRefor[çc]o\b/gi, "")
+    .replace(/\bDose\s*[Úú]nica\b/gi, "")
+    .replace(/\b\d+ª\s*Dose\b/gi, "")
+    .replace(/\bDose\s*\d+\b/gi, "")
+    .replace(/\b\d\/\d\b/g, "")
+    .replace(/\b\d+º\b/g, "");
+  return normalizeSpaces(cleaned);
 }
 
 function extractNameSuffix(line: string): string | null {
