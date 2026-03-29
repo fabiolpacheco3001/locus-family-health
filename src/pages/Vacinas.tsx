@@ -637,6 +637,21 @@ const Vacinas = () => {
             <ArrowLeft size={22} />
           </Button>
           <h1 className="text-lg font-bold text-foreground flex-1">Vacinas</h1>
+          {vaccines.length > 1 && (
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSortDesc((prev) => !prev)}
+                className="shrink-0"
+              >
+                <ArrowUpDown size={18} />
+              </Button>
+              <span className="absolute -bottom-5 right-0 text-[10px] text-muted-foreground whitespace-nowrap">
+                {sortDesc ? "Recentes" : "Antigos"}
+              </span>
+            </div>
+          )}
         </div>
 
         {isLoading ? (
