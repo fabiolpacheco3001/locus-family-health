@@ -140,7 +140,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
 
           {/* Notas */}
           <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Observações (opc.)</label>
+            <label className="text-sm font-medium text-foreground mb-1 block">Orientações</label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
