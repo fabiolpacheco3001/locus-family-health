@@ -128,18 +128,35 @@ const Vacinas = () => {
   const isCustom = form.name === "Outra (especificar)";
   const { ufs, cities, loadingCities } = useIbgeLocations(form.state);
 
+  // Pending city: stores the raw city value (e.g. "FLORIANOPOLIS" from PDF/DB)
+  // so it survives the async IBGE fetch cycle and can be matched after cities load
+  const [pendingCity, setPendingCity] = useState("");
+
   // Auto-match IBGE city name (PDF comes UPPERCASE without accents)
-  const normalizeStr = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const normalizeStr = (s: string) =>
+    s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
   useEffect(() => {
-    if (!form.city || !cities.length || loadingCities) return;
-    // If the city already matches exactly an IBGE name, do nothing
-    if (cities.some((c) => c.nome === form.city)) return;
-    // Try normalized match
-    const match = cities.find((c) => normalizeStr(c.nome) === normalizeStr(form.city));
+    // Only attempt match when cities are loaded and we have a pending value
+    if (!pendingCity || !cities.length || loadingCities) return;
+
+    // If already matches an IBGE name exactly, just apply and clear pending
+    const exactMatch = cities.find((c) => c.nome === pendingCity);
+    if (exactMatch) {
+      setForm((prev) => ({ ...prev, city: exactMatch.nome }));
+      setPendingCity("");
+      return;
+    }
+
+    // Try normalized match (removes accents + lowercase)
+    const match = cities.find(
+      (c) => normalizeStr(c.nome) === normalizeStr(pendingCity)
+    );
     if (match) {
       setForm((prev) => ({ ...prev, city: match.nome }));
     }
-  }, [cities, form.city, loadingCities]);
+    setPendingCity("");
+  }, [cities, pendingCity, loadingCities]);
 
   const { data: vaccines = [], isLoading } = useQuery({
     queryKey: ["vaccines", id],
