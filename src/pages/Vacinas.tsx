@@ -72,13 +72,6 @@ const formatDate = (dateStr: string) => {
   return `${parts[0]} - ${parts[1]?.substring(0, 3)}`;
 };
 
-// Mock OCR data for simulation
-const MOCK_IMPORTED: ImportedVaccine[] = [
-  { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 1", applied_date: "2021-04-28" },
-  { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 2", applied_date: "2021-06-29" },
-  { name: "FEBRE AMARELA", dose_label: "Dose Única", applied_date: "2005-02-01" },
-];
-const MOCK_CPF_FROM_PDF = "123.456.789-00"; // Simulated CPF read from the PDF
 
 const Vacinas = () => {
   const { id } = useParams<{ id: string }>();
