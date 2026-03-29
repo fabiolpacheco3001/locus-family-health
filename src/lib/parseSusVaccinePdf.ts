@@ -353,8 +353,8 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     // Clean facility
     const cleanFacility = facility.trim() || undefined;
 
-    // Clean batch
-    const cleanBatch = batch.trim() || undefined;
+    // Clean batch — keep only first word (strip strategy text like "Rotina")
+    const cleanBatch = (batch.trim().split(/\s+/)[0]) || undefined;
 
     // Apply Smart Mapping
     const mapped = mapVaccineToStandard(fullName);
