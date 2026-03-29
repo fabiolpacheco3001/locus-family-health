@@ -168,15 +168,8 @@ function extractNameSuffix(line: string): string | null {
  * Handles both strict date-only rows and hybrid rows where name/date/dose share the same line.
  */
 function extractVaccines(text: string): ImportedVaccine[] {
-  const markers = ["vacina/profilaxia", "vacinação"];
-  let startIdx = -1;
   const lowerText = text.toLowerCase();
-  for (const marker of markers) {
-    const idx = lowerText.indexOf(marker);
-    if (idx !== -1 && (startIdx === -1 || idx < startIdx)) {
-      startIdx = idx;
-    }
-  }
+  const startIdx = lowerText.indexOf("vacina/profilaxia");
 
   const tableText = startIdx !== -1 ? text.slice(startIdx) : text;
   const lines = tableText
