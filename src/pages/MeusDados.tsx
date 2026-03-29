@@ -67,6 +67,7 @@ const MeusDados = () => {
       setPhone("");
       setCpf("");
       setBloodType("");
+      setRelationship("");
       setAvatarUrl("");
     }
   }, [myProfile, authName]);
