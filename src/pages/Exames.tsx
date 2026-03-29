@@ -68,9 +68,13 @@ const Exames = () => {
     } catch { /* handled */ }
   };
 
-  const examesFiltrados = exams.filter(e => {
+  const examesFiltrados = [...exams.filter(e => {
     if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
     return e.status === 'Pronto' || e.status === 'Concluído' || e.status === 'Resultado Pronto' || e.status === 'Resultado Disponível' || e.status === 'Cancelado';
+  })].sort((a, b) => {
+    const dateA = a.exam_date ? new Date(a.exam_date).getTime() : 0;
+    const dateB = b.exam_date ? new Date(b.exam_date).getTime() : 0;
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
   const handleOpenEdit = (e: Exam) => {
