@@ -145,8 +145,8 @@ const Medicamentos = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Medicamentos</h1>
         </div>
 
-        <div className="mb-4">
-          <div className="flex p-1 bg-slate-100 rounded-xl">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex p-1 bg-slate-100 rounded-xl flex-1">
             <button
               onClick={() => setAbaAtiva('ativos')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
@@ -167,7 +167,7 @@ const Medicamentos = () => {
             >
               Concluídos
             </button>
-           </div>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="shrink-0">
