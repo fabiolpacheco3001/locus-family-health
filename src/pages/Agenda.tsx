@@ -181,7 +181,7 @@ const Agenda = () => {
                 <ArrowLeft size={22} />
               </Button>
             )}
-            <h1 className="text-2xl font-bold text-foreground">Agenda</h1>
+            <h1 className="font-bold text-foreground text-lg">Agenda</h1>
           </div>
         </div>
         {currentFilter && filterLabels[currentFilter] && (
