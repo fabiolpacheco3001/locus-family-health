@@ -29,8 +29,18 @@ type Vaccine = {
   booster_date: string | null;
   batch: string | null;
   side_effects: string | null;
+  details: string | null;
+  dose_type: string | null;
+  facility: string | null;
+  city: string | null;
+  state: string | null;
   created_at: string;
 };
+
+const UF_OPTIONS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
+  "PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+];
 
 const HUMAN_VACCINE_OPTIONS = [
   "BCG",
