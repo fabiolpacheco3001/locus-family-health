@@ -21,17 +21,16 @@ async function extractTextFromPdf(buffer: ArrayBuffer): Promise<string> {
     const content = await page.getTextContent();
 
     // Group text items by Y coordinate to reconstruct lines
-    const items = content.items.filter(
-      (item): item is { str: string; transform: number[] } => "str" in item && item.str.trim().length > 0
-    );
-
     // Group by Y (rounded to 2px tolerance)
     const rows = new Map<number, { x: number; text: string }[]>();
-    for (const item of items) {
-      const y = Math.round(item.transform[5] / 2) * 2;
-      const x = item.transform[4];
+    for (const item of content.items) {
+      if (!("str" in item) || !("transform" in item)) continue;
+      const textItem = item as { str: string; transform: number[] };
+      if (!textItem.str.trim()) continue;
+      const y = Math.round(textItem.transform[5] / 2) * 2;
+      const x = textItem.transform[4];
       if (!rows.has(y)) rows.set(y, []);
-      rows.get(y)!.push({ x, text: item.str });
+      rows.get(y)!.push({ x, text: textItem.str });
     }
 
     // Sort rows by Y descending (PDF coords: bottom-up), items by X ascending
