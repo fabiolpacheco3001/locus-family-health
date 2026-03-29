@@ -25,6 +25,7 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { data: routines = [] } = useQuery({
     queryKey: ["pet_routines", familyMemberId],
