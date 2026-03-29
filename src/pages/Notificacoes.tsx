@@ -106,7 +106,7 @@ const Notificacoes = () => {
                     Limpar tudo
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="rounded-2xl sm:rounded-2xl">
+                <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Limpar todas as notificações?</AlertDialogTitle>
                     <AlertDialogDescription>
