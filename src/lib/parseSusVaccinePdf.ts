@@ -347,11 +347,19 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     // Clean up state (should be 2 uppercase chars)
     const cleanState = state && /^[A-Z]{2}$/.test(state.trim()) ? state.trim() : undefined;
 
-    // Clean city
-    const cleanCity = city.trim() || undefined;
+    // Clean city & facility — hard-split fallback when pdfjs merges them
+    let cleanCity = city.trim() || undefined;
+    let cleanFacility = facility.trim() || undefined;
 
-    // Clean facility
-    const cleanFacility = facility.trim() || undefined;
+    // If city is empty but facility contains a known city pattern at the end, split it
+    if (!cleanCity && cleanFacility) {
+      // Try to split: last word(s) that look like a city name (all uppercase, no numbers)
+      const parts = cleanFacility.split(/\s{2,}/); // double-space often separates columns in pdfjs
+      if (parts.length >= 2) {
+        cleanFacility = parts.slice(0, -1).join(" ").trim();
+        cleanCity = parts[parts.length - 1].trim();
+      }
+    }
 
     // Clean batch — keep only first word (strip strategy text like "Rotina")
     const cleanBatch = (batch.trim().split(/\s+/)[0]) || undefined;
