@@ -31,7 +31,7 @@ const HEADER_LABELS: { key: string; patterns: RegExp[] }[] = [
   { key: "dose", patterns: [/^dose$/i] },
   { key: "batch", patterns: [/^lote$/i] },
   { key: "strategy", patterns: [/estrat[eé]gia/i] },
-  /\*\*?\s*cnes\s*[–\-]/i,
+  { key: "cnes", patterns: [/cnes/i] },
   { key: "facility", patterns: [/estabelecimento/i] },
   { key: "city", patterns: [/munic[ií]pio/i] },
   { key: "state", patterns: [/^uf$/i] },
