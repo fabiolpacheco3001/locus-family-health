@@ -670,7 +670,11 @@ const Vacinas = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {vaccines.map((v) => (
+            {[...vaccines].sort((a, b) => {
+              const dateA = a.applied_date || a.created_at;
+              const dateB = b.applied_date || b.created_at;
+              return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+            }).map((v) => (
               <button
                 key={v.id}
                 onClick={() => openEdit(v)}
