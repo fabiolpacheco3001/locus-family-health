@@ -227,8 +227,30 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                   </Select>
                 </div>
               </div>
-            </>
-          )}
+
+              {/* Grid: CPF + Telefone */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>CPF</Label>
+                  <Input
+                    type="text"
+                    placeholder="000.000.000-00"
+                    value={cpf}
+                    onChange={(e) => setCpf(formatCpf(e.target.value))}
+                    className="w-full max-w-full box-border min-w-0 text-[16px]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Telefone</Label>
+                  <Input
+                    type="tel"
+                    placeholder="(11) 99999-9999"
+                    value={phone}
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
+                    className="w-full max-w-full box-border min-w-0 text-[16px]"
+                  />
+                </div>
+              </div>
         </div>
 
         <DrawerFooter className="flex-row gap-3">
