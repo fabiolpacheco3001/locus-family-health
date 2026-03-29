@@ -31,7 +31,7 @@ const Home = () => {
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
   
 
-  const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
+  const myProfile = members.find((m) => m.id === linkedMemberId) ?? null;
 
   // All active medications across family
   const { medications, isLoading: medsLoading } = useMedications();
