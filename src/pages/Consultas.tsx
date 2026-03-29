@@ -48,9 +48,13 @@ const Consultas = () => {
     }
   }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
-  const consultasFiltradas = consultations.filter(c => {
+  const consultasFiltradas = [...consultations.filter(c => {
     if (abaAtiva === 'proximas') return c.status === 'Agendada';
     return c.status === 'Realizada' || c.status === 'Cancelada';
+  })].sort((a, b) => {
+    const dateA = a.consultation_date ? new Date(a.consultation_date).getTime() : 0;
+    const dateB = b.consultation_date ? new Date(b.consultation_date).getTime() : 0;
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
   const handleOpenEdit = (c: Consultation) => {
