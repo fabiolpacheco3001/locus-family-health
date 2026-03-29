@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useSmartBack from "@/hooks/useSmartBack";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
