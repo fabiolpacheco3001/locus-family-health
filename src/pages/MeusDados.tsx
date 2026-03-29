@@ -57,6 +57,7 @@ const MeusDados = () => {
       setPhone(myProfile.phone || "");
       setCpf(myProfile.cpf || "");
       setBloodType(myProfile.blood_type || "");
+      setRelationship(myProfile.relationship || "");
       setAvatarUrl(myProfile.avatar_url || "");
     } else {
       // No linked profile — prefill only auth name
