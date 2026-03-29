@@ -246,7 +246,7 @@ const FOOTER_PATTERNS = [
   /carteira de vacina[çc][aã]o emitida/i,
   /esta carteira/i,
   /sua autenticidade/i,
-  /\*\*?\s*cnes/i,
+  /^\*\*?\s*cnes\s*[–\-]/i,
   /^obs\./i,
 ];
 
@@ -279,11 +279,11 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    if (isFooterRow(row.cells)) break;
     if (isHeaderOrSkipRow(row.cells)) {
       pendingNameParts = [];
       continue;
     }
+    if (isFooterRow(row.cells)) break;
 
     // Check if this row has a date
     let dateStr = "";
