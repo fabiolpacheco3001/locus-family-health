@@ -159,7 +159,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
           </div>
 
           <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Observações (opc.)</label>
+            <label className="text-sm font-medium text-foreground mb-1 block">Orientações</label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
