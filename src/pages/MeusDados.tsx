@@ -43,6 +43,7 @@ const MeusDados = () => {
   const [gender, setGender] = useState("");
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
+  const [bloodType, setBloodType] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
