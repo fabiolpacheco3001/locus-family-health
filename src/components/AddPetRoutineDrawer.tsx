@@ -169,11 +169,18 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
           </div>
         </div>
 
-        <DrawerFooter>
+        <DrawerFooter className="flex-row gap-3">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="flex-1"
+          >
+            Cancelar
+          </Button>
           <Button
             onClick={() => mutation.mutate()}
             disabled={!datePerformed || mutation.isPending}
-            className="w-full"
+            className="flex-1"
           >
             {mutation.isPending ? "Salvando..." : "Salvar"}
           </Button>

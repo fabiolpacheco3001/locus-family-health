@@ -162,14 +162,19 @@ const Agenda = () => {
   });
 
   const filteredItems = React.useMemo(() => {
-    if (!currentFilter) return items;
-    if (currentFilter === "consultas") return items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
-    if (currentFilter === "exames") return items.filter((i) => i.kind === "exam");
-    if (currentFilter === "upcoming") return items.filter((i) =>
+    let result = items;
+    if (currentFilter === "consultas") result = items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
+    else if (currentFilter === "exames") result = items.filter((i) => i.kind === "exam");
+    else if (currentFilter === "upcoming") result = items.filter((i) =>
       i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Pronto"
     );
-    return items;
-  }, [items, currentFilter]);
+    return [...result].sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      return sortOrder === 'asc' ? diff : -diff;
+    });
+  }, [items, currentFilter, sortOrder]);
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
