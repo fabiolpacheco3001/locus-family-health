@@ -191,9 +191,13 @@ export function mapVaccineToStandard(rawName: string): { standardName: string; d
   const rawTrimmed = rawName.trim();
   for (const entry of VACCINE_MAP) {
     if (entry.pattern.test(rawTrimmed)) {
-      const cleanDetails = rawTrimmed
+      // Remove the matched pattern AND the standard name from details
+      let cleanDetails = rawTrimmed
+        .replace(entry.pattern, "")
         .replace(new RegExp(entry.standardName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "")
+        .replace(/\bVACINA\b/gi, "")
         .replace(/^[\s\-–,]+|[\s\-–,]+$/g, "")
+        .replace(/\s+/g, " ")
         .trim();
       return { standardName: entry.standardName, details: cleanDetails || rawTrimmed };
     }
