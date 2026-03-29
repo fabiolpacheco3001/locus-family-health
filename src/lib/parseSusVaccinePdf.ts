@@ -361,31 +361,34 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     // Translate dose
     const doseLabel = translateDose(rawDose);
 
-    // Clean up state (should be 2 uppercase chars)
-    const cleanState = state && /^[A-Z]{2}$/.test(state.trim()) ? state.trim() : undefined;
+    // Cascading sanitization for horizontal bleeding between facility/city/state
+    const rawFacility = facility.trim();
+    const rawCity = city.trim();
+    const rawState = state.trim();
 
-    // Clean city & facility — hard-split fallback when pdfjs merges them
-    let cleanCity = city.trim() || undefined;
-    let cleanFacility = facility.trim() || undefined;
+    const stateMatch = rawState.match(/\b[A-Z]{2}\b/)?.[0] || rawCity.match(/\b[A-Z]{2}$/)?.[0] || "";
+    const cleanState = stateMatch || undefined;
 
-    // If city is empty but facility contains a known city pattern at the end, split it
+    let cleanCity = rawCity;
+    if (cleanState) {
+      cleanCity = cleanCity.replace(new RegExp(`\\s*${cleanState}$`, "i"), "").trim();
+    }
+    cleanCity = cleanCity || undefined;
+
+    let cleanFacility = rawFacility;
+    if (cleanCity) {
+      cleanFacility = cleanFacility
+        .replace(new RegExp(`\\s*${cleanCity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"), "")
+        .trim();
+    }
+    cleanFacility = cleanFacility || undefined;
+
+    // Fallback extra caso a coluna city falhe totalmente
     if (!cleanCity && cleanFacility) {
-      // Try double-space split first (pdfjs often separates columns this way)
-      const dsParts = cleanFacility.split(/\s{2,}/);
-      if (dsParts.length >= 2) {
-        cleanFacility = dsParts.slice(0, -1).join(" ").trim();
-        cleanCity = dsParts[dsParts.length - 1].trim();
-      } else {
-        // Fallback: last word as city candidate (single-space split)
-        const words = cleanFacility.trim().split(/\s+/);
-        if (words.length > 2) {
-          const candidate = words[words.length - 1];
-          // Only split if the last word looks like a city name (all uppercase, no numbers, 3+ chars)
-          if (/^[A-Z]{3,}$/.test(candidate)) {
-            cleanCity = candidate;
-            cleanFacility = words.slice(0, -1).join(" ").trim();
-          }
-        }
+      const words = cleanFacility.trim().split(/\s+/);
+      if (words.length > 1) {
+        cleanCity = words.pop() || undefined;
+        cleanFacility = words.join(" ").trim() || undefined;
       }
     }
 
