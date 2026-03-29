@@ -119,6 +119,11 @@ const Vacinas = () => {
     booster_date: "",
     batch: "",
     side_effects: "",
+    details: "",
+    dose_type: "",
+    facility: "",
+    city: "",
+    state: "",
   });
 
   const isCustom = form.name === "Outra (especificar)";
