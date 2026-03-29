@@ -496,12 +496,12 @@ const Vacinas = () => {
                   onChange={(e) => setForm({ ...form, dose_type: e.target.value })}
                   className={INPUT_CLASSES}
                 >
-                  <option value="">Dose...</option>
+                  <option value="">Selecione...</option>
                   <option value="1ª Dose">1ª Dose</option>
                   <option value="2ª Dose">2ª Dose</option>
                   <option value="3ª Dose">3ª Dose</option>
-                  <option value="Dose Única">Única</option>
                   <option value="Reforço">Reforço</option>
+                  <option value="Única">Única</option>
                 </select>
               </div>
             </div>
