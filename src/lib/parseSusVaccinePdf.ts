@@ -205,9 +205,14 @@ export async function parseSusVaccinePdf(file: File): Promise<ParsedSusResult> {
   const cpf = extractCpf(text);
   const vaccines = extractVaccines(text);
 
-  // Extract ALL CPF-like patterns for array-match validation
-  const allCpfMatches = text.match(/\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2}/g) || [];
-  const allCpfCandidates = allCpfMatches.map(c => c.replace(/\D/g, ""));
+  // 1. Candidatos formatados estritamente (inequivocamente um CPF do SUS)
+  const formatted = text.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/g) || [];
+  // 2. Candidatos não-formatados com Boundaries (Exatamente 11 dígitos, nem mais, nem menos)
+  const unformatted = text.match(/(?<!\d)\d{11}(?!\d)/g) || [];
+  // 3. Unir, limpar e deduplicar
+  const allCpfCandidates = [...new Set(
+    [...formatted, ...unformatted].map(c => c.replace(/\D/g, ""))
+  )];
 
   return { cpf, allCpfCandidates, vaccines };
 }
