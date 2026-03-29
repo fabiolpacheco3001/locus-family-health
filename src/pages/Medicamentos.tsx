@@ -25,6 +25,7 @@ const Medicamentos = () => {
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const { medications, isLoading, addMedication, updateMedication, deleteMedication } = useMedications(id!);
 
   useEffect(() => {
