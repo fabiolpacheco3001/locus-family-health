@@ -282,6 +282,7 @@ const Vacinas = () => {
 
       if (result.cpf) {
         const pdfCpf = result.cpf.replace(/\D/g, "");
+        console.log("DEBUG CPF -> PDF Extraído:", pdfCpf, "| Banco:", memberCpf);
         if (pdfCpf && memberCpf !== pdfCpf) {
           toast.error("Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado.");
           return;

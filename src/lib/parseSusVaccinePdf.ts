@@ -53,9 +53,13 @@ async function extractTextFromPdf(buffer: ArrayBuffer): Promise<string> {
  * Looks for patterns like 123.456.789-00 near "CPF" or "CNS" markers.
  */
 function extractCpf(text: string): string | null {
-  // Try formatted CPF pattern
-  const cpfMatch = text.match(/(\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2})/);
-  return cpfMatch ? cpfMatch[1] : null;
+  // 1. Busca estrita contextual: "CPF" seguido de até 30 chars, depois formato XXX.XXX.XXX-XX
+  const contextualMatch = text.match(/CPF[\s\S]{0,30}?(\d{3}\.\d{3}\.\d{3}-\d{2})/i);
+  if (contextualMatch) return contextualMatch[1];
+
+  // 2. Fallback estrito: exige pontuação padrão do SUS (evita capturar CNS/CNES)
+  const strictGeneric = text.match(/(\d{3}\.\d{3}\.\d{3}-\d{2})/);
+  return strictGeneric ? strictGeneric[1] : null;
 }
 
 /**
