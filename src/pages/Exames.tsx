@@ -34,6 +34,7 @@ const Exames = () => {
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const { exams, isLoading, addExam, deleteExam, updateExam } = useExams(id!);
 
   useEffect(() => {
