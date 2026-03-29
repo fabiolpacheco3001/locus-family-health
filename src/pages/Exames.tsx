@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const statusColors: Record<string, string> = {
   Agendado: "bg-[#AEE2D4] text-slate-800 border-none",
