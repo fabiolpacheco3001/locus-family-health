@@ -387,11 +387,8 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
 export async function parseSusVaccinePdf(file: File): Promise<ParsedSusResult> {
   const buffer = await file.arrayBuffer();
 
-  // Run both extractions in parallel
-  const [flatText, tableRows] = await Promise.all([
-    extractFlatText(buffer),
-    extractTableRows(buffer),
-  ]);
+  // Single-pass extraction: avoids detached ArrayBuffer issues
+  const { flatText, tableRows } = await extractAll(buffer);
 
   console.log("FULL PDF TEXT:", flatText);
 
