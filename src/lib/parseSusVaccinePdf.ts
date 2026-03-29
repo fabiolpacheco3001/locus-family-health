@@ -6,6 +6,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 
 interface ParsedSusResult {
   cpf: string | null;
+  allCpfCandidates: string[];
   vaccines: ImportedVaccine[];
 }
 
@@ -204,5 +205,9 @@ export async function parseSusVaccinePdf(file: File): Promise<ParsedSusResult> {
   const cpf = extractCpf(text);
   const vaccines = extractVaccines(text);
 
-  return { cpf, vaccines };
+  // Extract ALL CPF-like patterns for array-match validation
+  const allCpfMatches = text.match(/\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2}/g) || [];
+  const allCpfCandidates = allCpfMatches.map(c => c.replace(/\D/g, ""));
+
+  return { cpf, allCpfCandidates, vaccines };
 }

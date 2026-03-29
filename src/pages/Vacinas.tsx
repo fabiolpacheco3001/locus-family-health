@@ -280,13 +280,13 @@ const Vacinas = () => {
         return;
       }
 
-      if (result.cpf) {
-        const pdfCpf = result.cpf.replace(/\D/g, "");
-        console.log("DEBUG CPF -> PDF Extraído:", pdfCpf, "| Banco:", memberCpf);
-        if (pdfCpf && memberCpf !== pdfCpf) {
-          toast.error("Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado.");
-          return;
-        }
+      // Array-match: check if the DB CPF exists among ALL CPF-like patterns in the PDF
+      const cleanCandidates = result.allCpfCandidates;
+      console.log("DEBUG CPF -> Candidatos no PDF:", cleanCandidates, "| Banco:", memberCpf);
+      const isDocumentOwner = cleanCandidates.includes(memberCpf);
+      if (!isDocumentOwner) {
+        toast.error("Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado.");
+        return;
       }
 
       // 4. Check if any vaccines were found
