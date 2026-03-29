@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
