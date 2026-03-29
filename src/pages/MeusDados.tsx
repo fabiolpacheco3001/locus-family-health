@@ -234,12 +234,18 @@ const MeusDados = () => {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label>Parentesco</Label>
-            <Input
-              value="Titular"
-              readOnly
-              disabled
-              className="w-full max-w-full box-border min-w-0 text-[16px] bg-muted cursor-not-allowed"
-            />
+            <Select value={relationship} onValueChange={setRelationship}>
+              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cônjuge">Cônjuge</SelectItem>
+                <SelectItem value="Filho(a)">Filho(a)</SelectItem>
+                <SelectItem value="Pai/Mãe">Pai/Mãe</SelectItem>
+                <SelectItem value="Irmão(ã)">Irmão(ã)</SelectItem>
+                <SelectItem value="Outros">Outros</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
