@@ -44,6 +44,7 @@ const MeusDados = () => {
   const [phone, setPhone] = useState("");
   const [cpf, setCpf] = useState("");
   const [bloodType, setBloodType] = useState("");
+  const [relationship, setRelationship] = useState("");
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
@@ -56,6 +57,7 @@ const MeusDados = () => {
       setPhone(myProfile.phone || "");
       setCpf(myProfile.cpf || "");
       setBloodType(myProfile.blood_type || "");
+      setRelationship(myProfile.relationship || "");
       setAvatarUrl(myProfile.avatar_url || "");
     } else {
       // No linked profile — prefill only auth name
@@ -65,6 +67,7 @@ const MeusDados = () => {
       setPhone("");
       setCpf("");
       setBloodType("");
+      setRelationship("");
       setAvatarUrl("");
     }
   }, [myProfile, authName]);
@@ -103,6 +106,7 @@ const MeusDados = () => {
           cpf: cpf || null,
           avatar_url: avatarUrl || null,
           blood_type: bloodType || null,
+          relationship: relationship || "Outros",
         });
       } else {
         // Auto-healing: create profile + link it
@@ -112,7 +116,7 @@ const MeusDados = () => {
             user_id: user!.id,
             group_id: groupId,
             name: name.trim(),
-            relationship: "Titular",
+            relationship: relationship || "Outros",
             birth_date: birthDate || null,
             gender: gender || null,
             phone: phone || null,
@@ -230,12 +234,18 @@ const MeusDados = () => {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <Label>Parentesco</Label>
-            <Input
-              value="Titular"
-              readOnly
-              disabled
-              className="w-full max-w-full box-border min-w-0 text-[16px] bg-muted cursor-not-allowed"
-            />
+            <Select value={relationship} onValueChange={setRelationship}>
+              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Cônjuge">Cônjuge</SelectItem>
+                <SelectItem value="Filho(a)">Filho(a)</SelectItem>
+                <SelectItem value="Pai/Mãe">Pai/Mãe</SelectItem>
+                <SelectItem value="Irmão(ã)">Irmão(ã)</SelectItem>
+                <SelectItem value="Outros">Outros</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1">
