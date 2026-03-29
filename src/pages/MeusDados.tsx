@@ -55,6 +55,7 @@ const MeusDados = () => {
       setGender(myProfile.gender || "");
       setPhone(myProfile.phone || "");
       setCpf(myProfile.cpf || "");
+      setBloodType(myProfile.blood_type || "");
       setAvatarUrl(myProfile.avatar_url || "");
     } else {
       // No linked profile — prefill only auth name
@@ -63,6 +64,7 @@ const MeusDados = () => {
       setGender("");
       setPhone("");
       setCpf("");
+      setBloodType("");
       setAvatarUrl("");
     }
   }, [myProfile, authName]);
