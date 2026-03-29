@@ -75,7 +75,7 @@ async function extractAll(buffer: ArrayBuffer): Promise<{ flatText: string; tabl
       if (!("str" in item) || !("transform" in item)) continue;
       const textItem = item as { str: string; transform: number[] };
       if (!textItem.str.trim()) continue;
-      const y = Math.round(textItem.transform[5] / 4) * 4;
+      const y = Math.round(textItem.transform[5] / 2) * 2;
       const x = textItem.transform[4];
       if (!rowMap.has(y)) rowMap.set(y, []);
       rowMap.get(y)!.push({ x, text: textItem.str.trim() });
