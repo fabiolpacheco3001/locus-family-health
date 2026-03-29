@@ -660,20 +660,13 @@ const Home = () => {
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-6 space-y-2">
             {(() => {
-              const ordemParentesco: Record<string, number> = {
-                "Titular": 1, "Cônjuge": 2, "Filho(a)": 3, "Pai/Mãe": 4, "Irmão(ã)": 5, "Outro": 6,
-              };
               const allowedIds = role === "user" && linkedMemberId
                 ? [linkedMemberId, ...managedProfiles]
                 : null;
               const filtered = allowedIds
                 ? members.filter(m => allowedIds.includes(m.id))
                 : members;
-              return [...filtered].sort((a, b) => {
-                const pesoA = ordemParentesco[a.relationship] || 99;
-                const pesoB = ordemParentesco[b.relationship] || 99;
-                return pesoA - pesoB;
-              }).map((member) => (
+              return sortFamilyMembers(filtered).map((member) => (
                 <button
                   key={member.id}
                   onClick={() => {
