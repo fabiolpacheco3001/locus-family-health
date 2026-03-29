@@ -21,6 +21,7 @@ import { ptBR } from "date-fns/locale";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import VaccineImportReviewDrawer, { type ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
 import { parseSusVaccinePdf } from "@/lib/parseSusVaccinePdf";
+import { useIbgeLocations } from "@/hooks/useIbgeLocations";
 
 type Vaccine = {
   id: string;
