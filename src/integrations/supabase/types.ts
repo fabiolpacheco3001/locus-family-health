@@ -920,36 +920,51 @@ export type Database = {
           applied_date: string | null
           batch: string | null
           booster_date: string | null
+          city: string | null
           created_at: string
+          details: string | null
+          dose_type: string | null
+          facility: string | null
           family_member_id: string
           group_id: string | null
           id: string
           name: string
           side_effects: string | null
+          state: string | null
           user_id: string
         }
         Insert: {
           applied_date?: string | null
           batch?: string | null
           booster_date?: string | null
+          city?: string | null
           created_at?: string
+          details?: string | null
+          dose_type?: string | null
+          facility?: string | null
           family_member_id: string
           group_id?: string | null
           id?: string
           name: string
           side_effects?: string | null
+          state?: string | null
           user_id: string
         }
         Update: {
           applied_date?: string | null
           batch?: string | null
           booster_date?: string | null
+          city?: string | null
           created_at?: string
+          details?: string | null
+          dose_type?: string | null
+          facility?: string | null
           family_member_id?: string
           group_id?: string | null
           id?: string
           name?: string
           side_effects?: string | null
+          state?: string | null
           user_id?: string
         }
         Relationships: [
