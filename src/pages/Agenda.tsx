@@ -176,12 +176,25 @@ const Agenda = () => {
         {/* Sticky Header with Glassmorphism */}
         <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-2 -mx-4 px-5">
           <div className="flex items-center gap-3">
-            {currentFilter && (
-              <Button variant="ghost" size="icon" onClick={goBack}>
-                <ArrowLeft size={22} />
-              </Button>
-            )}
-            <h1 className="font-bold text-foreground text-lg">Agenda</h1>
+            <Button variant="ghost" size="icon" onClick={goBack}>
+              <ArrowLeft size={22} />
+            </Button>
+            <h1 className="flex-1 font-bold text-foreground text-lg">Agenda</h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setSortOrder('asc')} className={sortOrder === 'asc' ? 'font-semibold' : ''}>
+                  Mais antigos primeiro
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
+                  Mais recentes primeiro
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         {currentFilter && filterLabels[currentFilter] && (
