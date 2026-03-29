@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Syringe, ChevronRight, Trash2 } from "lucide-react";
+import { ArrowLeft, Syringe, ChevronRight, Trash2, FileUp, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
-import VaccineImportCard from "@/components/VaccineImportCard";
 import VaccineImportReviewDrawer, { type ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
 
 type Vaccine = {
@@ -72,6 +71,14 @@ const formatDate = (dateStr: string) => {
   return `${parts[0]} - ${parts[1]?.substring(0, 3)}`;
 };
 
+// Mock OCR data for simulation
+const MOCK_IMPORTED: ImportedVaccine[] = [
+  { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 1", applied_date: "2021-04-28" },
+  { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 2", applied_date: "2021-06-29" },
+  { name: "FEBRE AMARELA", dose_label: "Dose Única", applied_date: "2005-02-01" },
+];
+const MOCK_CPF_FROM_PDF = "123.456.789-00"; // Simulated CPF read from the PDF
+
 const Vacinas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -79,6 +86,7 @@ const Vacinas = () => {
   const goBack = useSmartBack();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (groupLoading) return;
@@ -90,12 +98,15 @@ const Vacinas = () => {
       }
     }
   }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+
   const { members } = useFamilyMembers();
   const currentMember = members.find((m) => m.id === id);
   const isPet = (currentMember?.member_type || "human") === "pet";
   const VACCINE_OPTIONS = isPet ? PET_VACCINE_OPTIONS : HUMAN_VACCINE_OPTIONS;
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  // --- Drawer states ---
+  const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false);
   const [editingVaccine, setEditingVaccine] = useState<Vaccine | null>(null);
   const [form, setForm] = useState({
     name: "",
@@ -125,10 +136,11 @@ const Vacinas = () => {
   const resetForm = () =>
     setForm({ name: "", customName: "", applied_date: "", booster_date: "", batch: "", side_effects: "" });
 
-  const openAdd = () => {
+  const openManual = () => {
+    setActionDrawerOpen(false);
     setEditingVaccine(null);
     resetForm();
-    setDrawerOpen(true);
+    setTimeout(() => setFormDrawerOpen(true), 200);
   };
 
   const openEdit = (v: Vaccine) => {
@@ -142,11 +154,11 @@ const Vacinas = () => {
       batch: v.batch ?? "",
       side_effects: v.side_effects ?? "",
     });
-    setDrawerOpen(true);
+    setFormDrawerOpen(true);
   };
 
-  const closeDrawer = () => {
-    setDrawerOpen(false);
+  const closeFormDrawer = () => {
+    setFormDrawerOpen(false);
     setEditingVaccine(null);
   };
 
@@ -168,7 +180,7 @@ const Vacinas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
-      closeDrawer();
+      closeFormDrawer();
       toast.success("Vacina registrada com sucesso");
     },
     onError: () => toast.error("Erro ao registrar vacina"),
@@ -190,7 +202,7 @@ const Vacinas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
-      closeDrawer();
+      closeFormDrawer();
       toast.success("Vacina atualizada com sucesso");
     },
     onError: () => toast.error("Erro ao atualizar vacina"),
@@ -203,7 +215,7 @@ const Vacinas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
-      closeDrawer();
+      closeFormDrawer();
       toast.success("Vacina excluída com sucesso");
     },
     onError: () => toast.error("Erro ao excluir vacina"),
@@ -215,11 +227,8 @@ const Vacinas = () => {
       toast.error("Informe o nome da vacina");
       return;
     }
-    if (editingVaccine) {
-      updateMutation.mutate();
-    } else {
-      addMutation.mutate();
-    }
+    if (editingVaccine) updateMutation.mutate();
+    else addMutation.mutate();
   };
 
   const handleDelete = () => {
@@ -231,36 +240,97 @@ const Vacinas = () => {
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   // --- Import flow ---
+  const [uploading, setUploading] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [importPending, setImportPending] = useState(false);
+  const [importVaccines, setImportVaccines] = useState<ImportedVaccine[]>([]);
 
-  const MOCK_IMPORTED: ImportedVaccine[] = [
-    { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 1 (COVID-19 ASTRAZENECA/OXFORD)", applied_date: "2021-04-28" },
-    { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 2 (COVID-19 ASTRAZENECA/OXFORD)", applied_date: "2021-06-29" },
-    { name: "FEBRE AMARELA", dose_label: "Dose Única (FEBRE AMARELA)", applied_date: "2005-02-01" },
-  ];
+  const handleImportClick = () => {
+    setActionDrawerOpen(false);
+    setTimeout(() => fileRef.current?.click(), 200);
+  };
 
-  const handleImportReady = (_fileUrl: string) => {
-    // Simulated OCR — open review drawer after short delay
-    setTimeout(() => setReviewOpen(true), 1200);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.type !== "application/pdf") {
+      toast.error("Apenas arquivos PDF são aceitos.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      const { error } = await supabase.storage
+        .from("vaccine_documents")
+        .upload(filePath, file);
+      if (error) throw error;
+
+      // Simulate OCR processing + CPF validation
+      await new Promise((r) => setTimeout(r, 1500));
+
+      // CPF validation: compare mock CPF with member's CPF
+      const memberCpf = currentMember?.cpf?.replace(/\D/g, "") ?? "";
+      const pdfCpf = MOCK_CPF_FROM_PDF.replace(/\D/g, "");
+
+      if (memberCpf && pdfCpf && memberCpf !== pdfCpf) {
+        toast.error("Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado.");
+        return;
+      }
+
+      setImportVaccines(MOCK_IMPORTED);
+      setReviewOpen(true);
+    } catch {
+      toast.error("Erro ao enviar o arquivo. Tente novamente.");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   };
 
   const handleConfirmImport = async (selected: ImportedVaccine[]) => {
     if (!user || !id) return;
     setImportPending(true);
     try {
-      const rows = selected.map((v) => ({
+      // Anti-duplicate: fetch existing vaccines for this member
+      const { data: existing } = await supabase
+        .from("vaccines")
+        .select("name, applied_date")
+        .eq("family_member_id", id);
+
+      const existingSet = new Set(
+        (existing ?? []).map((v) => `${v.name?.toLowerCase()}|${v.applied_date}`)
+      );
+
+      const newVaccines = selected.filter(
+        (v) => !existingSet.has(`${v.name.toLowerCase()}|${v.applied_date}`)
+      );
+
+      if (newVaccines.length === 0) {
+        toast("Todas as vacinas deste documento já estão cadastradas.");
+        setReviewOpen(false);
+        return;
+      }
+
+      const rows = newVaccines.map((v) => ({
         user_id: user.id,
         family_member_id: id,
         name: v.name,
         applied_date: v.applied_date,
         ...(groupId ? { group_id: groupId } : {}),
       }));
+
       const { error } = await supabase.from("vaccines").insert(rows as any);
       if (error) throw error;
+
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
       setReviewOpen(false);
-      toast.success(`${selected.length} vacina(s) importada(s) com sucesso`);
+
+      const skipped = selected.length - newVaccines.length;
+      const msg = skipped > 0
+        ? `${newVaccines.length} vacina(s) importada(s). ${skipped} já existente(s) ignorada(s).`
+        : `${newVaccines.length} vacina(s) importada(s) com sucesso`;
+      toast.success(msg);
     } catch (err) {
       console.error("Import error:", err);
       toast.error("Erro ao importar vacinas");
@@ -269,26 +339,89 @@ const Vacinas = () => {
     }
   };
 
+  const anyDrawerOpen = actionDrawerOpen || formDrawerOpen || reviewOpen;
+
   return (
     <>
-      {!drawerOpen && !reviewOpen && <FixedFAB onClick={openAdd} />}
+      {!anyDrawerOpen && <FixedFAB onClick={() => setActionDrawerOpen(true)} />}
 
+      {/* Hidden file input */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".pdf,application/pdf"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Action Sheet Drawer */}
+      <Drawer open={actionDrawerOpen} onOpenChange={setActionDrawerOpen}>
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[50dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+          <DrawerHeader>
+            <DrawerTitle>Adicionar Vacina</DrawerTitle>
+          </DrawerHeader>
+          <div className="p-4 space-y-3">
+            <button
+              onClick={openManual}
+              className="w-full flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card active:bg-muted/50 transition-colors text-left"
+            >
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <PenLine className="text-primary" size={22} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground text-sm">Preencher Manualmente</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Registrar uma nova vacina avulsa</p>
+              </div>
+            </button>
+
+            {!isPet && (
+              <button
+                onClick={handleImportClick}
+                disabled={uploading}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card active:bg-muted/50 transition-colors text-left"
+              >
+                <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <FileUp className="text-primary" size={22} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm">Importar Carteira do SUS (PDF)</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Envie o PDF do Meu SUS para importar automaticamente
+                  </p>
+                </div>
+              </button>
+            )}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Upload loading overlay */}
+      {uploading && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-sm text-muted-foreground text-center px-8">
+            IA está lendo sua carteira de vacinação... Aguarde.
+          </p>
+        </div>
+      )}
+
+      {/* Import Review */}
       <VaccineImportReviewDrawer
         open={reviewOpen}
         onOpenChange={setReviewOpen}
-        vaccines={MOCK_IMPORTED}
+        vaccines={importVaccines}
         onConfirm={handleConfirmImport}
         isPending={importPending}
       />
 
-      <Drawer open={drawerOpen} onOpenChange={(open) => !open && closeDrawer()} repositionInputs={false}>
+      {/* Form Drawer */}
+      <Drawer open={formDrawerOpen} onOpenChange={(open) => !open && closeFormDrawer()} repositionInputs={false}>
         <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
           <DrawerHeader>
             <DrawerTitle>{editingVaccine ? "Editar Vacina" : "Nova Vacina"}</DrawerTitle>
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
-            {/* Vaccine name */}
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Vacina</label>
               <select
@@ -298,9 +431,7 @@ const Vacinas = () => {
               >
                 <option value="">Selecione...</option>
                 {VACCINE_OPTIONS.map((v) => (
-                  <option key={v} value={v}>
-                    {v}
-                  </option>
+                  <option key={v} value={v}>{v}</option>
                 ))}
               </select>
             </div>
@@ -318,7 +449,6 @@ const Vacinas = () => {
               </div>
             )}
 
-            {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">Data da aplicação</label>
@@ -327,7 +457,7 @@ const Vacinas = () => {
                   value={form.applied_date}
                   onChange={(e) => setForm({ ...form, applied_date: e.target.value })}
                   min="1900-01-01"
-                  max={new Date().toISOString().split('T')[0]}
+                  max={new Date().toISOString().split("T")[0]}
                   className={INPUT_CLASSES}
                 />
               </div>
@@ -344,7 +474,6 @@ const Vacinas = () => {
               </div>
             </div>
 
-            {/* Batch */}
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Lote</label>
               <input
@@ -356,7 +485,6 @@ const Vacinas = () => {
               />
             </div>
 
-            {/* Side effects */}
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Efeitos colaterais</label>
               <textarea
@@ -369,7 +497,6 @@ const Vacinas = () => {
             </div>
           </div>
 
-          {/* Fixed footer */}
           <div className="p-4 border-t mt-auto bg-background space-y-3">
             {editingVaccine && (
               <Button
@@ -388,6 +515,7 @@ const Vacinas = () => {
         </DrawerContent>
       </Drawer>
 
+      {/* Main list */}
       <div className="px-4 pt-6 pb-28 animate-fade-in">
         <div className="flex items-center gap-3 mb-6">
           <Button variant="ghost" size="icon" onClick={goBack}>
@@ -395,8 +523,6 @@ const Vacinas = () => {
           </Button>
           <h1 className="text-lg font-bold text-foreground flex-1">Vacinas</h1>
         </div>
-
-        <VaccineImportCard onImportReady={handleImportReady} />
 
         {isLoading ? (
           <div className="space-y-3">
