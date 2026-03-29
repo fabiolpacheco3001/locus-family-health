@@ -190,6 +190,8 @@ export async function parseSusVaccinePdf(file: File): Promise<ParsedSusResult> {
   const buffer = await file.arrayBuffer();
   const text = await extractTextFromPdf(buffer);
 
+  console.log("FULL PDF TEXT:", text);
+
   const cpf = extractCpf(text);
   const vaccines = extractVaccines(text);
 
