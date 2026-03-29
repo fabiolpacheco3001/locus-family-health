@@ -88,6 +88,8 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
       member_type: memberType,
       species: isPet ? species : null,
       breed: isPet ? (breed.trim() || null) : null,
+      cpf: isPet ? null : (cpf || null),
+      phone: isPet ? null : (phone || null),
     };
 
     try {
