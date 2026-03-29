@@ -254,6 +254,7 @@ const Vacinas = () => {
 
     setUploading(true);
     try {
+      // 1. Upload file to storage
       const safeName = file.name
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
@@ -268,29 +269,35 @@ const Vacinas = () => {
         return;
       }
 
-      // Simulate OCR processing + CPF validation
-      await new Promise((r) => setTimeout(r, 1500));
+      // 2. Parse PDF locally with pdfjs-dist
+      const result = await parseSusVaccinePdf(file);
 
-      // CPF validation: compare mock CPF with member's CPF
+      // 3. CPF Validation (Fail-Closed)
       const memberCpf = currentMember?.cpf?.replace(/\D/g, "") ?? "";
 
-      // Fail-closed: block if member has no CPF registered
       if (!memberCpf) {
         toast.error("Erro: Cadastre o CPF deste familiar antes de importar documentos do SUS.");
         return;
       }
 
-      const pdfCpf = MOCK_CPF_FROM_PDF.replace(/\D/g, "");
+      if (result.cpf) {
+        const pdfCpf = result.cpf.replace(/\D/g, "");
+        if (pdfCpf && memberCpf !== pdfCpf) {
+          toast.error("Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado.");
+          return;
+        }
+      }
 
-      if (pdfCpf && memberCpf !== pdfCpf) {
-        toast.error("Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado.");
+      // 4. Check if any vaccines were found
+      if (result.vaccines.length === 0) {
+        toast.error("Nenhuma vacina encontrada no documento. Verifique se o PDF é válido.");
         return;
       }
 
-      setImportVaccines(MOCK_IMPORTED);
+      setImportVaccines(result.vaccines);
       setReviewOpen(true);
     } catch {
-      toast.error("Erro ao enviar o arquivo. Tente novamente.");
+      toast.error("Erro ao processar o arquivo. Tente novamente.");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
