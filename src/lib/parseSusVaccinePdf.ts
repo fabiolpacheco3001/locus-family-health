@@ -359,9 +359,12 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     // Apply Smart Mapping
     const mapped = mapVaccineToStandard(fullName);
 
+    // Clean details — remove residual dates
+    const cleanDetails = mapped.details.toUpperCase().replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '').replace(/\s+/g, ' ').trim();
+
     vaccines.push({
       name: mapped.standardName,
-      details: mapped.details.toUpperCase().trim(),
+      details: cleanDetails || undefined,
       dose_label: doseLabel || undefined,
       applied_date: isoDate,
       batch: cleanBatch,

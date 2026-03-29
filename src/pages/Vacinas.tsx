@@ -546,9 +546,9 @@ const Vacinas = () => {
               </div>
             </div>
 
-            {/* Linha 3: Fabricante/Detalhes (100%) */}
+            {/* Linha 3: Informações Adicionais (100%) */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Fabricante / Detalhes</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Informações Adicionais</label>
               <input
                 type="text"
                 placeholder="Ex: Pfizer, Coronavac..."
