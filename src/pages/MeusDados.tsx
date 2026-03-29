@@ -106,6 +106,7 @@ const MeusDados = () => {
           cpf: cpf || null,
           avatar_url: avatarUrl || null,
           blood_type: bloodType || null,
+          relationship: relationship || "Outros",
         });
       } else {
         // Auto-healing: create profile + link it
