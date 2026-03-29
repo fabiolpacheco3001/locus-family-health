@@ -109,7 +109,7 @@ function extractDoseLabel(line: string): string | null {
   if (/[Úú]nica/i.test(raw)) return "Dose Única";
   if (/[Rr]efor[çc]o/i.test(raw)) return "Reforço";
   if (/\d+ª\s*Dose/i.test(raw)) return raw.replace(/\s+/g, " ");
-+
+
   const num = raw.match(/\d/);
   return num ? `Dose ${num[0]}` : null;
 }
