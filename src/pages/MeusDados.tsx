@@ -116,7 +116,7 @@ const MeusDados = () => {
             user_id: user!.id,
             group_id: groupId,
             name: name.trim(),
-            relationship: "Titular",
+            relationship: relationship || "Outros",
             birth_date: birthDate || null,
             gender: gender || null,
             phone: phone || null,
