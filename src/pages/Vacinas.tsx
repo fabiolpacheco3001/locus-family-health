@@ -185,6 +185,7 @@ const Vacinas = () => {
   const openEdit = (v: Vaccine) => {
     setEditingVaccine(v);
     const isStandard = VACCINE_OPTIONS.includes(v.name);
+    const rawCity = v.city ?? "";
     setForm({
       name: isStandard ? v.name : "Outra (especificar)",
       customName: isStandard ? "" : v.name,
@@ -195,9 +196,10 @@ const Vacinas = () => {
       details: v.details ?? "",
       dose_type: v.dose_type ?? "",
       facility: v.facility ?? "",
-      city: v.city ?? "",
+      city: "", // will be resolved by pendingCity match
       state: v.state ?? "",
     });
+    setPendingCity(rawCity);
     setFormDrawerOpen(true);
   };
 
