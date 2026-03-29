@@ -73,15 +73,32 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
           <Droplets className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Rotina e Higiene</h2>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5"
-          onClick={() => setDrawerOpen(true)}
-        >
-          <Plus size={16} />
-          Adicionar
-        </Button>
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSortOrder('asc')} className={sortOrder === 'asc' ? 'font-semibold' : ''}>
+                Mais antigos primeiro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
+                Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <Plus size={16} />
+            Adicionar
+          </Button>
+        </div>
       </div>
 
       {routines.length === 0 ? (
