@@ -663,9 +663,12 @@ const Vacinas = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm">{v.name}</p>
+                  {v.details && (
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.details}</p>
+                  )}
                   {v.applied_date && (
                     <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                      {formatDate(v.applied_date)}
+                      {[v.dose_type, formatDate(v.applied_date)].filter(Boolean).join(" · ")}
                     </p>
                   )}
                   {v.booster_date && (
