@@ -75,12 +75,22 @@ function extractDoseLabel(line: string): string | null {
   const doseMatch = line.match(/(\d+ª\s*Dose|Dose\s*\d+|Dose\s*[Úú]nica|Refor[çc]o|\d\/\d|D[1-5])/i);
   if (!doseMatch) return null;
   const raw = doseMatch[1].trim();
-  if (/^[1-9]\/\d$/i.test(raw)) return raw;
-  if (/[Úú]nica/i.test(raw)) return "Dose Única";
+  return translateDose(raw);
+}
+
+/** De/Para: traduz dose bruta do PDF para o padrão do sistema */
+function translateDose(raw: string): string | null {
+  if (/1\/2/i.test(raw)) return "1ª Dose";
+  if (/2\/2/i.test(raw)) return "2ª Dose";
+  if (/[Úú]nica/i.test(raw)) return "Única";
   if (/[Rr]efor[çc]o/i.test(raw)) return "Reforço";
-  if (/\d+ª\s*Dose/i.test(raw)) return raw.replace(/\s+/g, " ");
-  const num = raw.match(/\d/);
-  return num ? `Dose ${num[0]}` : null;
+  // "3ª Dose", "3/3", "D3", etc.
+  const num = raw.match(/(\d)/);
+  if (num) {
+    const n = parseInt(num[1], 10);
+    if (n >= 1 && n <= 3) return `${n}ª Dose`;
+  }
+  return raw;
 }
 
 const FOOTER_PATTERNS = [
