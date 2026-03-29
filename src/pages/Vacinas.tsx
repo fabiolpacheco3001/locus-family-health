@@ -29,8 +29,18 @@ type Vaccine = {
   booster_date: string | null;
   batch: string | null;
   side_effects: string | null;
+  details: string | null;
+  dose_type: string | null;
+  facility: string | null;
+  city: string | null;
+  state: string | null;
   created_at: string;
 };
+
+const UF_OPTIONS = [
+  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA",
+  "PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO",
+];
 
 const HUMAN_VACCINE_OPTIONS = [
   "BCG",
@@ -109,6 +119,11 @@ const Vacinas = () => {
     booster_date: "",
     batch: "",
     side_effects: "",
+    details: "",
+    dose_type: "",
+    facility: "",
+    city: "",
+    state: "",
   });
 
   const isCustom = form.name === "Outra (especificar)";
@@ -128,7 +143,7 @@ const Vacinas = () => {
   });
 
   const resetForm = () =>
-    setForm({ name: "", customName: "", applied_date: "", booster_date: "", batch: "", side_effects: "" });
+    setForm({ name: "", customName: "", applied_date: "", booster_date: "", batch: "", side_effects: "", details: "", dose_type: "", facility: "", city: "", state: "" });
 
   const openManual = () => {
     setActionDrawerOpen(false);
@@ -147,6 +162,11 @@ const Vacinas = () => {
       booster_date: v.booster_date ?? "",
       batch: v.batch ?? "",
       side_effects: v.side_effects ?? "",
+      details: v.details ?? "",
+      dose_type: v.dose_type ?? "",
+      facility: v.facility ?? "",
+      city: v.city ?? "",
+      state: v.state ?? "",
     });
     setFormDrawerOpen(true);
   };
@@ -168,6 +188,11 @@ const Vacinas = () => {
         booster_date: form.booster_date || null,
         batch: form.batch.trim() || null,
         side_effects: form.side_effects.trim() || null,
+        details: form.details.trim() || null,
+        dose_type: form.dose_type.trim() || null,
+        facility: form.facility.trim() || null,
+        city: form.city.trim() || null,
+        state: form.state || null,
         ...(groupId ? { group_id: groupId } : {}),
       } as any);
       if (error) throw error;
@@ -190,6 +215,11 @@ const Vacinas = () => {
           booster_date: form.booster_date || null,
           batch: form.batch.trim() || null,
           side_effects: form.side_effects.trim() || null,
+          details: form.details.trim() || null,
+          dose_type: form.dose_type.trim() || null,
+          facility: form.facility.trim() || null,
+          city: form.city.trim() || null,
+          state: form.state || null,
         })
         .eq("id", editingVaccine!.id);
       if (error) throw error;
@@ -334,6 +364,12 @@ const Vacinas = () => {
         family_member_id: id,
         name: v.name,
         applied_date: v.applied_date,
+        details: v.details || null,
+        dose_type: v.dose_label || null,
+        batch: v.batch || null,
+        facility: v.facility || null,
+        city: v.city || null,
+        state: v.state || null,
         ...(groupId ? { group_id: groupId } : {}),
       }));
 
@@ -439,18 +475,31 @@ const Vacinas = () => {
           </DrawerHeader>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4 overscroll-contain no-scrollbar">
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Vacina</label>
-              <select
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value, customName: "" })}
-                className={INPUT_CLASSES}
-              >
-                <option value="">Selecione...</option>
-                {VACCINE_OPTIONS.map((v) => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
+            {/* Linha 1: Vacina + Detalhes */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Vacina</label>
+                <select
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value, customName: "" })}
+                  className={INPUT_CLASSES}
+                >
+                  <option value="">Selecione...</option>
+                  {VACCINE_OPTIONS.map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Fabricante/Detalhes</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Pfizer, Coronavac..."
+                  value={form.details}
+                  onChange={(e) => setForm({ ...form, details: e.target.value })}
+                  className={INPUT_CLASSES}
+                />
+              </div>
             </div>
 
             {isCustom && (
@@ -466,6 +515,7 @@ const Vacinas = () => {
               </div>
             )}
 
+            {/* Linha 2: Data + Dose */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium text-foreground mb-1 block">Data da aplicação</label>
@@ -479,29 +529,74 @@ const Vacinas = () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">Data de reforço</label>
+                <label className="text-sm font-medium text-foreground mb-1 block">Dose</label>
+                <select
+                  value={form.dose_type}
+                  onChange={(e) => setForm({ ...form, dose_type: e.target.value })}
+                  className={INPUT_CLASSES}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="1ª Dose">1ª Dose</option>
+                  <option value="2ª Dose">2ª Dose</option>
+                  <option value="3ª Dose">3ª Dose</option>
+                  <option value="Dose Única">Dose Única</option>
+                  <option value="Reforço">Reforço</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Linha 3: Lote + Estabelecimento */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Lote</label>
                 <input
-                  type="date"
-                  value={form.booster_date}
-                  onChange={(e) => setForm({ ...form, booster_date: e.target.value })}
-                  min="1900-01-01"
-                  max="2099-12-31"
+                  type="text"
+                  placeholder="Ex: FA123/2026"
+                  value={form.batch}
+                  onChange={(e) => setForm({ ...form, batch: e.target.value })}
+                  className={INPUT_CLASSES}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Estabelecimento</label>
+                <input
+                  type="text"
+                  placeholder="Ex: UBS Centro"
+                  value={form.facility}
+                  onChange={(e) => setForm({ ...form, facility: e.target.value })}
                   className={INPUT_CLASSES}
                 />
               </div>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Lote</label>
-              <input
-                type="text"
-                placeholder="Ex: FA123/2026"
-                value={form.batch}
-                onChange={(e) => setForm({ ...form, batch: e.target.value })}
-                className={INPUT_CLASSES}
-              />
+            {/* Linha 4: Município + UF */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">Município</label>
+                <input
+                  type="text"
+                  placeholder="Ex: São Paulo"
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className={INPUT_CLASSES}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-foreground mb-1 block">UF</label>
+                <select
+                  value={form.state}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
+                  className={INPUT_CLASSES}
+                >
+                  <option value="">UF...</option>
+                  {UF_OPTIONS.map((uf) => (
+                    <option key={uf} value={uf}>{uf}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
+            {/* Linha 5: Efeitos Colaterais */}
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Efeitos colaterais</label>
               <textarea
@@ -568,9 +663,12 @@ const Vacinas = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-foreground text-sm">{v.name}</p>
+                  {v.details && (
+                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.details}</p>
+                  )}
                   {v.applied_date && (
                     <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                      {formatDate(v.applied_date)}
+                      {[v.dose_type, formatDate(v.applied_date)].filter(Boolean).join(" · ")}
                     </p>
                   )}
                   {v.booster_date && (
