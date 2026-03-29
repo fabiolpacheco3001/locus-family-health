@@ -1,0 +1,1 @@
+ALTER TABLE public.pet_routines ADD COLUMN IF NOT EXISTS time_performed text;

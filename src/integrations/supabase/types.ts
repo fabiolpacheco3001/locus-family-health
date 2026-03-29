@@ -852,6 +852,7 @@ export type Database = {
           recurrence: string | null
           routine_type: string
           status: string
+          time_performed: string | null
           user_id: string
         }
         Insert: {
@@ -864,6 +865,7 @@ export type Database = {
           recurrence?: string | null
           routine_type: string
           status?: string
+          time_performed?: string | null
           user_id: string
         }
         Update: {
@@ -876,6 +878,7 @@ export type Database = {
           recurrence?: string | null
           routine_type?: string
           status?: string
+          time_performed?: string | null
           user_id?: string
         }
         Relationships: [

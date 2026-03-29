@@ -1,11 +1,13 @@
 import * as React from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useSmartBack from "@/hooks/useSmartBack";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -42,6 +44,7 @@ const Agenda = () => {
   const [searchParams] = useSearchParams();
   const currentFilter = searchParams.get("filter");
   const today = startOfDay(new Date());
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["agenda", groupId, isAdmin, linkedMemberId, managedProfiles],
@@ -159,14 +162,19 @@ const Agenda = () => {
   });
 
   const filteredItems = React.useMemo(() => {
-    if (!currentFilter) return items;
-    if (currentFilter === "consultas") return items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
-    if (currentFilter === "exames") return items.filter((i) => i.kind === "exam");
-    if (currentFilter === "upcoming") return items.filter((i) =>
+    let result = items;
+    if (currentFilter === "consultas") result = items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
+    else if (currentFilter === "exames") result = items.filter((i) => i.kind === "exam");
+    else if (currentFilter === "upcoming") result = items.filter((i) =>
       i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Pronto"
     );
-    return items;
-  }, [items, currentFilter]);
+    return [...result].sort((a, b) => {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+      return sortOrder === 'asc' ? diff : -diff;
+    });
+  }, [items, currentFilter, sortOrder]);
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
@@ -176,12 +184,25 @@ const Agenda = () => {
         {/* Sticky Header with Glassmorphism */}
         <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-2 -mx-4 px-5">
           <div className="flex items-center gap-3">
-            {currentFilter && (
-              <Button variant="ghost" size="icon" onClick={goBack}>
-                <ArrowLeft size={22} />
-              </Button>
-            )}
-            <h1 className="font-bold text-foreground text-lg">Agenda</h1>
+            <Button variant="ghost" size="icon" onClick={goBack}>
+              <ArrowLeft size={22} />
+            </Button>
+            <h1 className="flex-1 font-bold text-foreground text-lg">Agenda</h1>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setSortOrder('asc')} className={sortOrder === 'asc' ? 'font-semibold' : ''}>
+                  Mais antigos primeiro
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
+                  Mais recentes primeiro
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         {currentFilter && filterLabels[currentFilter] && (

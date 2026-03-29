@@ -34,7 +34,7 @@ const Consultas = () => {
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'proximas' | 'historico'>('proximas');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const { consultations, isLoading, addConsultation, updateConsultation, deleteConsultation } = useConsultations(id!);
 
   useEffect(() => {
