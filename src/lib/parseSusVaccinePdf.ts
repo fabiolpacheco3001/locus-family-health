@@ -101,25 +101,71 @@ function isValidVaccineName(line: string): boolean {
 }
 
 function extractDoseLabel(line: string): string | null {
-  const doseMatch = line.match(/(\d+ª?\s*Dose|Dose\s*\d+|Dose\s*[Úú]nica|Refor[çc]o|D[1-5])/i);
-  if (doseMatch) {
-    const raw = doseMatch[1];
-    if (/[Úú]nica/i.test(raw)) return "Dose Única";
-    if (/[Rr]efor[çc]o/i.test(raw)) return "Reforço";
-    const num = raw.match(/\d/);
-    if (num) return `Dose ${num[0]}`;
+  const doseMatch = line.match(/(\d+ª\s*Dose|Dose\s*\d+|Dose\s*[Úú]nica|Refor[çc]o|\d\/\d|D[1-5])/i);
+  if (!doseMatch) return null;
+
+  const raw = doseMatch[1].trim();
+  if (/^[1-9]\/\d$/i.test(raw)) return raw;
+  if (/[Úú]nica/i.test(raw)) return "Dose Única";
+  if (/[Rr]efor[çc]o/i.test(raw)) return "Reforço";
+  if (/\d+ª\s*Dose/i.test(raw)) return raw.replace(/\s+/g, " ");
+
+  const num = raw.match(/\d/);
+  return num ? `Dose ${num[0]}` : null;
+}
+
+const FOOTER_PATTERNS = [
+  /^carteira de vacina[çc][aã]o emitida/i,
+  /^esta carteira/i,
+  /^sua autenticidade/i,
+  /^\*\*?\s*cnes/i,
+  /^obs\./i,
+];
+
+function isFooterLine(line: string): boolean {
+  return FOOTER_PATTERNS.some((pattern) => pattern.test(line));
+}
+
+function normalizeSpaces(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+function sanitizeVaccineName(value: string): string {
+  return normalizeSpaces(
+    value
+      .replace(/\bRefor[çc]o\b/gi, "")
+      .replace(/\bDose\s*[Úú]nica\b/gi, "")
+      .replace(/\b\d+ª\s*Dose\b/gi, "")
+      .replace(/\bDose\s*\d+\b/gi, "")
+      .replace(/\b\d\/\d\b/g, "")
+      .replace(/\b\d+º\b/g, "")
+  );
+}
+
+function extractNameSuffix(line: string): string | null {
+  const normalized = normalizeSpaces(line);
+  if (!normalized || isFooterLine(normalized) || SKIP_PATTERNS.some((p) => p.test(normalized))) {
+    return null;
   }
+
+  const doseMatch = normalized.match(/(\d+ª\s*Dose|Dose\s*\d+|Dose\s*[Úú]nica|Refor[çc]o|\d\/\d|D[1-5])/i);
+  if (doseMatch && typeof doseMatch.index === "number") {
+    const prefix = sanitizeVaccineName(normalized.slice(0, doseMatch.index));
+    return prefix && prefix.length <= 24 ? prefix : null;
+  }
+
+  if (/^[A-ZÀ-Ý0-9 .-]{1,24}$/u.test(normalized) && normalized.split(" ").length <= 3) {
+    return normalized;
+  }
+
   return null;
 }
 
 /**
  * Parses vaccine records using a structural state-machine approach.
- * Step A: Cut header — find first "Vacina/Profilaxia" or "VACINAÇÃO" marker.
- * Step B: Split remaining text into clean lines.
- * Step C: Anchor on strict date lines — previous line = vaccine name, next line = dose.
+ * Handles both strict date-only rows and hybrid rows where name/date/dose share the same line.
  */
 function extractVaccines(text: string): ImportedVaccine[] {
-  // Step A: Cut header to avoid capturing birth dates, user names, etc.
   const markers = ["vacina/profilaxia", "vacinação"];
   let startIdx = -1;
   const lowerText = text.toLowerCase();
@@ -129,40 +175,75 @@ function extractVaccines(text: string): ImportedVaccine[] {
       startIdx = idx;
     }
   }
+
   const tableText = startIdx !== -1 ? text.slice(startIdx) : text;
+  const lines = tableText
+    .split("\n")
+    .map((line) => normalizeSpaces(line))
+    .filter(Boolean);
 
-  // Step B: Split into clean lines
-  const lines = tableText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
-
-  // Step C: Anchor on strict date lines (line is ONLY DD/MM/YYYY)
-  const strictDateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
   const vaccines: ImportedVaccine[] = [];
+  const dateRegex = /\b\d{2}\/\d{2}\/\d{4}\b/;
+  let pendingNameParts: string[] = [];
 
-  for (let i = 1; i < lines.length; i++) {
-    if (!strictDateRegex.test(lines[i])) continue;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
 
-    const dateStr = lines[i];
+    if (isFooterLine(line)) break;
+    if (SKIP_PATTERNS.some((pattern) => pattern.test(line))) continue;
+
+    const dateMatch = line.match(dateRegex);
+    if (!dateMatch || typeof dateMatch.index !== "number") {
+      pendingNameParts.push(line);
+      continue;
+    }
+
+    const dateStr = dateMatch[0];
     const isoDate = convertDateToISO(dateStr);
-    if (!isoDate) continue;
+    if (!isoDate) {
+      pendingNameParts = [];
+      continue;
+    }
 
-    // Vaccine name = previous line
-    const nameLine = lines[i - 1];
-    if (!isValidVaccineName(nameLine)) continue;
+    const beforeDate = sanitizeVaccineName(line.slice(0, dateMatch.index));
+    const afterDate = normalizeSpaces(line.slice(dateMatch.index + dateStr.length));
 
-    // Dose = next line (if it exists and looks like a dose label)
-    let doseLabel: string | null = null;
-    if (i + 1 < lines.length) {
-      doseLabel = extractDoseLabel(lines[i + 1]);
+    let name = sanitizeVaccineName([...pendingNameParts, beforeDate].filter(Boolean).join(" "));
+    if (!isValidVaccineName(name)) {
+      pendingNameParts = [];
+      continue;
+    }
+
+    let doseLabel = extractDoseLabel(afterDate);
+    const nextLine = lines[i + 1];
+    let consumedNextLine = false;
+
+    if (nextLine && !isFooterLine(nextLine) && !nextLine.match(dateRegex) && !SKIP_PATTERNS.some((pattern) => pattern.test(nextLine))) {
+      const suffix = extractNameSuffix(nextLine);
+      if (suffix) {
+        name = sanitizeVaccineName(`${name} ${suffix}`);
+        consumedNextLine = true;
+      }
+
+      if (!doseLabel) {
+        const nextDose = extractDoseLabel(nextLine);
+        if (nextDose) {
+          doseLabel = nextDose;
+          consumedNextLine = true;
+        }
+      }
     }
 
     vaccines.push({
-      name: nameLine.toUpperCase().trim(),
+      name: name.toUpperCase().trim(),
       dose_label: doseLabel || undefined,
       applied_date: isoDate,
     });
+
+    pendingNameParts = [];
+    if (consumedNextLine) i += 1;
   }
 
-  // Deduplicate by name+date
   const seen = new Set<string>();
   return vaccines.filter((v) => {
     const key = `${v.name}|${v.applied_date}`;
