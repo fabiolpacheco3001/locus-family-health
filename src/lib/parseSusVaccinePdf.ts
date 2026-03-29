@@ -131,7 +131,7 @@ function detectColumns(rows: TableRow[]): ColumnBounds {
 function getCellForColumn(cells: TextCell[], col: { start: number; end: number } | undefined): string {
   if (!col) return "";
   // Find cells whose X falls within the column range (with tolerance)
-  const tolerance = 15;
+  const tolerance = 8;
   const matches = cells.filter(
     (c) => c.x >= col.start - tolerance && c.x <= col.end + tolerance
   );
