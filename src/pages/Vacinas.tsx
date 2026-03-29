@@ -396,6 +396,8 @@ const Vacinas = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Vacinas</h1>
         </div>
 
+        <VaccineImportCard onImportReady={handleImportReady} />
+
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
