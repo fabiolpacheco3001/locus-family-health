@@ -327,7 +327,8 @@ const Vacinas = () => {
 
       setImportVaccines(result.vaccines);
       setReviewOpen(true);
-    } catch {
+    } catch (error) {
+      console.error("Erro no Parser:", error);
       toast.error("Erro ao processar o arquivo. Tente novamente.");
     } finally {
       setUploading(false);
