@@ -246,7 +246,7 @@ const FOOTER_PATTERNS = [
   /carteira de vacina[çc][aã]o emitida/i,
   /esta carteira/i,
   /sua autenticidade/i,
-  /\*\*?\s*cnes/i,
+  /^\*\*?\s*cnes\s*[–\-]/i,
   /^obs\./i,
 ];
 
