@@ -64,112 +64,40 @@ function extractCpf(text: string): string | null {
 }
 
 /**
- * Parses vaccine records from the extracted text.
- * Handles multiple vaccine blocks in the SUS PDF format.
+ * Noise patterns — lines matching these are headers/metadata, not vaccine names.
  */
-function extractVaccines(text: string): ImportedVaccine[] {
-  const vaccines: ImportedVaccine[] = [];
+const SKIP_PATTERNS = [
+  /^data\b/i,
+  /^dose\b/i,
+  /^lote\b/i,
+  /^fabricante/i,
+  /^unidade/i,
+  /^vacinador/i,
+  /^grupo\b/i,
+  /^estrat[eé]gia/i,
+  /^cnes\b/i,
+  /^vacinas?\s+soros/i,
+  /^diluentes/i,
+  /^imunobiol[oó]gico/i,
+  /^situa[çc][aã]o/i,
+  /^cart(eira|ão)/i,
+  /^nacional/i,
+  /^minist[eé]rio/i,
+  /^sistema/i,
+  /^cpf/i,
+  /^cns\b/i,
+  /^nome\b/i,
+  /^p[aá]gina/i,
+  /^vacina\/profilaxia/i,
+  /^imuniza[çc]/i,
+];
 
-  // Date pattern DD/MM/YYYY
-  const datePattern = /(\d{2}\/\d{2}\/\d{4})/g;
-
-  // Split text into lines
-  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const dates = line.match(datePattern);
-    if (!dates || dates.length === 0) continue;
-
-    // Try to extract vaccine name from the same line or surrounding lines
-    // The SUS PDF typically has: Vaccine Name | Dose | Date | Lot | Location
-    // or variations thereof
-
-    // Remove dates and common noise words to isolate vaccine name
-    let vaccineName = extractVaccineNameFromLine(line, lines, i);
-    if (!vaccineName) continue;
-
-    // Extract dose label if present
-    const doseLabel = extractDoseLabel(line);
-
-    for (const dateStr of dates) {
-      const isoDate = convertDateToISO(dateStr);
-      if (!isoDate) continue;
-
-      vaccines.push({
-        name: vaccineName.toUpperCase().trim(),
-        dose_label: doseLabel || undefined,
-        applied_date: isoDate,
-      });
-    }
-  }
-
-  // Deduplicate by name+date
-  const seen = new Set<string>();
-  return vaccines.filter((v) => {
-    const key = `${v.name}|${v.applied_date}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function extractVaccineNameFromLine(line: string, allLines: string[], index: number): string | null {
-  // Common SUS PDF noise / headers to skip
-  const skipPatterns = [
-    /^data\b/i,
-    /^dose\b/i,
-    /^lote\b/i,
-    /^fabricante/i,
-    /^unidade/i,
-    /^vacinador/i,
-    /^grupo\b/i,
-    /^estrat[eé]gia/i,
-    /^cnes\b/i,
-    /^vacinas?\s+soros/i,
-    /^diluentes/i,
-    /^imunobiol[oó]gico/i,
-    /^situa[çc][aã]o/i,
-    /^cart(eira|ão)/i,
-    /^nacional/i,
-    /^minist[eé]rio/i,
-    /^sistema/i,
-    /^cpf/i,
-    /^cns\b/i,
-    /^nome\b/i,
-    /^p[aá]gina/i,
-  ];
-
-  // Clean the line: remove dates, lot numbers, UF codes
-  let cleaned = line
-    .replace(/\d{2}\/\d{2}\/\d{4}/g, "")
-    .replace(/\b[A-Z]{2}\d{6,}\b/g, "") // lot numbers
-    .replace(/\b\d{7,}\b/g, "") // CNES and other long numbers
-    .replace(/\b(Dose\s*\d*|[12345]ª?\s*Dose|Dose\s*[Úú]nica|Refor[çc]o|D\d)\b/gi, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-
-  if (cleaned.length < 3) {
-    // Try the previous line for the vaccine name
-    if (index > 0) {
-      const prev = allLines[index - 1].trim();
-      if (prev.length >= 3 && !skipPatterns.some((p) => p.test(prev)) && !/\d{2}\/\d{2}\/\d{4}/.test(prev)) {
-        return prev;
-      }
-    }
-    return null;
-  }
-
-  if (skipPatterns.some((p) => p.test(cleaned))) return null;
-
-  // Truncate very long strings (likely multiple columns merged)
-  // Take only the first meaningful segment
-  const segments = cleaned.split(/\s{3,}/);
-  const candidate = segments[0].trim();
-
-  if (candidate.length < 3) return null;
-
-  return candidate;
+function isValidVaccineName(line: string): boolean {
+  if (!line || line.length < 3) return false;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(line)) return false;
+  if (/^\d+$/.test(line)) return false;
+  if (SKIP_PATTERNS.some((p) => p.test(line))) return false;
+  return true;
 }
 
 function extractDoseLabel(line: string): string | null {
@@ -182,6 +110,66 @@ function extractDoseLabel(line: string): string | null {
     if (num) return `Dose ${num[0]}`;
   }
   return null;
+}
+
+/**
+ * Parses vaccine records using a structural state-machine approach.
+ * Step A: Cut header — find first "Vacina/Profilaxia" or "VACINAÇÃO" marker.
+ * Step B: Split remaining text into clean lines.
+ * Step C: Anchor on strict date lines — previous line = vaccine name, next line = dose.
+ */
+function extractVaccines(text: string): ImportedVaccine[] {
+  // Step A: Cut header to avoid capturing birth dates, user names, etc.
+  const markers = ["vacina/profilaxia", "vacinação"];
+  let startIdx = -1;
+  const lowerText = text.toLowerCase();
+  for (const marker of markers) {
+    const idx = lowerText.indexOf(marker);
+    if (idx !== -1 && (startIdx === -1 || idx < startIdx)) {
+      startIdx = idx;
+    }
+  }
+  const tableText = startIdx !== -1 ? text.slice(startIdx) : text;
+
+  // Step B: Split into clean lines
+  const lines = tableText.split("\n").map((l) => l.trim()).filter((l) => l.length > 0);
+
+  // Step C: Anchor on strict date lines (line is ONLY DD/MM/YYYY)
+  const strictDateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+  const vaccines: ImportedVaccine[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    if (!strictDateRegex.test(lines[i])) continue;
+
+    const dateStr = lines[i];
+    const isoDate = convertDateToISO(dateStr);
+    if (!isoDate) continue;
+
+    // Vaccine name = previous line
+    const nameLine = lines[i - 1];
+    if (!isValidVaccineName(nameLine)) continue;
+
+    // Dose = next line (if it exists and looks like a dose label)
+    let doseLabel: string | null = null;
+    if (i + 1 < lines.length) {
+      doseLabel = extractDoseLabel(lines[i + 1]);
+    }
+
+    vaccines.push({
+      name: nameLine.toUpperCase().trim(),
+      dose_label: doseLabel || undefined,
+      applied_date: isoDate,
+    });
+  }
+
+  // Deduplicate by name+date
+  const seen = new Set<string>();
+  return vaccines.filter((v) => {
+    const key = `${v.name}|${v.applied_date}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function convertDateToISO(dateStr: string): string | null {
