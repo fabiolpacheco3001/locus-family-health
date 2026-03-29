@@ -76,6 +76,8 @@ const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => 
       setTracksCycle(!!member.tracks_menstrual_cycle);
       setSpecies(member.species || "");
       setBreed(member.breed || "");
+      setCpf(member.cpf || "");
+      setPhone(member.phone || "");
     }
   }, [open, member]);
 
