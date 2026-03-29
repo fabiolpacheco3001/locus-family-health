@@ -16,9 +16,11 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import VaccineImportCard from "@/components/VaccineImportCard";
+import VaccineImportReviewDrawer, { type ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
 
 type Vaccine = {
   id: string;
