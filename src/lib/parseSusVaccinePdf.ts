@@ -357,11 +357,22 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
 
     // If city is empty but facility contains a known city pattern at the end, split it
     if (!cleanCity && cleanFacility) {
-      // Try to split: last word(s) that look like a city name (all uppercase, no numbers)
-      const parts = cleanFacility.split(/\s{2,}/); // double-space often separates columns in pdfjs
-      if (parts.length >= 2) {
-        cleanFacility = parts.slice(0, -1).join(" ").trim();
-        cleanCity = parts[parts.length - 1].trim();
+      // Try double-space split first (pdfjs often separates columns this way)
+      const dsParts = cleanFacility.split(/\s{2,}/);
+      if (dsParts.length >= 2) {
+        cleanFacility = dsParts.slice(0, -1).join(" ").trim();
+        cleanCity = dsParts[dsParts.length - 1].trim();
+      } else {
+        // Fallback: last word as city candidate (single-space split)
+        const words = cleanFacility.trim().split(/\s+/);
+        if (words.length > 2) {
+          const candidate = words[words.length - 1];
+          // Only split if the last word looks like a city name (all uppercase, no numbers, 3+ chars)
+          if (/^[A-Z]{3,}$/.test(candidate)) {
+            cleanCity = candidate;
+            cleanFacility = words.slice(0, -1).join(" ").trim();
+          }
+        }
       }
     }
 
