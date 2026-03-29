@@ -119,7 +119,7 @@ const Notificacoes = () => {
                       onClick={() => clearAllNotifications.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      Excluir tudo
+                      Sim, Excluir
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
