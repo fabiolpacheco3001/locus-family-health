@@ -109,7 +109,11 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {routines.map((r) => {
+          {[...routines].sort((a, b) => {
+            const dateA = new Date(a.date_performed).getTime();
+            const dateB = new Date(b.date_performed).getTime();
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+          }).map((r) => {
             const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
             const dateStr = format(parseISO(r.date_performed + "T12:00:00"), "dd MMM yyyy", { locale: ptBR });
             const recurrenceLabels: Record<string, string> = {
