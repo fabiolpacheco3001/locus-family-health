@@ -251,6 +251,8 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                   />
                 </div>
               </div>
+            </>
+          )}
         </div>
 
         <DrawerFooter className="flex-row gap-3">
