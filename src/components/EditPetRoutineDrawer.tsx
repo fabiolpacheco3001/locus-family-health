@@ -126,7 +126,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Data Realização</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Data</label>
               <input
                 type="date"
                 value={datePerformed}
@@ -135,17 +135,27 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
-              <select
-                value={recurrence}
-                onChange={(e) => setRecurrence(e.target.value)}
+              <label className="text-sm font-medium text-foreground mb-1 block">Hora (opc.)</label>
+              <input
+                type="time"
+                value={timePerformed}
+                onChange={(e) => setTimePerformed(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
-              >
-                {RECURRENCE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
+              />
             </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
+            <select
+              value={recurrence}
+              onChange={(e) => setRecurrence(e.target.value)}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
+            >
+              {RECURRENCE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           <div>
