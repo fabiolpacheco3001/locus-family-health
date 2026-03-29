@@ -25,6 +25,8 @@ export type NewConsultation = {
   type?: string | null;
   symptoms?: string | null;
   questions?: string | null;
+  status?: string;
+  cancel_reason?: string | null;
 };
 
 export type UpdateConsultation = {

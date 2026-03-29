@@ -26,6 +26,8 @@ export type NewExam = {
   status?: string;
   file_url?: string | null;
   consultation_id?: string | null;
+  cancel_reason?: string | null;
+  result_date?: string | null;
 };
 
 export type UpdateExam = {

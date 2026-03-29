@@ -48,6 +48,7 @@ export type NewMedication = {
   estoque_minimo?: number | null;
   receita_url?: string | null;
   reason?: string | null;
+  status?: string;
 };
 
 export type UpdateMedication = {
