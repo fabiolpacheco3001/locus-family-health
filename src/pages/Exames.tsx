@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const statusColors: Record<string, string> = {
   Agendado: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -33,6 +34,7 @@ const Exames = () => {
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const { exams, isLoading, addExam, deleteExam, updateExam } = useExams(id!);
 
   useEffect(() => {
@@ -66,9 +68,13 @@ const Exames = () => {
     } catch { /* handled */ }
   };
 
-  const examesFiltrados = exams.filter(e => {
+  const examesFiltrados = [...exams.filter(e => {
     if (abaAtiva === 'pendentes') return e.status === 'Pendente' || e.status === 'Agendado' || e.status === 'Coletado' || e.status === 'Realizado';
     return e.status === 'Pronto' || e.status === 'Concluído' || e.status === 'Resultado Pronto' || e.status === 'Resultado Disponível' || e.status === 'Cancelado';
+  })].sort((a, b) => {
+    const dateA = a.exam_date ? new Date(a.exam_date).getTime() : 0;
+    const dateB = b.exam_date ? new Date(b.exam_date).getTime() : 0;
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
   const handleOpenEdit = (e: Exam) => {
@@ -138,8 +144,8 @@ const Exames = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Exames</h1>
         </div>
 
-        <div className="mb-4">
-          <div className="flex p-1 bg-slate-100 rounded-xl">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex p-1 bg-slate-100 rounded-xl flex-1">
             <button
               onClick={() => setAbaAtiva('pendentes')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
@@ -157,6 +163,21 @@ const Exames = () => {
               Concluídos
             </button>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSortOrder('asc')} className={sortOrder === 'asc' ? 'font-semibold' : ''}>
+                Mais antigos primeiro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
+                Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {isLoading ? (

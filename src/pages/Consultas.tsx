@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle } from "lucide-react";
+import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConsultations, Consultation } from "@/hooks/useConsultations";
 import AddConsultationDrawer from "@/components/AddConsultationDrawer";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
@@ -33,6 +34,7 @@ const Consultas = () => {
   const [editingConsultation, setEditingConsultation] = useState<Consultation | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'proximas' | 'historico'>('proximas');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const { consultations, isLoading, addConsultation, updateConsultation, deleteConsultation } = useConsultations(id!);
 
   useEffect(() => {
@@ -46,9 +48,13 @@ const Consultas = () => {
     }
   }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
-  const consultasFiltradas = consultations.filter(c => {
+  const consultasFiltradas = [...consultations.filter(c => {
     if (abaAtiva === 'proximas') return c.status === 'Agendada';
     return c.status === 'Realizada' || c.status === 'Cancelada';
+  })].sort((a, b) => {
+    const dateA = a.consultation_date ? new Date(a.consultation_date).getTime() : 0;
+    const dateB = b.consultation_date ? new Date(b.consultation_date).getTime() : 0;
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
   const handleOpenEdit = (c: Consultation) => {
@@ -136,8 +142,8 @@ const Consultas = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Consultas</h1>
         </div>
 
-        <div className="mb-4">
-          <div className="flex p-1 bg-slate-100 rounded-xl">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex p-1 bg-slate-100 rounded-xl flex-1">
             <button
               onClick={() => setAbaAtiva('proximas')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
@@ -155,6 +161,21 @@ const Consultas = () => {
               Concluídas
             </button>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSortOrder('asc')} className={sortOrder === 'asc' ? 'font-semibold' : ''}>
+                Mais antigos primeiro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
+                Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {isLoading ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope, CalendarPlus, CalendarCheck, CheckCircle } from "lucide-react";
+import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope, CalendarPlus, CalendarCheck, CheckCircle, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,7 @@ import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const Medicamentos = () => {
   const { id } = useParams();
@@ -24,6 +25,7 @@ const Medicamentos = () => {
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const { medications, isLoading, addMedication, updateMedication, deleteMedication } = useMedications(id!);
 
   useEffect(() => {
@@ -37,9 +39,13 @@ const Medicamentos = () => {
     }
   }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
 
-  const medicamentosFiltrados = medications.filter(med => {
+  const medicamentosFiltrados = [...medications.filter(med => {
     if (abaAtiva === 'ativos') return med.status === 'Ativo';
     return med.status === 'Concluído';
+  })].sort((a, b) => {
+    const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+    const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
   const handleOpenEdit = (m: Medication) => {
@@ -139,8 +145,8 @@ const Medicamentos = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Medicamentos</h1>
         </div>
 
-        <div className="mb-4">
-          <div className="flex p-1 bg-slate-100 rounded-xl">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex p-1 bg-slate-100 rounded-xl flex-1">
             <button
               onClick={() => setAbaAtiva('ativos')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
@@ -162,6 +168,21 @@ const Medicamentos = () => {
               Concluídos
             </button>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSortOrder('asc')} className={sortOrder === 'asc' ? 'font-semibold' : ''}>
+                Mais antigos primeiro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
+                Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {isLoading ? (

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Droplets, Plus, Scissors, Bug, Pill, HelpCircle } from "lucide-react";
+import { Droplets, Plus, Scissors, Bug, Pill, HelpCircle, ArrowUpDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AddPetRoutineDrawer from "@/components/AddPetRoutineDrawer";
@@ -24,6 +25,7 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { data: routines = [] } = useQuery({
     queryKey: ["pet_routines", familyMemberId],
@@ -71,15 +73,32 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
           <Droplets className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">Rotina e Higiene</h2>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5"
-          onClick={() => setDrawerOpen(true)}
-        >
-          <Plus size={16} />
-          Adicionar
-        </Button>
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setSortOrder('asc')} className={sortOrder === 'asc' ? 'font-semibold' : ''}>
+                Mais antigos primeiro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
+                Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => setDrawerOpen(true)}
+          >
+            <Plus size={16} />
+            Adicionar
+          </Button>
+        </div>
       </div>
 
       {routines.length === 0 ? (
@@ -90,7 +109,11 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
         </div>
       ) : (
         <div className="space-y-2">
-          {routines.map((r) => {
+          {[...routines].sort((a, b) => {
+            const dateA = new Date(a.date_performed).getTime();
+            const dateB = new Date(b.date_performed).getTime();
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+          }).map((r) => {
             const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
             const dateStr = format(parseISO(r.date_performed + "T12:00:00"), "dd MMM yyyy", { locale: ptBR });
             const recurrenceLabels: Record<string, string> = {
