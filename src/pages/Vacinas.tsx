@@ -124,6 +124,7 @@ const Vacinas = () => {
   });
 
   const isCustom = form.name === "Outra (especificar)";
+  const { ufs, cities, loadingCities } = useIbgeLocations(form.state);
 
   const { data: vaccines = [], isLoading } = useQuery({
     queryKey: ["vaccines", id],
