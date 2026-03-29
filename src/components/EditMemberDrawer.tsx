@@ -300,6 +300,30 @@ const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => 
                   </div>
                 </div>
 
+                {/* Grid: CPF + Telefone */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label>CPF</Label>
+                    <Input
+                      type="text"
+                      placeholder="000.000.000-00"
+                      value={cpf}
+                      onChange={(e) => setCpf(formatCpf(e.target.value))}
+                      className="w-full max-w-full box-border min-w-0 text-[16px]"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Telefone</Label>
+                    <Input
+                      type="tel"
+                      placeholder="(11) 99999-9999"
+                      value={phone}
+                      onChange={(e) => setPhone(formatPhone(e.target.value))}
+                      className="w-full max-w-full box-border min-w-0 text-[16px]"
+                    />
+                  </div>
+                </div>
+
                 {/* Toggle: Ciclo Menstrual */}
                 <div className="flex items-center justify-between rounded-xl bg-card border border-border/50 p-4">
                   <div className="space-y-0.5">
