@@ -55,6 +55,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
       setRoutineType(isKnown ? routine.routine_type : "Outro");
       setCustomType(isKnown ? "" : routine.routine_type);
       setDatePerformed(routine.date_performed);
+      setTimePerformed((routine as any).time_performed || "");
       setRecurrence(routine.recurrence || "none");
       setNotes(routine.notes || "");
     }
