@@ -230,9 +230,56 @@ const Vacinas = () => {
 
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
+  // --- Import flow ---
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [importPending, setImportPending] = useState(false);
+
+  const MOCK_IMPORTED: ImportedVaccine[] = [
+    { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 1 (COVID-19 ASTRAZENECA/OXFORD)", applied_date: "2021-04-28" },
+    { name: "COVID-19 ASTRAZENECA/OXFORD", dose_label: "Dose 2 (COVID-19 ASTRAZENECA/OXFORD)", applied_date: "2021-06-29" },
+    { name: "FEBRE AMARELA", dose_label: "Dose Única (FEBRE AMARELA)", applied_date: "2005-02-01" },
+  ];
+
+  const handleImportReady = (_fileUrl: string) => {
+    // Simulated OCR — open review drawer after short delay
+    setTimeout(() => setReviewOpen(true), 1200);
+  };
+
+  const handleConfirmImport = async (selected: ImportedVaccine[]) => {
+    if (!user || !id) return;
+    setImportPending(true);
+    try {
+      const rows = selected.map((v) => ({
+        user_id: user.id,
+        family_member_id: id,
+        name: v.name,
+        applied_date: v.applied_date,
+        ...(groupId ? { group_id: groupId } : {}),
+      }));
+      const { error } = await supabase.from("vaccines").insert(rows as any);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
+      setReviewOpen(false);
+      toast.success(`${selected.length} vacina(s) importada(s) com sucesso`);
+    } catch (err) {
+      console.error("Import error:", err);
+      toast.error("Erro ao importar vacinas");
+    } finally {
+      setImportPending(false);
+    }
+  };
+
   return (
     <>
-      {!drawerOpen && <FixedFAB onClick={openAdd} />}
+      {!drawerOpen && !reviewOpen && <FixedFAB onClick={openAdd} />}
+
+      <VaccineImportReviewDrawer
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        vaccines={MOCK_IMPORTED}
+        onConfirm={handleConfirmImport}
+        isPending={importPending}
+      />
 
       <Drawer open={drawerOpen} onOpenChange={(open) => !open && closeDrawer()} repositionInputs={false}>
         <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
