@@ -95,22 +95,35 @@ async function extractAll(buffer: ArrayBuffer): Promise<{ flatText: string; tabl
 function detectColumns(rows: TableRow[]): ColumnBounds {
   const bounds: ColumnBounds = {};
 
-  for (const row of rows) {
-    const rowText = row.cells.map((c) => c.text).join(" ");
-    // Header row contains "Vacina/Profilaxia" or similar
-    if (!/vacina\/profilaxia/i.test(rowText) && !/imunobiol[oó]gico/i.test(rowText)) continue;
+  // 1. Find the header row index containing "Vacina/Profilaxia"
+  let headerRowIndex = -1;
+  for (let i = 0; i < rows.length; i++) {
+    const rowText = rows[i].cells.map((c) => c.text).join(" ");
+    if (/vacina\/profilaxia/i.test(rowText) || /imunobiol[oó]gico/i.test(rowText)) {
+      headerRowIndex = i;
+      break;
+    }
+  }
+  if (headerRowIndex === -1) return bounds;
 
-    // Found a header row — map each cell to a column key
-    for (const cell of row.cells) {
-      for (const hdr of HEADER_LABELS) {
-        if (hdr.patterns.some((p) => p.test(cell.text))) {
-          bounds[hdr.key] = { start: cell.x, end: cell.x }; // end will be refined
-          break;
-        }
+  // 2. Collect cells from ALL rows within ±6 Y-units of the header row
+  const headerY = rows[headerRowIndex].y;
+  const allHeaderCells: TextCell[] = [];
+  for (const row of rows) {
+    if (Math.abs(row.y - headerY) <= 6) {
+      allHeaderCells.push(...row.cells);
+    }
+  }
+
+  // 3. Match column labels from the combined cell pool
+  for (const cell of allHeaderCells) {
+    for (const hdr of HEADER_LABELS) {
+      if (bounds[hdr.key]) continue;
+      if (hdr.patterns.some((p) => p.test(cell.text))) {
+        bounds[hdr.key] = { start: cell.x, end: cell.x };
+        break;
       }
     }
-
-    if (Object.keys(bounds).length > 0) break; // use first header row found
   }
 
   // Refine end boundaries: each column ends where the next one starts
