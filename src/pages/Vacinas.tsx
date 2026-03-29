@@ -143,7 +143,7 @@ const Vacinas = () => {
   });
 
   const resetForm = () =>
-    setForm({ name: "", customName: "", applied_date: "", booster_date: "", batch: "", side_effects: "" });
+    setForm({ name: "", customName: "", applied_date: "", booster_date: "", batch: "", side_effects: "", details: "", dose_type: "", facility: "", city: "", state: "" });
 
   const openManual = () => {
     setActionDrawerOpen(false);
