@@ -172,8 +172,10 @@ const Vacinas = () => {
     enabled: !!id,
   });
 
-  const resetForm = () =>
+  const resetForm = () => {
     setForm({ name: "", customName: "", applied_date: "", booster_date: "", batch: "", side_effects: "", details: "", dose_type: "", facility: "", city: "", state: "" });
+    setPendingCity("");
+  };
 
   const openManual = () => {
     setActionDrawerOpen(false);
