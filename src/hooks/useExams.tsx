@@ -14,6 +14,7 @@ export type Exam = {
   file_url: string | null;
   result_date: string | null;
   consultation_id: string | null;
+  cancel_reason: string | null;
   created_at: string;
   consultations?: { professional_name: string | null; specialty: string } | null;
 };
