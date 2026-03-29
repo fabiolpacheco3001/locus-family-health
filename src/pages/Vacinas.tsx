@@ -188,6 +188,11 @@ const Vacinas = () => {
         booster_date: form.booster_date || null,
         batch: form.batch.trim() || null,
         side_effects: form.side_effects.trim() || null,
+        details: form.details.trim() || null,
+        dose_type: form.dose_type.trim() || null,
+        facility: form.facility.trim() || null,
+        city: form.city.trim() || null,
+        state: form.state || null,
         ...(groupId ? { group_id: groupId } : {}),
       } as any);
       if (error) throw error;
