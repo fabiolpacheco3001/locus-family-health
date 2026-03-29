@@ -92,11 +92,15 @@ const SKIP_PATTERNS = [
   /^imuniza[çc]/i,
 ];
 
+const GARBAGE_TERMS = ["carteira", "digital", "nacional", "data de nascimento", "cpf/cns", "vacinação digital"];
+
 function isValidVaccineName(line: string): boolean {
   if (!line || line.length < 3) return false;
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(line)) return false;
   if (/^\d+$/.test(line)) return false;
   if (SKIP_PATTERNS.some((p) => p.test(line))) return false;
+  const lower = line.toLowerCase();
+  if (GARBAGE_TERMS.some((t) => lower.includes(t))) return false;
   return true;
 }
 
