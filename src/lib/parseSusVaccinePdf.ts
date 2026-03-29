@@ -75,7 +75,7 @@ async function extractAll(buffer: ArrayBuffer): Promise<{ flatText: string; tabl
       if (!("str" in item) || !("transform" in item)) continue;
       const textItem = item as { str: string; transform: number[] };
       if (!textItem.str.trim()) continue;
-      const y = Math.round(textItem.transform[5] / 4) * 4;
+      const y = Math.round(textItem.transform[5] / 2) * 2;
       const x = textItem.transform[4];
       if (!rowMap.has(y)) rowMap.set(y, []);
       rowMap.get(y)!.push({ x, text: textItem.str.trim() });
@@ -347,11 +347,19 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     // Clean up state (should be 2 uppercase chars)
     const cleanState = state && /^[A-Z]{2}$/.test(state.trim()) ? state.trim() : undefined;
 
-    // Clean city
-    const cleanCity = city.trim() || undefined;
+    // Clean city & facility — hard-split fallback when pdfjs merges them
+    let cleanCity = city.trim() || undefined;
+    let cleanFacility = facility.trim() || undefined;
 
-    // Clean facility
-    const cleanFacility = facility.trim() || undefined;
+    // If city is empty but facility contains a known city pattern at the end, split it
+    if (!cleanCity && cleanFacility) {
+      // Try to split: last word(s) that look like a city name (all uppercase, no numbers)
+      const parts = cleanFacility.split(/\s{2,}/); // double-space often separates columns in pdfjs
+      if (parts.length >= 2) {
+        cleanFacility = parts.slice(0, -1).join(" ").trim();
+        cleanCity = parts[parts.length - 1].trim();
+      }
+    }
 
     // Clean batch — keep only first word (strip strategy text like "Rotina")
     const cleanBatch = (batch.trim().split(/\s+/)[0]) || undefined;
@@ -359,8 +367,8 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     // Apply Smart Mapping
     const mapped = mapVaccineToStandard(fullName);
 
-    // Clean details — remove residual dates
-    const cleanDetails = mapped.details.toUpperCase().replace(/\b\d{2}\/\d{2}\/\d{4}\b/g, '').replace(/\s+/g, ' ').trim();
+    // Clean details — remove residual dates (aggressive)
+    const cleanDetails = mapped.details.toUpperCase().replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ').replace(/\s+/g, ' ').trim();
 
     vaccines.push({
       name: mapped.standardName,
