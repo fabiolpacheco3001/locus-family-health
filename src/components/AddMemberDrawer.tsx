@@ -17,7 +17,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const relationships = ["Titular", "Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
+const relationships = ["Filho(a)", "Cônjuge", "Pai/Mãe", "Irmão(ã)", "Outro"];
 const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 const genders = ["Masculino", "Feminino", "Outro", "Prefiro não informar"];
 const speciesOptions = ["Cachorro", "Gato", "Pássaro", "Outro"];

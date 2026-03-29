@@ -226,8 +226,18 @@ const MeusDados = () => {
           <p className="text-xs text-muted-foreground">Este é seu e-mail de login e não pode ser alterado aqui.</p>
         </div>
 
-        {/* Grid: Nascimento + Parentesco */}
+        {/* Grid: Parentesco + Nascimento */}
         <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label>Parentesco</Label>
+            <Input
+              value="Titular"
+              readOnly
+              disabled
+              className="w-full max-w-full box-border min-w-0 text-[16px] bg-muted cursor-not-allowed"
+            />
+          </div>
+
           <div className="space-y-1">
             <Label>Nascimento</Label>
             <input
@@ -239,16 +249,6 @@ const MeusDados = () => {
               max={new Date().toISOString().split("T")[0]}
               style={{ textAlign: "left" }}
               className="flex h-10 w-full max-w-full box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] text-left justify-start ring-offset-background [&::-webkit-date-and-time-value]:text-left"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label>Parentesco</Label>
-            <Input
-              value="Titular"
-              readOnly
-              disabled
-              className="w-full max-w-full box-border min-w-0 text-[16px] bg-muted cursor-not-allowed"
             />
           </div>
         </div>

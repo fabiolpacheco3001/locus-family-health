@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMedications } from "@/hooks/useMedications";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { sortFamilyMembers } from "@/lib/sortFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +32,7 @@ const Home = () => {
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
   
 
-  const myProfile = members.find((m) => m.id === linkedMemberId) ?? members.find(m => m.relationship === 'Titular');
+  const myProfile = members.find((m) => m.id === linkedMemberId) ?? null;
 
   // All active medications across family
   const { medications, isLoading: medsLoading } = useMedications();
@@ -660,20 +661,13 @@ const Home = () => {
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-6 space-y-2">
             {(() => {
-              const ordemParentesco: Record<string, number> = {
-                "Titular": 1, "Cônjuge": 2, "Filho(a)": 3, "Pai/Mãe": 4, "Irmão(ã)": 5, "Outro": 6,
-              };
               const allowedIds = role === "user" && linkedMemberId
                 ? [linkedMemberId, ...managedProfiles]
                 : null;
               const filtered = allowedIds
                 ? members.filter(m => allowedIds.includes(m.id))
                 : members;
-              return [...filtered].sort((a, b) => {
-                const pesoA = ordemParentesco[a.relationship] || 99;
-                const pesoB = ordemParentesco[b.relationship] || 99;
-                return pesoA - pesoB;
-              }).map((member) => (
+              return sortFamilyMembers(filtered).map((member) => (
                 <button
                   key={member.id}
                   onClick={() => {

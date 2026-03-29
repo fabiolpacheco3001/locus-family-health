@@ -3,15 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import MemberAvatar from "@/components/MemberAvatar";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const ordemParentesco: Record<string, number> = {
-  "Titular": 1,
-  "Cônjuge": 2,
-  "Filho(a)": 3,
-  "Pai/Mãe": 4,
-  "Irmão(ã)": 5,
-  "Outro": 6,
-};
+import { sortFamilyMembers } from "@/lib/sortFamilyMembers";
 
 const Familia = () => {
   const { members, isLoading } = useFamilyMembers();
@@ -48,11 +40,7 @@ const Familia = () => {
 
         {members.length > 0 && (
           <div className="flex flex-col space-y-3 w-full">
-            {[...members].sort((a, b) => {
-                const pesoA = ordemParentesco[a.relationship] || 99;
-                const pesoB = ordemParentesco[b.relationship] || 99;
-                return pesoA - pesoB;
-              }).map((m) => (
+            {sortFamilyMembers(members).map((m) => (
                 <button
                   key={m.id}
                   onClick={() => navigate(`/familiar/${m.id}`)}
