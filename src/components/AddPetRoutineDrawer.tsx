@@ -39,6 +39,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
   const [datePerformed, setDatePerformed] = useState(today);
+  const [timePerformed, setTimePerformed] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
