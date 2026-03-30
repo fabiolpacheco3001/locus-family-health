@@ -730,7 +730,15 @@ const Vacinas = () => {
                 const dateB = b.applied_date || b.created_at;
                 return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
               }).map((v) => (
-                <SwipeableCard key={v.id} onSwipeDelete={() => handleSwipeDelete(v.id)}>
+                <ExamSwipeableCard
+                  key={v.id}
+                  onDelete={() => handleSwipeDelete(v.id)}
+                  onMarkRealizado={() => {}}
+                  onMarkPronto={() => {}}
+                  quickActionMode="none"
+                  isOpen={openCardId === v.id}
+                  onOpenChange={(isOpen) => setOpenCardId(isOpen ? v.id : null)}
+                >
                   <button
                     onClick={() => openEdit(v)}
                     className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
