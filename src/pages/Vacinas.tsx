@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Syringe, ChevronRight, Trash2, FileUp, PenLine, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown } from "lucide-react";
+import SwipeableCard from "@/components/SwipeableCard";
+import { AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -267,13 +269,12 @@ const Vacinas = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("vaccines").delete().eq("id", editingVaccine!.id);
+    mutationFn: async (vaccineId: string) => {
+      const { error } = await supabase.from("vaccines").delete().eq("id", vaccineId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
-      closeFormDrawer();
       toast.success("Vacina excluída com sucesso");
     },
     onError: () => toast.error("Erro ao excluir vacina"),
@@ -289,10 +290,8 @@ const Vacinas = () => {
     else addMutation.mutate();
   };
 
-  const handleDelete = () => {
-    if (window.confirm("Tem certeza que deseja excluir esta vacina?")) {
-      deleteMutation.mutate();
-    }
+  const handleSwipeDelete = (vaccineId: string) => {
+    deleteMutation.mutate(vaccineId);
   };
 
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
@@ -648,17 +647,7 @@ const Vacinas = () => {
             </div>
           </div>
 
-          <div className="p-4 border-t mt-auto bg-background space-y-3">
-            {editingVaccine && (
-              <Button
-                variant="outline"
-                className="w-full text-destructive border-destructive/20 hover:bg-destructive/5"
-                onClick={handleDelete}
-                disabled={isPending}
-              >
-                <Trash2 className="w-4 h-4 mr-2" /> Excluir Registro
-              </Button>
-            )}
+          <div className="p-4 border-t mt-auto bg-background">
             <Button onClick={handleSubmit} disabled={isPending} className="w-full">
               {isPending ? "Salvando..." : "Salvar"}
             </Button>
@@ -708,38 +697,41 @@ const Vacinas = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {[...vaccines].sort((a, b) => {
-              const dateA = a.applied_date || a.created_at;
-              const dateB = b.applied_date || b.created_at;
-              return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
-            }).map((v) => (
-              <button
-                key={v.id}
-                onClick={() => openEdit(v)}
-                className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
-                  <Syringe className="text-black" size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground text-sm">{v.name}</p>
-                  {v.details && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.details}</p>
-                  )}
-                  {v.applied_date && (
-                    <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                      {[v.dose_type, formatDate(v.applied_date)].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  {v.booster_date && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Reforço: <span className="capitalize">{formatDate(v.booster_date)}</span>
-                    </p>
-                  )}
-                </div>
-                <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
-              </button>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {[...vaccines].sort((a, b) => {
+                const dateA = a.applied_date || a.created_at;
+                const dateB = b.applied_date || b.created_at;
+                return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+              }).map((v) => (
+                <SwipeableCard key={v.id} onSwipeDelete={() => handleSwipeDelete(v.id)}>
+                  <button
+                    onClick={() => openEdit(v)}
+                    className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
+                      <Syringe className="text-black" size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground text-sm">{v.name}</p>
+                      {v.details && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.details}</p>
+                      )}
+                      {v.applied_date && (
+                        <p className="text-xs text-muted-foreground mt-0.5 capitalize">
+                          {[v.dose_type, formatDate(v.applied_date)].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
+                      {v.booster_date && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Reforço: <span className="capitalize">{formatDate(v.booster_date)}</span>
+                        </p>
+                      )}
+                    </div>
+                    <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
+                  </button>
+                </SwipeableCard>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>
