@@ -295,7 +295,16 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
 
   const STRICT_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
 
-  for (let i = 0; i < rows.length; i++) {
+  // ── Guilhotina Pré-Header: pula todas as linhas demográficas ──
+  let startIndex = 0;
+  for (let k = 0; k < rows.length; k++) {
+    if (isHeaderOrSkipRow(rows[k].cells)) {
+      startIndex = k;
+      break;
+    }
+  }
+
+  for (let i = startIndex; i < rows.length; i++) {
     const row = rows[i];
     if (isHeaderOrSkipRow(row.cells)) continue;
     if (isFooterRow(row.cells)) break;
@@ -363,6 +372,10 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
 
     const isoDate = convertDateToISO(dateMatch[0]);
     if (!isoDate) continue;
+
+    // ── Blindagem de datas históricas (nenhuma vacina antes de 1950) ──
+    const yearNum = parseInt(isoDate.substring(0, 4), 10);
+    if (yearNum < 1950) continue;
 
     const currentName = sanitizeVaccineName(rawName);
     if (!isValidVaccineName(currentName)) continue;
