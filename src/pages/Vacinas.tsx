@@ -647,17 +647,7 @@ const Vacinas = () => {
             </div>
           </div>
 
-          <div className="p-4 border-t mt-auto bg-background space-y-3">
-            {editingVaccine && (
-              <Button
-                variant="outline"
-                className="w-full text-destructive border-destructive/20 hover:bg-destructive/5"
-                onClick={handleDelete}
-                disabled={isPending}
-              >
-                <Trash2 className="w-4 h-4 mr-2" /> Excluir Registro
-              </Button>
-            )}
+          <div className="p-4 border-t mt-auto bg-background">
             <Button onClick={handleSubmit} disabled={isPending} className="w-full">
               {isPending ? "Salvando..." : "Salvar"}
             </Button>
