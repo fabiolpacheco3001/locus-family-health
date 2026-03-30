@@ -293,11 +293,42 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
   // Track raw names for retroactive concatenation of orphan lines
   const rawNames: string[] = [];
 
+  const STRICT_DATE = /^\d{2}\/\d{2}\/\d{4}$/;
+
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     if (isHeaderOrSkipRow(row.cells)) continue;
     if (isFooterRow(row.cells)) break;
 
+    // ── 1. Radar Amplo de Data: check ANY cell in the row for a date ──
+    const hasDateInRow = row.cells.some(c => STRICT_DATE.test(c.text.trim()));
+
+    if (!hasDateInRow) {
+      // TRUE orphan line (no date anywhere) — concatenate backwards
+      if (hasColumns && vaccines.length > 0) {
+        const orphanText = sanitizeVaccineName(
+          getCellForColumn(row.cells, columns.vaccine)
+        );
+        if (orphanText && isValidVaccineName(orphanText)) {
+          const lastIdx = vaccines.length - 1;
+          rawNames[lastIdx] = `${rawNames[lastIdx]} ${orphanText}`.trim();
+          const remapped = mapVaccineToStandard(rawNames[lastIdx]);
+          vaccines[lastIdx].name = remapped.standardName;
+          const reDetails = remapped.details.toUpperCase()
+            .replace(/COVID[- ]?19/gi, '')
+            .replace(/DIFTERIA\s*E\s*T[EÉ]TANO/gi, '')
+            .replace(/HEPATITE\s*B/gi, '')
+            .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
+            .replace(/^[\s\-]+|[\s\-]+$/g, '')
+            .replace(/\s{2,}/g, ' ')
+            .trim();
+          vaccines[lastIdx].details = reDetails || undefined;
+        }
+      }
+      continue;
+    }
+
+    // ── 2. Valid vaccine row — extract columns ──
     let dateStr = "";
     let rawName = "";
     let rawDose = "";
@@ -314,6 +345,12 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
       facility = getCellForColumn(row.cells, columns.facility);
       city = getCellForColumn(row.cells, columns.city);
       state = getCellForColumn(row.cells, columns.state);
+
+      // Fallback: if date escaped the column bounds, fish it from any cell
+      if (!STRICT_DATE.test(dateStr.trim())) {
+        const dateCell = row.cells.find(c => STRICT_DATE.test(c.text.trim()));
+        if (dateCell) dateStr = dateCell.text.trim();
+      }
     } else {
       const fullText = row.cells.map((c) => c.text).join(" ");
       const dm = fullText.match(DATE_REGEX);
@@ -322,24 +359,7 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     }
 
     const dateMatch = dateStr.match(DATE_REGEX);
-    if (!dateMatch) {
-      // Orphan line: concatenate BACKWARDS into the LAST vaccine
-      if (hasColumns) {
-        const orphanText = sanitizeVaccineName(rawName);
-        if (orphanText && isValidVaccineName(orphanText) && vaccines.length > 0) {
-          const lastIdx = vaccines.length - 1;
-          rawNames[lastIdx] = `${rawNames[lastIdx]} ${orphanText}`.trim();
-          // Re-apply Smart Mapping with updated rawName
-          const remapped = mapVaccineToStandard(rawNames[lastIdx]);
-          vaccines[lastIdx].name = remapped.standardName;
-          const reDetails = remapped.details.toUpperCase()
-            .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
-            .replace(/\s+/g, ' ').trim();
-          vaccines[lastIdx].details = reDetails || undefined;
-        }
-      }
-      continue;
-    }
+    if (!dateMatch) continue;
 
     const isoDate = convertDateToISO(dateMatch[0]);
     if (!isoDate) continue;
@@ -382,9 +402,14 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     const cleanBatch = (batch.trim().split(/\s+/)[0]) || undefined;
 
     const mapped = mapVaccineToStandard(currentName);
-    const cleanDetails = mapped.details.toUpperCase()
+    let cleanDetails = mapped.details.toUpperCase()
+      .replace(/COVID[- ]?19/gi, '')
+      .replace(/DIFTERIA\s*E\s*T[EÉ]TANO/gi, '')
+      .replace(/HEPATITE\s*B/gi, '')
       .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
-      .replace(/\s+/g, ' ').trim();
+      .replace(/^[\s\-]+|[\s\-]+$/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
 
     rawNames.push(currentName);
 
