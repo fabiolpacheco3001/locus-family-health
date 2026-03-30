@@ -37,12 +37,16 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um assistente médico de extração de dados. Leia o documento/exame anexado e retorne APENAS um objeto JSON válido com as seguintes chaves:
+    const systemPrompt = `Você é um assistente de extração de dados laboratoriais e de imagem.
+
+REGRA CRÍTICA DE PRIVACIDADE: Ignore, censure e descarte completamente qualquer dado pessoal do paciente (Nome, CPF, Endereço, Data de Nascimento) e dados do médico (Nome, CRM). NÃO inclua nenhuma dessas informações na sua resposta.
+
+Extraia ÚNICA e EXCLUSIVAMENTE:
 - "examName": nome do exame (ex: Hemograma Completo)
 - "location": laboratório ou local (ex: Laboratório Santa Luzia)
-- "examDate": data do exame no formato ISO YYYY-MM-DDTHH:mm:ss (infira a hora se houver, ou use T12:00:00 se não houver)
+- "examDate": data da realização no formato ISO YYYY-MM-DDTHH:mm:ss (infira a hora se houver, ou use T12:00:00 se não houver)
 
-Se não conseguir identificar algum campo, use null para esse campo. Retorne SOMENTE o JSON, sem markdown, sem explicações.`;
+Se não conseguir identificar algum campo, use null. Retorne SOMENTE o JSON, sem markdown, sem explicações.`;
 
     const fileResponse = await fetch(fileUrl);
     if (!fileResponse.ok) {

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, Ban } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   const [uploading, setUploading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lgpdConsent, setLgpdConsent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editingExam;
@@ -81,6 +83,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
     setFile(null);
     setExistingFileUrl(null);
     setCancelReason("");
+    setLgpdConsent(false);
   };
 
   const handleSave = async () => {
@@ -269,12 +272,22 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               )}
             </div>
 
-            {/* AI OCR Button */}
+            {/* AI OCR Button with LGPD consent */}
             {(file || existingFileUrl) && (
-              <div className="space-y-1.5">
+              <div className="space-y-3">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <Checkbox
+                    checked={lgpdConsent}
+                    onCheckedChange={(v) => setLgpdConsent(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-xs text-muted-foreground leading-relaxed text-justify">
+                    Concordo que o anexo será processado temporariamente por uma Inteligência Artificial parceira para extração dos dados, sendo descartado imediatamente após o uso.
+                  </span>
+                </label>
                 <Button
                   type="button"
-                  disabled={isAnalyzing || isPending}
+                  disabled={!lgpdConsent || isAnalyzing || isPending}
                   onClick={async () => {
                     setIsAnalyzing(true);
                     try {
@@ -338,11 +351,11 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               <div className="pt-4 border-t border-border">
                 <Button
                   variant="outline"
-                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                  className="w-full text-muted-foreground border-border hover:bg-muted/50"
                   onClick={() => { setCancelReason(""); setShowCancelAlert(true); }}
                 >
                   <Ban size={16} className="mr-2" />
-                  Cancelar Exame
+                  Marcar como Cancelado
                 </Button>
               </div>
             )}
