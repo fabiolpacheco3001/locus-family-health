@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX, Mail, FileUp, CalendarPlus, Syringe, Pencil, Users } from "lucide-react";
+import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX, Mail, FileUp, CalendarPlus, Syringe, Pencil, Users, Heart, FileText, BrainCircuit, Package, Lock, PawPrint } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
