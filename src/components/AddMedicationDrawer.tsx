@@ -96,6 +96,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [viewerOpen, setViewerOpen] = useState(false);
   const receitaInputRef = useRef<HTMLInputElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lgpdConsent, setLgpdConsent] = useState(false);
   const isEditing = !!editingMedication;
 
   const [extractedMeds, setExtractedMeds] = useState<ExtractedMed[]>([]);
