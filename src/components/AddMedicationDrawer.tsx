@@ -614,10 +614,24 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   )}
 
                   {!isEditing && !isWizardMode && (
-                    <div className="space-y-1.5">
+                    <div className="space-y-3">
+                      {/* LGPD Consent Checkbox */}
+                      {(receitaFile || existingReceitaUrl) && (
+                        <label className="flex items-start gap-2.5 cursor-pointer">
+                          <Checkbox
+                            checked={lgpdConsent}
+                            onCheckedChange={(v) => setLgpdConsent(v === true)}
+                            className="mt-0.5 shrink-0"
+                          />
+                          <span className="text-xs text-muted-foreground leading-relaxed text-justify">
+                            Concordo que a imagem do medicamento será processada temporariamente por uma Inteligência Artificial parceira para extração dos dados, sendo descartada imediatamente após o uso.
+                          </span>
+                        </label>
+                      )}
+
                       <Button
                         type="button"
-                        disabled={(!receitaFile && !existingReceitaUrl) || isAnalyzing || isPending}
+                        disabled={(!receitaFile && !existingReceitaUrl) || !lgpdConsent || isAnalyzing || isPending}
                         onClick={handleAnalyzeWithAI}
                         className="w-full gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground hover:opacity-90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -638,6 +652,23 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                           ? "Anexe uma foto da receita para ativar o preenchimento automático."
                           : "Nossa IA lê a foto da receita e preenche o formulário para você."}
                       </p>
+
+                      {/* Manual fallback link */}
+                      {(receitaFile || existingReceitaUrl) && (
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="w-full text-xs text-muted-foreground"
+                          onClick={() => {
+                            setReceitaFile(null);
+                            setExistingReceitaUrl(null);
+                            setLgpdConsent(false);
+                            if (receitaInputRef.current) receitaInputRef.current.value = "";
+                          }}
+                        >
+                          Prefiro preencher os dados manualmente
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
