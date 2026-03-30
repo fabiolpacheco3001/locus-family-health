@@ -150,6 +150,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setReason("");
     setReceitaFile(null);
     setExistingReceitaUrl(null);
+    setLgpdConsent(false);
     setExtractedMeds([]);
     setCurrentMedIndex(0);
   };
