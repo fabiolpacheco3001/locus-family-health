@@ -290,10 +290,8 @@ const Vacinas = () => {
     else addMutation.mutate();
   };
 
-  const handleDelete = () => {
-    if (window.confirm("Tem certeza que deseja excluir esta vacina?")) {
-      deleteMutation.mutate();
-    }
+  const handleSwipeDelete = (vaccineId: string) => {
+    deleteMutation.mutate(vaccineId);
   };
 
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
