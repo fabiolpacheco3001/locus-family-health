@@ -288,21 +288,16 @@ function isHeaderOrSkipRow(cells: TextCell[]): boolean {
 // ── Main vaccine extraction using column-based approach ───────────────────
 function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): ImportedVaccine[] {
   const vaccines: ImportedVaccine[] = [];
-  const hasColumns = Object.keys(columns).length >= 3; // at least vaccine, date, dose
+  const hasColumns = Object.keys(columns).length >= 3;
 
-  // Track multi-line vaccine names: some vaccines span 2+ Y-rows
-  // Strategy: accumulate name parts until we find a row with a date
-  let pendingNameParts: string[] = [];
+  // Track raw names for retroactive concatenation of orphan lines
+  const rawNames: string[] = [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    if (isHeaderOrSkipRow(row.cells)) {
-      pendingNameParts = [];
-      continue;
-    }
+    if (isHeaderOrSkipRow(row.cells)) continue;
     if (isFooterRow(row.cells)) break;
 
-    // Check if this row has a date
     let dateStr = "";
     let rawName = "";
     let rawDose = "";
@@ -320,45 +315,38 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
       city = getCellForColumn(row.cells, columns.city);
       state = getCellForColumn(row.cells, columns.state);
     } else {
-      // Fallback: use full row text
       const fullText = row.cells.map((c) => c.text).join(" ");
-      const dateMatch = fullText.match(DATE_REGEX);
-      if (dateMatch) {
-        dateStr = dateMatch[0];
-      }
+      const dm = fullText.match(DATE_REGEX);
+      if (dm) dateStr = dm[0];
       rawName = fullText;
     }
 
-    // Does this row have a valid date?
     const dateMatch = dateStr.match(DATE_REGEX);
     if (!dateMatch) {
-      // No date → this may be a continuation of a vaccine name
-      if (rawName && hasColumns) {
-        // Only accumulate from the vaccine column
-        const cleaned = sanitizeVaccineName(rawName);
-        if (cleaned && isValidVaccineName(cleaned)) {
-          pendingNameParts.push(cleaned);
+      // Orphan line: concatenate BACKWARDS into the LAST vaccine
+      if (hasColumns) {
+        const orphanText = sanitizeVaccineName(rawName);
+        if (orphanText && isValidVaccineName(orphanText) && vaccines.length > 0) {
+          const lastIdx = vaccines.length - 1;
+          rawNames[lastIdx] = `${rawNames[lastIdx]} ${orphanText}`.trim();
+          // Re-apply Smart Mapping with updated rawName
+          const remapped = mapVaccineToStandard(rawNames[lastIdx]);
+          vaccines[lastIdx].name = remapped.standardName;
+          const reDetails = remapped.details.toUpperCase()
+            .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
+            .replace(/\s+/g, ' ').trim();
+          vaccines[lastIdx].details = reDetails || undefined;
         }
       }
       continue;
     }
 
     const isoDate = convertDateToISO(dateMatch[0]);
-    if (!isoDate) {
-      pendingNameParts = [];
-      continue;
-    }
+    if (!isoDate) continue;
 
-    // Build the vaccine name from pending parts + current row
     const currentName = sanitizeVaccineName(rawName);
-    const fullName = [...pendingNameParts, currentName].filter(Boolean).join(" ").trim();
+    if (!isValidVaccineName(currentName)) continue;
 
-    if (!isValidVaccineName(fullName)) {
-      pendingNameParts = [];
-      continue;
-    }
-
-    // Translate dose
     const doseLabel = translateDose(rawDose);
 
     // Cascading sanitization for horizontal bleeding between facility/city/state
@@ -366,8 +354,8 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     const rawCity = city.trim();
     const rawState = state.trim();
 
-    const stateMatch = rawState.match(/\b[A-Z]{2}\b/)?.[0] || rawCity.match(/\b[A-Z]{2}$/)?.[0] || "";
-    const cleanState = stateMatch || undefined;
+    const stateMatch2 = rawState.match(/\b[A-Z]{2}\b/)?.[0] || rawCity.match(/\b[A-Z]{2}$/)?.[0] || "";
+    const cleanState = stateMatch2 || undefined;
 
     let cleanCity = rawCity;
     if (cleanState) {
@@ -383,7 +371,6 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     }
     cleanFacility = cleanFacility || undefined;
 
-    // Fallback extra caso a coluna city falhe totalmente
     if (!cleanCity && cleanFacility) {
       const words = cleanFacility.trim().split(/\s+/);
       if (words.length > 1) {
@@ -392,14 +379,14 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
       }
     }
 
-    // Clean batch — keep only first word (strip strategy text like "Rotina")
     const cleanBatch = (batch.trim().split(/\s+/)[0]) || undefined;
 
-    // Apply Smart Mapping
-    const mapped = mapVaccineToStandard(fullName);
+    const mapped = mapVaccineToStandard(currentName);
+    const cleanDetails = mapped.details.toUpperCase()
+      .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
+      .replace(/\s+/g, ' ').trim();
 
-    // Clean details — remove residual dates (aggressive)
-    const cleanDetails = mapped.details.toUpperCase().replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ').replace(/\s+/g, ' ').trim();
+    rawNames.push(currentName);
 
     vaccines.push({
       name: mapped.standardName,
@@ -411,8 +398,6 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
       city: cleanCity,
       state: cleanState,
     });
-
-    pendingNameParts = [];
   }
 
   // Deduplicate by name + date
