@@ -45,6 +45,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   const [uploading, setUploading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [lgpdConsent, setLgpdConsent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = !!editingExam;
