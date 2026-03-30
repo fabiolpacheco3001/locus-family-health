@@ -1,10 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX, Mail } from "lucide-react";
+import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX, Mail, FileUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const faqItems = [
+  {
+    icon: FileUp,
+    question: "Como importo minha carteira de vacinação do SUS?",
+    answer:
+      "Para poupar tempo, o Locus Vita permite importar seu histórico do SUS automaticamente:\n\n1. Baixe a sua Carteira Nacional de Vacinação em formato PDF através do aplicativo ou site oficial Meu SUS Digital.\n2. No Locus Vita, acesse a aba Minha Saúde e clique em Vacinas.\n3. Toque no botão (+) e escolha a opção Importar Carteira do SUS (PDF).\n4. Selecione o arquivo PDF baixado e aguarde nossa Inteligência Artificial ler o documento.\n5. Revise as vacinas encontradas e clique em Confirmar Importação.\n\n⚠️ Nota de Segurança: Por regras de privacidade (LGPD), o sistema só permitirá a importação se o CPF do documento for exatamente igual ao CPF cadastrado no perfil do familiar selecionado.",
+  },
   {
     icon: BookOpen,
     question: "Como adiciono um Pet à família?",
@@ -80,7 +86,7 @@ const Ajuda = () => {
                 <p className="text-sm">Nenhuma dúvida encontrada para esta busca.</p>
               </div>
             ) : (
-              filteredItems.map((item, index) => {
+              filteredItems.map((item) => {
                 const Icon = item.icon;
                 const originalIndex = faqItems.indexOf(item);
                 const isOpen = expandedIndex === originalIndex;
@@ -113,7 +119,7 @@ const Ajuda = () => {
                     </div>
                     {isOpen && (
                       <div className="px-4 pb-4">
-                        <p className="text-sm text-muted-foreground pl-[52px]">
+                        <p className="text-sm text-muted-foreground pl-[52px] whitespace-pre-line">
                           {item.answer}
                         </p>
                       </div>
@@ -129,7 +135,7 @@ const Ajuda = () => {
             <div className="w-16 h-px bg-border/60" />
             <p className="text-sm text-muted-foreground">Ainda não encontrou o que precisava?</p>
             <a
-              href="mailto:suporte@locusvita.com.br?subject=Suporte Locus Vita"
+              href="mailto:suporte.locustech@locustech.com.br?subject=Suporte Locus Vita"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-primary/30 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
             >
               <Mail size={16} />
