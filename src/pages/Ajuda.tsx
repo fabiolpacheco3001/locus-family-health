@@ -27,7 +27,7 @@ const faqItems = [
     icon: Pencil,
     question: "Como edito ou excluo um registro salvo?",
     answer:
-      "Caso tenha inserido uma informação errada, não se preocupe:\n\n1. Navegue até a lista onde o registro está (Agenda, Exames ou Vacinas).\n2. Toque sobre o card do item que deseja alterar.\n3. Na tela de edição, altere as informações e clique em Salvar, ou role até o final da tela e clique no botão vermelho Excluir Registro.",
+      "Caso tenha inserido uma informação errada, não se preocupe:\n\n1. Navegue até a lista onde o registro está (Agenda, Exames ou Vacinas).\n2. Para editar, toque sobre o card do item, altere as informações e clique em Salvar.\n3. Para excluir, basta deslizar o card do registro para a esquerda e tocar no ícone de lixeira.",
   },
   {
     icon: Users,
