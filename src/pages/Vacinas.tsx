@@ -697,38 +697,41 @@ const Vacinas = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {[...vaccines].sort((a, b) => {
-              const dateA = a.applied_date || a.created_at;
-              const dateB = b.applied_date || b.created_at;
-              return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
-            }).map((v) => (
-              <button
-                key={v.id}
-                onClick={() => openEdit(v)}
-                className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
-                  <Syringe className="text-black" size={20} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground text-sm">{v.name}</p>
-                  {v.details && (
-                    <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.details}</p>
-                  )}
-                  {v.applied_date && (
-                    <p className="text-xs text-muted-foreground mt-0.5 capitalize">
-                      {[v.dose_type, formatDate(v.applied_date)].filter(Boolean).join(" · ")}
-                    </p>
-                  )}
-                  {v.booster_date && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Reforço: <span className="capitalize">{formatDate(v.booster_date)}</span>
-                    </p>
-                  )}
-                </div>
-                <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
-              </button>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {[...vaccines].sort((a, b) => {
+                const dateA = a.applied_date || a.created_at;
+                const dateB = b.applied_date || b.created_at;
+                return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+              }).map((v) => (
+                <SwipeableCard key={v.id} onSwipeDelete={() => handleSwipeDelete(v.id)}>
+                  <button
+                    onClick={() => openEdit(v)}
+                    className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
+                      <Syringe className="text-black" size={20} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground text-sm">{v.name}</p>
+                      {v.details && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.details}</p>
+                      )}
+                      {v.applied_date && (
+                        <p className="text-xs text-muted-foreground mt-0.5 capitalize">
+                          {[v.dose_type, formatDate(v.applied_date)].filter(Boolean).join(" · ")}
+                        </p>
+                      )}
+                      {v.booster_date && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Reforço: <span className="capitalize">{formatDate(v.booster_date)}</span>
+                        </p>
+                      )}
+                    </div>
+                    <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
+                  </button>
+                </SwipeableCard>
+              ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

@@ -53,6 +53,42 @@ const faqItems = [
     answer:
       "Sim. Acesse a aba 'Ajustes' no menu inferior e toque em 'Gestão de Acessos' para convidar outros membros e configurar o que eles podem ver e editar.",
   },
+  {
+    icon: Heart,
+    question: "Como ativar e acessar o controle de Ciclo Menstrual?",
+    answer:
+      "1. Acesse a aba Ajustes e entre em Meu Perfil.\n2. Ative a chave correspondente ao Controle de Ciclo Menstrual.\n3. Uma vez ativado, um novo card de monitoramento ficará fixado permanentemente na aba Minha Saúde, onde você poderá registrar o início, fim e sintomas do seu ciclo.",
+  },
+  {
+    icon: FileText,
+    question: "O que é o RES e como exportá-lo?",
+    answer:
+      "O RES (Resumo Eletrônico de Saúde) é um documento que compila de forma inteligente todo o seu histórico clínico (consultas, vacinas, exames e condições). Para exportá-lo, acesse a aba Minha Saúde e clique no botão Exportar RES no topo da tela.\n\n⚠️ Atenção à Privacidade (LGPD): O arquivo PDF gerado contém dados extremamente sensíveis sobre sua saúde. Guarde-o em local seguro e compartilhe-o estritamente com profissionais de saúde de sua confiança.",
+  },
+  {
+    icon: BrainCircuit,
+    question: "Como usar a Inteligência Artificial para importar receitas médicas?",
+    answer:
+      "1. Na aba Minha Saúde, vá até a seção de Medicamentos e clique em adicionar (+).\n2. Selecione a opção Ler Receita com IA.\n3. Tire uma foto nítida da prescrição médica ou faça upload de um PDF.\n4. Nossa Inteligência Artificial lerá o documento e preencherá automaticamente o nome do remédio, dosagem e horários de tomada. Revise e salve!",
+  },
+  {
+    icon: Package,
+    question: "Como funciona o controle de estoque para medicamentos de uso contínuo?",
+    answer:
+      "Ao cadastrar um medicamento que você toma todos os dias, marque a opção Uso Contínuo. O sistema abrirá campos de controle de estoque. Insira quantas pílulas você tem na caixa atualmente e defina um limite de alerta (ex: avisar quando restarem 5). Sempre que você marcar o remédio como 'Tomado', o sistema descontará do estoque e enviará uma notificação automática quando for a hora de comprar uma nova caixa.",
+  },
+  {
+    icon: Lock,
+    question: "Como realizo a troca da minha senha?",
+    answer:
+      "Acesse a aba Ajustes no menu inferior, toque em Segurança (ou Configurações de Conta) e selecione Trocar Senha. Você precisará digitar a sua senha atual e, em seguida, definir a nova.",
+  },
+  {
+    icon: PawPrint,
+    question: "Como funciona a recorrência de Rotina e Higiene para Pets?",
+    answer:
+      "Pensando no bem-estar do seu animal, o sistema automatiza tarefas repetitivas.\n\n1. Acesse o perfil do seu Pet e vá em Rotina e Higiene.\n2. Ao adicionar um evento (como Banho, Tosa ou Remédio de Verme), defina o intervalo de recorrência (ex: a cada 30 dias).\n3. Quando você marcar a tarefa atual como 'Concluída', o Locus Vita agendará automaticamente a próxima data no calendário!",
+  },
 ];
 
 const Ajuda = () => {
