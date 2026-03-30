@@ -350,11 +350,11 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               <div className="pt-4 border-t border-border">
                 <Button
                   variant="outline"
-                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+                  className="w-full text-muted-foreground border-border hover:bg-muted/50"
                   onClick={() => { setCancelReason(""); setShowCancelAlert(true); }}
                 >
                   <Ban size={16} className="mr-2" />
-                  Cancelar Exame
+                  Marcar como Cancelado
                 </Button>
               </div>
             )}
