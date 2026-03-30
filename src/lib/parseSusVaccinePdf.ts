@@ -373,6 +373,10 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     const isoDate = convertDateToISO(dateMatch[0]);
     if (!isoDate) continue;
 
+    // ── Blindagem de datas históricas (nenhuma vacina antes de 1950) ──
+    const yearNum = parseInt(isoDate.substring(0, 4), 10);
+    if (yearNum < 1950) continue;
+
     const currentName = sanitizeVaccineName(rawName);
     if (!isValidVaccineName(currentName)) continue;
 
