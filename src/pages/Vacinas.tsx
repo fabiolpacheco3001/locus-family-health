@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown } from "lucide-react";
-import SwipeableCard from "@/components/SwipeableCard";
+import ExamSwipeableCard from "@/components/ExamSwipeableCard";
 import { AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -275,10 +275,48 @@ const Vacinas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
-      toast.success("Vacina excluída com sucesso");
     },
     onError: () => toast.error("Erro ao excluir vacina"),
   });
+
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
+
+  const handleSwipeDelete = async (vaccineId: string) => {
+    const vaccineToDelete = vaccines.find((v) => v.id === vaccineId);
+    if (!vaccineToDelete) return;
+    const cached = { ...vaccineToDelete };
+    try {
+      await deleteMutation.mutateAsync(vaccineId);
+      toast("Vacina excluída.", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              const { error } = await supabase.from("vaccines").insert({
+                family_member_id: id!,
+                user_id: user!.id,
+                name: cached.name,
+                applied_date: cached.applied_date,
+                booster_date: cached.booster_date,
+                batch: cached.batch,
+                side_effects: cached.side_effects,
+                details: cached.details,
+                dose_type: cached.dose_type,
+                facility: cached.facility,
+                city: cached.city,
+                state: cached.state,
+                ...(groupId ? { group_id: groupId } : {}),
+              } as any);
+              if (error) throw error;
+              queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
+              toast.success("Vacina restaurada.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
+    } catch { /* handled */ }
+  };
 
   const handleSubmit = () => {
     const finalName = getFinalName();
@@ -288,10 +326,6 @@ const Vacinas = () => {
     }
     if (editingVaccine) updateMutation.mutate();
     else addMutation.mutate();
-  };
-
-  const handleSwipeDelete = (vaccineId: string) => {
-    deleteMutation.mutate(vaccineId);
   };
 
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
@@ -706,7 +740,15 @@ const Vacinas = () => {
                 const dateB = b.applied_date || b.created_at;
                 return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
               }).map((v) => (
-                <SwipeableCard key={v.id} onSwipeDelete={() => handleSwipeDelete(v.id)}>
+                <ExamSwipeableCard
+                  key={v.id}
+                  onDelete={() => handleSwipeDelete(v.id)}
+                  onMarkRealizado={() => {}}
+                  onMarkPronto={() => {}}
+                  quickActionMode="none"
+                  isOpen={openCardId === v.id}
+                  onOpenChange={(isOpen) => setOpenCardId(isOpen ? v.id : null)}
+                >
                   <button
                     onClick={() => openEdit(v)}
                     className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
@@ -732,7 +774,7 @@ const Vacinas = () => {
                     </div>
                     <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
                   </button>
-                </SwipeableCard>
+                </ExamSwipeableCard>
               ))}
             </AnimatePresence>
           </div>
