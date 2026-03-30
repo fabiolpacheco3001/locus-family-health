@@ -275,23 +275,47 @@ const Vacinas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
-      toast.success("Vacina excluída com sucesso");
     },
     onError: () => toast.error("Erro ao excluir vacina"),
   });
 
-  const handleSubmit = () => {
-    const finalName = getFinalName();
-    if (!finalName) {
-      toast.error("Informe o nome da vacina");
-      return;
-    }
-    if (editingVaccine) updateMutation.mutate();
-    else addMutation.mutate();
-  };
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
 
-  const handleSwipeDelete = (vaccineId: string) => {
-    deleteMutation.mutate(vaccineId);
+  const handleSwipeDelete = async (vaccineId: string) => {
+    const vaccineToDelete = vaccines.find((v) => v.id === vaccineId);
+    if (!vaccineToDelete) return;
+    const cached = { ...vaccineToDelete };
+    try {
+      await deleteMutation.mutateAsync(vaccineId);
+      toast("Vacina excluída.", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              const { error } = await supabase.from("vaccines").insert({
+                family_member_id: id!,
+                user_id: user!.id,
+                name: cached.name,
+                applied_date: cached.applied_date,
+                booster_date: cached.booster_date,
+                batch: cached.batch,
+                side_effects: cached.side_effects,
+                details: cached.details,
+                dose_type: cached.dose_type,
+                facility: cached.facility,
+                city: cached.city,
+                state: cached.state,
+                ...(groupId ? { group_id: groupId } : {}),
+              } as any);
+              if (error) throw error;
+              queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
+              toast.success("Vacina restaurada.");
+            } catch { /* handled */ }
+          },
+        },
+        duration: 5000,
+      });
+    } catch { /* handled */ }
   };
 
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
