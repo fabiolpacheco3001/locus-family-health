@@ -764,7 +764,7 @@ const Vacinas = () => {
                     </div>
                     <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
                   </button>
-                </SwipeableCard>
+                </ExamSwipeableCard>
               ))}
             </AnimatePresence>
           </div>
