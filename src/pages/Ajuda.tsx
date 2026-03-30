@@ -143,7 +143,7 @@ const Ajuda = () => {
                     </div>
                     {isOpen && (
                       <div className="px-4 pb-4">
-                        <p className="text-sm text-muted-foreground pl-[52px] whitespace-pre-line">
+                        <p className="text-sm text-muted-foreground pl-[52px] whitespace-pre-line text-justify hyphens-auto">
                           {item.answer}
                         </p>
                       </div>
