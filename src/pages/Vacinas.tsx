@@ -269,13 +269,12 @@ const Vacinas = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("vaccines").delete().eq("id", editingVaccine!.id);
+    mutationFn: async (vaccineId: string) => {
+      const { error } = await supabase.from("vaccines").delete().eq("id", vaccineId);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
-      closeFormDrawer();
       toast.success("Vacina excluída com sucesso");
     },
     onError: () => toast.error("Erro ao excluir vacina"),
