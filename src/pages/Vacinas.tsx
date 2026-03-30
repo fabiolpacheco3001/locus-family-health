@@ -647,9 +647,12 @@ const Vacinas = () => {
             </div>
           </div>
 
-          <div className="p-4 border-t mt-auto bg-background">
+          <div className="p-4 border-t mt-auto bg-background space-y-3">
             <Button onClick={handleSubmit} disabled={isPending} className="w-full">
               {isPending ? "Salvando..." : "Salvar"}
+            </Button>
+            <Button type="button" variant="outline" onClick={closeFormDrawer} className="w-full">
+              Cancelar
             </Button>
           </div>
         </DrawerContent>
