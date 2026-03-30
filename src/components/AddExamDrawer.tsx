@@ -83,6 +83,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
     setFile(null);
     setExistingFileUrl(null);
     setCancelReason("");
+    setLgpdConsent(false);
   };
 
   const handleSave = async () => {
