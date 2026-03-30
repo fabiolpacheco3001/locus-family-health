@@ -437,6 +437,7 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     const mapped = mapVaccineToStandard(currentName);
     let cleanDetails = mapped.details.toUpperCase()
       .replace(/COVID[- ]?19/gi, '')
+      .replace(/\b19\b/g, '')
       .replace(/DIFTERIA\s*E\s*T[EÉ]TANO/gi, '')
       .replace(/HEPATITE\s*B/gi, '')
       .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
