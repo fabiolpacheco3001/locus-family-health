@@ -271,12 +271,22 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
               )}
             </div>
 
-            {/* AI OCR Button */}
+            {/* AI OCR Button with LGPD consent */}
             {(file || existingFileUrl) && (
-              <div className="space-y-1.5">
+              <div className="space-y-3">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <Checkbox
+                    checked={lgpdConsent}
+                    onCheckedChange={(v) => setLgpdConsent(v === true)}
+                    className="mt-0.5"
+                  />
+                  <span className="text-xs text-muted-foreground leading-relaxed text-justify">
+                    Concordo que o anexo será processado temporariamente por uma Inteligência Artificial parceira para extração dos dados, sendo descartado imediatamente após o uso.
+                  </span>
+                </label>
                 <Button
                   type="button"
-                  disabled={isAnalyzing || isPending}
+                  disabled={!lgpdConsent || isAnalyzing || isPending}
                   onClick={async () => {
                     setIsAnalyzing(true);
                     try {
