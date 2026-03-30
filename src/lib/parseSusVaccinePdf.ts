@@ -298,7 +298,8 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
   // ── Guilhotina Pré-Header: pula todas as linhas demográficas ──
   let startIndex = 0;
   for (let k = 0; k < rows.length; k++) {
-    if (isHeaderOrSkipRow(rows[k].cells)) {
+    const rowText = rows[k].cells.map(c => c.text).join(" ");
+    if (/vacina\/profilaxia/i.test(rowText) || /imunobiol[oó]gico/i.test(rowText)) {
       startIndex = k;
       break;
     }
