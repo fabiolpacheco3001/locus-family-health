@@ -305,8 +305,27 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     }
   }
 
-  for (let i = startIndex; i < rows.length; i++) {
-    const row = rows[i];
+  // ── Row Merging: agrupa linhas com delta-Y <= 4 em uma linha lógica ──
+  const mergedRows: { cells: TextCell[] }[] = [];
+  {
+    let mi = startIndex;
+    while (mi < rows.length) {
+      const groupCells: TextCell[] = [...rows[mi].cells];
+      let lastY = rows[mi].y;
+      while (mi + 1 < rows.length && Math.abs(rows[mi + 1].y - lastY) <= 4) {
+        mi++;
+        groupCells.push(...rows[mi].cells);
+        lastY = rows[mi].y;
+      }
+      groupCells.sort((a, b) => a.x - b.x);
+      mergedRows.push({ cells: groupCells });
+      mi++;
+    }
+  }
+  console.log("MERGED ROWS COUNT:", mergedRows.length, "from original", rows.length - startIndex);
+
+  for (let i = 0; i < mergedRows.length; i++) {
+    const row = mergedRows[i];
     if (isHeaderOrSkipRow(row.cells)) continue;
     if (isFooterRow(row.cells)) break;
 
