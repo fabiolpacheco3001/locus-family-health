@@ -318,6 +318,16 @@ const Vacinas = () => {
     } catch { /* handled */ }
   };
 
+  const handleSubmit = () => {
+    const finalName = getFinalName();
+    if (!finalName) {
+      toast.error("Informe o nome da vacina");
+      return;
+    }
+    if (editingVaccine) updateMutation.mutate();
+    else addMutation.mutate();
+  };
+
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   // --- Import flow ---
