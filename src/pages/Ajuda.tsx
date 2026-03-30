@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX, Mail, FileUp } from "lucide-react";
+import { ArrowLeft, Search, BookOpen, Share2, Stethoscope, SearchX, Mail, FileUp, CalendarPlus, Syringe, Pencil, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,30 @@ const faqItems = [
     question: "Como importo minha carteira de vacinação do SUS?",
     answer:
       "Para poupar tempo, o Locus Vita permite importar seu histórico do SUS automaticamente:\n\n1. Baixe a sua Carteira Nacional de Vacinação em formato PDF através do aplicativo ou site oficial Meu SUS Digital.\n2. No Locus Vita, acesse a aba Minha Saúde e clique em Vacinas.\n3. Toque no botão (+) e escolha a opção Importar Carteira do SUS (PDF).\n4. Selecione o arquivo PDF baixado e aguarde nossa Inteligência Artificial ler o documento.\n5. Revise as vacinas encontradas e clique em Confirmar Importação.\n\n⚠️ Nota de Segurança: Por regras de privacidade (LGPD), o sistema só permitirá a importação se o CPF do documento for exatamente igual ao CPF cadastrado no perfil do familiar selecionado.",
+  },
+  {
+    icon: CalendarPlus,
+    question: "Como adiciono uma nova Consulta ou Exame?",
+    answer:
+      "1. Acesse a aba Agenda (para ver seus compromissos) ou Minha Saúde (para visão geral).\n2. Toque no botão flutuante (+) no canto inferior direito.\n3. Selecione Nova Consulta ou Novo Exame.\n4. Preencha os detalhes como nome do médico, data e local, e clique em Salvar.",
+  },
+  {
+    icon: Syringe,
+    question: "Como registro uma vacina manualmente (sem o PDF)?",
+    answer:
+      "1. Acesse a aba Minha Saúde e clique em Vacinas.\n2. Toque no botão flutuante (+) e escolha Adicionar Manualmente.\n3. Selecione a vacina na lista, informe a data de aplicação, o número da dose e clique em Salvar.",
+  },
+  {
+    icon: Pencil,
+    question: "Como edito ou excluo um registro salvo?",
+    answer:
+      "Caso tenha inserido uma informação errada, não se preocupe:\n\n1. Navegue até a lista onde o registro está (Agenda, Exames ou Vacinas).\n2. Toque sobre o card do item que deseja alterar.\n3. Na tela de edição, altere as informações e clique em Salvar, ou role até o final da tela e clique no botão vermelho Excluir Registro.",
+  },
+  {
+    icon: Users,
+    question: "Como acesso os dados de saúde dos meus familiares ou pets?",
+    answer:
+      "1. Acesse a aba Família no menu inferior.\n2. Toque no card do familiar ou pet desejado.\n3. O aplicativo alternará para o perfil selecionado, permitindo que você visualize e adicione consultas, exames e vacinas exclusivas para aquele membro da família.",
   },
   {
     icon: BookOpen,
