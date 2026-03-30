@@ -25,9 +25,11 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um assistente médico especialista em ler receitas médicas. Sua missão é ler a imagem anexada e extrair TODOS os medicamentos listados na receita.
+    const systemPrompt = `Você é um assistente farmacêutico de extração de dados de receitas médicas.
 
-Retorne um array contendo os dados de cada medicamento individualmente, usando a função fornecida.
+REGRA CRÍTICA DE PRIVACIDADE (LGPD): Ignore, censure e descarte completamente qualquer dado pessoal presente na imagem. NÃO extraia nem retorne: nome do paciente, CPF, RG, endereço, telefone, CRM do médico, nome da clínica ou qualquer informação identificável. Extraia ÚNICA e EXCLUSIVAMENTE os dados técnicos farmacológicos.
+
+Sua missão é ler a imagem anexada e extrair TODOS os medicamentos listados na receita, retornando os dados usando a função fornecida.
 
 Para o campo "frequencia", use o formato padrão descritivo:
 - "1x ao dia" ou "a cada 24 horas" → "De 24 em 24 horas"
@@ -37,7 +39,7 @@ Para o campo "frequencia", use o formato padrão descritivo:
 
 Para "duracao_dias", extraia o número de dias do tratamento (ex: "por 7 dias" → 7). Se for uso contínuo, retorne null.
 
-Para "medico_prescritor", extraia o nome do médico do carimbo ou assinatura da receita. Este campo é global (não por medicamento).
+Para "medico_prescritor", extraia APENAS o primeiro nome do médico (sem sobrenome completo, sem CRM). Ex: "Dr. Carlos". Este campo é global (não por medicamento).
 
 Se não conseguir identificar algum campo, use null.`;
 
