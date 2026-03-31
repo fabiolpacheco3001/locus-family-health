@@ -31,6 +31,13 @@ const PEACH    = "#F2A97F";
 const MINT     = "#A7D3CB";
 const CERULEAN = "#A0C4D7";
 
+/* ─── Unsplash lifestyle images ─── */
+const HERO_IMG   = "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=1000";
+const IMG_PHONE  = "https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&q=80&w=800";
+const IMG_VACCINE = "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800";
+const IMG_STOCK  = "https://images.unsplash.com/photo-1585435557343-3b092031a831?auto=format&fit=crop&q=80&w=800";
+const IMG_PET    = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=800";
+
 /* ─── scroll-reveal hook ─── */
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -92,6 +99,37 @@ const SectionWrapper = ({
 const Landing = () => {
   const navigate = useNavigate();
 
+  const features = [
+    {
+      title: "IA para Receitas",
+      desc: "Tire uma foto. Nossa IA lê a letra do médico e cadastra os alarmes automaticamente.",
+      img: IMG_PHONE,
+      badge: "Inteligência Artificial",
+      badgeBg: MINT,
+    },
+    {
+      title: "Importação do SUS",
+      desc: "Faça upload do PDF e organizamos seu histórico de vacinas em segundos.",
+      img: IMG_VACCINE,
+      badge: "Automatizado",
+      badgeBg: CERULEAN,
+    },
+    {
+      title: "Estoque Inteligente",
+      desc: "Avisamos quando a caixa do seu remédio de uso contínuo está acabando.",
+      img: IMG_STOCK,
+      badge: "Alertas",
+      badgeBg: MINT,
+    },
+    {
+      title: "Rotina Pet",
+      desc: "Banhos, vacinas e vermífugos agendados automaticamente com recorrência.",
+      img: IMG_PET,
+      badge: "Agendado",
+      badgeBg: CERULEAN,
+    },
+  ];
+
   return (
     <div className="min-h-screen w-full font-sans" style={{ background: BG, color: FG }}>
       {/* ──────────── HEADER ──────────── */}
@@ -127,39 +165,66 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* ──────────── SEÇÃO 1 — HERO ──────────── */}
-      <SectionWrapper className="pt-24 pb-20 text-center">
-        <Reveal>
-          <h1
-            className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-[1.1] tracking-tight"
-            style={{ color: DARK }}
-          >
-            A saúde de quem você ama,
-            <br className="hidden sm:block" />{" "}
-            <span style={{ color: PEACH }}>organizada</span> em um só lugar.
-          </h1>
-        </Reveal>
-        <Reveal delay={150}>
-          <p className="mt-6 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: FG }}>
-            O Locus Vita é o único <strong>Family Hub</strong> que usa Inteligência Artificial para
-            gerenciar medicamentos, consultas, vacinas e a rotina do seu Pet.
-          </p>
-        </Reveal>
-        <Reveal delay={300}>
-          <div className="mt-10 flex flex-col items-center gap-3">
-            <Button
-              size="lg"
-              className="rounded-full text-lg px-10 py-7 shadow-xl text-white font-bold animate-[pulse_3s_ease-in-out_infinite] hover:scale-105 transition-transform"
-              style={{ background: PEACH }}
-              onClick={() => navigate("/cadastro")}
-            >
-              Comece seus 30 Dias Grátis <ArrowRight className="ml-2" size={22} />
-            </Button>
-            <span className="text-xs tracking-wide" style={{ color: "#999" }}>
-              Não exigimos cartão de crédito
-            </span>
-          </div>
-        </Reveal>
+      {/* ──────────── SEÇÃO 1 — HERO (2 colunas) ──────────── */}
+      <SectionWrapper className="pt-16 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14 items-center">
+          {/* Texto */}
+          <Reveal>
+            <div className="text-center md:text-left">
+              <h1
+                className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-[1.1] tracking-tight"
+                style={{ color: DARK }}
+              >
+                A saúde de quem você ama,{" "}
+                <span style={{ color: PEACH }}>organizada</span> em um só lugar.
+              </h1>
+              <p className="mt-6 text-base sm:text-lg leading-relaxed" style={{ color: FG }}>
+                O Locus Vita é o único <strong>Family Hub</strong> que usa Inteligência Artificial para
+                gerenciar medicamentos, consultas, vacinas e a rotina do seu Pet.
+              </p>
+              <div className="mt-8 flex flex-col sm:flex-row items-center md:items-start gap-3">
+                <Button
+                  size="lg"
+                  className="rounded-full text-lg px-10 py-7 shadow-xl text-white font-bold animate-[pulse_3s_ease-in-out_infinite] hover:scale-105 transition-transform"
+                  style={{ background: PEACH }}
+                  onClick={() => navigate("/cadastro")}
+                >
+                  Comece seus 30 Dias Grátis <ArrowRight className="ml-2" size={22} />
+                </Button>
+              </div>
+              <span className="mt-3 inline-block text-xs tracking-wide" style={{ color: "#999" }}>
+                Não exigimos cartão de crédito
+              </span>
+            </div>
+          </Reveal>
+
+          {/* Foto lifestyle */}
+          <Reveal delay={200}>
+            <div className="relative mx-auto max-w-md md:max-w-none">
+              <img
+                src={HERO_IMG}
+                alt="Família feliz e saudável"
+                className="w-full h-64 sm:h-80 md:h-[420px] object-cover rounded-3xl shadow-2xl"
+                loading="eager"
+              />
+              {/* badge flutuante */}
+              <div
+                className="absolute -bottom-4 -left-2 md:-left-4 rounded-2xl px-4 py-2.5 shadow-lg flex items-center gap-2"
+                style={{ background: "white" }}
+              >
+                <span
+                  className="flex h-8 w-8 items-center justify-center rounded-full"
+                  style={{ background: `${MINT}30` }}
+                >
+                  <Heart size={16} style={{ color: MINT }} />
+                </span>
+                <span className="text-xs font-semibold" style={{ color: DARK }}>
+                  Tudo sob controle ✨
+                </span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
       </SectionWrapper>
 
       {/* ──────────── SEÇÃO 2 — AGITAÇÃO DA DOR (Editorial) ──────────── */}
@@ -224,7 +289,7 @@ const Landing = () => {
         </div>
       </SectionWrapper>
 
-      {/* ──────────── SEÇÃO 3 — FEATURES KILLER ──────────── */}
+      {/* ──────────── SEÇÃO 3 — FEATURES KILLER (zigue-zague com fotos) ──────────── */}
       <SectionWrapper className="py-20">
         <Reveal>
           <h2
@@ -238,55 +303,37 @@ const Landing = () => {
           </p>
         </Reveal>
 
-        {[
-          {
-            icon: <Brain size={36} />,
-            emoji: "🪄",
-            title: "IA para Receitas",
-            desc: "Tire uma foto. Nossa IA lê a letra do médico e cadastra os alarmes automaticamente.",
-            bg: MINT,
-          },
-          {
-            icon: <Syringe size={36} />,
-            emoji: "💉",
-            title: "Importação do SUS",
-            desc: "Faça upload do PDF e organizamos seu histórico de vacinas em segundos.",
-            bg: CERULEAN,
-          },
-          {
-            icon: <Package size={36} />,
-            emoji: "📦",
-            title: "Estoque Inteligente",
-            desc: "Avisamos quando a caixa do seu remédio de uso contínuo está acabando.",
-            bg: MINT,
-          },
-          {
-            icon: <PawPrint size={36} />,
-            emoji: "🐾",
-            title: "Rotina Pet",
-            desc: "Banhos, vacinas e vermífugos agendados automaticamente com recorrência.",
-            bg: CERULEAN,
-          },
-        ].map((f, i) => {
+        {features.map((f, i) => {
           const reverse = i % 2 !== 0;
           return (
             <Reveal key={i} delay={i * 80}>
               <div
-                className={`flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-10 mb-16`}
+                className={`flex flex-col ${reverse ? "md:flex-row-reverse" : "md:flex-row"} items-center gap-8 md:gap-12 mb-20`}
               >
-                {/* icon block */}
-                <div
-                  className="flex h-32 w-32 shrink-0 items-center justify-center rounded-3xl shadow-lg transition-transform duration-300 hover:scale-105"
-                  style={{ background: `${f.bg}30` }}
-                >
-                  <span className="text-6xl drop-shadow-sm">{f.emoji}</span>
+                {/* photo */}
+                <div className="relative w-full md:w-1/2 shrink-0">
+                  <img
+                    src={f.img}
+                    alt={f.title}
+                    className="w-full h-56 sm:h-64 md:h-72 object-cover rounded-3xl shadow-xl transition-transform duration-300 hover:scale-[1.02]"
+                    loading="lazy"
+                  />
+                  {/* floating badge */}
+                  <Badge
+                    className="absolute top-4 left-4 text-xs px-3 py-1 shadow-md border-none text-white font-semibold"
+                    style={{ background: f.badgeBg }}
+                  >
+                    {f.badge}
+                  </Badge>
                 </div>
                 {/* text */}
-                <div className={reverse ? "text-center md:text-right" : "text-center md:text-left"}>
+                <div className={`flex-1 ${reverse ? "text-center md:text-right" : "text-center md:text-left"}`}>
                   <h3 className="text-xl md:text-2xl font-bold" style={{ color: DARK }}>
                     {f.title}
                   </h3>
-                  <p className="mt-3 max-w-md text-sm md:text-base leading-relaxed">{f.desc}</p>
+                  <p className="mt-3 max-w-md text-sm md:text-base leading-relaxed mx-auto md:mx-0">
+                    {f.desc}
+                  </p>
                 </div>
               </div>
             </Reveal>
