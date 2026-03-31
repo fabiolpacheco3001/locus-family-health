@@ -51,6 +51,40 @@ async function asaasFetch(path: string, options: RequestInit) {
   return res.json();
 }
 
+/** Find existing Asaas customer by email, or create one */
+async function findOrCreateCustomer(email: string, name: string): Promise<string> {
+  // Search by email
+  const search = await asaasFetch(`/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
+  if (search.data && search.data.length > 0) {
+    console.log("Found existing Asaas customer:", search.data[0].id);
+    return search.data[0].id;
+  }
+
+  // Create new customer
+  const created = await asaasFetch("/customers", {
+    method: "POST",
+    body: JSON.stringify({ name, email }),
+  });
+  console.log("Created new Asaas customer:", created.id);
+  return created.id;
+}
+
+/** Get the invoiceUrl from the first payment of a subscription */
+async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string> {
+  // Wait briefly for Asaas to generate the first payment
+  await new Promise((r) => setTimeout(r, 1500));
+
+  const payments = await asaasFetch(`/payments?subscription=${subscriptionId}`, { method: "GET" });
+  if (payments.data && payments.data.length > 0) {
+    const payment = payments.data[0];
+    if (payment.invoiceUrl) return payment.invoiceUrl;
+    // Fallback: build the URL from the payment id
+    return `https://sandbox.asaas.com/i/${payment.id}`;
+  }
+
+  throw new Error("Nenhuma cobrança gerada para a assinatura. Tente novamente.");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -59,16 +93,9 @@ Deno.serve(async (req) => {
   try {
     // Validate JWT
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(
         JSON.stringify({ error: "Missing auth header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (!authHeader.startsWith("Bearer ")) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -79,8 +106,7 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const { data: { user }, error: userError } =
-      await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       console.error("Auth error:", userError);
       return new Response(
@@ -90,52 +116,75 @@ Deno.serve(async (req) => {
     }
 
     const userId = user.id;
+    const userEmail = user.email!;
+    const userName = user.user_metadata?.full_name || userEmail;
 
     // Validate body
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return new Response(
         JSON.stringify({ error: parsed.error.flatten().fieldErrors }),
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const { planType } = parsed.data;
     const plan = PLAN_CONFIG[planType];
 
-    // Update plan_type in subscriptions (no customer creation — Asaas handles it via Payment Link)
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // 1. Find or create customer in Asaas (zero duplication)
+    const customerId = await findOrCreateCustomer(userEmail, userName);
+
+    // Save the asaas_customer_id and plan_type
     await adminClient
       .from("subscriptions")
-      .update({ plan_type: planType })
+      .update({ plan_type: planType, asaas_customer_id: customerId })
       .eq("user_id", userId);
 
-    // Create payment link directly (Asaas creates the customer at checkout time)
-    const paymentLink = await asaasFetch("/paymentLinks", {
-      method: "POST",
-      body: JSON.stringify({
-        name: plan.description,
-        billingType: plan.billingType,
-        chargeType: "RECURRENT",
-        subscriptionCycle: plan.cycle,
-        value: plan.value,
-        maxInstallmentCount: 1,
-        dueDateLimitDays: 3,
-        notificationEnabled: true,
-        callback: {
-          successUrl: "https://locus-family-vita.lovable.app/home",
-          autoRedirect: true,
-        },
-        externalReference: userId,
-      }),
-    });
+    // 2. Check if there's already a pending subscription for this customer
+    const existingSubs = await asaasFetch(
+      `/subscriptions?customer=${customerId}&status=ACTIVE&status=PENDING`,
+      { method: "GET" }
+    );
+
+    let subscriptionId: string;
+
+    if (existingSubs.data && existingSubs.data.length > 0) {
+      // Reuse existing subscription — get its pending payment
+      subscriptionId = existingSubs.data[0].id;
+      console.log("Reusing existing Asaas subscription:", subscriptionId);
+    } else {
+      // 3. Create a new subscription via POST /subscriptions
+      const nextDueDate = new Date();
+      nextDueDate.setDate(nextDueDate.getDate() + 1); // Due tomorrow
+      const dueDateStr = nextDueDate.toISOString().split("T")[0];
+
+      const subscription = await asaasFetch("/subscriptions", {
+        method: "POST",
+        body: JSON.stringify({
+          customer: customerId,
+          billingType: plan.billingType,
+          value: plan.value,
+          nextDueDate: dueDateStr,
+          cycle: plan.cycle,
+          description: plan.description,
+          externalReference: userId,
+        }),
+      });
+
+      subscriptionId = subscription.id;
+      console.log("Created Asaas subscription:", subscriptionId);
+    }
+
+    // 4. Get the invoice URL from the first payment
+    const invoiceUrl = await getSubscriptionInvoiceUrl(subscriptionId);
 
     return new Response(
-      JSON.stringify({ url: paymentLink.url }),
+      JSON.stringify({ url: invoiceUrl }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
