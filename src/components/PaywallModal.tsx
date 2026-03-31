@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Rocket, Loader2 } from "lucide-react";
+import { Rocket, Loader2, LogOut } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,9 +14,12 @@ import { toast } from "sonner";
 interface PaywallModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When true, hides close button and forces interaction */
+  locked?: boolean;
+  onLogout?: () => void;
 }
 
-const PaywallModal = ({ open, onOpenChange }: PaywallModalProps) => {
+const PaywallModal = ({ open, onOpenChange, locked, onLogout }: PaywallModalProps) => {
   const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
@@ -32,8 +35,13 @@ const PaywallModal = ({ open, onOpenChange }: PaywallModalProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[380px] rounded-[24px] w-[92vw] p-6">
+    <Dialog open={open} onOpenChange={locked ? () => {} : onOpenChange}>
+      <DialogContent
+        className="max-w-[380px] rounded-[24px] w-[92vw] p-6"
+        onPointerDownOutside={locked ? (e) => e.preventDefault() : undefined}
+        onEscapeKeyDown={locked ? (e) => e.preventDefault() : undefined}
+        hideCloseButton={locked}
+      >
         <DialogHeader className="items-center text-center space-y-3">
           <div className="w-16 h-16 rounded-full bg-accent/15 flex items-center justify-center mx-auto">
             <Rocket size={32} className="text-accent" />
@@ -78,6 +86,17 @@ const PaywallModal = ({ open, onOpenChange }: PaywallModalProps) => {
             )}
           </Button>
         </div>
+
+        {locked && onLogout && (
+          <Button
+            variant="ghost"
+            className="mt-3 w-full text-muted-foreground"
+            onClick={onLogout}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Sair da conta
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );

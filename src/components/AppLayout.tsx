@@ -66,6 +66,9 @@ const AppLayout = () => {
     scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);
 
+  // Show locked paywall if subscription is not premium-eligible
+  const showPaywall = !subLoading && user && !canUsePremium;
+
   return (
     <InviteAcceptInterceptor>
       <MobileShell>
@@ -75,6 +78,14 @@ const AppLayout = () => {
           </Suspense>
         </div>
         <BottomNav />
+        {showPaywall && (
+          <PaywallModal
+            open={true}
+            onOpenChange={() => {}}
+            locked
+            onLogout={signOut}
+          />
+        )}
       </MobileShell>
     </InviteAcceptInterceptor>
   );
