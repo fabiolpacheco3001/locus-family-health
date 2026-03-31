@@ -146,7 +146,6 @@ const App = () => (
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </CrispChatProvider>
         </BrowserRouter>
       </TooltipProvider>
       </FamilyGroupProvider>
