@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import locusVitaLogo from "@/assets/locus-vita-logo-landing.jpeg";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
