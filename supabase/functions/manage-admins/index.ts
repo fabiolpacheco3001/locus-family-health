@@ -110,6 +110,41 @@ Deno.serve(async (req) => {
       return json({ success: true, email: target.email });
     }
 
+    // ── CREATE ──
+    if (action === "create") {
+      const { email, password, role } = body;
+      if (!email || !password) return json({ error: "E-mail e senha são obrigatórios." }, 400);
+      if (!["admin", "super_admin"].includes(role)) return json({ error: "Cargo inválido." }, 400);
+      if (password.length < 6) return json({ error: "A senha deve ter no mínimo 6 caracteres." }, 400);
+
+      // Create user via Admin API (does NOT affect caller's session)
+      const { data: newUser, error: createErr } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+      if (createErr) {
+        const msg = createErr.message?.includes("already been registered")
+          ? "Este e-mail já está cadastrado."
+          : createErr.message;
+        return json({ error: msg }, 409);
+      }
+
+      // Insert role
+      const { error: roleErr } = await adminClient
+        .from("user_roles")
+        .upsert({ id: newUser.user.id, role }, { onConflict: "id" });
+
+      if (roleErr) {
+        // Rollback: delete the created user
+        await adminClient.auth.admin.deleteUser(newUser.user.id);
+        return json({ error: "Erro ao atribuir cargo. Usuário não foi criado." }, 500);
+      }
+
+      return json({ success: true, email: newUser.user.email });
+    }
+
     // ── REVOKE ──
     if (action === "revoke") {
       const { userId } = body;
