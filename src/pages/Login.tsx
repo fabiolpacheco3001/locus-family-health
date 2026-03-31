@@ -58,13 +58,13 @@ const Login = () => {
     if (planFromUrl) {
       setCheckoutLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         const url = await createSubscription(planFromUrl);
         window.location.href = url;
         return;
       } catch (err: any) {
         setCheckoutLoading(false);
-        toast.error(err?.message || "Não foi possível gerar o link de pagamento. Tente novamente na aba Ajustes.");
+        toast.error("Conta criada, mas houve um erro ao redirecionar para o pagamento: " + (err?.message || "Tente novamente na aba Ajustes."));
         navigate("/home");
         return;
       }
