@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import locusvitaLogo from "@/assets/locus-vita-logo.jpeg";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 
 const Cadastro = () => {
@@ -22,6 +23,11 @@ const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmError, setConfirmError] = useState("");
+
+  // Clear any stale cached session to prevent auth limbo
+  useEffect(() => {
+    supabase.auth.signOut();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
