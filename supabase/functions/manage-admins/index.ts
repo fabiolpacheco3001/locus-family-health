@@ -10,37 +10,33 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const json = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify the caller is authenticated
+    // Verify caller
     const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
-    // Verify caller is super_admin
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user: caller } } = await callerClient.auth.getUser();
-    if (!caller) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!caller) return json({ error: "Unauthorized" }, 401);
 
-    const { action } = await req.json();
+    const body = await req.json();
+    const { action } = body;
 
+    // ── LIST ──
     if (action === "list") {
-      // List all admins with their email from auth.users
       const { data: roles, error: rolesErr } = await adminClient
         .from("user_roles")
         .select("id, role, created_at")
@@ -48,7 +44,6 @@ Deno.serve(async (req) => {
 
       if (rolesErr) throw rolesErr;
 
-      // Get emails for these users
       const admins = [];
       for (const role of roles || []) {
         const { data: { user } } = await adminClient.auth.admin.getUserById(role.id);
@@ -60,12 +55,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ admins }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ admins });
     }
 
-    // For mutations, verify super_admin
+    // ── MUTATIONS: super_admin only ──
     const { data: callerRole } = await adminClient
       .from("user_roles")
       .select("role")
@@ -73,28 +66,76 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (callerRole?.role !== "super_admin") {
-      return new Response(JSON.stringify({ error: "Apenas Super Admins podem alterar cargos." }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return json({ error: "Apenas Super Admins podem alterar cargos." }, 403);
     }
 
+    // ── PROMOTE ──
     if (action === "promote") {
-      const { email } = await req.json().catch(() => ({}));
-      // Already parsed above, re-parse body
-      const body = await new Response(req.body).json().catch(() => null);
-      // Body was already consumed, let's use a different approach
+      const { email } = body;
+      if (!email) return json({ error: "E-mail obrigatório." }, 400);
+
+      // Find user by email
+      const { data: { users }, error: listErr } = await adminClient.auth.admin.listUsers();
+      if (listErr) throw listErr;
+
+      const target = users.find(
+        (u) => u.email?.toLowerCase() === email.toLowerCase()
+      );
+      if (!target) {
+        return json({ error: "Nenhum usuário encontrado com esse e-mail." }, 404);
+      }
+
+      // Check if already admin
+      const { data: existing } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("id", target.id)
+        .maybeSingle();
+
+      if (existing?.role === "admin" || existing?.role === "super_admin") {
+        return json({ error: "Este usuário já é administrador." }, 409);
+      }
+
+      if (existing) {
+        await adminClient
+          .from("user_roles")
+          .update({ role: "admin" })
+          .eq("id", target.id);
+      } else {
+        await adminClient
+          .from("user_roles")
+          .insert({ id: target.id, role: "admin" });
+      }
+
+      return json({ success: true, email: target.email });
     }
 
-    // Re-read the body for mutation actions
-    return new Response(JSON.stringify({ error: "Invalid action" }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    // ── REVOKE ──
+    if (action === "revoke") {
+      const { userId } = body;
+      if (!userId) return json({ error: "userId obrigatório." }, 400);
+
+      // Prevent revoking super_admin
+      const { data: targetRole } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (targetRole?.role === "super_admin") {
+        return json({ error: "Não é possível revogar acesso de Super Admin." }, 403);
+      }
+
+      await adminClient
+        .from("user_roles")
+        .update({ role: "customer" })
+        .eq("id", userId);
+
+      return json({ success: true });
+    }
+
+    return json({ error: "Ação inválida." }, 400);
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return json({ error: err.message }, 500);
   }
 });
