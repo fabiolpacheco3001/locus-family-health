@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ const menuItems = [
   { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
   { icon: FileText, label: "Política de Privacidade", path: null },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: "/ajuda" },
-  { icon: Mail, label: "Fale Conosco", path: "mailto:suporte@locustech.com.br" },
+  { icon: Mail, label: "Fale Conosco", path: "__support__" },
 ];
 
 const Ajustes = () => {
@@ -38,6 +38,23 @@ const Ajustes = () => {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [supportUrl, setSupportUrl] = useState<string>("");
+  const [supportEmail, setSupportEmail] = useState<string>("suporte@locustech.com.br");
+
+  useEffect(() => {
+    supabase
+      .from("system_configs" as any)
+      .select("key, value")
+      .in("key", ["support_url", "support_email"])
+      .then(({ data }) => {
+        if (data) {
+          for (const row of data as any[]) {
+            if (row.key === "support_url") setSupportUrl(row.value || "");
+            if (row.key === "support_email") setSupportEmail(row.value || "suporte@locustech.com.br");
+          }
+        }
+      });
+  }, []);
 
   const handleRegularize = async () => {
     setLoadingSubscription(true);
@@ -220,7 +237,13 @@ const Ajustes = () => {
               <button
                 key={label}
                 onClick={() => {
-                  if (path?.startsWith("mailto:")) {
+                  if (path === "__support__") {
+                    if (supportUrl) {
+                      window.open(supportUrl, "_blank");
+                    } else {
+                      window.location.href = `mailto:${supportEmail}`;
+                    }
+                  } else if (path?.startsWith("mailto:")) {
                     window.location.href = path;
                   } else if (path) {
                     navigate(path);

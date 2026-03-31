@@ -975,6 +975,30 @@ export type Database = {
         }
         Relationships: []
       }
+      system_configs: {
+        Row: {
+          description: string
+          id: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          description?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value?: string
+        }
+        Update: {
+          description?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           key: string
