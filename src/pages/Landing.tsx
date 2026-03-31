@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { createSubscription } from "@/services/asaasService";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
