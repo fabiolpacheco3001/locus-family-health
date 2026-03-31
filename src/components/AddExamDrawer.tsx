@@ -293,6 +293,10 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   type="button"
                   disabled={!lgpdConsent || isAnalyzing || isPending}
                   onClick={async () => {
+                    if (!canUsePremium) {
+                      setShowPaywall(true);
+                      return;
+                    }
                     setIsAnalyzing(true);
                     try {
                       let urlToAnalyze = existingFileUrl;
