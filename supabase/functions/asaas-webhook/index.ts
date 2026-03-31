@@ -46,15 +46,7 @@ Deno.serve(async (req) => {
     const externalReference = payment.externalReference as string | null;
     const customerId = payment.customer as string | null;
 
-    // Determine which identifier to use for the lookup
-    let updateQuery = adminClient.from("subscriptions");
-
-    if (externalReference) {
-      // externalReference = user_id
-      updateQuery = updateQuery.update({} as Record<string, unknown>).eq("user_id", externalReference) as typeof updateQuery;
-    } else if (customerId) {
-      updateQuery = updateQuery.update({} as Record<string, unknown>).eq("asaas_customer_id", customerId) as typeof updateQuery;
-    } else {
+    if (!externalReference && !customerId) {
       console.warn("No externalReference or customer ID in payment payload");
       return new Response(
         JSON.stringify({ received: true, warning: "no identifier" }),
@@ -71,8 +63,18 @@ Deno.serve(async (req) => {
       case "PAYMENT_CONFIRMED":
         newStatus = "active";
         updateData.status = newStatus;
+        // Update next_billing_date from payment dueDate
         if (payment.dueDate) {
           updateData.next_billing_date = payment.dueDate;
+        }
+        // Determine plan_type from subscription cycle or payment value
+        if (payment.value) {
+          const value = Number(payment.value);
+          if (value >= 150) {
+            updateData.plan_type = "annual";
+          } else {
+            updateData.plan_type = "monthly";
+          }
         }
         break;
 
@@ -95,12 +97,12 @@ Deno.serve(async (req) => {
         );
     }
 
-    // Always save the Asaas customer ID from the payment payload
+    // Always save the Asaas customer ID
     if (customerId) {
       updateData.asaas_customer_id = customerId;
     }
 
-    // Execute update — prefer externalReference (user_id) as primary identifier
+    // Prefer externalReference (user_id) as primary identifier
     const identifier = externalReference
       ? { column: "user_id", value: externalReference }
       : { column: "asaas_customer_id", value: customerId! };
@@ -118,7 +120,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log(`Subscription updated: ${identifier.column}=${identifier.value}, status=${newStatus}`);
+    console.log(`Subscription updated: ${identifier.column}=${identifier.value}, status=${newStatus}, data=${JSON.stringify(updateData)}`);
 
     return new Response(
       JSON.stringify({ received: true, status: newStatus }),

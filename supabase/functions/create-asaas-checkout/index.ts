@@ -53,14 +53,12 @@ async function asaasFetch(path: string, options: RequestInit) {
 
 /** Find existing Asaas customer by email, or create one */
 async function findOrCreateCustomer(email: string, name: string): Promise<string> {
-  // Search by email
   const search = await asaasFetch(`/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
   if (search.data && search.data.length > 0) {
     console.log("Found existing Asaas customer:", search.data[0].id);
     return search.data[0].id;
   }
 
-  // Create new customer
   const created = await asaasFetch("/customers", {
     method: "POST",
     body: JSON.stringify({ name, email }),
@@ -71,14 +69,12 @@ async function findOrCreateCustomer(email: string, name: string): Promise<string
 
 /** Get the invoiceUrl from the first payment of a subscription */
 async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string> {
-  // Wait briefly for Asaas to generate the first payment
   await new Promise((r) => setTimeout(r, 1500));
 
   const payments = await asaasFetch(`/payments?subscription=${subscriptionId}`, { method: "GET" });
   if (payments.data && payments.data.length > 0) {
     const payment = payments.data[0];
     if (payment.invoiceUrl) return payment.invoiceUrl;
-    // Fallback: build the URL from the payment id
     return `https://sandbox.asaas.com/i/${payment.id}`;
   }
 
@@ -91,7 +87,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate JWT
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return new Response(
@@ -119,7 +114,6 @@ Deno.serve(async (req) => {
     const userEmail = user.email!;
     const userName = user.user_metadata?.full_name || userEmail;
 
-    // Validate body
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return new Response(
@@ -136,7 +130,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1. Find or create customer in Asaas (zero duplication)
+    // 1. Find or create customer in Asaas
     const customerId = await findOrCreateCustomer(userEmail, userName);
 
     // Save the asaas_customer_id and plan_type
@@ -145,7 +139,7 @@ Deno.serve(async (req) => {
       .update({ plan_type: planType, asaas_customer_id: customerId })
       .eq("user_id", userId);
 
-    // 2. Check if there's already a pending subscription for this customer
+    // 2. Check for existing active/pending subscription
     const existingSubs = await asaasFetch(
       `/subscriptions?customer=${customerId}&status=ACTIVE&status=PENDING`,
       { method: "GET" }
@@ -154,20 +148,19 @@ Deno.serve(async (req) => {
     let subscriptionId: string;
 
     if (existingSubs.data && existingSubs.data.length > 0) {
-      // Reuse existing subscription — get its pending payment
       subscriptionId = existingSubs.data[0].id;
       console.log("Reusing existing Asaas subscription:", subscriptionId);
     } else {
-      // 3. Create a new subscription via POST /subscriptions
+      // 3. Create subscription with CREDIT_CARD only
       const nextDueDate = new Date();
-      nextDueDate.setDate(nextDueDate.getDate() + 1); // Due tomorrow
+      nextDueDate.setDate(nextDueDate.getDate() + 1);
       const dueDateStr = nextDueDate.toISOString().split("T")[0];
 
       const subscription = await asaasFetch("/subscriptions", {
         method: "POST",
         body: JSON.stringify({
           customer: customerId,
-          billingType: plan.billingType,
+          billingType: "CREDIT_CARD",
           value: plan.value,
           nextDueDate: dueDateStr,
           cycle: plan.cycle,
@@ -180,7 +173,7 @@ Deno.serve(async (req) => {
       console.log("Created Asaas subscription:", subscriptionId);
     }
 
-    // 4. Get the invoice URL from the first payment
+    // 4. Get the invoice URL
     const invoiceUrl = await getSubscriptionInvoiceUrl(subscriptionId);
 
     return new Response(

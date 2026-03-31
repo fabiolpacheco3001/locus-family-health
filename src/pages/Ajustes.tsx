@@ -116,67 +116,100 @@ const Ajustes = () => {
             </div>
           </div>
 
-          {/* Subscription Card */}
+          {/* Subscription Card - Netflix Style */}
           {subscription && (
-            <div className="p-4 bg-card rounded-xl shadow-sm border border-border/40 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Crown size={18} className="text-accent" />
-                  <span className="text-sm font-semibold text-foreground">Minha Assinatura</span>
+            <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
+              {/* Header gradient */}
+              <div className={`px-4 py-3 ${
+                isActive
+                  ? "bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]"
+                  : isPastDue
+                  ? "bg-gradient-to-r from-red-600 to-red-400"
+                  : trialExpired
+                  ? "bg-gradient-to-r from-gray-500 to-gray-400"
+                  : "bg-gradient-to-r from-amber-500 to-amber-400"
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Crown size={16} className="text-white" />
+                    <span className="text-sm font-bold text-white">
+                      {isActive
+                        ? subscription.plan_type === "annual"
+                          ? "Plano Anual Locus Vita"
+                          : "Plano Mensal Locus Vita"
+                        : isTrialing && !trialExpired
+                        ? "Período de Avaliação"
+                        : isPastDue
+                        ? "Pagamento Pendente"
+                        : "Trial Expirado"}
+                    </span>
+                  </div>
+                  {isActive && (
+                    <Badge className="bg-white/20 text-white border-none text-xs backdrop-blur-sm">Ativo</Badge>
+                  )}
                 </div>
-                {isTrialing && !trialExpired && (
-                  <Badge className="bg-emerald-100 text-emerald-700 border-none text-xs">Período de Avaliação</Badge>
-                )}
-                {isActive && (
-                  <Badge className="bg-primary/15 text-primary border-none text-xs">
-                    {subscription.plan_type === "annual" ? "Anual" : "Mensal"}
-                  </Badge>
-                )}
-                {isPastDue && (
-                  <Badge className="bg-destructive/15 text-destructive border-none text-xs">Pagamento Pendente</Badge>
-                )}
-                {trialExpired && (
-                  <Badge className="bg-destructive/15 text-destructive border-none text-xs">Trial Expirado</Badge>
-                )}
               </div>
 
-              {isTrialing && !trialExpired && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock size={14} />
-                    <span>Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu teste.</span>
+              {/* Body */}
+              <div className="bg-card p-4 space-y-3">
+                {isActive && (
+                  <>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-2xl font-bold text-foreground">
+                        {subscription.plan_type === "annual" ? "R$ 191,00" : "R$ 19,90"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        /{subscription.plan_type === "annual" ? "ano" : "mês"}
+                      </span>
+                    </div>
+                    {subscription.next_billing_date && (
+                      <p className="text-sm text-muted-foreground">
+                        Próximo pagamento:{" "}
+                        <strong className="text-foreground">
+                          {format(parseISO(subscription.next_billing_date), "dd MMM yyyy", { locale: ptBR })}
+                        </strong>
+                      </p>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => toast.info("Portal de gerenciamento em breve.")}
+                      className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
+                    >
+                      Gerenciar Assinatura
+                    </Button>
+                  </>
+                )}
+
+                {isTrialing && !trialExpired && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock size={14} />
+                      <span>Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu teste.</span>
+                    </div>
+                    <Button
+                      onClick={() => navigate("/#planos")}
+                      className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
+                    >
+                      Assinar Premium
+                    </Button>
                   </div>
+                )}
+
+                {(isPastDue || trialExpired) && (
                   <Button
-                    onClick={() => navigate("/#planos")}
-                    className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
+                    onClick={handleRegularize}
+                    disabled={loadingSubscription}
+                    className="w-full h-10 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold shadow-md"
                   >
-                    Assinar Premium
+                    {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : (
+                      <span className="flex items-center gap-2">
+                        <AlertCircle size={16} />
+                        Regularizar Pagamento
+                      </span>
+                    )}
                   </Button>
-                </div>
-              )}
-
-              {isActive && subscription.next_billing_date && (
-                <p className="text-sm text-muted-foreground">
-                  Próxima cobrança: <strong className="text-foreground">
-                    {format(parseISO(subscription.next_billing_date), "dd MMM yyyy", { locale: ptBR })}
-                  </strong>
-                </p>
-              )}
-
-              {(isPastDue || trialExpired) && (
-                <Button
-                  onClick={handleRegularize}
-                  disabled={loadingSubscription}
-                  className="w-full h-10 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold shadow-md"
-                >
-                  {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : (
-                    <span className="flex items-center gap-2">
-                      <AlertCircle size={16} />
-                      Regularizar Pagamento
-                    </span>
-                  )}
-                </Button>
-              )}
+                )}
+              </div>
             </div>
           )}
 
