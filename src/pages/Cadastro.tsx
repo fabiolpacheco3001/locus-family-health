@@ -51,8 +51,23 @@ const Cadastro = () => {
       return;
     }
 
-    toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar seu acesso.");
-    navigate("/login");
+    // Express checkout tunnel
+    if (planFromUrl) {
+      setCheckoutLoading(true);
+      try {
+        const url = await createSubscription(planFromUrl);
+        window.location.href = url;
+        return;
+      } catch {
+        setCheckoutLoading(false);
+        toast.error("Não foi possível gerar o link de pagamento. Tente novamente na aba Ajustes.");
+        navigate("/home");
+        return;
+      }
+    }
+
+    toast.success("Conta criada com sucesso!");
+    navigate("/home");
   };
 
   return (
