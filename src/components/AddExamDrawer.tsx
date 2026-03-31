@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, Ban } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAiStatus } from "@/hooks/useAiStatus";
+import { logAiUsage } from "@/hooks/useLogAiUsage";
 import PaywallModal from "@/components/PaywallModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +37,7 @@ interface Props {
 const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Props) => {
   const { addExam, updateExam, deleteExam, uploadFile } = useExams(familyMemberId);
   const { canUsePremium } = useSubscription();
+  const { isAiActive } = useAiStatus();
   const [showPaywall, setShowPaywall] = useState(false);
   const [name, setName] = useState("");
   const [examDate, setExamDate] = useState("");
@@ -293,6 +296,10 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   type="button"
                   disabled={!lgpdConsent || isAnalyzing || isPending}
                   onClick={async () => {
+                    if (!isAiActive) {
+                      toast.error("A Inteligência Artificial está temporariamente em manutenção. Por favor, insira os dados manualmente.");
+                      return;
+                    }
                     if (!canUsePremium) {
                       setShowPaywall(true);
                       return;
@@ -328,6 +335,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                         }
                       }
                       toast.success("Dados extraídos com sucesso!");
+                      logAiUsage("exame", 0);
                     } catch (err: any) {
                       console.error("OCR error:", err);
                       toast.error(err?.message || "Não foi possível ler o documento.");

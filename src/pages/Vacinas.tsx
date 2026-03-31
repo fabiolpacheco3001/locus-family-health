@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAiStatus } from "@/hooks/useAiStatus";
 import PaywallModal from "@/components/PaywallModal";
 import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown } from "lucide-react";
 import ExamSwipeableCard from "@/components/ExamSwipeableCard";
@@ -90,6 +91,7 @@ const Vacinas = () => {
   const { user } = useAuth();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const { canUsePremium } = useSubscription();
+  const { isAiActive } = useAiStatus();
   const [showPaywall, setShowPaywall] = useState(false);
   const goBack = useSmartBack();
   const navigate = useNavigate();
@@ -341,6 +343,10 @@ const Vacinas = () => {
   const [importVaccines, setImportVaccines] = useState<ImportedVaccine[]>([]);
 
   const handleImportClick = () => {
+    if (!isAiActive) {
+      toast.error("A Inteligência Artificial está temporariamente em manutenção. Por favor, insira os dados manualmente.");
+      return;
+    }
     if (!canUsePremium) {
       setShowPaywall(true);
       return;

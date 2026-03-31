@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAiStatus } from "@/hooks/useAiStatus";
+import { logAiUsage } from "@/hooks/useLogAiUsage";
 import PaywallModal from "@/components/PaywallModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -79,6 +81,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
   const { canUsePremium } = useSubscription();
+  const { isAiActive } = useAiStatus();
   const [showPaywall, setShowPaywall] = useState(false);
   const { addMedication, updateMedication, deleteMedication, uploadReceita } = useMedications(familyMemberId);
   const { consultations } = useConsultations(familyMemberId);
@@ -222,6 +225,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   };
 
   const handleAnalyzeWithAI = async () => {
+    if (!isAiActive) {
+      toast.error("A Inteligência Artificial está temporariamente em manutenção. Por favor, insira os dados manualmente.");
+      return;
+    }
     if (!canUsePremium) {
       setShowPaywall(true);
       return;
@@ -270,6 +277,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
         toast.success("Dados extraídos da receita com sucesso!");
       }
+      logAiUsage("receita", 0);
     } catch (err: any) {
       console.error("Prescription OCR error:", err);
       toast.error(err?.message || "Não foi possível ler a receita. Preencha manualmente.");
