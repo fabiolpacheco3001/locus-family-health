@@ -1,20 +1,24 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import locusvitaLogo from "@/assets/locus-vita-logo.jpeg";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { createSubscription } from "@/services/asaasService";
 
 const Cadastro = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const planFromUrl = searchParams.get("plan") as "monthly" | "annual" | null;
   const { signUp } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmError, setConfirmError] = useState("");
@@ -47,9 +51,35 @@ const Cadastro = () => {
       return;
     }
 
-    toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar seu acesso.");
-    navigate("/login");
+    // Express checkout tunnel
+    if (planFromUrl) {
+      setCheckoutLoading(true);
+      try {
+        const url = await createSubscription(planFromUrl);
+        window.location.href = url;
+        return;
+      } catch {
+        setCheckoutLoading(false);
+        toast.error("Não foi possível gerar o link de pagamento. Tente novamente na aba Ajustes.");
+        navigate("/home");
+        return;
+      }
+    }
+
+    toast.success("Conta criada com sucesso!");
+    navigate("/home");
   };
+
+  // Full-screen checkout overlay
+  if (checkoutLoading) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-[#f2f0eb] animate-fade-in">
+        <Loader2 className="animate-spin text-primary mb-4" size={48} />
+        <p className="text-lg font-semibold text-foreground">Preparando seu ambiente seguro de pagamento...</p>
+        <p className="text-sm text-muted-foreground mt-2">Você será redirecionado em instantes.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
@@ -131,7 +161,7 @@ const Cadastro = () => {
         </form>
 
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => navigate(planFromUrl ? `/login?plan=${planFromUrl}` : "/login")}
           className="mt-6 text-sm text-muted-foreground hover:text-primary transition-colors text-center"
         >
           Já tem uma conta? <span className="font-semibold underline">Entrar</span>

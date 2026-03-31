@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
@@ -9,17 +9,21 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { createSubscription } from "@/services/asaasService";
 
 type ViewMode = "login" | "forgot";
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const planFromUrl = searchParams.get("plan") as "monthly" | "annual" | null;
   const { signIn } = useAuth();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -48,6 +52,21 @@ const Login = () => {
     if (error) {
       toast.error("E-mail ou senha incorretos. Tente novamente.");
       return;
+    }
+
+    // Express checkout tunnel
+    if (planFromUrl) {
+      setCheckoutLoading(true);
+      try {
+        const url = await createSubscription(planFromUrl);
+        window.location.href = url;
+        return;
+      } catch {
+        setCheckoutLoading(false);
+        toast.error("Não foi possível gerar o link de pagamento. Tente novamente na aba Ajustes.");
+        navigate("/home");
+        return;
+      }
     }
 
     {
@@ -93,6 +112,17 @@ const Login = () => {
       navigate("/home");
     }
   };
+
+  // Full-screen checkout overlay
+  if (checkoutLoading) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-[#f2f0eb] animate-fade-in">
+        <Loader2 className="animate-spin text-primary mb-4" size={48} />
+        <p className="text-lg font-semibold text-foreground">Preparando seu ambiente seguro de pagamento...</p>
+        <p className="text-sm text-muted-foreground mt-2">Você será redirecionado em instantes.</p>
+      </div>
+    );
+  }
 
   // Forgot password view
   if (viewMode === "forgot") {
@@ -176,7 +206,7 @@ const Login = () => {
         </form>
 
         <button
-          onClick={() => navigate("/cadastro")}
+          onClick={() => navigate(planFromUrl ? `/cadastro?plan=${planFromUrl}` : "/cadastro")}
           className="mt-6 text-sm text-muted-foreground hover:text-primary transition-colors text-center"
         >
           Ainda não tem conta? <span className="font-semibold underline">Crie aqui</span>
