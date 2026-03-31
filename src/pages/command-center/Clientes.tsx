@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, MoreHorizontal, Users, X } from "lucide-react";
+import { Search, MoreHorizontal, Users, Ban, KeyRound, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,11 @@ import {
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 interface SubscriptionRow {
@@ -27,7 +32,8 @@ interface SubscriptionRow {
   next_billing_date: string | null;
   created_at: string;
   asaas_customer_id: string | null;
-  user_name?: string;
+  user_name: string | null;
+  user_email: string | null;
 }
 
 const planBadge = (plan: string) => {
@@ -51,6 +57,8 @@ const statusBadge = (status: string) => {
       return <Badge className="bg-red-500 text-white border-none">Inadimplente</Badge>;
     case "canceled":
       return <Badge variant="secondary" className="bg-gray-300 text-gray-600 border-none">Cancelado</Badge>;
+    case "suspended":
+      return <Badge variant="destructive" className="border-none">Bloqueado</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -59,29 +67,49 @@ const statusBadge = (status: string) => {
 const Clientes = () => {
   const [search, setSearch] = useState("");
   const [selectedClient, setSelectedClient] = useState<SubscriptionRow | null>(null);
+  const [blockTarget, setBlockTarget] = useState<SubscriptionRow | null>(null);
 
   const { data: subscriptions = [], isLoading } = useQuery({
     queryKey: ["admin-subscriptions"],
     queryFn: async () => {
+      // Single query: fetch all subscriptions
       const { data: subs, error } = await supabase
         .from("subscriptions")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
+      if (!subs?.length) return [] as SubscriptionRow[];
 
-      const userIds = (subs ?? []).map((s: any) => s.user_id);
+      // Batch fetch names for all user_ids in one go
+      const userIds = subs.map((s: any) => s.user_id);
       const { data: members } = await supabase
         .from("family_members")
-        .select("user_id, name, relationship")
+        .select("user_id, name")
         .in("user_id", userIds)
         .eq("relationship", "Eu");
 
-      const memberMap = new Map<string, string>();
-      (members ?? []).forEach((m: any) => memberMap.set(m.user_id, m.name));
+      const nameMap = new Map<string, string>();
+      (members ?? []).forEach((m: any) => nameMap.set(m.user_id, m.name));
 
-      return (subs ?? []).map((s: any) => ({
+      // Batch fetch emails via edge function
+      let emailMap = new Map<string, string>();
+      try {
+        const { data: emailData } = await supabase.functions.invoke("manage-admins", {
+          body: { action: "list-emails", userIds },
+        });
+        if (emailData?.emails) {
+          (emailData.emails as { id: string; email: string }[]).forEach((e) =>
+            emailMap.set(e.id, e.email)
+          );
+        }
+      } catch {
+        // Fallback: no emails
+      }
+
+      return subs.map((s: any) => ({
         ...s,
-        user_name: memberMap.get(s.user_id) || null,
+        user_name: nameMap.get(s.user_id) || null,
+        user_email: emailMap.get(s.user_id) || null,
       })) as SubscriptionRow[];
     },
   });
@@ -92,10 +120,58 @@ const Clientes = () => {
     return subscriptions.filter(
       (s) =>
         s.user_name?.toLowerCase().includes(q) ||
-        s.user_id.toLowerCase().includes(q) ||
-        s.asaas_customer_id?.toLowerCase().includes(q)
+        s.user_email?.toLowerCase().includes(q) ||
+        s.user_id.toLowerCase().includes(q)
     );
   }, [subscriptions, search]);
+
+  const handleResetPassword = async (sub: SubscriptionRow) => {
+    if (!sub.user_email) {
+      toast.error("E-mail do usuário não disponível.");
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(sub.user_email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success(`E-mail de recuperação enviado para ${sub.user_email}.`);
+    } catch {
+      toast.error("Erro ao enviar e-mail de recuperação.");
+    }
+  };
+
+  const handleBlockUser = async () => {
+    if (!blockTarget) return;
+    const newStatus = blockTarget.status === "suspended" ? "active" : "suspended";
+    const { error } = await supabase
+      .from("subscriptions")
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq("id", blockTarget.id);
+
+    if (error) {
+      toast.error("Erro ao atualizar status do usuário.");
+    } else {
+      toast.success(newStatus === "suspended" ? "Usuário bloqueado." : "Usuário desbloqueado.");
+      // Refresh list
+      window.location.reload();
+    }
+    setBlockTarget(null);
+  };
+
+  const tableSkeletons = (
+    <>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <TableRow key={i}>
+          <TableCell><Skeleton className="h-8 w-32" /></TableCell>
+          <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+          <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+          <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+          <TableCell><Skeleton className="h-6 w-8" /></TableCell>
+        </TableRow>
+      ))}
+    </>
+  );
 
   return (
     <div className="space-y-6">
@@ -109,7 +185,7 @@ const Clientes = () => {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar por nome ou ID..."
+          placeholder="Buscar por nome, e-mail ou ID..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 bg-white border-gray-200"
@@ -124,20 +200,15 @@ const Clientes = () => {
               <TableHead className="font-semibold text-[#2A5C82]">Plano</TableHead>
               <TableHead className="font-semibold text-[#2A5C82]">Status</TableHead>
               <TableHead className="font-semibold text-[#2A5C82]">Próxima Cobrança</TableHead>
-              <TableHead className="font-semibold text-[#2A5C82]">Asaas ID</TableHead>
               <TableHead className="font-semibold text-[#2A5C82] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
-                  Carregando clientes...
-                </TableCell>
-              </TableRow>
+              tableSkeletons
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-12">
+                <TableCell colSpan={5} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="w-8 h-8 opacity-40" />
                     <p className="text-sm">
@@ -152,7 +223,7 @@ const Clientes = () => {
                   <TableCell>
                     <div>
                       <p className="font-medium text-foreground text-sm">{sub.user_name || "—"}</p>
-                      <p className="text-xs text-muted-foreground">{sub.user_id.slice(0, 8)}...</p>
+                      <p className="text-xs text-muted-foreground">{sub.user_email || sub.user_id.slice(0, 8) + "..."}</p>
                     </div>
                   </TableCell>
                   <TableCell>{planBadge(sub.plan_type)}</TableCell>
@@ -161,9 +232,6 @@ const Clientes = () => {
                     {sub.next_billing_date
                       ? format(parseISO(sub.next_billing_date), "dd/MM/yyyy", { locale: ptBR })
                       : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground font-mono">
-                    {sub.asaas_customer_id || "—"}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -174,13 +242,19 @@ const Clientes = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setSelectedClient(sub)}>
+                          <Eye className="w-4 h-4 mr-2" />
                           Ver Detalhes
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleResetPassword(sub)}>
+                          <KeyRound className="w-4 h-4 mr-2" />
+                          Resetar Senha
+                        </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="text-red-600 focus:text-red-600"
-                          onClick={() => toast.info("Funcionalidade de bloqueio em desenvolvimento.")}
+                          className={sub.status === "suspended" ? "text-emerald-600 focus:text-emerald-600" : "text-red-600 focus:text-red-600"}
+                          onClick={() => setBlockTarget(sub)}
                         >
-                          Bloquear Acesso
+                          <Ban className="w-4 h-4 mr-2" />
+                          {sub.status === "suspended" ? "Desbloquear" : "Bloquear Acesso"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -203,6 +277,10 @@ const Clientes = () => {
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Nome</p>
                 <p className="font-medium text-foreground">{selectedClient.user_name || "Não informado"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">E-mail</p>
+                <p className="text-sm text-foreground">{selectedClient.user_email || "Não disponível"}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">User ID</p>
@@ -250,6 +328,31 @@ const Clientes = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Block Confirm Dialog */}
+      <AlertDialog open={!!blockTarget} onOpenChange={() => setBlockTarget(null)}>
+        <AlertDialogContent className="max-w-[340px] rounded-[24px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {blockTarget?.status === "suspended" ? "Desbloquear Usuário?" : "Bloquear Usuário?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {blockTarget?.status === "suspended"
+                ? `Deseja restaurar o acesso de ${blockTarget?.user_name || blockTarget?.user_email || "este usuário"}?`
+                : `Deseja suspender o acesso de ${blockTarget?.user_name || blockTarget?.user_email || "este usuário"}? Ele não poderá usar o app enquanto estiver bloqueado.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button
+              variant={blockTarget?.status === "suspended" ? "default" : "destructive"}
+              onClick={handleBlockUser}
+            >
+              {blockTarget?.status === "suspended" ? "Desbloquear" : "Bloquear"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
