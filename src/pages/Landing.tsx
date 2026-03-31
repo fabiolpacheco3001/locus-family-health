@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { createSubscription } from "@/services/asaasService";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -99,6 +102,25 @@ const SectionWrapper = ({
 /* ================================================================== */
 const Landing = () => {
   const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
+
+  const handleSubscribe = async (planType: "monthly" | "annual") => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate(`/cadastro?plan=${planType}`);
+        return;
+      }
+      setLoadingPlan(planType);
+      const url = await createSubscription(planType);
+      window.location.href = url;
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      toast.error(err?.message || "Erro ao iniciar pagamento. Tente novamente.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   const features = [
     {
@@ -446,9 +468,10 @@ const Landing = () => {
                   <Button
                     className="w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
                     style={{ background: MINT }}
-                    onClick={() => navigate("/cadastro")}
+                    disabled={loadingPlan === "monthly"}
+                    onClick={() => handleSubscribe("monthly")}
                   >
-                    Assinar
+                    {loadingPlan === "monthly" ? "Processando..." : "Assinar"}
                   </Button>
                 </div>
               </CardContent>
@@ -482,9 +505,10 @@ const Landing = () => {
                   <Button
                     className="w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
                     style={{ background: PEACH }}
-                    onClick={() => navigate("/cadastro")}
+                    disabled={loadingPlan === "annual"}
+                    onClick={() => handleSubscribe("annual")}
                   >
-                    Assinar com Desconto
+                    {loadingPlan === "annual" ? "Processando..." : "Assinar com Desconto"}
                   </Button>
                 </div>
               </CardContent>
