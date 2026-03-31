@@ -22,6 +22,7 @@ import {
   Bug,
 } from "lucide-react";
 import locusVitaLogo from "@/assets/locus-vita-logo-landing.jpeg";
+import locusVitaLogoFooter from "@/assets/locus-vita-logo-footer.svg";
 
 /* ─── colour tokens (brand-book hex) ─── */
 const BG       = "#f2f0eb";
