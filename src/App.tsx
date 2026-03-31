@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { CrispChatProvider } from "@/components/CrispChatProvider";
 import { FamilyGroupProvider } from "@/hooks/useFamilyGroup";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
