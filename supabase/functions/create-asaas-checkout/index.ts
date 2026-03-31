@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
         dueDateLimitDays: 3,
         notificationEnabled: true,
         callback: {
-          successUrl: `${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app") || "https://locus-family-vita.lovable.app"}/home`,
+          successUrl: "https://locus-family-vita.lovable.app/home",
           autoRedirect: true,
         },
         externalReference: userId,
