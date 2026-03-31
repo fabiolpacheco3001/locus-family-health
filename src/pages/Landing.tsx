@@ -119,7 +119,7 @@ const Landing = () => {
               size="sm"
               className="rounded-full text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
               style={{ background: MINT }}
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/cadastro")}
             >
               Criar Conta
             </Button>
