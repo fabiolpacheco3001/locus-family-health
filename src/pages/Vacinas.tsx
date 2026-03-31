@@ -91,6 +91,7 @@ const Vacinas = () => {
   const { user } = useAuth();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const { canUsePremium } = useSubscription();
+  const { isAiActive } = useAiStatus();
   const [showPaywall, setShowPaywall] = useState(false);
   const goBack = useSmartBack();
   const navigate = useNavigate();
