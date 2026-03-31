@@ -503,11 +503,13 @@ const Landing = () => {
                 </p>
                 <div className="mt-auto pt-8 w-full">
                   <Button
+                  <Button
                     className="w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
                     style={{ background: PEACH }}
-                    onClick={() => navigate("/cadastro")}
+                    disabled={loadingPlan === "annual"}
+                    onClick={() => handleSubscribe("annual")}
                   >
-                    Assinar com Desconto
+                    {loadingPlan === "annual" ? "Processando..." : "Assinar com Desconto"}
                   </Button>
                 </div>
               </CardContent>
