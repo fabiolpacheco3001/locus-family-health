@@ -45,7 +45,7 @@ async function asaasFetch(path: string, options: RequestInit) {
   if (!res.ok) {
     const body = await res.text();
     console.error(`Asaas API error: ${res.status} ${body}`);
-    throw new Error(`Asaas API error: ${res.status}`);
+    throw new Error(`Falha no Asaas (${res.status}): ${body}`);
   }
 
   return res.json();
