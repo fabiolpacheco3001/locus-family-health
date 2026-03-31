@@ -41,9 +41,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = viewMode === "signup"
-      ? await signUp(email, password, name)
-      : await signIn(email, password);
+    const { error } = await signIn(email, password);
 
     setLoading(false);
 
