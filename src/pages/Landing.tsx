@@ -119,7 +119,7 @@ const Landing = () => {
               size="sm"
               className="rounded-full text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
               style={{ background: MINT }}
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/cadastro")}
             >
               Criar Conta
             </Button>
@@ -151,7 +151,7 @@ const Landing = () => {
               size="lg"
               className="rounded-full text-lg px-10 py-7 shadow-xl text-white font-bold animate-[pulse_3s_ease-in-out_infinite] hover:scale-105 transition-transform"
               style={{ background: PEACH }}
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/cadastro")}
             >
               Comece seus 30 Dias Grátis <ArrowRight className="ml-2" size={22} />
             </Button>
@@ -372,7 +372,7 @@ const Landing = () => {
                 <Button
                   className="mt-8 w-full rounded-full text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
                   style={{ background: MINT }}
-                  onClick={() => navigate("/login")}
+                   onClick={() => navigate("/cadastro")}
                 >
                   Começar Agora
                 </Button>
@@ -395,7 +395,7 @@ const Landing = () => {
                 <Button
                   className="mt-8 w-full rounded-full text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
                   style={{ background: MINT }}
-                  onClick={() => navigate("/login")}
+                   onClick={() => navigate("/cadastro")}
                 >
                   Assinar
                 </Button>
@@ -429,7 +429,7 @@ const Landing = () => {
                 <Button
                   className="mt-8 w-full rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: PEACH }}
-                  onClick={() => navigate("/login")}
+                   onClick={() => navigate("/cadastro")}
                 >
                   Assinar com Desconto
                 </Button>

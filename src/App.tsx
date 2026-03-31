@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { FamilyGroupProvider } from "@/hooks/useFamilyGroup";
 import Login from "./pages/Login";
+import Cadastro from "./pages/Cadastro";
 import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 import AppLayout from "./components/AppLayout";
@@ -99,6 +100,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
+            <Route path="/cadastro" element={<Suspense fallback={<RouteLoader />}><Cadastro /></Suspense>} />
             <Route path="/reset-password" element={<Suspense fallback={<RouteLoader />}><ResetPassword /></Suspense>} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<Home />} />

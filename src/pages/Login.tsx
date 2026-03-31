@@ -10,16 +10,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type ViewMode = "login" | "signup" | "forgot";
+type ViewMode = "login" | "forgot";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn } = useAuth();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -42,9 +41,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = viewMode === "signup"
-      ? await signUp(email, password, name)
-      : await signIn(email, password);
+    const { error } = await signIn(email, password);
 
     setLoading(false);
 
@@ -135,20 +132,12 @@ const Login = () => {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
       <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-12">
           <img src={locusvitaLogo} alt="Locus Vita" className="w-40 h-40 object-cover rounded-3xl shadow-md mb-4" />
           <p className="text-muted-foreground text-sm mt-1">Saúde Familiar Simplificada</p>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {viewMode === "signup" && (
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-foreground">Nome</label>
-              <Input placeholder="Ex: João da Silva" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-          )}
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">E-mail</label>
             <Input type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -173,26 +162,24 @@ const Login = () => {
             </div>
           </div>
 
-          {viewMode === "login" && (
-            <button
-              type="button"
-              onClick={() => setViewMode("forgot")}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-            >
-              Esqueci minha senha
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setViewMode("forgot")}
+            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+          >
+            Esqueci minha senha
+          </button>
 
           <Button type="submit" className="w-full h-12 text-base font-semibold mt-2" disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" size={20} /> : viewMode === "signup" ? "Criar conta" : "Entrar"}
+            {loading ? <Loader2 className="animate-spin" size={20} /> : "Entrar"}
           </Button>
         </form>
 
         <button
-          onClick={() => setViewMode(viewMode === "signup" ? "login" : "signup")}
+          onClick={() => navigate("/cadastro")}
           className="mt-6 text-sm text-muted-foreground hover:text-primary transition-colors text-center"
         >
-          {viewMode === "signup" ? "Já tem uma conta? Entrar" : "Criar sua conta"}
+          Ainda não tem conta? <span className="font-semibold underline">Crie aqui</span>
         </button>
       </div>
     </div>
