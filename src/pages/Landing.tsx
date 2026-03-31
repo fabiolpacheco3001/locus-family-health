@@ -467,7 +467,7 @@ const Landing = () => {
               >
                 Mais Popular
               </div>
-              <CardContent className="p-7 text-center flex flex-col items-center pt-10 h-full">
+              <CardContent className="p-7 text-center flex flex-col items-center h-full">
                 <Badge className="mb-5 text-xs px-4 py-1" style={{ background: `${PEACH}30`, color: DARK }}>
                   Anual
                 </Badge>
