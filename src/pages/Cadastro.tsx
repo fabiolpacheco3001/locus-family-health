@@ -10,7 +10,6 @@ import { useAuth } from "@/hooks/useAuth";
 const Cadastro = () => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
-  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
