@@ -788,6 +788,7 @@ const Vacinas = () => {
           </div>
         )}
       </div>
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
     </>
   );
 };
