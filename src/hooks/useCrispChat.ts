@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-const CRISP_WEBSITE_ID = import.meta.env.VITE_CRISP_WEBSITE_ID;
+const CRISP_WEBSITE_ID = "c08f585f-abc2-405f-9bd6-b75db6d662be";
 
 declare global {
   interface Window {
