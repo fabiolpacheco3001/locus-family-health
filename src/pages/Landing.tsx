@@ -372,7 +372,7 @@ const Landing = () => {
                 <Button
                   className="mt-8 w-full rounded-full text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
                   style={{ background: MINT }}
-                  onClick={() => navigate("/login")}
+                   onClick={() => navigate("/cadastro")}
                 >
                   Começar Agora
                 </Button>
