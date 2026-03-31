@@ -33,8 +33,23 @@ const Ajustes = () => {
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
+  const { subscription, isTrialing, isActive, isPastDue, trialDaysLeft, trialExpired } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+
+  const handleRegularize = async () => {
+    setLoadingSubscription(true);
+    try {
+      const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
+      const url = await createSubscription(planType as "monthly" | "annual");
+      window.location.href = url;
+    } catch {
+      toast.error("Erro ao gerar link de pagamento.");
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
 
   const myProfile = members?.find((m) => m.id === linkedMemberId) ?? members?.[0];
 
