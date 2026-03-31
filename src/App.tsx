@@ -135,6 +135,12 @@ const App = () => (
               <Route path="/seguranca" element={<Seguranca />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
             </Route>
+            <Route path="/command_center" element={<AdminRoute><Suspense fallback={<RouteLoader />}><CommandCenterLayout /></Suspense></AdminRoute>}>
+              <Route index element={<CCDashboard />} />
+              <Route path="clientes" element={<CCClientes />} />
+              <Route path="admins" element={<CCAdmins />} />
+              <Route path="config" element={<CCConfig />} />
+            </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
