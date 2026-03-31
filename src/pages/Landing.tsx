@@ -418,7 +418,7 @@ const Landing = () => {
                 </p>
                 <p className="mt-3 text-sm leading-relaxed">Teste todas as funções Premium por 30 dias.</p>
                 <Button
-                  className="mt-8 w-full rounded-full text-white font-semibold shadow-md hover:shadow-lg transition-shadow"
+                  className="mt-8 w-full rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: MINT }}
                    onClick={() => navigate("/cadastro")}
                 >
