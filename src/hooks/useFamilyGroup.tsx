@@ -34,7 +34,7 @@ export const FamilyGroupProvider = ({ children }: { children: ReactNode }) => {
         .select("group_id, role, family_member_id, managed_profiles")
         .eq("auth_user_id", user!.id)
         .limit(1)
-        .single();
+        .maybeSingle();
       if (error) throw error;
       return data as unknown as { group_id: string; role: AppRole; family_member_id: string | null; managed_profiles: string[] | null };
     },
