@@ -905,6 +905,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           </div>
         </DialogContent>
       </Dialog>
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
     </>
   );
 };

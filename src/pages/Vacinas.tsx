@@ -341,6 +341,10 @@ const Vacinas = () => {
   const [importVaccines, setImportVaccines] = useState<ImportedVaccine[]>([]);
 
   const handleImportClick = () => {
+    if (!canUsePremium) {
+      setShowPaywall(true);
+      return;
+    }
     setActionDrawerOpen(false);
     setTimeout(() => fileRef.current?.click(), 200);
   };

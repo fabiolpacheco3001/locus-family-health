@@ -436,6 +436,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
     </>
   );
 };
