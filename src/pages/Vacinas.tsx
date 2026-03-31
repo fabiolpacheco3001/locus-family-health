@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown } from "lucide-react";
 import ExamSwipeableCard from "@/components/ExamSwipeableCard";
 import { AnimatePresence } from "framer-motion";
@@ -87,6 +89,8 @@ const Vacinas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
+  const { canUsePremium } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
   const goBack = useSmartBack();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -337,6 +341,10 @@ const Vacinas = () => {
   const [importVaccines, setImportVaccines] = useState<ImportedVaccine[]>([]);
 
   const handleImportClick = () => {
+    if (!canUsePremium) {
+      setShowPaywall(true);
+      return;
+    }
     setActionDrawerOpen(false);
     setTimeout(() => fileRef.current?.click(), 200);
   };
@@ -780,6 +788,7 @@ const Vacinas = () => {
           </div>
         )}
       </div>
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
     </>
   );
 };

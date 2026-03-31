@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog } from "lucide-react";
+import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -9,9 +10,13 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
+import { createSubscription } from "@/services/asaasService";
 import MemberAvatar from "@/components/MemberAvatar";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const menuItems = [
   { icon: User, label: "Meus Dados", path: "/meus-dados" },
@@ -28,8 +33,23 @@ const Ajustes = () => {
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
+  const { subscription, isTrialing, isActive, isPastDue, trialDaysLeft, trialExpired } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+
+  const handleRegularize = async () => {
+    setLoadingSubscription(true);
+    try {
+      const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
+      const url = await createSubscription(planType as "monthly" | "annual");
+      window.location.href = url;
+    } catch {
+      toast.error("Erro ao gerar link de pagamento.");
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
 
   const myProfile = members?.find((m) => m.id === linkedMemberId) ?? members?.[0];
 
@@ -95,6 +115,70 @@ const Ajustes = () => {
               <p className="text-sm text-muted-foreground">{myProfile?.relationship ?? "Membro"}</p>
             </div>
           </div>
+
+          {/* Subscription Card */}
+          {subscription && (
+            <div className="p-4 bg-card rounded-xl shadow-sm border border-border/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Crown size={18} className="text-accent" />
+                  <span className="text-sm font-semibold text-foreground">Minha Assinatura</span>
+                </div>
+                {isTrialing && !trialExpired && (
+                  <Badge className="bg-emerald-100 text-emerald-700 border-none text-xs">Período de Avaliação</Badge>
+                )}
+                {isActive && (
+                  <Badge className="bg-primary/15 text-primary border-none text-xs">
+                    {subscription.plan_type === "annual" ? "Anual" : "Mensal"}
+                  </Badge>
+                )}
+                {isPastDue && (
+                  <Badge className="bg-destructive/15 text-destructive border-none text-xs">Pagamento Pendente</Badge>
+                )}
+                {trialExpired && (
+                  <Badge className="bg-destructive/15 text-destructive border-none text-xs">Trial Expirado</Badge>
+                )}
+              </div>
+
+              {isTrialing && !trialExpired && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock size={14} />
+                    <span>Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu teste.</span>
+                  </div>
+                  <Button
+                    onClick={() => navigate("/#planos")}
+                    className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
+                  >
+                    Assinar Premium
+                  </Button>
+                </div>
+              )}
+
+              {isActive && subscription.next_billing_date && (
+                <p className="text-sm text-muted-foreground">
+                  Próxima cobrança: <strong className="text-foreground">
+                    {format(parseISO(subscription.next_billing_date), "dd MMM yyyy", { locale: ptBR })}
+                  </strong>
+                </p>
+              )}
+
+              {(isPastDue || trialExpired) && (
+                <Button
+                  onClick={handleRegularize}
+                  disabled={loadingSubscription}
+                  className="w-full h-10 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold shadow-md"
+                >
+                  {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : (
+                    <span className="flex items-center gap-2">
+                      <AlertCircle size={16} />
+                      Regularizar Pagamento
+                    </span>
+                  )}
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Menu Items */}
           <div className="space-y-3">

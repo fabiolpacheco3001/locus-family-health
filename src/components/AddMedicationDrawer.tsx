@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,6 +78,8 @@ type ExtractedMed = {
 const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
+  const { canUsePremium } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
   const { addMedication, updateMedication, deleteMedication, uploadReceita } = useMedications(familyMemberId);
   const { consultations } = useConsultations(familyMemberId);
   const [name, setName] = useState("");
@@ -218,6 +222,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   };
 
   const handleAnalyzeWithAI = async () => {
+    if (!canUsePremium) {
+      setShowPaywall(true);
+      return;
+    }
     setIsAnalyzing(true);
     try {
       let urlToAnalyze = existingReceitaUrl;
@@ -897,6 +905,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           </div>
         </DialogContent>
       </Dialog>
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
     </>
   );
 };

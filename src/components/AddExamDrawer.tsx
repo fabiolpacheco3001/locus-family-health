@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, Ban } from "lucide-react";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,6 +34,8 @@ interface Props {
 
 const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Props) => {
   const { addExam, updateExam, deleteExam, uploadFile } = useExams(familyMemberId);
+  const { canUsePremium } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
   const [name, setName] = useState("");
   const [examDate, setExamDate] = useState("");
   const [location, setLocation] = useState("");
@@ -289,6 +293,10 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   type="button"
                   disabled={!lgpdConsent || isAnalyzing || isPending}
                   onClick={async () => {
+                    if (!canUsePremium) {
+                      setShowPaywall(true);
+                      return;
+                    }
                     setIsAnalyzing(true);
                     try {
                       let urlToAnalyze = existingFileUrl;
@@ -428,6 +436,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
     </>
   );
 };
