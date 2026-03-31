@@ -161,7 +161,7 @@ const Cadastro = () => {
         </form>
 
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => navigate(planFromUrl ? `/login?plan=${planFromUrl}` : "/login")}
           className="mt-6 text-sm text-muted-foreground hover:text-primary transition-colors text-center"
         >
           Já tem uma conta? <span className="font-semibold underline">Entrar</span>
