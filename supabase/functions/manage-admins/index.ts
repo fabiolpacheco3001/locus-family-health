@@ -35,6 +35,20 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // ── LIST EMAILS (batch) ──
+    if (action === "list-emails") {
+      const { userIds } = body;
+      if (!Array.isArray(userIds)) return json({ error: "userIds required" }, 400);
+      const emails: { id: string; email: string }[] = [];
+      for (const uid of userIds) {
+        try {
+          const { data: { user } } = await adminClient.auth.admin.getUserById(uid);
+          if (user?.email) emails.push({ id: uid, email: user.email });
+        } catch { /* skip */ }
+      }
+      return json({ emails });
+    }
+
     // ── LIST ──
     if (action === "list") {
       const { data: roles, error: rolesErr } = await adminClient
