@@ -409,7 +409,7 @@ const Landing = () => {
           {/* Básico */}
           <Reveal delay={0}>
             <Card className="rounded-2xl border h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-lg" style={{ borderColor: "#ddd" }}>
-              <CardContent className="p-7 text-center flex flex-col items-center">
+              <CardContent className="p-7 text-center flex flex-col items-center h-full">
                 <Badge className="mb-5 text-xs px-4 py-1" style={{ background: `${MINT}30`, color: DARK }}>
                   Teste
                 </Badge>
@@ -418,7 +418,7 @@ const Landing = () => {
                 </p>
                 <p className="mt-3 text-sm leading-relaxed">Teste todas as funções Premium por 30 dias.</p>
                 <Button
-                  className="mt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
+                  className="mt-auto pt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: MINT }}
                    onClick={() => navigate("/cadastro")}
                 >
@@ -431,7 +431,7 @@ const Landing = () => {
           {/* Mensal */}
           <Reveal delay={120}>
             <Card className="rounded-2xl border h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-lg" style={{ borderColor: "#ddd" }}>
-              <CardContent className="p-7 text-center flex flex-col items-center">
+              <CardContent className="p-7 text-center flex flex-col items-center h-full">
                 <Badge className="mb-5 text-xs px-4 py-1" style={{ background: `${CERULEAN}30`, color: DARK }}>
                   Mensal
                 </Badge>
@@ -441,7 +441,7 @@ const Landing = () => {
                 </p>
                 <p className="mt-3 text-sm">Cancele quando quiser.</p>
                 <Button
-                  className="mt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
+                  className="mt-auto pt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: MINT }}
                    onClick={() => navigate("/cadastro")}
                 >
@@ -463,7 +463,7 @@ const Landing = () => {
               >
                 Mais Popular
               </div>
-              <CardContent className="p-7 text-center flex flex-col items-center pt-10">
+              <CardContent className="p-7 text-center flex flex-col items-center pt-10 h-full">
                 <Badge className="mb-5 text-xs px-4 py-1" style={{ background: `${PEACH}30`, color: DARK }}>
                   Anual
                 </Badge>
@@ -475,7 +475,7 @@ const Landing = () => {
                   Apenas R$ 15,90/mês — 20% OFF
                 </p>
                 <Button
-                  className="mt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
+                  className="mt-auto pt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: PEACH }}
                    onClick={() => navigate("/cadastro")}
                 >
