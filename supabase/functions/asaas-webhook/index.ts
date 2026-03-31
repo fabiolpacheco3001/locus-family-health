@@ -63,18 +63,44 @@ Deno.serve(async (req) => {
       case "PAYMENT_CONFIRMED":
         newStatus = "active";
         updateData.status = newStatus;
-        // Update next_billing_date from payment dueDate
-        if (payment.dueDate) {
+
+        // Fetch real subscription details from Asaas to get true nextDueDate
+        if (payment.subscription) {
+          try {
+            const asaasKey = Deno.env.get("ASAAS_API_KEY") || "";
+            const subResp = await fetch(
+              `https://sandbox.asaas.com/api/v3/subscriptions/${payment.subscription}`,
+              { headers: { access_token: asaasKey } }
+            );
+            if (subResp.ok) {
+              const subData = await subResp.json();
+              console.log("Asaas subscription details:", JSON.stringify(subData));
+              if (subData.nextDueDate) {
+                updateData.next_billing_date = subData.nextDueDate;
+              }
+              // Determine plan_type from subscription cycle
+              if (subData.cycle === "YEARLY") {
+                updateData.plan_type = "annual";
+              } else if (subData.cycle === "MONTHLY") {
+                updateData.plan_type = "monthly";
+              }
+            } else {
+              console.warn("Failed to fetch Asaas subscription:", subResp.status, await subResp.text());
+              // Fallback to payment dueDate
+              if (payment.dueDate) updateData.next_billing_date = payment.dueDate;
+            }
+          } catch (fetchErr) {
+            console.error("Error fetching Asaas subscription:", fetchErr);
+            if (payment.dueDate) updateData.next_billing_date = payment.dueDate;
+          }
+        } else if (payment.dueDate) {
           updateData.next_billing_date = payment.dueDate;
         }
-        // Determine plan_type from subscription cycle or payment value
-        if (payment.value) {
+
+        // Fallback plan_type from value if not set by cycle
+        if (!updateData.plan_type && payment.value) {
           const value = Number(payment.value);
-          if (value >= 150) {
-            updateData.plan_type = "annual";
-          } else {
-            updateData.plan_type = "monthly";
-          }
+          updateData.plan_type = value >= 150 ? "annual" : "monthly";
         }
         break;
 
