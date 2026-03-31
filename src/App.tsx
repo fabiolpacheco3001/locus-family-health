@@ -97,7 +97,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
             <Route path="/reset-password" element={<Suspense fallback={<RouteLoader />}><ResetPassword /></Suspense>} />
             <Route element={<AppLayout />}>
