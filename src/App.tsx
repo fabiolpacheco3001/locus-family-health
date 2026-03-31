@@ -15,6 +15,7 @@ import AdminRoute from "./components/AdminRoute";
 import CommandCenterLayout from "./components/CommandCenterLayout";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import AdminLogin from "./pages/AdminLogin";
 
 // Lazy-loaded routes (code-split into separate chunks)
 // Lazy chunk import functions (reused for prefetching)
