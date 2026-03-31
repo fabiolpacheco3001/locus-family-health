@@ -463,7 +463,7 @@ const Landing = () => {
               >
                 Mais Popular
               </div>
-              <CardContent className="p-7 text-center flex flex-col items-center pt-10">
+              <CardContent className="p-7 text-center flex flex-col items-center pt-10 h-full">
                 <Badge className="mb-5 text-xs px-4 py-1" style={{ background: `${PEACH}30`, color: DARK }}>
                   Anual
                 </Badge>
@@ -475,7 +475,7 @@ const Landing = () => {
                   Apenas R$ 15,90/mês — 20% OFF
                 </p>
                 <Button
-                  className="mt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
+                  className="mt-auto pt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: PEACH }}
                    onClick={() => navigate("/cadastro")}
                 >
