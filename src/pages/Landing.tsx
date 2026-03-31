@@ -418,7 +418,7 @@ const Landing = () => {
                 </p>
                 <p className="mt-3 text-sm leading-relaxed">Teste todas as funções Premium por 30 dias.</p>
                 <Button
-                  className="mt-8 w-full rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
+                  className="mt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: MINT }}
                    onClick={() => navigate("/cadastro")}
                 >
@@ -441,7 +441,7 @@ const Landing = () => {
                 </p>
                 <p className="mt-3 text-sm">Cancele quando quiser.</p>
                 <Button
-                  className="mt-8 w-full rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
+                  className="mt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: MINT }}
                    onClick={() => navigate("/cadastro")}
                 >
@@ -475,7 +475,7 @@ const Landing = () => {
                   Apenas R$ 15,90/mês — 20% OFF
                 </p>
                 <Button
-                  className="mt-8 w-full rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
+                  className="mt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: PEACH }}
                    onClick={() => navigate("/cadastro")}
                 >
