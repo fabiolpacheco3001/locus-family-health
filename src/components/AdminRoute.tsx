@@ -39,7 +39,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (status === "denied") {
     toast.error("Acesso negado.");
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/command_center/login" replace />;
   }
 
   return <>{children}</>;

@@ -15,6 +15,7 @@ import AdminRoute from "./components/AdminRoute";
 import CommandCenterLayout from "./components/CommandCenterLayout";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
+import AdminLogin from "./pages/AdminLogin";
 
 // Lazy-loaded routes (code-split into separate chunks)
 // Lazy chunk import functions (reused for prefetching)
@@ -135,6 +136,7 @@ const App = () => (
               <Route path="/seguranca" element={<Seguranca />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
             </Route>
+            <Route path="/command_center/login" element={<AdminLogin />} />
             <Route path="/command_center" element={<AdminRoute><Suspense fallback={<RouteLoader />}><CommandCenterLayout /></Suspense></AdminRoute>}>
               <Route index element={<CCDashboard />} />
               <Route path="clientes" element={<CCClientes />} />
