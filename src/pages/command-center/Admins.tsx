@@ -18,6 +18,9 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { ShieldCheck, ShieldAlert, UserPlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -33,11 +36,12 @@ interface Admin {
 const Admins = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [promoteOpen, setPromoteOpen] = useState(false);
-  const [promoteEmail, setPromoteEmail] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPassword, setCreatePassword] = useState("");
+  const [createRole, setCreateRole] = useState<string>("admin");
   const [revokeTarget, setRevokeTarget] = useState<Admin | null>(null);
 
-  // Check if current user is super_admin
   const { data: currentRole } = useQuery({
     queryKey: ["current-admin-role", user?.id],
     queryFn: async () => {
@@ -53,7 +57,6 @@ const Admins = () => {
 
   const isSuperAdmin = currentRole === "super_admin";
 
-  // List admins
   const { data: admins, isLoading } = useQuery({
     queryKey: ["admin-list"],
     queryFn: async () => {
@@ -65,11 +68,10 @@ const Admins = () => {
     },
   });
 
-  // Promote mutation
-  const promoteMutation = useMutation({
-    mutationFn: async (email: string) => {
+  const createMutation = useMutation({
+    mutationFn: async (payload: { email: string; password: string; role: string }) => {
       const { data, error } = await supabase.functions.invoke("manage-admins", {
-        body: { action: "promote", email },
+        body: { action: "create", ...payload },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -77,16 +79,17 @@ const Admins = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-list"] });
-      toast.success("Administrador adicionado com sucesso!");
-      setPromoteOpen(false);
-      setPromoteEmail("");
+      toast.success("Conta criada com sucesso!");
+      setCreateOpen(false);
+      setCreateEmail("");
+      setCreatePassword("");
+      setCreateRole("admin");
     },
     onError: (err: Error) => {
-      toast.error(err.message || "Erro ao promover usuário.");
+      toast.error(err.message || "Erro ao criar administrador.");
     },
   });
 
-  // Revoke mutation
   const revokeMutation = useMutation({
     mutationFn: async (userId: string) => {
       const { data, error } = await supabase.functions.invoke("manage-admins", {
@@ -106,6 +109,8 @@ const Admins = () => {
     },
   });
 
+  const canSubmitCreate = createEmail.trim() && createPassword.length >= 6 && createRole;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -114,9 +119,9 @@ const Admins = () => {
           <p className="text-sm text-muted-foreground">Gerencie a equipe de administradores da plataforma.</p>
         </div>
         {isSuperAdmin && (
-          <Button onClick={() => setPromoteOpen(true)} className="gap-2">
+          <Button onClick={() => setCreateOpen(true)} className="gap-2">
             <UserPlus size={16} />
-            Promover Admin
+            Adicionar Admin
           </Button>
         )}
       </div>
@@ -189,42 +194,67 @@ const Admins = () => {
         </CardContent>
       </Card>
 
-      {/* Promote Dialog */}
-      <Dialog open={promoteOpen} onOpenChange={setPromoteOpen}>
-        <DialogContent className="max-w-[400px]">
+      {/* Create Admin Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-[420px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus size={18} className="text-[#2A5C82]" />
-              Promover Administrador
+              Criar Novo Administrador
             </DialogTitle>
             <DialogDescription>
-              Informe o e-mail de um usuário já cadastrado para conceder acesso administrativo.
+              Crie uma conta diretamente. O novo administrador poderá acessar o Command Center com as credenciais abaixo.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
+          <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>E-mail do usuário</Label>
+              <Label>E-mail</Label>
               <Input
                 type="email"
-                placeholder="usuario@exemplo.com"
-                value={promoteEmail}
-                onChange={(e) => setPromoteEmail(e.target.value)}
+                placeholder="admin@empresa.com"
+                value={createEmail}
+                onChange={(e) => setCreateEmail(e.target.value)}
                 className="text-[16px]"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label>Senha Temporária</Label>
+              <Input
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={createPassword}
+                onChange={(e) => setCreatePassword(e.target.value)}
+                className="text-[16px]"
+              />
+              {createPassword.length > 0 && createPassword.length < 6 && (
+                <p className="text-xs text-destructive">A senha deve ter no mínimo 6 caracteres.</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label>Cargo</Label>
+              <Select value={createRole} onValueChange={setCreateRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="super_admin">Super Administrador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setPromoteOpen(false)}>
+            <Button variant="outline" type="button" onClick={() => setCreateOpen(false)}>
               Cancelar
             </Button>
             <Button
-              onClick={() => promoteMutation.mutate(promoteEmail)}
-              disabled={!promoteEmail.trim() || promoteMutation.isPending}
+              onClick={() => createMutation.mutate({ email: createEmail, password: createPassword, role: createRole })}
+              disabled={!canSubmitCreate || createMutation.isPending}
             >
-              {promoteMutation.isPending ? (
+              {createMutation.isPending ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (
-                "Promover"
+                "Criar Conta"
               )}
             </Button>
           </DialogFooter>
