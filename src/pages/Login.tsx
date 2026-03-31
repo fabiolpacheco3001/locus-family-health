@@ -113,6 +113,17 @@ const Login = () => {
     }
   };
 
+  // Full-screen checkout overlay
+  if (checkoutLoading) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-[#f2f0eb] animate-fade-in">
+        <Loader2 className="animate-spin text-primary mb-4" size={48} />
+        <p className="text-lg font-semibold text-foreground">Preparando seu ambiente seguro de pagamento...</p>
+        <p className="text-sm text-muted-foreground mt-2">Você será redirecionado em instantes.</p>
+      </div>
+    );
+  }
+
   // Forgot password view
   if (viewMode === "forgot") {
     return (
