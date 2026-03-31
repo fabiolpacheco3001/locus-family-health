@@ -222,6 +222,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   };
 
   const handleAnalyzeWithAI = async () => {
+    if (!canUsePremium) {
+      setShowPaywall(true);
+      return;
+    }
     setIsAnalyzing(true);
     try {
       let urlToAnalyze = existingReceitaUrl;
