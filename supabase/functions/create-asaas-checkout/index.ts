@@ -109,8 +109,6 @@ Deno.serve(async (req) => {
     const userId = claimsData.claims.sub as string;
     const userEmail = claimsData.claims.email as string;
 
-    const userId = user.id;
-    const userEmail = user.email!;
 
     // Validate body
     const parsed = BodySchema.safeParse(await req.json());
