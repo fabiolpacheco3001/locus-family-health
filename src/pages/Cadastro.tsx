@@ -6,13 +6,10 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import locusvitaLogo from "@/assets/locus-vita-logo.jpeg";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 const Cadastro = () => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
-  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -41,26 +38,17 @@ const Cadastro = () => {
     setLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      const msg = error.message?.includes("already registered")
+        ? "Este e-mail já está cadastrado. Tente fazer login."
+        : error.message?.includes("weak")
+        ? "A senha é muito fraca. Use pelo menos 8 caracteres com letras e números."
+        : error.message || "Erro ao criar conta. Tente novamente.";
+      toast.error(msg);
       return;
     }
 
-    const { data: { user: currentUser } } = await supabase.auth.getUser();
-    if (currentUser) {
-      queryClient.prefetchQuery({
-        queryKey: ["family_members", currentUser.id],
-        queryFn: async () => {
-          const { data } = await supabase
-            .from("family_members")
-            .select("*")
-            .is("deleted_at", null)
-            .order("created_at", { ascending: true });
-          return data ?? [];
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-    }
-    navigate("/home");
+    toast.success("Conta criada com sucesso! Verifique seu e-mail para confirmar seu acesso.");
+    navigate("/login");
   };
 
   return (
@@ -138,7 +126,7 @@ const Cadastro = () => {
             className="w-full h-12 text-base font-semibold mt-2"
             disabled={loading}
           >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : "Criar Conta"}
+            {loading ? <><Loader2 className="animate-spin mr-2" size={20} /> Criando conta...</> : "Criar Conta"}
           </Button>
         </form>
 
