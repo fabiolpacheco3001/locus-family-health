@@ -102,25 +102,46 @@ Deno.serve(async (req) => {
       updateData.asaas_customer_id = customerId;
     }
 
-    // Prefer externalReference (user_id) as primary identifier
-    const identifier = externalReference
-      ? { column: "user_id", value: externalReference }
-      : { column: "asaas_customer_id", value: customerId! };
+    // Log full payload for debugging
+    console.log("Full payment payload:", JSON.stringify(payment));
+    console.log("Data to upsert:", JSON.stringify(updateData));
 
-    const { error } = await adminClient
-      .from("subscriptions")
-      .update(updateData)
-      .eq(identifier.column, identifier.value);
+    if (externalReference) {
+      // UPSERT using user_id as conflict target
+      updateData.user_id = externalReference;
 
-    if (error) {
-      console.error("Failed to update subscription:", error);
-      return new Response(
-        JSON.stringify({ error: "Failed to update subscription" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      const { data, error } = await adminClient
+        .from("subscriptions")
+        .upsert(updateData as any, { onConflict: "user_id" })
+        .select();
+
+      if (error) {
+        console.error("Failed to upsert subscription:", JSON.stringify(error));
+        return new Response(
+          JSON.stringify({ error: "Failed to upsert subscription", details: error }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Subscription upserted successfully:", JSON.stringify(data));
+    } else {
+      // Fallback: update by asaas_customer_id
+      const { data, error } = await adminClient
+        .from("subscriptions")
+        .update(updateData)
+        .eq("asaas_customer_id", customerId!)
+        .select();
+
+      if (error) {
+        console.error("Failed to update subscription by customer_id:", JSON.stringify(error));
+        return new Response(
+          JSON.stringify({ error: "Failed to update subscription", details: error }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Subscription updated by customer_id:", JSON.stringify(data));
     }
-
-    console.log(`Subscription updated: ${identifier.column}=${identifier.value}, status=${newStatus}, data=${JSON.stringify(updateData)}`);
 
     return new Response(
       JSON.stringify({ received: true, status: newStatus }),
