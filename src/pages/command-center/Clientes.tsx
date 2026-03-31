@@ -3,24 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, MoreHorizontal, Users } from "lucide-react";
+import { Search, MoreHorizontal, Users, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
 import { toast } from "sonner";
 
 interface SubscriptionRow {
@@ -32,9 +27,7 @@ interface SubscriptionRow {
   next_billing_date: string | null;
   created_at: string;
   asaas_customer_id: string | null;
-  // Joined from family_members
   user_name?: string;
-  user_email?: string;
 }
 
 const planBadge = (plan: string) => {
@@ -65,19 +58,17 @@ const statusBadge = (status: string) => {
 
 const Clientes = () => {
   const [search, setSearch] = useState("");
+  const [selectedClient, setSelectedClient] = useState<SubscriptionRow | null>(null);
 
   const { data: subscriptions = [], isLoading } = useQuery({
     queryKey: ["admin-subscriptions"],
     queryFn: async () => {
-      // Fetch subscriptions
       const { data: subs, error } = await supabase
         .from("subscriptions")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
 
-      // Fetch family members to get names (the "Eu" profile for each user)
       const userIds = (subs ?? []).map((s: any) => s.user_id);
       const { data: members } = await supabase
         .from("family_members")
@@ -86,9 +77,7 @@ const Clientes = () => {
         .eq("relationship", "Eu");
 
       const memberMap = new Map<string, string>();
-      (members ?? []).forEach((m: any) => {
-        memberMap.set(m.user_id, m.name);
-      });
+      (members ?? []).forEach((m: any) => memberMap.set(m.user_id, m.name));
 
       return (subs ?? []).map((s: any) => ({
         ...s,
@@ -117,7 +106,6 @@ const Clientes = () => {
         </p>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -128,7 +116,6 @@ const Clientes = () => {
         />
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -164,12 +151,8 @@ const Clientes = () => {
                 <TableRow key={sub.id} className="hover:bg-gray-50/50">
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground text-sm">
-                        {sub.user_name || "—"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {sub.user_id.slice(0, 8) + "..."}
-                      </p>
+                      <p className="font-medium text-foreground text-sm">{sub.user_name || "—"}</p>
+                      <p className="text-xs text-muted-foreground">{sub.user_id.slice(0, 8)}...</p>
                     </div>
                   </TableCell>
                   <TableCell>{planBadge(sub.plan_type)}</TableCell>
@@ -190,15 +173,12 @@ const Clientes = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => toast.info("Funcionalidade em desenvolvimento.")}>
+                        <DropdownMenuItem onClick={() => setSelectedClient(sub)}>
                           Ver Detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.info("Integração Asaas em breve.")}>
-                          Sincronizar Asaas
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
-                          onClick={() => toast.info("Funcionalidade em desenvolvimento.")}
+                          onClick={() => toast.info("Funcionalidade de bloqueio em desenvolvimento.")}
                         >
                           Bloquear Acesso
                         </DropdownMenuItem>
@@ -211,6 +191,65 @@ const Clientes = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Client Detail Sheet */}
+      <Sheet open={!!selectedClient} onOpenChange={(open) => !open && setSelectedClient(null)}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="text-[#2A5C82]">Detalhes do Cliente</SheetTitle>
+          </SheetHeader>
+          {selectedClient && (
+            <div className="space-y-5 mt-6">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Nome</p>
+                <p className="font-medium text-foreground">{selectedClient.user_name || "Não informado"}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">User ID</p>
+                <p className="text-sm font-mono text-foreground break-all">{selectedClient.user_id}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Plano</p>
+                  {planBadge(selectedClient.plan_type)}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  {statusBadge(selectedClient.status)}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Asaas Customer ID</p>
+                <p className="text-sm font-mono text-foreground">{selectedClient.asaas_customer_id || "—"}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Cadastro</p>
+                  <p className="text-sm text-foreground">
+                    {format(parseISO(selectedClient.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Próxima Cobrança</p>
+                  <p className="text-sm text-foreground">
+                    {selectedClient.next_billing_date
+                      ? format(parseISO(selectedClient.next_billing_date), "dd/MM/yyyy", { locale: ptBR })
+                      : "—"}
+                  </p>
+                </div>
+              </div>
+              {selectedClient.trial_end && (
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Fim do Trial</p>
+                  <p className="text-sm text-foreground">
+                    {format(parseISO(selectedClient.trial_end), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

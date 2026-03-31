@@ -21,13 +21,48 @@ export function useSubscription() {
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
+
+      // 1. Check own subscription
+      const { data: ownSub, error } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
-      return data as Subscription | null;
+
+      if (ownSub && (ownSub as any).status === "active") {
+        return ownSub as Subscription;
+      }
+
+      // 2. If no active own sub, check family owner's subscription (Tenant Billing)
+      const { data: membership } = await supabase
+        .from("family_group_members")
+        .select("group_id")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+
+      if (membership?.group_id) {
+        const { data: group } = await supabase
+          .from("family_groups")
+          .select("created_by")
+          .eq("id", membership.group_id)
+          .maybeSingle();
+
+        if (group?.created_by && group.created_by !== user.id) {
+          const { data: ownerSub } = await supabase
+            .from("subscriptions")
+            .select("*")
+            .eq("user_id", group.created_by)
+            .maybeSingle();
+
+          if (ownerSub && (ownerSub as any).status === "active") {
+            return ownerSub as Subscription;
+          }
+        }
+      }
+
+      // 3. Fall back to own subscription (trialing, past_due, etc.)
+      return (ownSub as Subscription | null) ?? null;
     },
     enabled: !!user?.id,
   });
@@ -44,7 +79,6 @@ export function useSubscription() {
   })();
 
   const trialExpired = isTrialing && trialDaysLeft <= 0;
-
   const canUsePremium = isActive || (isTrialing && !trialExpired);
 
   return {

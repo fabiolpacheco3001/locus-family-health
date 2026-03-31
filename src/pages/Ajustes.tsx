@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock } from "lucide-react";
+import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,6 +25,7 @@ const menuItems = [
   { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
   { icon: FileText, label: "Política de Privacidade", path: null },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: "/ajuda" },
+  { icon: Mail, label: "Fale Conosco", path: "mailto:suporte@locustech.com.br" },
 ];
 
 const Ajustes = () => {
@@ -218,7 +219,13 @@ const Ajustes = () => {
             {menuItems.map(({ icon: Icon, label, path }) => (
               <button
                 key={label}
-                onClick={() => path && navigate(path)}
+                onClick={() => {
+                  if (path?.startsWith("mailto:")) {
+                    window.location.href = path;
+                  } else if (path) {
+                    navigate(path);
+                  }
+                }}
                 className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
