@@ -136,6 +136,7 @@ const App = () => (
               <Route path="/seguranca" element={<Seguranca />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
             </Route>
+            <Route path="/command_center/login" element={<AdminLogin />} />
             <Route path="/command_center" element={<AdminRoute><Suspense fallback={<RouteLoader />}><CommandCenterLayout /></Suspense></AdminRoute>}>
               <Route index element={<CCDashboard />} />
               <Route path="clientes" element={<CCClientes />} />
