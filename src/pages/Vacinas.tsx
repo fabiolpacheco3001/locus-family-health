@@ -89,6 +89,8 @@ const Vacinas = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
+  const { canUsePremium } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
   const goBack = useSmartBack();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
