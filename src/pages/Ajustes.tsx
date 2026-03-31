@@ -38,6 +38,23 @@ const Ajustes = () => {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [supportUrl, setSupportUrl] = useState<string>("");
+  const [supportEmail, setSupportEmail] = useState<string>("suporte@locustech.com.br");
+
+  useEffect(() => {
+    supabase
+      .from("system_configs" as any)
+      .select("key, value")
+      .in("key", ["support_url", "support_email"])
+      .then(({ data }) => {
+        if (data) {
+          for (const row of data as any[]) {
+            if (row.key === "support_url") setSupportUrl(row.value || "");
+            if (row.key === "support_email") setSupportEmail(row.value || "suporte@locustech.com.br");
+          }
+        }
+      });
+  }, []);
 
   const handleRegularize = async () => {
     setLoadingSubscription(true);
