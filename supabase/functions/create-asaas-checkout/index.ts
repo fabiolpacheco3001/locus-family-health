@@ -11,7 +11,7 @@ const BodySchema = z.object({
   planType: z.enum(["monthly", "annual"]),
 });
 
-const ASAAS_BASE = "https://api.asaas.com/v3";
+const ASAAS_BASE = "https://sandbox.asaas.com/api/v3";
 
 const PLAN_CONFIG = {
   monthly: {
