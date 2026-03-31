@@ -478,13 +478,15 @@ const Landing = () => {
                 <p className="mt-2 text-sm font-semibold" style={{ color: PEACH }}>
                   Apenas R$ 15,90/mês — 20% OFF
                 </p>
-                <Button
-                  className="mt-auto pt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
-                  style={{ background: PEACH }}
-                   onClick={() => navigate("/cadastro")}
-                >
-                  Assinar com Desconto
-                </Button>
+                <div className="mt-auto pt-8 w-full">
+                  <Button
+                    className="w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
+                    style={{ background: PEACH }}
+                    onClick={() => navigate("/cadastro")}
+                  >
+                    Assinar com Desconto
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </Reveal>
