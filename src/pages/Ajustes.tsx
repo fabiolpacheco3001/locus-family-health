@@ -25,6 +25,7 @@ const menuItems = [
   { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
   { icon: FileText, label: "Política de Privacidade", path: null },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: "/ajuda" },
+  { icon: null, label: "Fale Conosco", path: "mailto:suporte@locustech.com.br" },
 ];
 
 const Ajustes = () => {
