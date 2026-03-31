@@ -343,6 +343,10 @@ const Vacinas = () => {
   const [importVaccines, setImportVaccines] = useState<ImportedVaccine[]>([]);
 
   const handleImportClick = () => {
+    if (!isAiActive) {
+      toast.error("A Inteligência Artificial está temporariamente em manutenção. Por favor, insira os dados manualmente.");
+      return;
+    }
     if (!canUsePremium) {
       setShowPaywall(true);
       return;
