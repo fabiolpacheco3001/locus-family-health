@@ -296,6 +296,10 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                   type="button"
                   disabled={!lgpdConsent || isAnalyzing || isPending}
                   onClick={async () => {
+                    if (!isAiActive) {
+                      toast.error("A Inteligência Artificial está temporariamente em manutenção. Por favor, insira os dados manualmente.");
+                      return;
+                    }
                     if (!canUsePremium) {
                       setShowPaywall(true);
                       return;
