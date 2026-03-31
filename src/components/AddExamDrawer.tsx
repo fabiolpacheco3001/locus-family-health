@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, Ban } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAiStatus } from "@/hooks/useAiStatus";
+import { logAiUsage } from "@/hooks/useLogAiUsage";
 import PaywallModal from "@/components/PaywallModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
