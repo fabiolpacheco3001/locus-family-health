@@ -417,13 +417,15 @@ const Landing = () => {
                   Grátis
                 </p>
                 <p className="mt-3 text-sm leading-relaxed">Teste todas as funções Premium por 30 dias.</p>
-                <Button
-                  className="mt-auto pt-8 w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
-                  style={{ background: MINT }}
-                   onClick={() => navigate("/cadastro")}
-                >
-                  Começar Agora
-                </Button>
+                <div className="mt-auto pt-8 w-full">
+                  <Button
+                    className="w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
+                    style={{ background: MINT }}
+                    onClick={() => navigate("/cadastro")}
+                  >
+                    Começar Agora
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </Reveal>
