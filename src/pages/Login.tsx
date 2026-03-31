@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type ViewMode = "login" | "signup" | "forgot";
+type ViewMode = "login" | "forgot";
 
 const Login = () => {
   const navigate = useNavigate();
