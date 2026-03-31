@@ -163,9 +163,10 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("create-asaas-checkout error:", error);
+    const message = error instanceof Error ? error.message : "Erro interno no servidor";
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({ error: message }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
