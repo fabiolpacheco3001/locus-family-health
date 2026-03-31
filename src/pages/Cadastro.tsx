@@ -24,6 +24,11 @@ const Cadastro = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmError, setConfirmError] = useState("");
 
+  // Clear any stale cached session to prevent auth limbo
+  useEffect(() => {
+    supabase.auth.signOut();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setConfirmError("");

@@ -26,6 +26,10 @@ const Login = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Clear any stale cached session to prevent auth limbo
+  useEffect(() => {
+    supabase.auth.signOut();
+  }, []);
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
