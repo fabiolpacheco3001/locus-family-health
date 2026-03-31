@@ -54,6 +54,21 @@ const Login = () => {
       return;
     }
 
+    // Express checkout tunnel
+    if (planFromUrl) {
+      setCheckoutLoading(true);
+      try {
+        const url = await createSubscription(planFromUrl);
+        window.location.href = url;
+        return;
+      } catch {
+        setCheckoutLoading(false);
+        toast.error("Não foi possível gerar o link de pagamento. Tente novamente na aba Ajustes.");
+        navigate("/home");
+        return;
+      }
+    }
+
     {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       if (currentUser) {
