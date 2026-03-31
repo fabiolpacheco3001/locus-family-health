@@ -83,6 +83,7 @@ const Cadastro = () => {
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
+      <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
         <div className="flex flex-col items-center mb-10">
           <img src={locusvitaLogo} alt="Locus Vita" className="w-32 h-32 object-cover rounded-3xl shadow-md mb-4" />
           <h1 className="text-lg font-semibold text-foreground">Criar sua Conta</h1>
