@@ -11,6 +11,8 @@ import Cadastro from "./pages/Cadastro";
 import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 import AppLayout from "./components/AppLayout";
+import AdminRoute from "./components/AdminRoute";
+import CommandCenterLayout from "./components/CommandCenterLayout";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 
@@ -36,6 +38,10 @@ const importSeguranca = () => import("./pages/Seguranca");
 const importGestaoAcessos = () => import("./pages/GestaoAcessos");
 const importPetRotinas = () => import("./pages/PetRotinas");
 const importAjuda = () => import("./pages/Ajuda");
+const importCCDashboard = () => import("./pages/command-center/Dashboard");
+const importCCClientes = () => import("./pages/command-center/Clientes");
+const importCCAdmins = () => import("./pages/command-center/Admins");
+const importCCConfig = () => import("./pages/command-center/Config");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
@@ -57,6 +63,10 @@ const Seguranca = lazy(importSeguranca);
 const GestaoAcessos = lazy(importGestaoAcessos);
 const PetRotinas = lazy(importPetRotinas);
 const Ajuda = lazy(importAjuda);
+const CCDashboard = lazy(importCCDashboard);
+const CCClientes = lazy(importCCClientes);
+const CCAdmins = lazy(importCCAdmins);
+const CCConfig = lazy(importCCConfig);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
@@ -124,6 +134,12 @@ const App = () => (
               <Route path="/notificacoes" element={<Notificacoes />} />
               <Route path="/seguranca" element={<Seguranca />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
+            </Route>
+            <Route path="/command_center" element={<AdminRoute><Suspense fallback={<RouteLoader />}><CommandCenterLayout /></Suspense></AdminRoute>}>
+              <Route index element={<CCDashboard />} />
+              <Route path="clientes" element={<CCClientes />} />
+              <Route path="admins" element={<CCAdmins />} />
+              <Route path="config" element={<CCConfig />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
