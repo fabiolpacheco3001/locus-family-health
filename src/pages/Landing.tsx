@@ -102,6 +102,25 @@ const SectionWrapper = ({
 /* ================================================================== */
 const Landing = () => {
   const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
+
+  const handleSubscribe = async (planType: "monthly" | "annual") => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate(`/cadastro?plan=${planType}`);
+        return;
+      }
+      setLoadingPlan(planType);
+      const url = await createSubscription(planType);
+      window.location.href = url;
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      toast.error(err?.message || "Erro ao iniciar pagamento. Tente novamente.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   const features = [
     {
