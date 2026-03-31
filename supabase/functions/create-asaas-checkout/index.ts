@@ -51,29 +51,6 @@ async function asaasFetch(path: string, options: RequestInit) {
   return res.json();
 }
 
-async function findOrCreateCustomer(email: string, name: string) {
-  // Search existing customer by email
-  const search = await asaasFetch(
-    `/customers?email=${encodeURIComponent(email)}`,
-    { method: "GET" }
-  );
-
-  if (search.data && search.data.length > 0) {
-    return search.data[0].id;
-  }
-
-  // Create new customer
-  const customer = await asaasFetch("/customers", {
-    method: "POST",
-    body: JSON.stringify({
-      name: name || email.split("@")[0],
-      email,
-    }),
-  });
-
-  return customer.id;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -113,8 +90,6 @@ Deno.serve(async (req) => {
     }
 
     const userId = user.id;
-    const userEmail = user.email!;
-
 
     // Validate body
     const parsed = BodySchema.safeParse(await req.json());
@@ -128,10 +103,7 @@ Deno.serve(async (req) => {
     const { planType } = parsed.data;
     const plan = PLAN_CONFIG[planType];
 
-    // Find or create Asaas customer
-    const customerId = await findOrCreateCustomer(userEmail, "");
-
-    // Save customer ID in subscriptions table
+    // Update plan_type in subscriptions (no customer creation — Asaas handles it via Payment Link)
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -139,13 +111,10 @@ Deno.serve(async (req) => {
 
     await adminClient
       .from("subscriptions")
-      .update({
-        asaas_customer_id: customerId,
-        plan_type: planType,
-      })
+      .update({ plan_type: planType })
       .eq("user_id", userId);
 
-    // Create payment link
+    // Create payment link directly (Asaas creates the customer at checkout time)
     const paymentLink = await asaasFetch("/paymentLinks", {
       method: "POST",
       body: JSON.stringify({

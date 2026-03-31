@@ -95,7 +95,12 @@ Deno.serve(async (req) => {
         );
     }
 
-    // Execute update
+    // Always save the Asaas customer ID from the payment payload
+    if (customerId) {
+      updateData.asaas_customer_id = customerId;
+    }
+
+    // Execute update — prefer externalReference (user_id) as primary identifier
     const identifier = externalReference
       ? { column: "user_id", value: externalReference }
       : { column: "asaas_customer_id", value: customerId! };
