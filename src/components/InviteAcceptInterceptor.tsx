@@ -79,7 +79,16 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
       queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
       queryClient.invalidateQueries({ queryKey: ["family_members"] });
       setState({ step: "ready" });
-    } catch {
+    } catch (err: any) {
+      console.error("[InviteInterceptor] provisionNewGroup error:", err);
+      // If it's a duplicate key / already exists, try to recover
+      const isDuplicate = err?.code === "23505";
+      if (isDuplicate) {
+        queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
+        queryClient.invalidateQueries({ queryKey: ["family_members"] });
+        setState({ step: "ready" });
+        return;
+      }
       toast.error("Erro ao configurar sua conta. Recarregue a página.");
       setState({ step: "error", message: "Erro ao configurar conta." });
     }
