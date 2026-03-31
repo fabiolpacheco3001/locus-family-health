@@ -1,13 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function createSubscription(planType: "monthly" | "annual"): Promise<string> {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
-  if (sessionError || !sessionData?.session) {
-    throw new Error("Sessão não encontrada. Por favor, faça login novamente.");
+  if (refreshError || !refreshData?.session) {
+    throw new Error("Sessão inválida. Faça login novamente para assinar.");
   }
 
-  const session = sessionData.session;
+  const token = refreshData.session.access_token;
 
   let responseData: any;
   let responseError: any;
@@ -16,7 +16,7 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
     const result = await supabase.functions.invoke("create-asaas-checkout", {
       body: { planType },
       headers: {
-        Authorization: `Bearer ${session.access_token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     responseData = result.data;
@@ -34,7 +34,8 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
         detail = responseData.error || responseData.message || "";
       }
     } catch (_) { /* ignore */ }
-    throw new Error(detail || responseError.message || "Não foi possível criar o link de pagamento.");
+    const reason = detail || responseError.message || "Desconhecido";
+    throw new Error(`Erro do servidor financeiro: ${reason}`);
   }
 
   if (!responseData?.url) {
