@@ -494,9 +494,9 @@ const Landing = () => {
       >
         <div className="mx-auto max-w-5xl px-5 md:px-8 lg:px-0 flex flex-col items-center gap-6 text-sm">
           <img
-            src={locusVitaLogo}
+            src={locusVitaLogoFooter}
             alt="Locus Vita"
-            className="h-10 w-auto rounded-lg opacity-70"
+            className="h-14 w-auto opacity-80"
           />
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs" style={{ color: "#888" }}>
             <a href="#" className="hover:underline">
