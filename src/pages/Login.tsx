@@ -171,7 +171,7 @@ const Login = () => {
           </button>
 
           <Button type="submit" className="w-full h-12 text-base font-semibold mt-2" disabled={loading}>
-            {loading ? <Loader2 className="animate-spin" size={20} /> : "Entrar"}
+            {loading ? <><Loader2 className="animate-spin mr-2" size={20} /> Entrando...</> : "Entrar"}
           </Button>
         </form>
 
