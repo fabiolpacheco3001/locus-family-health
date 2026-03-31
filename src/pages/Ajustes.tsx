@@ -237,7 +237,13 @@ const Ajustes = () => {
               <button
                 key={label}
                 onClick={() => {
-                  if (path?.startsWith("mailto:")) {
+                  if (path === "__support__") {
+                    if (supportUrl) {
+                      window.open(supportUrl, "_blank");
+                    } else {
+                      window.location.href = `mailto:${supportEmail}`;
+                    }
+                  } else if (path?.startsWith("mailto:")) {
                     window.location.href = path;
                   } else if (path) {
                     navigate(path);
