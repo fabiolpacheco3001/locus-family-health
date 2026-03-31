@@ -78,14 +78,13 @@ const AppLayout = () => {
           </Suspense>
         </div>
         <BottomNav />
-        {showPaywall && (
-          <PaywallModal
-            open={true}
-            onOpenChange={() => {}}
-            locked
-            onLogout={signOut}
-          />
-        )}
+        {/* Always render the modal to avoid Radix body-style cleanup issues on unmount */}
+        <PaywallModal
+          open={showPaywall ?? false}
+          onOpenChange={() => {}}
+          locked={showPaywall ?? false}
+          onLogout={signOut}
+        />
       </MobileShell>
     </InviteAcceptInterceptor>
   );
