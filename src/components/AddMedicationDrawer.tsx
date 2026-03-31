@@ -81,6 +81,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
   const { canUsePremium } = useSubscription();
+  const { isAiActive } = useAiStatus();
   const [showPaywall, setShowPaywall] = useState(false);
   const { addMedication, updateMedication, deleteMedication, uploadReceita } = useMedications(familyMemberId);
   const { consultations } = useConsultations(familyMemberId);
