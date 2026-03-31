@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 import AppLayout from "./components/AppLayout";
 import NotFound from "./pages/NotFound";
+import Landing from "./pages/Landing";
 
 // Lazy-loaded routes (code-split into separate chunks)
 // Lazy chunk import functions (reused for prefetching)
