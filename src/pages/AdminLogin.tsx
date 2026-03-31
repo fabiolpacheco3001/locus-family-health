@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import locusVitaLogo from "@/assets/locus-vita-logo-landing.jpeg";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -59,9 +60,7 @@ const AdminLogin = () => {
       <Card className="w-full max-w-md shadow-2xl border-0" style={{ backgroundColor: "#f2f0eb" }}>
         <CardContent className="pt-10 pb-8 px-8">
           <div className="flex flex-col items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#A7D3CB" }}>
-              <ShieldCheck className="w-7 h-7 text-white" />
-            </div>
+            <img src={locusVitaLogo} alt="Locus Vita" className="h-16 w-auto rounded-lg" />
             <div className="text-center">
               <h1 className="text-xl font-bold" style={{ color: "#1C3333" }}>
                 Locus Vita — Command Center
