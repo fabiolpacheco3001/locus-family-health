@@ -12,6 +12,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Validate Asaas webhook token
+    const incomingToken = req.headers.get("asaas-access-token");
+    const expectedToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
+
+    if (!expectedToken || !incomingToken || incomingToken !== expectedToken) {
+      console.warn("Webhook rejected: invalid or missing asaas-access-token header");
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body = await req.json();
     const event = body.event as string;
     const payment = body.payment;
