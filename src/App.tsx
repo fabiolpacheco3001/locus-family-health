@@ -11,6 +11,8 @@ import Cadastro from "./pages/Cadastro";
 import ResetPassword from "./pages/ResetPassword";
 import Home from "./pages/Home";
 import AppLayout from "./components/AppLayout";
+import AdminRoute from "./components/AdminRoute";
+import CommandCenterLayout from "./components/CommandCenterLayout";
 import NotFound from "./pages/NotFound";
 import Landing from "./pages/Landing";
 
