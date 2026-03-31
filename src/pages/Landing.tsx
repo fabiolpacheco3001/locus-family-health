@@ -411,7 +411,7 @@ const Landing = () => {
             <Card className="rounded-2xl border h-full transition-all duration-300 hover:scale-[1.02] hover:shadow-lg" style={{ borderColor: "#ddd" }}>
               <CardContent className="p-7 text-center flex flex-col items-center">
                 <Badge className="mb-5 text-xs px-4 py-1" style={{ background: `${MINT}30`, color: DARK }}>
-                  Básico
+                  Teste
                 </Badge>
                 <p className="text-5xl font-extrabold" style={{ color: DARK }}>
                   Grátis
