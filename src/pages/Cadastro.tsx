@@ -70,9 +70,19 @@ const Cadastro = () => {
     navigate("/home");
   };
 
+  // Full-screen checkout overlay
+  if (checkoutLoading) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-[#f2f0eb] animate-fade-in">
+        <Loader2 className="animate-spin text-primary mb-4" size={48} />
+        <p className="text-lg font-semibold text-foreground">Preparando seu ambiente seguro de pagamento...</p>
+        <p className="text-sm text-muted-foreground mt-2">Você será redirecionado em instantes.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
-      <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
         <div className="flex flex-col items-center mb-10">
           <img src={locusvitaLogo} alt="Locus Vita" className="w-32 h-32 object-cover rounded-3xl shadow-md mb-4" />
           <h1 className="text-lg font-semibold text-foreground">Criar sua Conta</h1>
