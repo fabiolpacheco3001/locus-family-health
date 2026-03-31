@@ -25,8 +25,9 @@ const InlineRouteLoader = () => (
 );
 
 const AppLayout = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
+  const { canUsePremium, isLoading: subLoading, subscription } = useSubscription();
   const { medications } = useMedications();
   useMedicationAlarms(medications);
   useStockAlerts(medications);
