@@ -225,6 +225,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   };
 
   const handleAnalyzeWithAI = async () => {
+    if (!isAiActive) {
+      toast.error("A Inteligência Artificial está temporariamente em manutenção. Por favor, insira os dados manualmente.");
+      return;
+    }
     if (!canUsePremium) {
       setShowPaywall(true);
       return;
