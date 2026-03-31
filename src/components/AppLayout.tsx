@@ -9,6 +9,8 @@ import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { useMedications } from "@/hooks/useMedications";
 import { useMenstrualAlerts } from "@/hooks/useMenstrualAlerts";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,8 +25,9 @@ const InlineRouteLoader = () => (
 );
 
 const AppLayout = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
+  const { canUsePremium, isLoading: subLoading, subscription } = useSubscription();
   const { medications } = useMedications();
   useMedicationAlarms(medications);
   useStockAlerts(medications);
@@ -63,6 +66,9 @@ const AppLayout = () => {
     scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);
 
+  // Show locked paywall if subscription is not premium-eligible
+  const showPaywall = !subLoading && user && !canUsePremium;
+
   return (
     <InviteAcceptInterceptor>
       <MobileShell>
@@ -72,6 +78,14 @@ const AppLayout = () => {
           </Suspense>
         </div>
         <BottomNav />
+        {showPaywall && (
+          <PaywallModal
+            open={true}
+            onOpenChange={() => {}}
+            locked
+            onLogout={signOut}
+          />
+        )}
       </MobileShell>
     </InviteAcceptInterceptor>
   );
