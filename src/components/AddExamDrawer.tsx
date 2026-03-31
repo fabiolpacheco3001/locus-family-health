@@ -34,6 +34,8 @@ interface Props {
 
 const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Props) => {
   const { addExam, updateExam, deleteExam, uploadFile } = useExams(familyMemberId);
+  const { canUsePremium } = useSubscription();
+  const [showPaywall, setShowPaywall] = useState(false);
   const [name, setName] = useState("");
   const [examDate, setExamDate] = useState("");
   const [location, setLocation] = useState("");
