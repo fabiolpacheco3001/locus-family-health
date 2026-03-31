@@ -335,6 +335,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                         }
                       }
                       toast.success("Dados extraídos com sucesso!");
+                      logAiUsage("exame", 0);
                     } catch (err: any) {
                       console.error("OCR error:", err);
                       toast.error(err?.message || "Não foi possível ler o documento.");
