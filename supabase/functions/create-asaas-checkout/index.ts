@@ -45,7 +45,7 @@ async function asaasFetch(path: string, options: RequestInit) {
   if (!res.ok) {
     const body = await res.text();
     console.error(`Asaas API error: ${res.status} ${body}`);
-    throw new Error(`Asaas API error: ${res.status}`);
+    throw new Error(`Falha no Asaas (${res.status}): ${body}`);
   }
 
   return res.json();
@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
         dueDateLimitDays: 3,
         notificationEnabled: true,
         callback: {
-          successUrl: `${Deno.env.get("SUPABASE_URL")?.replace(".supabase.co", ".lovable.app") || "https://locus-family-vita.lovable.app"}/home`,
+          successUrl: "https://locus-family-vita.lovable.app/home",
           autoRedirect: true,
         },
         externalReference: userId,
@@ -163,9 +163,10 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("create-asaas-checkout error:", error);
+    const message = error instanceof Error ? error.message : "Erro interno no servidor";
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: corsHeaders }
+      JSON.stringify({ error: message }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
