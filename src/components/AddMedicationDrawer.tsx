@@ -277,6 +277,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
         toast.success("Dados extraídos da receita com sucesso!");
       }
+      logAiUsage("receita", 0);
     } catch (err: any) {
       console.error("Prescription OCR error:", err);
       toast.error(err?.message || "Não foi possível ler a receita. Preencha manualmente.");
