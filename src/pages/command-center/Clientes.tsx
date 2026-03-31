@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Search, MoreHorizontal, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -31,8 +31,10 @@ interface SubscriptionRow {
   trial_end: string | null;
   next_billing_date: string | null;
   created_at: string;
-  user_email?: string;
+  asaas_customer_id: string | null;
+  // Joined from family_members
   user_name?: string;
+  user_email?: string;
 }
 
 const planBadge = (plan: string) => {
@@ -74,7 +76,24 @@ const Clientes = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (subs ?? []) as SubscriptionRow[];
+
+      // Fetch family members to get names (the "Eu" profile for each user)
+      const userIds = (subs ?? []).map((s: any) => s.user_id);
+      const { data: members } = await supabase
+        .from("family_members")
+        .select("user_id, name, relationship")
+        .in("user_id", userIds)
+        .eq("relationship", "Eu");
+
+      const memberMap = new Map<string, string>();
+      (members ?? []).forEach((m: any) => {
+        memberMap.set(m.user_id, m.name);
+      });
+
+      return (subs ?? []).map((s: any) => ({
+        ...s,
+        user_name: memberMap.get(s.user_id) || null,
+      })) as SubscriptionRow[];
     },
   });
 
@@ -83,9 +102,9 @@ const Clientes = () => {
     const q = search.toLowerCase();
     return subscriptions.filter(
       (s) =>
-        s.user_email?.toLowerCase().includes(q) ||
         s.user_name?.toLowerCase().includes(q) ||
-        s.user_id.toLowerCase().includes(q)
+        s.user_id.toLowerCase().includes(q) ||
+        s.asaas_customer_id?.toLowerCase().includes(q)
     );
   }, [subscriptions, search]);
 
@@ -102,7 +121,7 @@ const Clientes = () => {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Buscar por e-mail ou nome..."
+          placeholder="Buscar por nome ou ID..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 bg-white border-gray-200"
@@ -118,19 +137,20 @@ const Clientes = () => {
               <TableHead className="font-semibold text-[#2A5C82]">Plano</TableHead>
               <TableHead className="font-semibold text-[#2A5C82]">Status</TableHead>
               <TableHead className="font-semibold text-[#2A5C82]">Próxima Cobrança</TableHead>
+              <TableHead className="font-semibold text-[#2A5C82]">Asaas ID</TableHead>
               <TableHead className="font-semibold text-[#2A5C82] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
                   Carregando clientes...
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12">
+                <TableCell colSpan={6} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="w-8 h-8 opacity-40" />
                     <p className="text-sm">
@@ -148,7 +168,7 @@ const Clientes = () => {
                         {sub.user_name || "—"}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {sub.user_email || sub.user_id.slice(0, 8) + "..."}
+                        {sub.user_id.slice(0, 8) + "..."}
                       </p>
                     </div>
                   </TableCell>
@@ -156,8 +176,11 @@ const Clientes = () => {
                   <TableCell>{statusBadge(sub.status)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {sub.next_billing_date
-                      ? format(new Date(sub.next_billing_date), "dd/MM/yyyy", { locale: ptBR })
+                      ? format(parseISO(sub.next_billing_date), "dd/MM/yyyy", { locale: ptBR })
                       : "—"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground font-mono">
+                    {sub.asaas_customer_id || "—"}
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
