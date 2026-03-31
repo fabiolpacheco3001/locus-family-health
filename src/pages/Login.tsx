@@ -46,7 +46,7 @@ const Login = () => {
     setLoading(false);
 
     if (error) {
-      toast.error(error.message);
+      toast.error("E-mail ou senha incorretos. Tente novamente.");
       return;
     }
 
