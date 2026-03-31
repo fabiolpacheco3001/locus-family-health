@@ -151,7 +151,7 @@ const Landing = () => {
               size="lg"
               className="rounded-full text-lg px-10 py-7 shadow-xl text-white font-bold animate-[pulse_3s_ease-in-out_infinite] hover:scale-105 transition-transform"
               style={{ background: PEACH }}
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/cadastro")}
             >
               Comece seus 30 Dias Grátis <ArrowRight className="ml-2" size={22} />
             </Button>
