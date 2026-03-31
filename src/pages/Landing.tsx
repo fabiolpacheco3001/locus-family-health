@@ -137,7 +137,7 @@ const Landing = () => {
         className="sticky top-0 z-50 w-full backdrop-blur-md border-b"
         style={{ background: "rgba(244,241,235,0.80)", borderColor: "#e5e1da" }}
       >
-        <div className="mx-auto max-w-5xl flex items-center justify-between px-5 md:px-8 lg:px-0 h-20">
+        <div className="mx-auto max-w-5xl flex items-center justify-between px-5 md:px-8 lg:px-0 h-24">
           <img
             src={locusVitaLogo}
             alt="Locus Vita"
