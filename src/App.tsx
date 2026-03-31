@@ -109,7 +109,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <CrispChatProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
