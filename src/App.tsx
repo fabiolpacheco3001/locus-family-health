@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { CrispChatProvider } from "@/components/CrispChatProvider";
 import { FamilyGroupProvider } from "@/hooks/useFamilyGroup";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
@@ -108,6 +109,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <CrispChatProvider>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
@@ -145,6 +147,7 @@ const App = () => (
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </CrispChatProvider>
         </BrowserRouter>
       </TooltipProvider>
       </FamilyGroupProvider>
