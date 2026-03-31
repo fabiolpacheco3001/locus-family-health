@@ -17,6 +17,7 @@ import {
   Heart,
   Mail,
 } from "lucide-react";
+import locusVitaLogo from "@/assets/locus-vita-logo-landing.jpeg";
 
 /* ─── colour tokens (brand-book hex) ─── */
 const BG       = "#f2f0eb";
@@ -55,9 +56,7 @@ const Landing = () => {
         style={{ background: "rgba(244,241,235,0.80)", borderColor: "#e5e1da" }}
       >
         <div className="mx-auto max-w-5xl flex items-center justify-between px-5 md:px-8 lg:px-0 h-14">
-          <span className="text-lg font-bold tracking-tight" style={{ color: DARK }}>
-            Locus Vita
-          </span>
+          <img src={locusVitaLogo} alt="Locus Vita" className="h-10 w-auto rounded" />
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
               Entrar
