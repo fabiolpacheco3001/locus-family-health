@@ -1,29 +1,42 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export async function createSubscription(planType: "monthly" | "annual"): Promise<string> {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-  if (sessionError || !session) {
-    throw new Error("Sessão não encontrada. Por favor, faça login novamente.");
+  let session;
+  try {
+    const { data, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !data?.session) {
+      throw new Error("Sessão não encontrada. Por favor, faça login novamente.");
+    }
+    session = data.session;
+  } catch (e: any) {
+    throw new Error(e?.message || "Sessão não encontrada. Por favor, faça login novamente.");
   }
 
-  const { data, error } = await supabase.functions.invoke("create-asaas-checkout", {
-    body: { planType },
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-    },
-  });
+  let data: any;
+  let error: any;
+  try {
+    const result = await supabase.functions.invoke("create-asaas-checkout", {
+      body: { planType },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+    data = result.data;
+    error = result.error;
+  } catch (invokeErr: any) {
+    console.error("Error invoking checkout function:", invokeErr);
+    throw new Error("Não foi possível conectar ao servidor de pagamento. Tente novamente.");
+  }
 
   if (error) {
     console.error("Error creating checkout:", error);
-    // Try to extract detailed message from the response body
     let detail = "";
     try {
       if (data && typeof data === "object") {
         detail = (data as any).error || (data as any).message || "";
       }
-    } catch (_) { /* ignore parse errors */ }
-    throw new Error(detail || error.message || "Não foi possível criar o link de pagamento. Tente novamente.");
+    } catch (_) { /* ignore */ }
+    throw new Error(detail || error.message || "Não foi possível criar o link de pagamento.");
   }
 
   if (!data?.url) {
