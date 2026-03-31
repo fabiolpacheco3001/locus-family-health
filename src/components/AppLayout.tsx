@@ -9,6 +9,8 @@ import { useStockAlerts } from "@/hooks/useStockAlerts";
 import { useMedications } from "@/hooks/useMedications";
 import { useMenstrualAlerts } from "@/hooks/useMenstrualAlerts";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
