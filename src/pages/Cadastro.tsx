@@ -51,16 +51,17 @@ const Cadastro = () => {
       return;
     }
 
-    // Express checkout tunnel
+    // Express checkout tunnel — wait for session to stabilize
     if (planFromUrl) {
       setCheckoutLoading(true);
       try {
+        await new Promise(resolve => setTimeout(resolve, 800));
         const url = await createSubscription(planFromUrl);
         window.location.href = url;
         return;
-      } catch {
+      } catch (err: any) {
         setCheckoutLoading(false);
-        toast.error("Não foi possível gerar o link de pagamento. Tente novamente na aba Ajustes.");
+        toast.error(err?.message || "Não foi possível gerar o link de pagamento. Tente novamente na aba Ajustes.");
         navigate("/home");
         return;
       }
