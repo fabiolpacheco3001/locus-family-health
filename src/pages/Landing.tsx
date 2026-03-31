@@ -468,9 +468,10 @@ const Landing = () => {
                   <Button
                     className="w-full h-12 rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center"
                     style={{ background: MINT }}
-                    onClick={() => navigate("/cadastro")}
+                    disabled={loadingPlan === "monthly"}
+                    onClick={() => handleSubscribe("monthly")}
                   >
-                    Assinar
+                    {loadingPlan === "monthly" ? "Processando..." : "Assinar"}
                   </Button>
                 </div>
               </CardContent>
