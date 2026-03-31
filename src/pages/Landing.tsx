@@ -429,7 +429,7 @@ const Landing = () => {
                 <Button
                   className="mt-8 w-full rounded-full text-white font-bold shadow-lg hover:shadow-xl transition-shadow"
                   style={{ background: PEACH }}
-                  onClick={() => navigate("/login")}
+                   onClick={() => navigate("/cadastro")}
                 >
                   Assinar com Desconto
                 </Button>
