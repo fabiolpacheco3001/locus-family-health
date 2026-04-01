@@ -49,7 +49,7 @@ const Prontuario = () => {
 
   // Load logo as base64 for PDF
   useEffect(() => {
-    fetch("/logo-locus-vita-icon.jpeg")
+    fetch("/logo-locus-vita.svg?v=2")
       .then((r) => r.blob())
       .then((blob) => {
         const reader = new FileReader();
