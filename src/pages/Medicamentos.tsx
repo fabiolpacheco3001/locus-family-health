@@ -59,11 +59,29 @@ const Medicamentos = () => {
 
   const handleDrawerChange = (open: boolean) => {
     setDrawerOpen(open);
-    if (!open) setEditingMedication(null);
+    if (!open) {
+      setEditingMedication(null);
+      setAiData(null);
+    }
   };
 
   const handleAdd = () => {
     setEditingMedication(null);
+    setAiData(null);
+    setActionDrawerOpen(true);
+  };
+
+  const handleSelectManual = () => {
+    setAiData(null);
+    setDrawerOpen(true);
+  };
+
+  const handleSelectAI = () => {
+    setAiUploadOpen(true);
+  };
+
+  const handleAiAnalysisComplete = (data: any, receitaUrl: string | null) => {
+    setAiData({ data, receitaUrl });
     setDrawerOpen(true);
   };
 
