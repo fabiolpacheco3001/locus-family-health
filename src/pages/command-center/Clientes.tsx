@@ -85,7 +85,7 @@ const Clientes = () => {
       const { data: profiles, error } = await supabase
         .from("family_members")
         .select("user_id, name, created_at")
-        .eq("relationship", "Eu")
+        .in("relationship", ["Eu", "Titular"])
         .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
