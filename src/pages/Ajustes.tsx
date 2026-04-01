@@ -173,7 +173,7 @@ const Ajustes = () => {
               <div className="bg-card p-4 space-y-3">
                 {isActive && (
                   <>
-                    <div className="flex items-baseline justify-between">
+                    <div className="flex justify-center items-baseline gap-1 mt-4">
                       <span className="text-2xl font-bold text-foreground">
                         {subscription.plan_type === "annual" ? "R$ 191,00" : "R$ 19,90"}
                       </span>

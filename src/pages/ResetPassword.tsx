@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import locusvitaLogo from "@/assets/locus-vita-logo.jpeg";
+import locusvitaLogo from "@/assets/locus-vita-logo-splash.svg";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
