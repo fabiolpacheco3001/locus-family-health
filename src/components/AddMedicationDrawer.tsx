@@ -587,6 +587,19 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-24 no-scrollbar">
             <div className="flex flex-col gap-6">
 
+              {/* Banner de Revisão IA */}
+              {aiReviewMode && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Revisão Necessária</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                      Deciframos a receita, mas por favor, confira os nomes e as dosagens antes de salvar.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* ═══════ BLOCO 1: Origem e Documentação (com moldura) ═══════ */}
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
                 {/* Receita Médica - Upload + IA */}
