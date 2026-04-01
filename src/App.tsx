@@ -44,6 +44,8 @@ const importCCDashboard = () => import("./pages/command-center/Dashboard");
 const importCCClientes = () => import("./pages/command-center/Clientes");
 const importCCAdmins = () => import("./pages/command-center/Admins");
 const importCCConfig = () => import("./pages/command-center/Config");
+const importCCChangelog = () => import("./pages/command-center/Changelog");
+const importChangelog = () => import("./pages/Changelog");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
@@ -69,6 +71,8 @@ const CCDashboard = lazy(importCCDashboard);
 const CCClientes = lazy(importCCClientes);
 const CCAdmins = lazy(importCCAdmins);
 const CCConfig = lazy(importCCConfig);
+const CCChangelog = lazy(importCCChangelog);
+const Changelog = lazy(importChangelog);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
@@ -132,6 +136,7 @@ const App = () => (
               <Route path="/familiar/:id/doencas" element={<Doencas />} />
               <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
               <Route path="/familiar/:id/rotinas-pet" element={<PetRotinas />} />
+              <Route path="/changelog" element={<Changelog />} />
               <Route path="/ajuda" element={<Ajuda />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
               <Route path="/seguranca" element={<Seguranca />} />
@@ -142,6 +147,7 @@ const App = () => (
               <Route index element={<CCDashboard />} />
               <Route path="clientes" element={<CCClientes />} />
               <Route path="admins" element={<CCAdmins />} />
+              <Route path="changelog" element={<CCChangelog />} />
               <Route path="config" element={<CCConfig />} />
             </Route>
             <Route path="*" element={<NotFound />} />

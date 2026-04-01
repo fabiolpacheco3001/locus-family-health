@@ -136,6 +136,39 @@ export type Database = {
           },
         ]
       }
+      changelogs: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          release_date: string
+          title: string
+          type: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          release_date?: string
+          title: string
+          type?: string
+          version: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          release_date?: string
+          title?: string
+          type?: string
+          version?: string
+        }
+        Relationships: []
+      }
       consultations: {
         Row: {
           cancel_reason: string | null

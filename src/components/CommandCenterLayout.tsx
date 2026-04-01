@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, ShieldCheck, Settings, Menu, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, Settings, Menu, LogOut, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: "/command_center", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/command_center/clientes", icon: Users, label: "Clientes", end: false },
   { to: "/command_center/admins", icon: ShieldCheck, label: "Administradores", end: false },
+  { to: "/command_center/changelog", icon: FileText, label: "Changelog", end: false },
   { to: "/command_center/config", icon: Settings, label: "Configurações", end: false },
 ];
 
