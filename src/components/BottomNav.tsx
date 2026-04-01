@@ -31,16 +31,25 @@ const BottomNav = () => {
     import("@/App").then(m => m.prefetchByRoute?.[path]?.());
   };
 
+  const getFilteredMembers = () => {
+    const allowedIds = role === "user" && linkedMemberId
+      ? [linkedMemberId, ...managedProfiles]
+      : null;
+    return allowedIds
+      ? members.filter(m => allowedIds.includes(m.id))
+      : members;
+  };
+
   const handleClick = (path: string) => {
     if (path === "__drawer_saude__") {
-      if (role === "user" && linkedMemberId) {
-        // If user has managed_profiles, show drawer to pick; otherwise go direct
-        if (managedProfiles.length > 0) {
-          setDrawerOpen(true);
-        } else {
-          navigate(`/familiar/${linkedMemberId}`, { state: { from: location.pathname } });
-        }
-      } else {
+      const filtered = getFilteredMembers();
+      if (filtered.length === 1) {
+        navigate(`/familiar/${filtered[0].id}`, { state: { from: location.pathname } });
+      } else if (filtered.length > 1) {
+        setDrawerOpen(true);
+      }
+      // length === 0: open drawer to show empty state
+      else {
         setDrawerOpen(true);
       }
     } else {
