@@ -107,7 +107,8 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
             <input
               ref={receitaInputRef}
               type="file"
-              accept="image/*,.pdf"
+              accept="image/*,application/pdf"
+              capture="environment"
               className="hidden"
               onChange={(e) => {
                 const selected = e.target.files?.[0] ?? null;
@@ -134,8 +135,8 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
               >
                 <Upload className="text-primary" size={32} />
                 <div className="text-center">
-                  <p className="text-sm font-medium text-foreground">Toque para selecionar</p>
-                  <p className="text-xs text-muted-foreground mt-1">Foto ou PDF da receita médica</p>
+                  <p className="text-sm font-medium text-foreground">Tirar foto ou anexar arquivo</p>
+                  <p className="text-xs text-muted-foreground mt-1">Aponte a câmera para a receita ou escolha da galeria.</p>
                 </div>
               </button>
             )}
