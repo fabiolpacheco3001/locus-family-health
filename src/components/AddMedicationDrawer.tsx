@@ -628,7 +628,20 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </div>
               )}
 
-              {/* ═══════ BLOCO 1: Origem e Documentação (com moldura) ═══════ */}
+              {/* Banner de Alerta Pediátrico */}
+              {aiReviewMode && isPediatric && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border border-destructive bg-destructive/10 dark:bg-destructive/20">
+                  <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-destructive">⚠️ ALERTA CLÍNICO: Perfil PEDIÁTRICO</p>
+                    <p className="text-xs text-destructive/80 mt-0.5">
+                      {patientName ? `Criança: ${patientName}, ` : ""}{patientAge} {patientAge === 1 ? "ano" : "anos"}. Atenção redobrada à adequação do medicamento e dosagens para a idade.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
                 {/* Receita Médica - Upload + IA */}
                 <div className="space-y-3">
