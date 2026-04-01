@@ -137,7 +137,7 @@ const Login = () => {
       <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
         <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
           <div className="flex flex-col items-center mb-10">
-            <img src={locusvitaLogo} alt="Locus Vita" className="w-24 h-24 object-cover rounded-2xl shadow-md mb-4" />
+            <img src={locusvitaLogo} alt="Locus Vita" className="h-24 w-auto mb-4" />
             <h1 className="text-lg font-semibold text-foreground">Recuperar Senha</h1>
             <p className="text-muted-foreground text-sm mt-1 text-center">
               Digite seu e-mail para receber o link de recuperação.
@@ -170,7 +170,7 @@ const Login = () => {
     <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
       <div className="flex-1 flex flex-col justify-center px-8 py-12 animate-fade-in">
         <div className="flex flex-col items-center mb-12">
-          <img src={locusvitaLogo} alt="Locus Vita" className="w-40 h-40 object-cover rounded-3xl shadow-md mb-4" />
+          <img src={locusvitaLogo} alt="Locus Vita" className="h-32 w-auto mb-4" />
           <p className="text-muted-foreground text-sm mt-1">Saúde Familiar Simplificada</p>
         </div>
 
