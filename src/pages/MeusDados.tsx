@@ -108,6 +108,9 @@ const MeusDados = () => {
           blood_type: bloodType || null,
           relationship: relationship || "Outros",
         });
+        // Sync auth metadata so Home greeting updates immediately
+        await supabase.auth.updateUser({ data: { full_name: name.trim() } });
+        await supabase.auth.refreshSession();
       } else {
         // Auto-healing: create profile + link it
         const { data: newMember, error: insertErr } = await supabase
@@ -138,10 +141,18 @@ const MeusDados = () => {
 
         if (linkErr) throw linkErr;
 
+        // Sync auth metadata for auto-heal path too
+        await supabase.auth.updateUser({ data: { full_name: name.trim() } });
+        await supabase.auth.refreshSession();
+
         // Refresh caches
         queryClient.invalidateQueries({ queryKey: ["family_members"] });
         queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
       }
+
+      // Invalidate any cached user/auth data so Home re-renders with new name
+      queryClient.invalidateQueries({ queryKey: ["family_members"] });
+      queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
 
       toast.success("Dados atualizados com sucesso!");
       navigate("/ajustes");
