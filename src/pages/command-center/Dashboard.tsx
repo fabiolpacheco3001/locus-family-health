@@ -11,55 +11,39 @@ const Dashboard = () => {
   const { data: metrics } = useQuery({
     queryKey: ["admin-dashboard-metrics"],
     queryFn: async () => {
-      // Parallel fetch: subscriptions + titulares (for implicit trial count)
-      const [subsRes, titularesRes] = await Promise.all([
-        supabase.from("subscriptions").select("status, plan_type, user_id"),
-        supabase
-          .from("family_members")
-          .select("user_id, created_at")
-          .in("relationship", ["Eu", "Titular"])
-          .is("deleted_at", null),
-      ]);
+      const { data, error } = await supabase.rpc("get_admin_clients");
+      if (error) throw error;
+      const clients = data ?? [];
 
-      if (subsRes.error) throw subsRes.error;
-      if (titularesRes.error) throw titularesRes.error;
+      const activeSubs = clients.filter((c: any) => c.status === "active");
 
-      const subs = subsRes.data ?? [];
-      const titulares = titularesRes.data ?? [];
-
-      const activeSubs = subs.filter((s) => s.status === "active");
-
-      // MRR: R$19,90 per monthly + R$191/12 per annual
-      const mrr = activeSubs.reduce((acc, s) => {
-        if (s.plan_type === "monthly" || s.plan_type === "mensal") return acc + MONTHLY_PRICE;
-        if (s.plan_type === "annual" || s.plan_type === "anual" || s.plan_type === "yearly") return acc + ANNUAL_PRICE / 12;
+      const mrr = activeSubs.reduce((acc: number, c: any) => {
+        if (c.plan_type === "monthly" || c.plan_type === "mensal") return acc + MONTHLY_PRICE;
+        if (c.plan_type === "annual" || c.plan_type === "anual" || c.plan_type === "yearly") return acc + ANNUAL_PRICE / 12;
         return acc;
       }, 0);
 
-      // Set of user_ids that have ANY subscription
-      const allSubUserIds = new Set(subs.map((s: any) => s.user_id));
-
-      // Implicit trial: titulares without subscription, created <= 30 days ago
       const now = new Date();
-      const implicitTrials = titulares.filter((t) => {
-        if (allSubUserIds.has(t.user_id)) return false;
-        const days = differenceInDays(now, new Date(t.created_at));
-        return days <= 30;
+      const implicitTrials = clients.filter((c: any) => {
+        if (c.status === "active" || c.status === "suspended" || c.status === "canceled") return false;
+        if (c.status) return false; // any other explicit status
+        return differenceInDays(now, new Date(c.created_at)) <= 30;
       });
 
       return {
-        totalTitulares: titulares.length,
+        totalClients: clients.length,
         activePremium: activeSubs.length,
         mrr,
         implicitTrials: implicitTrials.length,
       };
     },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
-
   const stats = [
     {
       label: "Total de Titulares",
-      value: metrics?.totalTitulares ?? 0,
+      value: metrics?.totalClients ?? 0,
       icon: Users,
       color: "text-[#2A5C82]",
     },
