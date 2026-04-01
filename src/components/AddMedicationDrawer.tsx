@@ -110,6 +110,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
   const [extractedMeds, setExtractedMeds] = useState<ExtractedMed[]>([]);
   const [currentMedIndex, setCurrentMedIndex] = useState(0);
+  const [aiReviewMode, setAiReviewMode] = useState(false);
   const isWizardMode = extractedMeds.length > 1;
 
   useEffect(() => {
