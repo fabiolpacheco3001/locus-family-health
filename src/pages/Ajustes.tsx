@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail } from "lucide-react";
+import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,6 +25,7 @@ const menuItems = [
   { icon: Bell, label: "Notificações", path: "/notificacoes" },
   { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
   { icon: FileText, label: "Política de Privacidade", path: null },
+  { icon: Sparkles, label: "Novidades do Locus Vita", path: "/changelog" },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: "/ajuda" },
   { icon: Mail, label: "Fale Conosco", path: "__support__" },
 ];
