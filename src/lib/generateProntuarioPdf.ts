@@ -73,10 +73,12 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     doc.setFillColor(...PRIMARY_COLOR);
     doc.rect(0, 0, pageW, headerH, "F");
 
-    // Try to draw logo if available
+    // Try to draw logo if available (white bg behind transparent SVG)
     if (data.logoBase64) {
       try {
-        doc.addImage(data.logoBase64, "JPEG", margin, 4, 14, 14);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(margin, 4, 14, 14, 2, 2, "F");
+        doc.addImage(data.logoBase64, "PNG", margin, 4, 14, 14);
       } catch {
         // fallback: no logo
       }
