@@ -742,7 +742,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
                 <div className="space-y-1.5">
                   <Label>Nome do Medicamento *</Label>
-                  <MedicationAutocomplete value={name} onChange={setName} />
+                  <div className={currentConfidence && currentConfidence !== "alta" ? lowConfidenceClass + " rounded-md" : ""}>
+                    <MedicationAutocomplete value={name} onChange={setName} />
+                  </div>
+                  {currentConfidence === "baixa" && (
+                    <p className="text-xs text-amber-600 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> Leitura difícil — verifique com atenção
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -753,7 +760,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Dosagem</Label>
-                    <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className="text-[16px]" />
+                    <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className={`text-[16px] ${currentConfidence && currentConfidence !== "alta" ? lowConfidenceClass : ""}`} />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Frequência</Label>
