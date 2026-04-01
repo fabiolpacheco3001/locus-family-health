@@ -24,26 +24,7 @@ const MedicationActionDrawer = ({ open, onOpenChange, onSelectAI, onSelectManual
         </DrawerHeader>
 
         <div className="flex flex-col gap-3 px-4 pb-8">
-          {/* Opção 1: IA */}
-          <button
-            onClick={() => {
-              onOpenChange(false);
-              setTimeout(onSelectAI, 300);
-            }}
-            className="flex items-start gap-4 p-4 rounded-xl border border-primary/20 bg-primary/5 text-left active:bg-primary/10 sm:hover:bg-primary/10 transition-colors w-full"
-          >
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-              <Sparkles className="text-primary" size={20} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-foreground">Ler Receita com IA</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Envie uma foto da receita e preenchemos tudo para você.
-              </p>
-            </div>
-          </button>
-
-          {/* Opção 2: Manual */}
+          {/* Opção 1: Manual */}
           <button
             onClick={() => {
               onOpenChange(false);
@@ -58,6 +39,25 @@ const MedicationActionDrawer = ({ open, onOpenChange, onSelectAI, onSelectManual
               <p className="text-sm font-bold text-foreground">Preencher Manualmente</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Registrar um novo medicamento campo a campo.
+              </p>
+            </div>
+          </button>
+
+          {/* Opção 2: IA */}
+          <button
+            onClick={() => {
+              onOpenChange(false);
+              setTimeout(onSelectAI, 300);
+            }}
+            className="flex items-start gap-4 p-4 rounded-xl border border-primary/20 bg-primary/5 text-left active:bg-primary/10 sm:hover:bg-primary/10 transition-colors w-full"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="text-primary" size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">Ler Receita com IA</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Envie uma foto da receita e preenchemos tudo para você.
               </p>
             </div>
           </button>
