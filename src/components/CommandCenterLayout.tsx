@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: "/command_center", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/command_center/clientes", icon: Users, label: "Clientes", end: false },
   { to: "/command_center/admins", icon: ShieldCheck, label: "Administradores", end: false },
+  { to: "/command_center/changelog", icon: FileText, label: "Changelog", end: false },
   { to: "/command_center/config", icon: Settings, label: "Configurações", end: false },
 ];
 
