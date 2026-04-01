@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, Suspense } from "react";
+import { useRef, useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import { Skeleton } from "@/components/ui/skeleton";
