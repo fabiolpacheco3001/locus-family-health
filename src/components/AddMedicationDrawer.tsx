@@ -162,6 +162,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setLgpdConsent(false);
     setExtractedMeds([]);
     setCurrentMedIndex(0);
+    setAiReviewMode(false);
   };
 
   const parsedDate = useMemo(() => {
