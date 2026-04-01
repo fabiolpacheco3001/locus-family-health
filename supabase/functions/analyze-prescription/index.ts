@@ -110,7 +110,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
                           },
                           dosagem: {
                             type: "string",
-                            description: "Dosage (e.g. 500mg, 5ml)",
+                            description: "Dosage (e.g. 500mg, 1 comprimido, 5ml, 10 gotas)",
                           },
                           frequencia: {
                             type: "string",
@@ -119,6 +119,11 @@ Se não conseguir identificar algum campo com segurança, use null.`;
                           duracao_dias: {
                             type: "number",
                             description: "Duration in days (e.g. 7), or null if continuous use",
+                          },
+                          confianca: {
+                            type: "string",
+                            enum: ["alta", "media", "baixa"],
+                            description: "Confidence level of the extraction: alta (clear reading), media (deduced by context), baixa (very difficult reading)",
                           },
                         },
                         required: ["nome_medicamento"],
