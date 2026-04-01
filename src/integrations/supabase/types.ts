@@ -1122,6 +1122,18 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_admin_clients: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          next_billing_date: string
+          plan_type: string
+          status: string
+          user_id: string
+        }[]
+      }
       is_group_admin: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
