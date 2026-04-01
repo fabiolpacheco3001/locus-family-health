@@ -108,7 +108,6 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
               ref={receitaInputRef}
               type="file"
               accept="image/*,application/pdf"
-              capture="environment"
               className="hidden"
               onChange={(e) => {
                 const selected = e.target.files?.[0] ?? null;
