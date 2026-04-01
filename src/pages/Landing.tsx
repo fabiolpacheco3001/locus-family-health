@@ -103,7 +103,13 @@ const SectionWrapper = ({
 /* ================================================================== */
 const Landing = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
+
+  // Auto-redirect logged-in users to /home
+  if (!loading && user) {
+    return <Navigate to="/home" replace />;
+  }
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
     try {
