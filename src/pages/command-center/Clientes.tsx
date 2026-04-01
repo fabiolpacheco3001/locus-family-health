@@ -72,13 +72,15 @@ const Clientes = () => {
   const [blockTarget, setBlockTarget] = useState<ClientRow | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: clients = [], isLoading } = useQuery({
+  const { data: clients = [], isLoading, error: queryError } = useQuery({
     queryKey: ["admin-clients"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_admin_clients");
       if (error) throw error;
       return (data ?? []) as ClientRow[];
     },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const filtered = useMemo(() => {
@@ -184,6 +186,15 @@ const Clientes = () => {
           <TableBody>
             {isLoading ? (
               tableSkeletons
+            ) : queryError ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Users className="w-8 h-8 opacity-40" />
+                    <p className="text-sm">Não foi possível carregar a lista de clientes no momento.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-12">
