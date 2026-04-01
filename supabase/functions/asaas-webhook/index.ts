@@ -75,14 +75,31 @@ Deno.serve(async (req) => {
             if (subResp.ok) {
               const subData = await subResp.json();
               console.log("Asaas subscription details:", JSON.stringify(subData));
-              if (subData.nextDueDate) {
-                updateData.next_billing_date = subData.nextDueDate;
-              }
+
               // Determine plan_type from subscription cycle
-              if (subData.cycle === "YEARLY") {
+              const cycle = subData.cycle as string | undefined;
+              if (cycle === "YEARLY") {
                 updateData.plan_type = "annual";
-              } else if (subData.cycle === "MONTHLY") {
+              } else if (cycle === "MONTHLY") {
                 updateData.plan_type = "monthly";
+              }
+
+              // Validate nextDueDate: must be strictly in the future
+              const today = new Date().toISOString().split("T")[0];
+              if (subData.nextDueDate && subData.nextDueDate > today) {
+                updateData.next_billing_date = subData.nextDueDate;
+                console.log("Using Asaas nextDueDate (future):", subData.nextDueDate);
+              } else {
+                // Calculate next billing from payment.dueDate + cycle interval
+                const baseDate = payment.dueDate ? new Date(payment.dueDate + "T12:00:00Z") : new Date();
+                if (cycle === "YEARLY") {
+                  baseDate.setFullYear(baseDate.getFullYear() + 1);
+                } else {
+                  baseDate.setMonth(baseDate.getMonth() + 1);
+                }
+                const calculated = baseDate.toISOString().split("T")[0];
+                updateData.next_billing_date = calculated;
+                console.log("Calculated next_billing_date:", calculated, "(Asaas returned:", subData.nextDueDate, ")");
               }
             } else {
               console.warn("Failed to fetch Asaas subscription:", subResp.status, await subResp.text());
