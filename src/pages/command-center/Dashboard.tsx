@@ -36,12 +36,8 @@ const Dashboard = () => {
         return acc;
       }, 0);
 
-      // Titulares with subscription user_ids
-      const subUserIds = new Set(subs.map((s: any) => s.user_id));
-
-      // Build set of user_ids that have ANY subscription
-      const allSubsRes = await supabase.from("subscriptions").select("user_id");
-      const allSubUserIds = new Set((allSubsRes.data ?? []).map((s: any) => s.user_id));
+      // Set of user_ids that have ANY subscription
+      const allSubUserIds = new Set(subs.map((s: any) => s.user_id));
 
       // Implicit trial: titulares without subscription, created <= 30 days ago
       const now = new Date();
