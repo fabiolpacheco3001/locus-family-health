@@ -186,6 +186,15 @@ const Clientes = () => {
           <TableBody>
             {isLoading ? (
               tableSkeletons
+            ) : queryError ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-12">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <Users className="w-8 h-8 opacity-40" />
+                    <p className="text-sm">Não foi possível carregar a lista de clientes no momento.</p>
+                  </div>
+                </TableCell>
+              </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-12">
