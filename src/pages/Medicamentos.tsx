@@ -8,6 +8,7 @@ import { useMedications, Medication } from "@/hooks/useMedications";
 import AddMedicationDrawer from "@/components/AddMedicationDrawer";
 import MedicationActionDrawer from "@/components/MedicationActionDrawer";
 import AiMedicationUpload from "@/components/AiMedicationUpload";
+import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
 import { format } from "date-fns";
