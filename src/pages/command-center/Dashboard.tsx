@@ -13,7 +13,7 @@ const Dashboard = () => {
     queryFn: async () => {
       // Parallel fetch: subscriptions + titulares (for implicit trial count)
       const [subsRes, titularesRes] = await Promise.all([
-        supabase.from("subscriptions").select("status, plan_type"),
+        supabase.from("subscriptions").select("status, plan_type, user_id"),
         supabase
           .from("family_members")
           .select("user_id, created_at")
