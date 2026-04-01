@@ -62,9 +62,18 @@ const AppLayout = () => {
     return () => clearTimeout(tid);
   }, []);
 
+  // Reset scroll on navigation
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, [pathname]);
+
+  // Exorcise stale body styles left by Radix Dialog on abrupt unmounts
+  useEffect(() => {
+    return () => {
+      document.body.style.pointerEvents = '';
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   // Show locked paywall if subscription is not premium-eligible
   const showPaywall = !subLoading && user && !canUsePremium;

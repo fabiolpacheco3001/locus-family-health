@@ -342,6 +342,10 @@ const Ajustes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <PaywallModal
+        open={showPaywall}
+        onOpenChange={setShowPaywall}
+      />
     </div>
   );
 };
