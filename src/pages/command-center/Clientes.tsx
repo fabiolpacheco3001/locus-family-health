@@ -230,7 +230,7 @@ const Clientes = () => {
                   <TableCell>{statusBadge(sub.status)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {sub.next_billing_date
-                      ? format(parseISO(sub.next_billing_date), "dd/MM/yyyy", { locale: ptBR })
+                      ? format(new Date(sub.next_billing_date.substring(0, 10) + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
                       : "—"}
                   </TableCell>
                   <TableCell className="text-right">
