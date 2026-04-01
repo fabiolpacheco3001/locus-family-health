@@ -52,8 +52,9 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
             Eleve a saúde da sua família
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground text-center leading-relaxed">
-            Seu período de avaliação terminou ou há pendências no seu plano. Assine o Locus Vita para
-            continuar usando nossas tecnologias premium.
+            {implicitTrialExpired
+              ? "Seus 30 dias de teste gratuito terminaram. Assine para continuar cuidando da saúde da sua família."
+              : "Seu período de avaliação terminou ou há pendências no seu plano. Assine o Locus Vita para continuar usando nossas tecnologias premium."}
           </DialogDescription>
         </DialogHeader>
 
