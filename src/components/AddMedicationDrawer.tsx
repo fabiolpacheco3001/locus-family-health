@@ -116,6 +116,24 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [aiReviewMode, setAiReviewMode] = useState(false);
   const isWizardMode = extractedMeds.length > 1;
 
+  // Fetch patient age from family_members
+  useEffect(() => {
+    if (!familyMemberId || !open) return;
+    supabase
+      .from("family_members")
+      .select("birth_date, name")
+      .eq("id", familyMemberId)
+      .single()
+      .then(({ data }) => {
+        if (data?.birth_date) {
+          setPatientAge(differenceInYears(new Date(), new Date(data.birth_date)));
+        } else {
+          setPatientAge(null);
+        }
+        setPatientName(data?.name?.split(" ")[0] ?? null);
+      });
+  }, [familyMemberId, open]);
+
   useEffect(() => {
     if (editingMedication) {
       setName(editingMedication.name);
