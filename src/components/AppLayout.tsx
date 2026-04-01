@@ -27,7 +27,7 @@ const InlineRouteLoader = () => (
 const AppLayout = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
-  const { canUsePremium, isLoading: subLoading, subscription } = useSubscription();
+  const { canUsePremium, isLoading: subLoading, subscription, implicitTrialExpired } = useSubscription();
   const { medications } = useMedications();
   useMedicationAlarms(medications);
   useStockAlerts(medications);
@@ -84,6 +84,7 @@ const AppLayout = () => {
           onOpenChange={() => {}}
           locked={showPaywall ?? false}
           onLogout={signOut}
+          implicitTrialExpired={implicitTrialExpired}
         />
       </MobileShell>
     </InviteAcceptInterceptor>

@@ -17,9 +17,11 @@ interface PaywallModalProps {
   /** When true, hides close button and forces interaction */
   locked?: boolean;
   onLogout?: () => void;
+  /** When true, shows implicit trial expired message */
+  implicitTrialExpired?: boolean;
 }
 
-const PaywallModal = ({ open, onOpenChange, locked, onLogout }: PaywallModalProps) => {
+const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpired }: PaywallModalProps) => {
   const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
@@ -50,8 +52,9 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout }: PaywallModalProp
             Eleve a saúde da sua família
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground text-center leading-relaxed">
-            Seu período de avaliação terminou ou há pendências no seu plano. Assine o Locus Vita para
-            continuar usando nossas tecnologias premium.
+            {implicitTrialExpired
+              ? "Seus 30 dias de teste gratuito terminaram. Assine para continuar cuidando da saúde da sua família."
+              : "Seu período de avaliação terminou ou há pendências no seu plano. Assine o Locus Vita para continuar usando nossas tecnologias premium."}
           </DialogDescription>
         </DialogHeader>
 
