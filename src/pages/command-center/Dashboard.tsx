@@ -43,7 +43,7 @@ const Dashboard = () => {
   const stats = [
     {
       label: "Total de Titulares",
-      value: metrics?.totalTitulares ?? 0,
+      value: metrics?.totalClients ?? 0,
       icon: Users,
       color: "text-[#2A5C82]",
     },
