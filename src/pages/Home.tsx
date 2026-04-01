@@ -30,6 +30,24 @@ const Home = () => {
   const { members, isLoading: membersLoading } = useFamilyMembers();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, role } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
+
+  const getFilteredMembers = () => {
+    const allowedIds = role === "user" && linkedMemberId
+      ? [linkedMemberId, ...managedProfiles]
+      : null;
+    return allowedIds
+      ? members.filter(m => allowedIds.includes(m.id))
+      : members;
+  };
+
+  const handleQuickAction = (action: 'consultas' | 'exames' | 'medicamentos') => {
+    const filtered = getFilteredMembers();
+    if (filtered.length === 1) {
+      navigate(`/familiar/${filtered[0].id}/${action}`, { state: { from: '/home' } });
+    } else {
+      setQuickAction(action);
+    }
+  };
   
 
   const myProfile = members.find((m) => m.id === linkedMemberId) ?? null;
@@ -447,9 +465,7 @@ const Home = () => {
           ].map(({ icon: Icon, label, key }) => {
             const action = key === null
               ? () => navigate('/gerenciar-familia', { state: { from: '/home' } })
-              : role === "user" && linkedMemberId && managedProfiles.length === 0
-                ? () => navigate(`/familiar/${linkedMemberId}/${key}`, { state: { from: '/home' } })
-                : () => setQuickAction(key);
+              : () => handleQuickAction(key);
             return (
             <button
               key={label}
