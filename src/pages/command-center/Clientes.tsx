@@ -311,7 +311,7 @@ const Clientes = () => {
                   <p className="text-xs text-muted-foreground">Próxima Cobrança</p>
                   <p className="text-sm text-foreground">
                     {selectedClient.next_billing_date
-                      ? format(parseISO(selectedClient.next_billing_date), "dd/MM/yyyy", { locale: ptBR })
+                      ? format(new Date(selectedClient.next_billing_date.substring(0, 10) + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
                       : "—"}
                   </p>
                 </div>
