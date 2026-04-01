@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Search, MoreHorizontal, Users, Ban, KeyRound, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -23,75 +23,86 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-interface SubscriptionRow {
-  id: string;
+interface ClientRow {
   user_id: string;
-  plan_type: string;
-  status: string;
-  trial_end: string | null;
-  next_billing_date: string | null;
-  created_at: string;
-  asaas_customer_id: string | null;
-  user_name: string | null;
+  user_name: string;
   user_email: string | null;
+  profile_created_at: string;
+  subscription: {
+    id: string;
+    plan_type: string;
+    status: string;
+    trial_end: string | null;
+    next_billing_date: string | null;
+    created_at: string;
+    asaas_customer_id: string | null;
+  } | null;
 }
 
-const planBadge = (plan: string) => {
-  switch (plan) {
-    case "monthly":
-      return <Badge className="bg-[#78C2AD] text-white border-none">Mensal</Badge>;
-    case "annual":
-      return <Badge className="bg-[#F2A97F] text-white border-none">Anual</Badge>;
-    default:
-      return <Badge variant="secondary" className="bg-gray-200 text-gray-700 border-none">Free</Badge>;
-  }
-};
+const planStatusBadge = (client: ClientRow) => {
+  const sub = client.subscription;
 
-const statusBadge = (status: string) => {
-  switch (status) {
-    case "active":
-      return <Badge className="bg-emerald-500 text-white border-none">Ativo</Badge>;
-    case "trialing":
-      return <Badge className="bg-amber-400 text-gray-900 border-none">Trial</Badge>;
-    case "past_due":
-      return <Badge className="bg-red-500 text-white border-none">Inadimplente</Badge>;
-    case "canceled":
-      return <Badge variant="secondary" className="bg-gray-300 text-gray-600 border-none">Cancelado</Badge>;
-    case "suspended":
+  if (sub) {
+    if (sub.status === "active") {
+      const label = sub.plan_type === "annual" ? "Premium Anual" : "Premium Mensal";
+      return <Badge className="bg-emerald-500 text-white border-none">{label}</Badge>;
+    }
+    if (sub.status === "suspended" || sub.status === "canceled") {
       return <Badge variant="destructive" className="border-none">Bloqueado</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
+    }
+    if (sub.status === "past_due") {
+      return <Badge className="bg-red-500 text-white border-none">Inadimplente</Badge>;
+    }
+    if (sub.status === "trialing") {
+      return <Badge className="bg-amber-400 text-gray-900 border-none">Trial</Badge>;
+    }
+    return <Badge variant="outline">{sub.status}</Badge>;
   }
+
+  // No subscription → implicit free plan
+  const daysUsed = differenceInDays(new Date(), new Date(client.profile_created_at));
+  const remaining = 30 - daysUsed;
+
+  if (remaining > 0) {
+    return (
+      <Badge className="bg-[#2A5C82] text-white border-none">
+        Plano Grátis ({remaining}d restantes)
+      </Badge>
+    );
+  }
+  return <Badge className="bg-red-500 text-white border-none">Expirado</Badge>;
 };
 
 const Clientes = () => {
   const [search, setSearch] = useState("");
-  const [selectedClient, setSelectedClient] = useState<SubscriptionRow | null>(null);
-  const [blockTarget, setBlockTarget] = useState<SubscriptionRow | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
+  const [blockTarget, setBlockTarget] = useState<ClientRow | null>(null);
 
-  const { data: subscriptions = [], isLoading } = useQuery({
-    queryKey: ["admin-subscriptions"],
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ["admin-clients"],
     queryFn: async () => {
-      // Single query: fetch all subscriptions
-      const { data: subs, error } = await supabase
-        .from("subscriptions")
-        .select("*")
+      // 1. Fetch all "Eu" profiles (one per user)
+      const { data: profiles, error } = await supabase
+        .from("family_members")
+        .select("user_id, name, created_at")
+        .eq("relationship", "Eu")
+        .is("deleted_at", null)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      if (!subs?.length) return [] as SubscriptionRow[];
+      if (!profiles?.length) return [] as ClientRow[];
 
-      // Batch fetch names for all user_ids in one go
-      const userIds = subs.map((s: any) => s.user_id);
-      const { data: members } = await supabase
-        .from("family_members")
-        .select("user_id, name")
-        .in("user_id", userIds)
-        .eq("relationship", "Eu");
+      const userIds = profiles.map((p: any) => p.user_id);
 
-      const nameMap = new Map<string, string>();
-      (members ?? []).forEach((m: any) => nameMap.set(m.user_id, m.name));
+      // 2. Fetch all subscriptions for these users
+      const { data: subs } = await supabase
+        .from("subscriptions")
+        .select("*")
+        .in("user_id", userIds);
 
-      // Batch fetch emails via edge function
+      const subMap = new Map<string, any>();
+      (subs ?? []).forEach((s: any) => subMap.set(s.user_id, s));
+
+      // 3. Batch fetch emails
       let emailMap = new Map<string, string>();
       try {
         const { data: emailData } = await supabase.functions.invoke("manage-admins", {
@@ -106,36 +117,38 @@ const Clientes = () => {
         // Fallback: no emails
       }
 
-      return subs.map((s: any) => ({
-        ...s,
-        user_name: nameMap.get(s.user_id) || null,
-        user_email: emailMap.get(s.user_id) || null,
-      })) as SubscriptionRow[];
+      return profiles.map((p: any) => ({
+        user_id: p.user_id,
+        user_name: p.name,
+        user_email: emailMap.get(p.user_id) || null,
+        profile_created_at: p.created_at,
+        subscription: subMap.get(p.user_id) || null,
+      })) as ClientRow[];
     },
   });
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return subscriptions;
+    if (!search.trim()) return clients;
     const q = search.toLowerCase();
-    return subscriptions.filter(
-      (s) =>
-        s.user_name?.toLowerCase().includes(q) ||
-        s.user_email?.toLowerCase().includes(q) ||
-        s.user_id.toLowerCase().includes(q)
+    return clients.filter(
+      (c) =>
+        c.user_name?.toLowerCase().includes(q) ||
+        c.user_email?.toLowerCase().includes(q) ||
+        c.user_id.toLowerCase().includes(q)
     );
-  }, [subscriptions, search]);
+  }, [clients, search]);
 
-  const handleResetPassword = async (sub: SubscriptionRow) => {
-    if (!sub.user_email) {
+  const handleResetPassword = async (client: ClientRow) => {
+    if (!client.user_email) {
       toast.error("E-mail do usuário não disponível.");
       return;
     }
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(sub.user_email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(client.user_email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
-      toast.success(`E-mail de recuperação enviado para ${sub.user_email}.`);
+      toast.success(`E-mail de recuperação enviado para ${client.user_email}.`);
     } catch {
       toast.error("Erro ao enviar e-mail de recuperação.");
     }
@@ -143,17 +156,22 @@ const Clientes = () => {
 
   const handleBlockUser = async () => {
     if (!blockTarget) return;
-    const newStatus = blockTarget.status === "suspended" ? "active" : "suspended";
+    const sub = blockTarget.subscription;
+    if (!sub) {
+      toast.error("Usuário não possui assinatura para bloquear.");
+      setBlockTarget(null);
+      return;
+    }
+    const newStatus = sub.status === "suspended" ? "active" : "suspended";
     const { error } = await supabase
       .from("subscriptions")
       .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq("id", blockTarget.id);
+      .eq("id", sub.id);
 
     if (error) {
       toast.error("Erro ao atualizar status do usuário.");
     } else {
       toast.success(newStatus === "suspended" ? "Usuário bloqueado." : "Usuário desbloqueado.");
-      // Refresh list
       window.location.reload();
     }
     setBlockTarget(null);
@@ -164,8 +182,7 @@ const Clientes = () => {
       {[1, 2, 3, 4, 5].map((i) => (
         <TableRow key={i}>
           <TableCell><Skeleton className="h-8 w-32" /></TableCell>
-          <TableCell><Skeleton className="h-6 w-16" /></TableCell>
-          <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+          <TableCell><Skeleton className="h-6 w-24" /></TableCell>
           <TableCell><Skeleton className="h-6 w-24" /></TableCell>
           <TableCell><Skeleton className="h-6 w-8" /></TableCell>
         </TableRow>
@@ -197,8 +214,7 @@ const Clientes = () => {
           <TableHeader>
             <TableRow className="bg-gray-50/80">
               <TableHead className="font-semibold text-[#2A5C82]">Usuário</TableHead>
-              <TableHead className="font-semibold text-[#2A5C82]">Plano</TableHead>
-              <TableHead className="font-semibold text-[#2A5C82]">Status</TableHead>
+              <TableHead className="font-semibold text-[#2A5C82]">Plano / Status</TableHead>
               <TableHead className="font-semibold text-[#2A5C82]">Próxima Cobrança</TableHead>
               <TableHead className="font-semibold text-[#2A5C82] text-right">Ações</TableHead>
             </TableRow>
@@ -208,7 +224,7 @@ const Clientes = () => {
               tableSkeletons
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-12">
+                <TableCell colSpan={4} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <Users className="w-8 h-8 opacity-40" />
                     <p className="text-sm">
@@ -218,19 +234,18 @@ const Clientes = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((sub) => (
-                <TableRow key={sub.id} className="hover:bg-gray-50/50">
+              filtered.map((client) => (
+                <TableRow key={client.user_id} className="hover:bg-gray-50/50">
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground text-sm">{sub.user_name || "—"}</p>
-                      <p className="text-xs text-muted-foreground">{sub.user_email || sub.user_id.slice(0, 8) + "..."}</p>
+                      <p className="font-medium text-foreground text-sm">{client.user_name || "—"}</p>
+                      <p className="text-xs text-muted-foreground">{client.user_email || client.user_id.slice(0, 8) + "..."}</p>
                     </div>
                   </TableCell>
-                  <TableCell>{planBadge(sub.plan_type)}</TableCell>
-                  <TableCell>{statusBadge(sub.status)}</TableCell>
+                  <TableCell>{planStatusBadge(client)}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {sub.next_billing_date
-                      ? format(new Date(sub.next_billing_date.substring(0, 10) + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
+                    {client.subscription?.next_billing_date
+                      ? format(new Date(client.subscription.next_billing_date.substring(0, 10) + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
                       : "—"}
                   </TableCell>
                   <TableCell className="text-right">
@@ -241,21 +256,23 @@ const Clientes = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setSelectedClient(sub)}>
+                        <DropdownMenuItem onClick={() => setSelectedClient(client)}>
                           <Eye className="w-4 h-4 mr-2" />
                           Ver Detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleResetPassword(sub)}>
+                        <DropdownMenuItem onClick={() => handleResetPassword(client)}>
                           <KeyRound className="w-4 h-4 mr-2" />
                           Resetar Senha
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className={sub.status === "suspended" ? "text-emerald-600 focus:text-emerald-600" : "text-red-600 focus:text-red-600"}
-                          onClick={() => setBlockTarget(sub)}
-                        >
-                          <Ban className="w-4 h-4 mr-2" />
-                          {sub.status === "suspended" ? "Desbloquear" : "Bloquear Acesso"}
-                        </DropdownMenuItem>
+                        {client.subscription && (
+                          <DropdownMenuItem
+                            className={client.subscription.status === "suspended" ? "text-emerald-600 focus:text-emerald-600" : "text-red-600 focus:text-red-600"}
+                            onClick={() => setBlockTarget(client)}
+                          >
+                            <Ban className="w-4 h-4 mr-2" />
+                            {client.subscription.status === "suspended" ? "Desbloquear" : "Bloquear Acesso"}
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -288,41 +305,31 @@ const Clientes = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Plano</p>
-                  {planBadge(selectedClient.plan_type)}
+                  <p className="text-xs text-muted-foreground">Plano / Status</p>
+                  {planStatusBadge(selectedClient)}
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Status</p>
-                  {statusBadge(selectedClient.status)}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Asaas Customer ID</p>
-                <p className="text-sm font-mono text-foreground">{selectedClient.asaas_customer_id || "—"}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Cadastro</p>
                   <p className="text-sm text-foreground">
-                    {format(parseISO(selectedClient.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Próxima Cobrança</p>
-                  <p className="text-sm text-foreground">
-                    {selectedClient.next_billing_date
-                      ? format(new Date(selectedClient.next_billing_date.substring(0, 10) + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
-                      : "—"}
+                    {format(parseISO(selectedClient.profile_created_at), "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
               </div>
-              {selectedClient.trial_end && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Fim do Trial</p>
-                  <p className="text-sm text-foreground">
-                    {format(parseISO(selectedClient.trial_end), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                  </p>
-                </div>
+              {selectedClient.subscription && (
+                <>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Asaas Customer ID</p>
+                    <p className="text-sm font-mono text-foreground">{selectedClient.subscription.asaas_customer_id || "—"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Próxima Cobrança</p>
+                    <p className="text-sm text-foreground">
+                      {selectedClient.subscription.next_billing_date
+                        ? format(new Date(selectedClient.subscription.next_billing_date.substring(0, 10) + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR })
+                        : "—"}
+                    </p>
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -334,10 +341,10 @@ const Clientes = () => {
         <AlertDialogContent className="max-w-[340px] rounded-[24px]">
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {blockTarget?.status === "suspended" ? "Desbloquear Usuário?" : "Bloquear Usuário?"}
+              {blockTarget?.subscription?.status === "suspended" ? "Desbloquear Usuário?" : "Bloquear Usuário?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {blockTarget?.status === "suspended"
+              {blockTarget?.subscription?.status === "suspended"
                 ? `Deseja restaurar o acesso de ${blockTarget?.user_name || blockTarget?.user_email || "este usuário"}?`
                 : `Deseja suspender o acesso de ${blockTarget?.user_name || blockTarget?.user_email || "este usuário"}? Ele não poderá usar o app enquanto estiver bloqueado.`}
             </AlertDialogDescription>
@@ -345,10 +352,10 @@ const Clientes = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <Button
-              variant={blockTarget?.status === "suspended" ? "default" : "destructive"}
+              variant={blockTarget?.subscription?.status === "suspended" ? "default" : "destructive"}
               onClick={handleBlockUser}
             >
-              {blockTarget?.status === "suspended" ? "Desbloquear" : "Bloquear"}
+              {blockTarget?.subscription?.status === "suspended" ? "Desbloquear" : "Bloquear"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

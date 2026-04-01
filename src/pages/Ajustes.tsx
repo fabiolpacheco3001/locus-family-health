@@ -34,7 +34,7 @@ const Ajustes = () => {
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
-  const { subscription, isTrialing, isActive, isPastDue, trialDaysLeft, trialExpired } = useSubscription();
+  const { subscription, isTrialing, isActive, isPastDue, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
