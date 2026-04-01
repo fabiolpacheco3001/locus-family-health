@@ -1,15 +1,18 @@
 
 
-## Plano: Usar PNG da logo no PDF do Prontuário
+## Plano: Usar PNG com bordas arredondadas na tela de Login
 
-### Problema
-O `jsPDF` não renderiza SVG — apenas formatos raster (PNG/JPEG). Atualmente o código carrega um SVG, resultando num quadrado branco.
+### Alterações
 
-### Solução
-1. **Copiar** o arquivo `Logo_Locus_Vita.png` enviado para `public/logo-locus-vita-pdf.png`
-2. **Alterar** `src/pages/Prontuario.tsx` (linhas 51-59): trocar o fetch de `/logo-locus-vita.svg?v=2` para `/logo-locus-vita-pdf.png`
-3. **Nenhuma** alteração em `generateProntuarioPdf.ts` — o código já usa `doc.addImage(..., "PNG", ...)` corretamente
+1. **Copiar asset**: `user-uploads://Logo_Locus_Vita-2.png` → `src/assets/locus-vita-logo-login.png`
 
-### Resultado
-A logo PNG (com fundo branco, compatível com jsPDF) aparecerá no cabeçalho verde do PDF, legível e sem quadrado em branco.
+2. **Alterar `src/pages/Login.tsx`**:
+   - Trocar o import da logo: `import locusvitaLogo from "@/assets/locus-vita-logo-login.png"`
+   - Na linha 173, adicionar classes de arredondamento e sombra à tag `<img>`:
+     ```
+     className="h-32 w-32 object-cover rounded-3xl shadow-md mb-4"
+     ```
+   - Mesma alteração na logo da view "forgot" (linha ~135) para consistência
+
+3. **Sem alterações** em Cadastro, Reset, PDF ou qualquer outra tela.
 
