@@ -31,7 +31,7 @@ import {
 import { toast } from "sonner";
 import { useMedications, Medication, NewMedication } from "@/hooks/useMedications";
 import { useConsultations } from "@/hooks/useConsultations";
-import { addDays, format } from "date-fns";
+import { addDays, format, differenceInYears } from "date-fns";
 
 interface Props {
   open: boolean;
@@ -106,12 +106,33 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const receitaInputRef = useRef<HTMLInputElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lgpdConsent, setLgpdConsent] = useState(false);
+  const [patientAge, setPatientAge] = useState<number | null>(null);
+  const [patientName, setPatientName] = useState<string | null>(null);
   const isEditing = !!editingMedication;
+  const isPediatric = patientAge !== null && patientAge < 12;
 
   const [extractedMeds, setExtractedMeds] = useState<ExtractedMed[]>([]);
   const [currentMedIndex, setCurrentMedIndex] = useState(0);
   const [aiReviewMode, setAiReviewMode] = useState(false);
   const isWizardMode = extractedMeds.length > 1;
+
+  // Fetch patient age from family_members
+  useEffect(() => {
+    if (!familyMemberId || !open) return;
+    supabase
+      .from("family_members")
+      .select("birth_date, name")
+      .eq("id", familyMemberId)
+      .single()
+      .then(({ data }) => {
+        if (data?.birth_date) {
+          setPatientAge(differenceInYears(new Date(), new Date(data.birth_date)));
+        } else {
+          setPatientAge(null);
+        }
+        setPatientName(data?.name?.split(" ")[0] ?? null);
+      });
+  }, [familyMemberId, open]);
 
   useEffect(() => {
     if (editingMedication) {
@@ -259,7 +280,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       }
 
       const { data, error } = await supabase.functions.invoke("analyze-prescription", {
-        body: { fileUrl: urlToAnalyze },
+        body: { fileUrl: urlToAnalyze, ...(patientAge !== null ? { patientAge } : {}) },
       });
 
       if (error) throw error;
@@ -607,7 +628,20 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 </div>
               )}
 
-              {/* ═══════ BLOCO 1: Origem e Documentação (com moldura) ═══════ */}
+              {/* Banner de Alerta Pediátrico */}
+              {aiReviewMode && isPediatric && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border border-destructive bg-destructive/10 dark:bg-destructive/20">
+                  <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-destructive">⚠️ ALERTA CLÍNICO: Perfil PEDIÁTRICO</p>
+                    <p className="text-xs text-destructive/80 mt-0.5">
+                      {patientName ? `Criança: ${patientName}, ` : ""}{patientAge} {patientAge === 1 ? "ano" : "anos"}. Atenção redobrada à adequação do medicamento e dosagens para a idade.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
                 {/* Receita Médica - Upload + IA */}
                 <div className="space-y-3">
