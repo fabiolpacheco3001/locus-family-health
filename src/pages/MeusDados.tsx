@@ -141,10 +141,18 @@ const MeusDados = () => {
 
         if (linkErr) throw linkErr;
 
+        // Sync auth metadata for auto-heal path too
+        await supabase.auth.updateUser({ data: { full_name: name.trim() } });
+        await supabase.auth.refreshSession();
+
         // Refresh caches
         queryClient.invalidateQueries({ queryKey: ["family_members"] });
         queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
       }
+
+      // Invalidate any cached user/auth data so Home re-renders with new name
+      queryClient.invalidateQueries({ queryKey: ["family_members"] });
+      queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
 
       toast.success("Dados atualizados com sucesso!");
       navigate("/ajustes");
