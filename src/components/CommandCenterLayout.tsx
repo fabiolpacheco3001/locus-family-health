@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, ShieldCheck, Settings, Menu, LogOut, X } from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, Settings, Menu, LogOut, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
