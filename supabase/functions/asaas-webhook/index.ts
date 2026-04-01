@@ -6,6 +6,33 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Fetch the real subscription data from Asaas API.
+ * Returns { nextDueDate, cycle } or null on failure.
+ */
+async function fetchAsaasSubscription(subscriptionId: string): Promise<{ nextDueDate: string | null; cycle: string | null } | null> {
+  const asaasKey = Deno.env.get("ASAAS_API_KEY") || "";
+  try {
+    const resp = await fetch(
+      `https://sandbox.asaas.com/api/v3/subscriptions/${subscriptionId}`,
+      { headers: { access_token: asaasKey } }
+    );
+    if (!resp.ok) {
+      console.warn("Failed to fetch Asaas subscription:", resp.status, await resp.text());
+      return null;
+    }
+    const data = await resp.json();
+    console.log("Asaas subscription details:", JSON.stringify(data));
+    return {
+      nextDueDate: data.nextDueDate ?? null,
+      cycle: data.cycle ?? null,
+    };
+  } catch (err) {
+    console.error("Error fetching Asaas subscription:", err);
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,20 +55,73 @@ Deno.serve(async (req) => {
     const event = body.event as string;
     const payment = body.payment;
 
-    if (!event || !payment) {
-      console.warn("Webhook received without event or payment:", JSON.stringify(body));
+    if (!event) {
+      console.warn("Webhook received without event:", JSON.stringify(body));
       return new Response(
         JSON.stringify({ received: true }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Asaas webhook event: ${event}, payment ID: ${payment.id}`);
+    console.log(`Asaas webhook event: ${event}, payment ID: ${payment?.id}`);
+    console.log("Full payload:", JSON.stringify(body));
 
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // ─── SUBSCRIPTION_UPDATED ───
+    // Asaas sends this when a subscription's details change.
+    // The subscription object is at body.subscription (not body.payment).
+    if (event === "SUBSCRIPTION_UPDATED") {
+      const sub = body.subscription;
+      if (!sub?.id) {
+        console.warn("SUBSCRIPTION_UPDATED without subscription object");
+        return new Response(
+          JSON.stringify({ received: true }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Fetch fresh data from Asaas API
+      const asaasData = await fetchAsaasSubscription(sub.id);
+      if (!asaasData) {
+        return new Response(
+          JSON.stringify({ received: true, warning: "could not fetch subscription" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      if (asaasData.nextDueDate) updateData.next_billing_date = asaasData.nextDueDate;
+      if (asaasData.cycle === "YEARLY") updateData.plan_type = "annual";
+      else if (asaasData.cycle === "MONTHLY") updateData.plan_type = "monthly";
+
+      const extRef = sub.externalReference as string | null;
+      if (extRef) {
+        updateData.user_id = extRef;
+        const { data, error } = await adminClient
+          .from("subscriptions")
+          .upsert(updateData as any, { onConflict: "user_id" })
+          .select();
+        console.log("SUBSCRIPTION_UPDATED upsert:", JSON.stringify({ data, error }));
+      }
+
+      return new Response(
+        JSON.stringify({ received: true, event }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── PAYMENT EVENTS ───
+    if (!payment) {
+      console.warn("Unhandled event without payment:", event);
+      return new Response(
+        JSON.stringify({ received: true, event }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const externalReference = payment.externalReference as string | null;
     const customerId = payment.customer as string | null;
@@ -54,64 +134,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Process event
     let newStatus: string | null = null;
     const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
     switch (event) {
       case "PAYMENT_RECEIVED":
-      case "PAYMENT_CONFIRMED":
+      case "PAYMENT_CONFIRMED": {
         newStatus = "active";
         updateData.status = newStatus;
 
-        // Fetch real subscription details from Asaas to get true nextDueDate
+        // Fetch the REAL nextDueDate from Asaas — Single Source of Truth
         if (payment.subscription) {
-          try {
-            const asaasKey = Deno.env.get("ASAAS_API_KEY") || "";
-            const subResp = await fetch(
-              `https://sandbox.asaas.com/api/v3/subscriptions/${payment.subscription}`,
-              { headers: { access_token: asaasKey } }
-            );
-            if (subResp.ok) {
-              const subData = await subResp.json();
-              console.log("Asaas subscription details:", JSON.stringify(subData));
-
-              // Determine plan_type from subscription cycle
-              const cycle = subData.cycle as string | undefined;
-              if (cycle === "YEARLY") {
-                updateData.plan_type = "annual";
-              } else if (cycle === "MONTHLY") {
-                updateData.plan_type = "monthly";
-              }
-
-              // Validate nextDueDate: must be strictly in the future
-              const today = new Date().toISOString().split("T")[0];
-              if (subData.nextDueDate && subData.nextDueDate > today) {
-                updateData.next_billing_date = subData.nextDueDate;
-                console.log("Using Asaas nextDueDate (future):", subData.nextDueDate);
-              } else {
-                // Calculate next billing from payment.dueDate + cycle interval
-                const baseDate = payment.dueDate ? new Date(payment.dueDate + "T12:00:00Z") : new Date();
-                if (cycle === "YEARLY") {
-                  baseDate.setFullYear(baseDate.getFullYear() + 1);
-                } else {
-                  baseDate.setMonth(baseDate.getMonth() + 1);
-                }
-                const calculated = baseDate.toISOString().split("T")[0];
-                updateData.next_billing_date = calculated;
-                console.log("Calculated next_billing_date:", calculated, "(Asaas returned:", subData.nextDueDate, ")");
-              }
-            } else {
-              console.warn("Failed to fetch Asaas subscription:", subResp.status, await subResp.text());
-              // Fallback to payment dueDate
-              if (payment.dueDate) updateData.next_billing_date = payment.dueDate;
+          const asaasData = await fetchAsaasSubscription(payment.subscription);
+          if (asaasData) {
+            // Use the Asaas nextDueDate EXACTLY as-is — no local calculations
+            if (asaasData.nextDueDate) {
+              updateData.next_billing_date = asaasData.nextDueDate;
+              console.log("Using Asaas nextDueDate (SSOT):", asaasData.nextDueDate);
             }
-          } catch (fetchErr) {
-            console.error("Error fetching Asaas subscription:", fetchErr);
-            if (payment.dueDate) updateData.next_billing_date = payment.dueDate;
+            if (asaasData.cycle === "YEARLY") updateData.plan_type = "annual";
+            else if (asaasData.cycle === "MONTHLY") updateData.plan_type = "monthly";
           }
-        } else if (payment.dueDate) {
-          updateData.next_billing_date = payment.dueDate;
         }
 
         // Fallback plan_type from value if not set by cycle
@@ -120,6 +163,7 @@ Deno.serve(async (req) => {
           updateData.plan_type = value >= 150 ? "annual" : "monthly";
         }
         break;
+      }
 
       case "PAYMENT_OVERDUE":
         newStatus = "past_due";
@@ -145,14 +189,10 @@ Deno.serve(async (req) => {
       updateData.asaas_customer_id = customerId;
     }
 
-    // Log full payload for debugging
-    console.log("Full payment payload:", JSON.stringify(payment));
     console.log("Data to upsert:", JSON.stringify(updateData));
 
     if (externalReference) {
-      // UPSERT using user_id as conflict target
       updateData.user_id = externalReference;
-
       const { data, error } = await adminClient
         .from("subscriptions")
         .upsert(updateData as any, { onConflict: "user_id" })
@@ -165,10 +205,8 @@ Deno.serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-
       console.log("Subscription upserted successfully:", JSON.stringify(data));
     } else {
-      // Fallback: update by asaas_customer_id
       const { data, error } = await adminClient
         .from("subscriptions")
         .update(updateData)
@@ -182,7 +220,6 @@ Deno.serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-
       console.log("Subscription updated by customer_id:", JSON.stringify(data));
     }
 
