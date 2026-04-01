@@ -14,6 +14,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import MemberAvatar from "@/components/MemberAvatar";
+import PaywallModal from "@/components/PaywallModal";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -38,6 +39,7 @@ const Ajustes = () => {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [supportUrl, setSupportUrl] = useState<string>("");
   const [supportEmail, setSupportEmail] = useState<string>("suporte@locustech.com.br");
 
@@ -240,11 +242,10 @@ const Ajustes = () => {
                   </p>
                 )}
                 <Button
-                  onClick={handleRegularize}
-                  disabled={loadingSubscription}
+                  onClick={() => setShowPaywall(true)}
                   className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
                 >
-                  {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Assinar Agora"}
+                  Assinar Agora
                 </Button>
               </div>
             </div>
@@ -341,6 +342,10 @@ const Ajustes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <PaywallModal
+        open={showPaywall}
+        onOpenChange={setShowPaywall}
+      />
     </div>
   );
 };
