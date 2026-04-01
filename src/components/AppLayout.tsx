@@ -84,6 +84,7 @@ const AppLayout = () => {
           onOpenChange={() => {}}
           locked={showPaywall ?? false}
           onLogout={signOut}
+          implicitTrialExpired={implicitTrialExpired}
         />
       </MobileShell>
     </InviteAcceptInterceptor>
