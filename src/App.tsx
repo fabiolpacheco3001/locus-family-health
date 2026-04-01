@@ -71,6 +71,8 @@ const CCDashboard = lazy(importCCDashboard);
 const CCClientes = lazy(importCCClientes);
 const CCAdmins = lazy(importCCAdmins);
 const CCConfig = lazy(importCCConfig);
+const CCChangelog = lazy(importCCChangelog);
+const Changelog = lazy(importChangelog);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
