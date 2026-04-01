@@ -21,7 +21,7 @@ interface PaywallModalProps {
   implicitTrialExpired?: boolean;
 }
 
-const PaywallModal = ({ open, onOpenChange, locked, onLogout }: PaywallModalProps) => {
+const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpired }: PaywallModalProps) => {
   const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
