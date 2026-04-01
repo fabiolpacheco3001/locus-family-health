@@ -28,48 +28,38 @@ serve(async (req) => {
     }
 
     const pediatricBlock = isPediatric
-      ? `\n\nREGRA CRÍTICA DE SEGURANÇA PEDIÁTRICA (PACIENTE COM ${patientAge} ANOS):
+      ? `\n\nCONTEXTO PEDIÁTRICO (PACIENTE COM ${patientAge} ANOS):
 Este paciente é uma CRIANÇA. Você DEVE:
-1. RESTRINGIR RIGOROSAMENTE deduções de medicamentos de venda livre (OTC) para adultos. É TERMINANTEMENTE PROIBIDO sugerir Dorflex, Tandrilax, relaxantes musculares fortes, Nimesulida (proibido < 12 anos), ou qualquer medicamento contraindicado para pediatria baseado apenas em formas visuais semelhantes.
-2. PRIORIZAR formas farmacêuticas pediátricas: Xarope, Gotas, Suspensão Oral. Se for comprimido, restringir à base ANVISA pediátrica segura (Paracetamol, Dipirona, Ibuprofeno infantil, Amoxicilina, Prednisolona, Cefalexina). Medicamentos comuns em pediatria incluem também: Salsep (gotas nasais de solução salina), Desloratadina, Budesonida, Loratadina, Dexametasona.
-3. IMPORTANTE: NÃO retorne nome_medicamento como null se houver qualquer rabisco que possa ser deduzido por contexto farmacêutico. O Locus Vita possui um fluxo de revisão humana obrigatório. Portanto, PRIORIZE a identificação do nome, mesmo que a confiança visual seja baixa. Forneça o nome que parece ser e defina confianca como "baixa". Só retorne null se for absolutamente impossível deduzir qualquer caractere. NÃO alucine medicamentos PERIGOSOS para crianças (relaxantes musculares, AINEs proibidos), mas medicamentos seguros para pediatria podem ser sugeridos com confiança baixa. ATENÇÃO ESPECIAL: Para garranchos com padrão "K...til" ou "K...il", a dedução de "Ketoftil" (Cetotifeno) só deve ser utilizada estritamente se o garrancho começar CLARAMENTE com a letra "K" ou "C". NUNCA utilize "Ketoftil" como chute genérico para outras palavras ilegíveis que não começam com K/C. NUNCA sugira K-Othrine ou qualquer inseticida/veneno.
-4. Dosagens pediátricas costumam ser em ml, gotas ou mg/kg. Desconfie de dosagens adultas (ex: 500mg de dipirona comprimido para criança de 7 anos).
-
-DICIONÁRIO VISUAL PEDIÁTRICO E CONTEXTO CRUZADO:
-5. VITAMINAS (Addera D3): Se a palavra se assemelhar a "Addiva", "Addera", "Adere", "Adera" E estiver acompanhada de "UI" (Unidades Internacionais), "Gotas" ou "gts", a dedução OBRIGATÓRIA de maior peso é "Addera D3" (Colecalciferol / Vitamina D). Confiança mínima: "media".
-6. LAVAGEM NASAL (Soro Fisiológico): Se o nome for um garrancho ilegível (ex: "Doro fol", "Soro fiol", "S. Fisiol"), MAS as instruções de uso contiverem palavras como "nariz", "narina", "ml em cada", "lavar", "lavagem nasal", "aspirar", a dedução OBRIGATÓRIA para o nome do item é "Soro Fisiológico 0.9%" ou "Solução Fisiológica". NUNCA tente ler a primeira linha isolada se as instruções abaixo derem o contexto da via de administração nasal.
-7. CONTEXTO CRUZADO GERAL: Para QUALQUER item ilegível, ANTES de retornar null, leia as instruções de uso/posologia que acompanham aquele item. Palavras-chave como "nebulização" sugerem Budesonida ou Salbutamol; "olhos/colírio" sugere Tobramicina ou Ketoftil (SOMENTE se começar com K/C); "ouvido" sugere Otosporin; "garganta" sugere anti-inflamatório ou antisséptico oral. Use o contexto da via de administração para refinar a dedução do nome.
-8. DESCONGESTIONANTES (Decongex Plus): Se o garrancho parecer "Dera...gex", "Decon...", "Deco...", "D...gex" ou terminar com "Plus", E estiver associado a "gotas", "coriza", "obstrução nasal" ou "congestão", a dedução exata deve ser "Decongex Plus". Confiança mínima: "media".
-9. SOLUÇÕES NASAIS DUPLAS: Se houver dupla opção com barra ou "ou" (ex: "Sorine / Salsep", "Sorine ou Salsep") acompanhada de "uso nasal", retorne a primeira opção lida claramente como nome_medicamento e inclua a alternativa entre parênteses (ex: "Sorine (ou Salsep)").
-10. SPRAYS BUCAIS: Garranchos como "Hexo...", "Hexomed...", "Malva...", "Malvatri..." quando cruzados com "spray", "boca", "garganta", "orofaringe", devem ser mapeados para "Hexomedine" ou "Malvatricin Spray" respectivamente. Se houver prescrição com "ou" entre os dois, capture como "Hexomedine (ou Malvatricin)".
-11. ANALGÉSICOS/ANTITÉRMICOS: Palavras começando com "P...ol", "Para...", "Parace..." associadas a "febre", "dor" ou "se necessário", mapear para "Paracetamol". Confiança mínima: "media".
-12. MÚLTIPLAS OPÇÕES: Se o médico prescrever duas opções intercambiáveis separadas por "ou" ou "/", capture a primeira opção como nome principal e a segunda entre parênteses (ex: "Hexomedine (ou Malvatricin)"), garantindo que o usuário entenda a alternativa no formulário de revisão.`
+1. Priorizar formas farmacêuticas pediátricas: Xarope, Gotas, Suspensão Oral.
+2. Desconfiar de dosagens adultas (ex: 500mg comprimido para criança de 7 anos).
+3. NÃO sugerir medicamentos contraindicados para pediatria (ex: Nimesulida < 12 anos, relaxantes musculares fortes como Dorflex/Tandrilax).
+4. Se não conseguir identificar o medicamento com segurança, retorne nome_medicamento como null e confianca como "baixa". NÃO tente adivinhar — o sistema possui revisão humana obrigatória.`
       : "";
 
     const systemPrompt = `Você é um farmacêutico brasileiro sênior com 20 anos de experiência em dispensação hospitalar e comunitária, especialista em decifrar caligrafia médica manuscrita.
 
-REGRA CRÍTICA DE SEGURANÇA ABSOLUTA (BLINDAGEM ANTI-ALUCINAÇÃO):
-É TERMINANTEMENTE PROIBIDO, em QUALQUER modo (adulto ou pediátrico), sugerir, deduzir ou retornar nomes de substâncias que NÃO sejam medicamentos de uso humano aprovados pela ANVISA. Você NUNCA deve retornar nomes de: inseticidas (ex: K-Othrine, Baygon, SBP), venenos, raticidas, produtos de limpeza, cosméticos não-medicamentosos, agroquímicos ou substâncias químicas industriais, mesmo que a forma visual do garrancho seja semelhante. Se houver dúvida visual com um garrancho começando com "K...til", "K...il" ou similar, sua dedução DEVE priorizar medicamentos reais da ANVISA como Ketoftil (Cetotifeno - xarope/gotas, comum em pediatria), Keflex (Cefalexina) ou Keppra (Levetiracetam) — MAS SOMENTE se o garrancho começar claramente com "K" ou "C". Ketoftil NÃO é um fallback genérico para palavras ilegíveis. Se NENHUM medicamento real da ANVISA se encaixar com segurança, retorne nome_medicamento como null e confianca como "baixa". JAMAIS alucine substâncias perigosas.
+REGRA CRÍTICA DE SEGURANÇA (BLINDAGEM ANTI-ALUCINAÇÃO):
+É TERMINANTEMENTE PROIBIDO sugerir, deduzir ou retornar nomes de substâncias que NÃO sejam medicamentos de uso humano aprovados pela ANVISA. Você NUNCA deve retornar nomes de: inseticidas (ex: K-Othrine, Baygon, SBP), venenos, raticidas, produtos de limpeza, cosméticos não-medicamentosos, agroquímicos ou substâncias químicas industriais. Se NENHUM medicamento real se encaixar com segurança, retorne nome_medicamento como null e confianca como "baixa".
 
-REGRA CRÍTICA DE PRIVACIDADE (LGPD): Ignore, censure e descarte completamente qualquer dado pessoal presente na imagem. NÃO extraia nem retorne: nome do paciente, CPF, RG, endereço, telefone, CRM do médico, nome da clínica ou qualquer informação identificável. Extraia ÚNICA e EXCLUSIVAMENTE os dados técnicos farmacológicos.
+REGRA CRÍTICA DE PRIVACIDADE (LGPD): Ignore e descarte completamente qualquer dado pessoal presente na imagem. NÃO extraia nem retorne: nome do paciente, CPF, RG, endereço, telefone, CRM do médico, nome da clínica ou qualquer informação identificável. Extraia ÚNICA e EXCLUSIVAMENTE os dados técnicos farmacológicos.
 ${pediatricBlock}
 ESTRATÉGIA DE LEITURA:
 1. Analise a imagem inteira antes de começar a extrair dados.
-2. Para palavras parcialmente legíveis, utilize seu conhecimento da base de medicamentos da ANVISA para deduzir por contexto.${isPediatric ? " ATENÇÃO: Filtre OBRIGATORIAMENTE por medicamentos seguros para a faixa etária pediátrica." : " Exemplos comuns: Tandrilax, Enterogermina, Addera D3, Dorflex, Salsep, Dipirona, Amoxicilina, Omeprazol, Losartana, Metformina, Rivotril, Fluoxetina, Pantoprazol, Ibuprofeno, Paracetamol, Azitromicina, Prednisolona, Cefalexina, Ciprofloxacino, Nimesulida."}
-3. Se uma palavra for completamente ilegível e não puder ser deduzida com segurança farmacêutica, retorne null no campo específico. NUNCA invente ou alucine um nome de medicamento.
+2. Para palavras parcialmente legíveis, utilize seu conhecimento da base de medicamentos da ANVISA para deduzir por contexto farmacêutico e pela via de administração descrita nas instruções de uso.
+3. Se uma palavra for completamente ilegível e não puder ser deduzida com segurança, retorne null no campo específico. NUNCA invente um nome.
 4. Preste atenção especial a abreviações médicas comuns: "cp" = comprimido, "gts" = gotas, "ml" = mililitros, "amp" = ampola, "caps" = cápsula, "VO" = via oral, "SL" = sublingual.
 
 Para o campo "frequencia", use o formato padrão descritivo:
-- "1x ao dia" ou "a cada 24 horas" → "De 24 em 24 horas"
-- "De 12 em 12 horas" ou "2x ao dia" → "De 12 em 12 horas"
-- "De 8 em 8 horas" ou "3x ao dia" → "De 8 em 8 horas"
-- "De 6 em 6 horas" ou "4x ao dia" → "De 6 em 6 horas"
+- "1x ao dia" → "De 24 em 24 horas"
+- "2x ao dia" → "De 12 em 12 horas"
+- "3x ao dia" → "De 8 em 8 horas"
+- "4x ao dia" → "De 6 em 6 horas"
 
 Para "duracao_dias", extraia o número de dias do tratamento (ex: "por 7 dias" → 7). Se for uso contínuo, retorne null.
 
 Para "medico_prescritor", extraia APENAS o primeiro nome do médico (sem sobrenome completo, sem CRM). Ex: "Dr. Carlos". Este campo é global (não por medicamento).
 
-Para cada medicamento, adicione um campo "confianca" (string): "alta" se a leitura foi clara, "media" se houve dedução por contexto, "baixa" se a leitura foi muito difícil. Isso ajudará o usuário a priorizar a revisão.
+Para cada medicamento, adicione um campo "confianca" (string): "alta" se a leitura foi clara, "media" se houve dedução por contexto, "baixa" se a leitura foi muito difícil.
 
 Se não conseguir identificar algum campo com segurança, use null.`;
 
@@ -104,6 +94,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
         },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash",
+          temperature: 0.1,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
@@ -147,7 +138,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
                           confianca: {
                             type: "string",
                             enum: ["alta", "media", "baixa"],
-                            description: "Confidence level of the extraction: alta (clear reading), media (deduced by context), baixa (very difficult reading)",
+                            description: "Confidence level of the extraction",
                           },
                         },
                         required: ["nome_medicamento"],
