@@ -17,6 +17,8 @@ interface PaywallModalProps {
   /** When true, hides close button and forces interaction */
   locked?: boolean;
   onLogout?: () => void;
+  /** When true, shows implicit trial expired message */
+  implicitTrialExpired?: boolean;
 }
 
 const PaywallModal = ({ open, onOpenChange, locked, onLogout }: PaywallModalProps) => {

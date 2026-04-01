@@ -67,29 +67,55 @@ export function useSubscription() {
     enabled: !!user?.id,
   });
 
-  const isTrialing = subscription?.status === "trialing";
-  const isActive = subscription?.status === "active";
-  const isPastDue = subscription?.status === "past_due";
+  const isSuspended = subscription?.status === "suspended";
   const isCanceled = subscription?.status === "canceled";
+  const isActive = subscription?.status === "active";
+  const isTrialing = subscription?.status === "trialing";
+  const isPastDue = subscription?.status === "past_due";
+
+  // Implicit 30-day trial: if no subscription record exists, use auth created_at
+  const implicitTrialDaysLeft = (() => {
+    if (subscription) return null; // has explicit record, don't use implicit
+    if (!user?.created_at) return null;
+    const createdAt = new Date(user.created_at).getTime();
+    const diff = 30 - Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diff);
+  })();
 
   const trialDaysLeft = (() => {
+    if (implicitTrialDaysLeft !== null) return implicitTrialDaysLeft;
     if (!isTrialing || !subscription?.trial_end) return 0;
     const diff = new Date(subscription.trial_end).getTime() - Date.now();
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   })();
 
   const trialExpired = isTrialing && trialDaysLeft <= 0;
-  const canUsePremium = isActive || (isTrialing && !trialExpired);
+
+  // Hierarchy: 1) Explicit block → 2) Explicit access → 3) Implicit trial
+  const canUsePremium = (() => {
+    if (isSuspended || isCanceled) return false;
+    if (isActive) return true;
+    if (isTrialing && !trialExpired) return true;
+    // No subscription record: implicit trial
+    if (!subscription && implicitTrialDaysLeft !== null) return implicitTrialDaysLeft > 0;
+    return false;
+  })();
+
+  // Whether user is on implicit trial (no subscription record, within 30 days)
+  const isImplicitTrial = !subscription && implicitTrialDaysLeft !== null && implicitTrialDaysLeft > 0;
+  const implicitTrialExpired = !subscription && implicitTrialDaysLeft !== null && implicitTrialDaysLeft <= 0;
 
   return {
     subscription,
     isLoading,
-    isTrialing,
+    isTrialing: isTrialing || isImplicitTrial,
     isActive,
     isPastDue,
     isCanceled,
     trialDaysLeft,
-    trialExpired,
+    trialExpired: trialExpired || implicitTrialExpired,
     canUsePremium,
+    isImplicitTrial,
+    implicitTrialExpired,
   };
 }
