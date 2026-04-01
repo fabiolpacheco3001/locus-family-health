@@ -108,6 +108,9 @@ const MeusDados = () => {
           blood_type: bloodType || null,
           relationship: relationship || "Outros",
         });
+        // Sync auth metadata so Home greeting updates immediately
+        await supabase.auth.updateUser({ data: { full_name: name.trim() } });
+        await supabase.auth.refreshSession();
       } else {
         // Auto-healing: create profile + link it
         const { data: newMember, error: insertErr } = await supabase
