@@ -68,6 +68,7 @@ type ExtractedMed = {
   dosagem?: string | null;
   frequencia?: string | null;
   duracao_dias?: number | null;
+  confianca?: "alta" | "media" | "baixa" | null;
   _name?: string;
   _dosage?: string;
   _frequencyHours?: string;
@@ -109,6 +110,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
   const [extractedMeds, setExtractedMeds] = useState<ExtractedMed[]>([]);
   const [currentMedIndex, setCurrentMedIndex] = useState(0);
+  const [aiReviewMode, setAiReviewMode] = useState(false);
   const isWizardMode = extractedMeds.length > 1;
 
   useEffect(() => {
@@ -160,6 +162,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setLgpdConsent(false);
     setExtractedMeds([]);
     setCurrentMedIndex(0);
+    setAiReviewMode(false);
   };
 
   const parsedDate = useMemo(() => {
@@ -182,6 +185,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     const opt = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours);
     return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
+
+  const currentConfidence = useMemo(() => {
+    if (!aiReviewMode || extractedMeds.length === 0) return null;
+    return extractedMeds[currentMedIndex]?.confianca ?? null;
+  }, [aiReviewMode, extractedMeds, currentMedIndex]);
+
+  const lowConfidenceClass = "ring-2 ring-amber-400 border-amber-400";
 
   const populateFromExtracted = (med: ExtractedMed) => {
     setName(med._name ?? med.nome_medicamento ?? "");
@@ -257,17 +267,18 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
       if (data?.medicamentos?.length > 0) {
         if (data.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+        setAiReviewMode(true);
 
         if (data.medicamentos.length > 1) {
           setExtractedMeds(data.medicamentos);
           setCurrentMedIndex(0);
           populateFromExtracted(data.medicamentos[0]);
-          toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise um por um.`);
+          toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise cada um antes de salvar.`);
         } else {
-          setExtractedMeds([]);
+          setExtractedMeds([data.medicamentos[0]]);
           setCurrentMedIndex(0);
           populateFromExtracted(data.medicamentos[0]);
-          toast.success("Dados extraídos da receita com sucesso!");
+          toast.success("Dados extraídos! Revise antes de salvar.");
         }
       } else {
         if (data?.nome_medicamento) setName(data.nome_medicamento);
@@ -275,7 +286,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
         if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
         if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
-        toast.success("Dados extraídos da receita com sucesso!");
+        setAiReviewMode(true);
+        toast.success("Dados extraídos! Revise antes de salvar.");
       }
       logAiUsage("receita", 0);
     } catch (err: any) {
@@ -582,6 +594,19 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-24 no-scrollbar">
             <div className="flex flex-col gap-6">
 
+              {/* Banner de Revisão IA */}
+              {aiReviewMode && (
+                <div className="flex items-start gap-3 p-3 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">Revisão Necessária</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                      Deciframos a receita, mas por favor, confira os nomes e as dosagens antes de salvar.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* ═══════ BLOCO 1: Origem e Documentação (com moldura) ═══════ */}
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
                 {/* Receita Médica - Upload + IA */}
@@ -717,7 +742,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
                 <div className="space-y-1.5">
                   <Label>Nome do Medicamento *</Label>
-                  <MedicationAutocomplete value={name} onChange={setName} />
+                  <div className={currentConfidence && currentConfidence !== "alta" ? lowConfidenceClass + " rounded-md" : ""}>
+                    <MedicationAutocomplete value={name} onChange={setName} />
+                  </div>
+                  {currentConfidence === "baixa" && (
+                    <p className="text-xs text-amber-600 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" /> Leitura difícil — verifique com atenção
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -728,7 +760,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Dosagem</Label>
-                    <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className="text-[16px]" />
+                    <Input placeholder="Ex: 5ml" value={dosage} onChange={(e) => setDosage(e.target.value)} className={`text-[16px] ${currentConfidence && currentConfidence !== "alta" ? lowConfidenceClass : ""}`} />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Frequência</Label>
