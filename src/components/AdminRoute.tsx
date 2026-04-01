@@ -32,7 +32,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   if (status === "loading") {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#f2f0eb] z-50">
-        <img src="/logo-locus-vita.svg" alt="Locus Vita" className="w-20 h-20 animate-breathing" />
+        <img src="/logo-locus-vita.svg" alt="Locus Vita" className="w-32 h-32 animate-breathing" />
       </div>
     );
   }
