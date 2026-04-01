@@ -12,13 +12,15 @@ serve(async (req) => {
   }
 
   try {
-    const { fileUrl } = await req.json();
+    const { fileUrl, patientAge } = await req.json();
     if (!fileUrl) {
       return new Response(JSON.stringify({ error: "fileUrl is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    const isPediatric = typeof patientAge === "number" && patientAge < 12;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
