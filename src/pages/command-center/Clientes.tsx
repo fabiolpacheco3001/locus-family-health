@@ -72,13 +72,15 @@ const Clientes = () => {
   const [blockTarget, setBlockTarget] = useState<ClientRow | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: clients = [], isLoading } = useQuery({
+  const { data: clients = [], isLoading, error: queryError } = useQuery({
     queryKey: ["admin-clients"],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_admin_clients");
       if (error) throw error;
       return (data ?? []) as ClientRow[];
     },
+    retry: false,
+    refetchOnWindowFocus: false,
   });
 
   const filtered = useMemo(() => {
