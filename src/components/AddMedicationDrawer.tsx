@@ -186,6 +186,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
 
+  const currentConfidence = useMemo(() => {
+    if (!aiReviewMode || extractedMeds.length === 0) return null;
+    return extractedMeds[currentMedIndex]?.confianca ?? null;
+  }, [aiReviewMode, extractedMeds, currentMedIndex]);
+
+  const lowConfidenceClass = "ring-2 ring-amber-400 border-amber-400";
+
   const populateFromExtracted = (med: ExtractedMed) => {
     setName(med._name ?? med.nome_medicamento ?? "");
     setDosage(med._dosage ?? med.dosagem ?? "");
