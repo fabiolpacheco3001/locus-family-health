@@ -151,12 +151,25 @@ const Medicamentos = () => {
 
   return (
     <>
-      {!drawerOpen && <FixedFAB onClick={handleAdd} />}
+      {!drawerOpen && !actionDrawerOpen && !aiUploadOpen && <FixedFAB onClick={handleAdd} />}
+      <MedicationActionDrawer
+        open={actionDrawerOpen}
+        onOpenChange={setActionDrawerOpen}
+        onSelectAI={handleSelectAI}
+        onSelectManual={handleSelectManual}
+      />
+      <AiMedicationUpload
+        open={aiUploadOpen}
+        onOpenChange={setAiUploadOpen}
+        familyMemberId={id!}
+        onAnalysisComplete={handleAiAnalysisComplete}
+      />
       <AddMedicationDrawer
         open={drawerOpen}
         onOpenChange={handleDrawerChange}
         familyMemberId={id!}
         editingMedication={editingMedication}
+        aiData={aiData}
       />
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">
