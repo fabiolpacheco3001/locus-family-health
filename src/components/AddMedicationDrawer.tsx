@@ -68,6 +68,7 @@ type ExtractedMed = {
   dosagem?: string | null;
   frequencia?: string | null;
   duracao_dias?: number | null;
+  confianca?: "alta" | "media" | "baixa" | null;
   _name?: string;
   _dosage?: string;
   _frequencyHours?: string;
