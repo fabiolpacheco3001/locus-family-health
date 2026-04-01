@@ -280,7 +280,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       }
 
       const { data, error } = await supabase.functions.invoke("analyze-prescription", {
-        body: { fileUrl: urlToAnalyze },
+        body: { fileUrl: urlToAnalyze, ...(patientAge !== null ? { patientAge } : {}) },
       });
 
       if (error) throw error;
