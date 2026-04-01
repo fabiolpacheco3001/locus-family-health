@@ -465,9 +465,7 @@ const Home = () => {
           ].map(({ icon: Icon, label, key }) => {
             const action = key === null
               ? () => navigate('/gerenciar-familia', { state: { from: '/home' } })
-              : role === "user" && linkedMemberId && managedProfiles.length === 0
-                ? () => navigate(`/familiar/${linkedMemberId}/${key}`, { state: { from: '/home' } })
-                : () => setQuickAction(key);
+              : () => handleQuickAction(key);
             return (
             <button
               key={label}
