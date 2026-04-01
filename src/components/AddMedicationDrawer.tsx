@@ -38,6 +38,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   familyMemberId: string;
   editingMedication?: Medication | null;
+  aiData?: { data: any; receitaUrl: string | null } | null;
 }
 
 const FREQUENCY_OPTIONS = [
