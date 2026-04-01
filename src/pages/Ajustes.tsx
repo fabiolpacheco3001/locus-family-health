@@ -184,7 +184,7 @@ const Ajustes = () => {
                       <p className="text-sm text-muted-foreground">
                         Próximo pagamento:{" "}
                         <strong className="text-foreground">
-                          {format(parseISO(subscription.next_billing_date), "dd MMM yyyy", { locale: ptBR })}
+                          {format(new Date(subscription.next_billing_date.substring(0, 10) + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })}
                         </strong>
                       </p>
                     )}
