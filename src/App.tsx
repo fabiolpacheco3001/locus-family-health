@@ -147,6 +147,7 @@ const App = () => (
               <Route index element={<CCDashboard />} />
               <Route path="clientes" element={<CCClientes />} />
               <Route path="admins" element={<CCAdmins />} />
+              <Route path="changelog" element={<CCChangelog />} />
               <Route path="config" element={<CCConfig />} />
             </Route>
             <Route path="*" element={<NotFound />} />
