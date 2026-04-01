@@ -106,7 +106,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const receitaInputRef = useRef<HTMLInputElement>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lgpdConsent, setLgpdConsent] = useState(false);
+  const [patientAge, setPatientAge] = useState<number | null>(null);
+  const [patientName, setPatientName] = useState<string | null>(null);
   const isEditing = !!editingMedication;
+  const isPediatric = patientAge !== null && patientAge < 12;
 
   const [extractedMeds, setExtractedMeds] = useState<ExtractedMed[]>([]);
   const [currentMedIndex, setCurrentMedIndex] = useState(0);
