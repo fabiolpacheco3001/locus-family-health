@@ -260,17 +260,18 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
       if (data?.medicamentos?.length > 0) {
         if (data.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+        setAiReviewMode(true);
 
         if (data.medicamentos.length > 1) {
           setExtractedMeds(data.medicamentos);
           setCurrentMedIndex(0);
           populateFromExtracted(data.medicamentos[0]);
-          toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise um por um.`);
+          toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise cada um antes de salvar.`);
         } else {
-          setExtractedMeds([]);
+          setExtractedMeds([data.medicamentos[0]]);
           setCurrentMedIndex(0);
           populateFromExtracted(data.medicamentos[0]);
-          toast.success("Dados extraídos da receita com sucesso!");
+          toast.success("Dados extraídos! Revise antes de salvar.");
         }
       } else {
         if (data?.nome_medicamento) setName(data.nome_medicamento);
@@ -278,7 +279,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
         if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
         if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
-        toast.success("Dados extraídos da receita com sucesso!");
+        setAiReviewMode(true);
+        toast.success("Dados extraídos! Revise antes de salvar.");
       }
       logAiUsage("receita", 0);
     } catch (err: any) {
