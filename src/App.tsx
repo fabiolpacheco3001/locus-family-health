@@ -98,7 +98,7 @@ const RouteLoader = () => (
     <img
       src="/logo-locus-vita.svg"
       alt="Locus Vita"
-      className="w-20 h-20 animate-breathing"
+      className="w-32 h-32 animate-breathing"
     />
   </div>
 );
