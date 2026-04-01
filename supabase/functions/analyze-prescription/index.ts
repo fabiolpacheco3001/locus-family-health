@@ -31,8 +31,8 @@ serve(async (req) => {
       ? `\n\nREGRA CRÍTICA DE SEGURANÇA PEDIÁTRICA (PACIENTE COM ${patientAge} ANOS):
 Este paciente é uma CRIANÇA. Você DEVE:
 1. RESTRINGIR RIGOROSAMENTE deduções de medicamentos de venda livre (OTC) para adultos. É TERMINANTEMENTE PROIBIDO sugerir Dorflex, Tandrilax, relaxantes musculares fortes, Nimesulida (proibido < 12 anos), ou qualquer medicamento contraindicado para pediatria baseado apenas em formas visuais semelhantes.
-2. PRIORIZAR formas farmacêuticas pediátricas: Xarope, Gotas, Suspensão Oral. Se for comprimido, restringir à base ANVISA pediátrica segura (Paracetamol, Dipirona, Ibuprofeno infantil, Amoxicilina, Prednisolona, Cefalexina).
-3. Se houver QUALQUER dúvida visual sobre o nome do medicamento, retorne nome_medicamento como null e confianca como "baixa". NÃO alucine medicamentos perigosos para crianças.
+2. PRIORIZAR formas farmacêuticas pediátricas: Xarope, Gotas, Suspensão Oral. Se for comprimido, restringir à base ANVISA pediátrica segura (Paracetamol, Dipirona, Ibuprofeno infantil, Amoxicilina, Prednisolona, Cefalexina). Medicamentos comuns em pediatria incluem também: Salsep (gotas nasais de solução salina), Desloratadina, Budesonida, Loratadina, Dexametasona.
+3. IMPORTANTE: NÃO retorne nome_medicamento como null se houver qualquer rabisco que possa ser deduzido por contexto farmacêutico. O Locus Vita possui um fluxo de revisão humana obrigatório. Portanto, PRIORIZE a identificação do nome, mesmo que a confiança visual seja baixa. Forneça o nome que parece ser e defina confianca como "baixa". Só retorne null se for absolutamente impossível deduzir qualquer caractere. NÃO alucine medicamentos PERIGOSOS para crianças (relaxantes musculares, AINEs proibidos), mas medicamentos seguros para pediatria podem ser sugeridos com confiança baixa.
 4. Dosagens pediátricas costumam ser em ml, gotas ou mg/kg. Desconfie de dosagens adultas (ex: 500mg de dipirona comprimido para criança de 7 anos).`
       : "";
 
