@@ -624,7 +624,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="space-y-1.5">
                   <Label>Médico Prescritor</Label>
                   <Input
-                    placeholder="Ex: Dr. Varella"
+                    placeholder="Ex: Dr. Varella - CRM 12345"
                     value={medicoPrescritor}
                     onChange={(e) => setMedicoPrescritor(e.target.value)}
                     className="text-[16px]"
