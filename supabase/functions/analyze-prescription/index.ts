@@ -63,7 +63,7 @@ Para o campo "frequencia", use o formato padrão descritivo:
 
 Para "duracao_dias", extraia o número de dias do tratamento (ex: "por 7 dias" → 7). Se for uso contínuo, retorne null.
 
-Para "medico_prescritor", extraia APENAS o primeiro nome do médico (sem sobrenome completo, sem CRM). Ex: "Dr. Carlos". Este campo é global (não por medicamento).
+Para "medico_prescritor", localize o carimbo ou assinatura do médico na receita. Extraia o NOME COMPLETO do médico e o número do CRM. Concatene no formato: "Nome do Médico - CRM [número]" (ex: "Dr. Carlos Varella - CRM 12345"). Se não encontrar o CRM, retorne apenas o nome completo encontrado. Este campo é global (não por medicamento).
 
 Para cada medicamento, adicione um campo "confianca" (string): "alta" se a leitura foi clara, "media" se houve dedução por contexto, "baixa" se a leitura foi muito difícil.
 
