@@ -23,6 +23,9 @@ const Medicamentos = () => {
   const navigate = useNavigate();
   const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
+  const [aiUploadOpen, setAiUploadOpen] = useState(false);
+  const [aiData, setAiData] = useState<{ data: any; receitaUrl: string | null } | null>(null);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
