@@ -39,6 +39,7 @@ const Ajustes = () => {
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const [supportUrl, setSupportUrl] = useState<string>("");
   const [supportEmail, setSupportEmail] = useState<string>("suporte@locustech.com.br");
 
