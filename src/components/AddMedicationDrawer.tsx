@@ -166,6 +166,36 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   }, [editingMedication, open]);
 
+  // Process AI data when received from AiMedicationUpload
+  useEffect(() => {
+    if (!aiData || !open) return;
+    const data = aiData.data;
+    if (aiData.receitaUrl) setExistingReceitaUrl(aiData.receitaUrl);
+
+    if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+    setAiReviewMode(true);
+
+    if (data?.medicamentos?.length > 0) {
+      if (data.medicamentos.length > 1) {
+        setExtractedMeds(data.medicamentos);
+        setCurrentMedIndex(0);
+        populateFromExtracted(data.medicamentos[0]);
+        toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise cada um antes de salvar.`);
+      } else {
+        setExtractedMeds([data.medicamentos[0]]);
+        setCurrentMedIndex(0);
+        populateFromExtracted(data.medicamentos[0]);
+        toast.success("Dados extraídos! Revise antes de salvar.");
+      }
+    } else {
+      if (data?.nome_medicamento) setName(data.nome_medicamento);
+      if (data?.dosagem) setDosage(data.dosagem);
+      if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
+      if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
+      toast.success("Dados extraídos! Revise antes de salvar.");
+    }
+  }, [aiData, open]);
+
   const resetForm = () => {
     setName("");
     setDosage("");
