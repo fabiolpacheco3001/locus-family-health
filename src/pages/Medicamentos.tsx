@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMedications, Medication } from "@/hooks/useMedications";
 import AddMedicationDrawer from "@/components/AddMedicationDrawer";
+import MedicationActionDrawer from "@/components/MedicationActionDrawer";
+import AiMedicationUpload from "@/components/AiMedicationUpload";
 import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
@@ -22,6 +24,9 @@ const Medicamentos = () => {
   const navigate = useNavigate();
   const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
+  const [aiUploadOpen, setAiUploadOpen] = useState(false);
+  const [aiData, setAiData] = useState<{ data: any; receitaUrl: string | null } | null>(null);
   const [editingMedication, setEditingMedication] = useState<Medication | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
@@ -55,11 +60,29 @@ const Medicamentos = () => {
 
   const handleDrawerChange = (open: boolean) => {
     setDrawerOpen(open);
-    if (!open) setEditingMedication(null);
+    if (!open) {
+      setEditingMedication(null);
+      setAiData(null);
+    }
   };
 
   const handleAdd = () => {
     setEditingMedication(null);
+    setAiData(null);
+    setActionDrawerOpen(true);
+  };
+
+  const handleSelectManual = () => {
+    setAiData(null);
+    setDrawerOpen(true);
+  };
+
+  const handleSelectAI = () => {
+    setAiUploadOpen(true);
+  };
+
+  const handleAiAnalysisComplete = (data: any, receitaUrl: string | null) => {
+    setAiData({ data, receitaUrl });
     setDrawerOpen(true);
   };
 
@@ -129,12 +152,25 @@ const Medicamentos = () => {
 
   return (
     <>
-      {!drawerOpen && <FixedFAB onClick={handleAdd} />}
+      {!drawerOpen && !actionDrawerOpen && !aiUploadOpen && <FixedFAB onClick={handleAdd} />}
+      <MedicationActionDrawer
+        open={actionDrawerOpen}
+        onOpenChange={setActionDrawerOpen}
+        onSelectAI={handleSelectAI}
+        onSelectManual={handleSelectManual}
+      />
+      <AiMedicationUpload
+        open={aiUploadOpen}
+        onOpenChange={setAiUploadOpen}
+        familyMemberId={id!}
+        onAnalysisComplete={handleAiAnalysisComplete}
+      />
       <AddMedicationDrawer
         open={drawerOpen}
         onOpenChange={handleDrawerChange}
         familyMemberId={id!}
         editingMedication={editingMedication}
+        aiData={aiData}
       />
 
       <div className="px-4 pt-6 pb-28 animate-fade-in">

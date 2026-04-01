@@ -1,10 +1,8 @@
-import { useState, useEffect, useMemo, useRef } from "react";
-import { Loader2, Trash2, Paperclip, X, Eye, Sparkles, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Loader2, Trash2, Paperclip, Eye, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
-import { logAiUsage } from "@/hooks/useLogAiUsage";
 import PaywallModal from "@/components/PaywallModal";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +36,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   familyMemberId: string;
   editingMedication?: Medication | null;
+  aiData?: { data: any; receitaUrl: string | null } | null;
 }
 
 const FREQUENCY_OPTIONS = [
@@ -78,7 +77,7 @@ type ExtractedMed = {
   _estoqueMinimo?: string;
 };
 
-const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
+const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication, aiData }: Props) => {
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
   const { canUsePremium } = useSubscription();
@@ -103,9 +102,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
-  const receitaInputRef = useRef<HTMLInputElement>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [lgpdConsent, setLgpdConsent] = useState(false);
   const [patientAge, setPatientAge] = useState<number | null>(null);
   const [patientName, setPatientName] = useState<string | null>(null);
   const isEditing = !!editingMedication;
@@ -165,6 +161,36 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   }, [editingMedication, open]);
 
+  // Process AI data when received from AiMedicationUpload
+  useEffect(() => {
+    if (!aiData || !open) return;
+    const data = aiData.data;
+    if (aiData.receitaUrl) setExistingReceitaUrl(aiData.receitaUrl);
+
+    if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
+    setAiReviewMode(true);
+
+    if (data?.medicamentos?.length > 0) {
+      if (data.medicamentos.length > 1) {
+        setExtractedMeds(data.medicamentos);
+        setCurrentMedIndex(0);
+        populateFromExtracted(data.medicamentos[0]);
+        toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise cada um antes de salvar.`);
+      } else {
+        setExtractedMeds([data.medicamentos[0]]);
+        setCurrentMedIndex(0);
+        populateFromExtracted(data.medicamentos[0]);
+        toast.success("Dados extraídos! Revise antes de salvar.");
+      }
+    } else {
+      if (data?.nome_medicamento) setName(data.nome_medicamento);
+      if (data?.dosagem) setDosage(data.dosagem);
+      if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
+      if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
+      toast.success("Dados extraídos! Revise antes de salvar.");
+    }
+  }, [aiData, open]);
+
   const resetForm = () => {
     setName("");
     setDosage("");
@@ -180,7 +206,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setReason("");
     setReceitaFile(null);
     setExistingReceitaUrl(null);
-    setLgpdConsent(false);
+    
     setExtractedMeds([]);
     setCurrentMedIndex(0);
     setAiReviewMode(false);
@@ -255,81 +281,6 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     }
   };
 
-  const handleAnalyzeWithAI = async () => {
-    if (!isAiActive) {
-      toast.error("A Inteligência Artificial está temporariamente em manutenção. Por favor, insira os dados manualmente.");
-      return;
-    }
-    if (!canUsePremium) {
-      setShowPaywall(true);
-      return;
-    }
-
-    // Reset previous extraction state before starting new analysis
-    setExtractedMeds([]);
-    setCurrentMedIndex(0);
-    setAiReviewMode(false);
-    setName("");
-    setDosage("");
-    setFrequencyHours("");
-    setDurationDays("");
-    setUsoContinuo(false);
-    setMedicoPrescritor("");
-
-    setIsAnalyzing(true);
-    try {
-      let urlToAnalyze = existingReceitaUrl;
-      if (receitaFile) {
-        const tempId = editingMedication?.id ?? crypto.randomUUID();
-        urlToAnalyze = await uploadReceita(receitaFile, tempId);
-        setExistingReceitaUrl(urlToAnalyze);
-        setReceitaFile(null);
-      }
-
-      if (!urlToAnalyze) {
-        toast.error("Nenhum arquivo disponível para análise.");
-        return;
-      }
-
-      const { data, error } = await supabase.functions.invoke("analyze-prescription", {
-        body: { fileUrl: urlToAnalyze, ...(patientAge !== null ? { patientAge } : {}) },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      if (data?.medicamentos?.length > 0) {
-        if (data.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
-        setAiReviewMode(true);
-
-        if (data.medicamentos.length > 1) {
-          setExtractedMeds(data.medicamentos);
-          setCurrentMedIndex(0);
-          populateFromExtracted(data.medicamentos[0]);
-          toast.success(`${data.medicamentos.length} medicamentos encontrados! Revise cada um antes de salvar.`);
-        } else {
-          setExtractedMeds([data.medicamentos[0]]);
-          setCurrentMedIndex(0);
-          populateFromExtracted(data.medicamentos[0]);
-          toast.success("Dados extraídos! Revise antes de salvar.");
-        }
-      } else {
-        if (data?.nome_medicamento) setName(data.nome_medicamento);
-        if (data?.dosagem) setDosage(data.dosagem);
-        if (data?.frequencia_horas) setFrequencyHours(String(data.frequencia_horas));
-        if (data?.duracao_dias) setDurationDays(String(data.duracao_dias));
-        if (data?.medico_prescritor) setMedicoPrescritor(data.medico_prescritor);
-        setAiReviewMode(true);
-        toast.success("Dados extraídos! Revise antes de salvar.");
-      }
-      logAiUsage("receita", 0);
-    } catch (err: any) {
-      console.error("Prescription OCR error:", err);
-      toast.error(err?.message || "Não foi possível ler a receita. Preencha manualmente.");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
 
   const [showDateAlert, setShowDateAlert] = useState(false);
   const [pendingAction, setPendingAction] = useState<"next" | "save" | null>(null);
@@ -655,112 +606,19 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
 
               <div className="p-4 border border-border rounded-xl bg-muted/30 space-y-4">
-                {/* Receita Médica - Upload + IA */}
-                <div className="space-y-3">
-                  <Label>Receita Médica (PDF ou Imagem)</Label>
-                  <input
-                    ref={receitaInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    className="hidden"
-                    onChange={(e) => {
-                      const selected = e.target.files?.[0] ?? null;
-                      if (selected && selected.size > 20 * 1024 * 1024) {
-                        toast.error("Arquivo muito grande (máx 20MB).");
-                        return;
-                      }
-                      setReceitaFile(selected);
-                    }}
-                  />
-                  {receitaFile ? (
-                    <div className="flex items-center gap-2 p-3 bg-background rounded-md border border-border">
-                      <Paperclip size={16} className="text-muted-foreground shrink-0" />
-                      <span className="text-sm text-foreground truncate flex-1">{receitaFile.name}</span>
-                      <button onClick={() => { setReceitaFile(null); if (receitaInputRef.current) receitaInputRef.current.value = ""; }}>
-                        <X size={16} className="text-muted-foreground" />
-                      </button>
-                    </div>
-                  ) : existingReceitaUrl ? (
+                {/* Receita anexada (somente visualização, quando veio da IA ou edição) */}
+                {existingReceitaUrl && (
+                  <div className="space-y-1.5">
+                    <Label>Receita Médica</Label>
                     <div className="flex items-center gap-2 p-3 bg-background rounded-md border border-border">
                       <Paperclip size={16} className="text-muted-foreground shrink-0" />
                       <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
                       <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
                         <Eye size={16} className="text-primary" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8" onClick={() => { setExistingReceitaUrl(null); setReceitaFile(null); }}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
                     </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      className="w-full justify-start gap-2 text-muted-foreground"
-                      onClick={() => receitaInputRef.current?.click()}
-                    >
-                      <Paperclip size={16} />
-                      Selecionar arquivo
-                    </Button>
-                  )}
-
-                  {!isEditing && !isWizardMode && (
-                    <div className="space-y-3">
-                      {/* LGPD Consent Checkbox */}
-                      {(receitaFile || existingReceitaUrl) && (
-                        <label className="flex items-start gap-2.5 cursor-pointer">
-                          <Checkbox
-                            checked={lgpdConsent}
-                            onCheckedChange={(v) => setLgpdConsent(v === true)}
-                            className="mt-0.5 shrink-0"
-                          />
-                          <span className="text-xs text-muted-foreground leading-relaxed text-justify">
-                            Concordo que a imagem do medicamento será processada temporariamente por uma Inteligência Artificial parceira para extração dos dados, sendo descartada imediatamente após o uso.
-                          </span>
-                        </label>
-                      )}
-
-                      <Button
-                        type="button"
-                        disabled={(!receitaFile && !existingReceitaUrl) || !lgpdConsent || isAnalyzing || isPending}
-                        onClick={handleAnalyzeWithAI}
-                        className="w-full gap-2 bg-gradient-to-r from-accent to-primary text-primary-foreground hover:opacity-90 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isAnalyzing ? (
-                          <>
-                            <Loader2 size={16} className="animate-spin" />
-                            Lendo receita...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles size={16} />
-                            Preencher formulário com IA
-                          </>
-                        )}
-                      </Button>
-                      <p className="text-xs text-muted-foreground text-center">
-                        {(!receitaFile && !existingReceitaUrl)
-                          ? "Anexe uma foto da receita para ativar o preenchimento automático."
-                          : "Nossa IA lê a foto da receita e preenche o formulário para você."}
-                      </p>
-
-                      {/* Manual fallback link */}
-                      {(receitaFile || existingReceitaUrl) && (
-                        <Button
-                          type="button"
-                          variant="link"
-                          className="w-full text-xs text-muted-foreground"
-                          onClick={() => {
-                            setReceitaFile(null);
-                            setExistingReceitaUrl(null);
-                            setLgpdConsent(false);
-                            if (receitaInputRef.current) receitaInputRef.current.value = "";
-                          }}
-                        >
-                          Prefiro preencher os dados manualmente
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Médico Prescritor */}
                 <div className="space-y-1.5">
