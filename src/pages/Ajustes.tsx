@@ -242,11 +242,10 @@ const Ajustes = () => {
                   </p>
                 )}
                 <Button
-                  onClick={handleRegularize}
-                  disabled={loadingSubscription}
+                  onClick={() => setShowPaywall(true)}
                   className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
                 >
-                  {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Assinar Agora"}
+                  Assinar Agora
                 </Button>
               </div>
             </div>
