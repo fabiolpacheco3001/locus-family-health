@@ -17,7 +17,7 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const planFromUrl = searchParams.get("plan") as "monthly" | "annual" | null;
-  const { signIn } = useAuth();
+  const { signIn, user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>("login");
   const [email, setEmail] = useState("");
@@ -26,10 +26,12 @@ const Login = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Clear any stale cached session to prevent auth limbo
+  // Auto-redirect if already logged in
   useEffect(() => {
-    supabase.auth.signOut();
-  }, []);
+    if (!authLoading && user && !planFromUrl) {
+      navigate("/home", { replace: true });
+    }
+  }, [authLoading, user, planFromUrl, navigate]);
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
