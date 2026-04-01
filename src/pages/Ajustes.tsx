@@ -34,7 +34,7 @@ const Ajustes = () => {
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
-  const { subscription, isTrialing, isActive, isPastDue, trialDaysLeft, trialExpired } = useSubscription();
+  const { subscription, isTrialing, isActive, isPastDue, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
@@ -135,7 +135,7 @@ const Ajustes = () => {
           </div>
 
           {/* Subscription Card - Netflix Style */}
-          {subscription && (
+          {subscription ? (
             <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
               {/* Header gradient */}
               <div className={`px-4 py-3 ${
@@ -155,11 +155,9 @@ const Ajustes = () => {
                         ? subscription.plan_type === "annual"
                           ? "Plano Anual Locus Vita"
                           : "Plano Mensal Locus Vita"
-                        : isTrialing && !trialExpired
-                        ? "Período de Avaliação"
                         : isPastDue
                         ? "Pagamento Pendente"
-                        : "Trial Expirado"}
+                        : "Assinatura"}
                     </span>
                   </div>
                   {isActive && (
@@ -198,22 +196,7 @@ const Ajustes = () => {
                   </>
                 )}
 
-                {isTrialing && !trialExpired && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock size={14} />
-                      <span>Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu teste.</span>
-                    </div>
-                    <Button
-                      onClick={() => navigate("/#planos")}
-                      className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
-                    >
-                      Assinar Premium
-                    </Button>
-                  </div>
-                )}
-
-                {(isPastDue || trialExpired) && (
+                {isPastDue && (
                   <Button
                     onClick={handleRegularize}
                     disabled={loadingSubscription}
@@ -227,6 +210,42 @@ const Ajustes = () => {
                     )}
                   </Button>
                 )}
+              </div>
+            </div>
+          ) : (
+            /* Plano Grátis Card */
+            <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
+              <div className={`px-4 py-3 ${
+                implicitTrialExpired
+                  ? "bg-gradient-to-r from-gray-500 to-gray-400"
+                  : "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
+              }`}>
+                <div className="flex items-center gap-2">
+                  <Crown size={16} className="text-white" />
+                  <span className="text-sm font-bold text-white">
+                    {implicitTrialExpired ? "Acesso Gratuito Expirado" : "Você está no Plano Grátis"}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-card p-4 space-y-3">
+                {!implicitTrialExpired && trialDaysLeft > 0 && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock size={14} />
+                    <span>Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu acesso gratuito.</span>
+                  </div>
+                )}
+                {implicitTrialExpired && (
+                  <p className="text-sm text-muted-foreground">
+                    Seus 30 dias de acesso gratuito terminaram. Assine para continuar.
+                  </p>
+                )}
+                <Button
+                  onClick={handleRegularize}
+                  disabled={loadingSubscription}
+                  className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
+                >
+                  {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Assinar Agora"}
+                </Button>
               </div>
             </div>
           )}
