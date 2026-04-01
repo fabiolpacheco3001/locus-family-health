@@ -264,6 +264,18 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setShowPaywall(true);
       return;
     }
+
+    // Reset previous extraction state before starting new analysis
+    setExtractedMeds([]);
+    setCurrentMedIndex(0);
+    setAiReviewMode(false);
+    setName("");
+    setDosage("");
+    setFrequencyHours("");
+    setDurationDays("");
+    setUsoContinuo(false);
+    setMedicoPrescritor("");
+
     setIsAnalyzing(true);
     try {
       let urlToAnalyze = existingReceitaUrl;
