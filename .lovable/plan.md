@@ -2,49 +2,46 @@
 
 ## Diagnosis
 
-The `create-asaas-checkout` Edge Function uses `supabase.auth.getClaims()` which doesn't exist in `@supabase/supabase-js@2.49.1`. The function crashes with a 500 error on every call, meaning **the Asaas API key has never been reached**.
+All 4 subscriptions in the database have `next_billing_date = 2026-04-01` (today's date). The webhook fetches `subData.nextDueDate` from Asaas, but right after a first payment, Asaas returns the current cycle's due date, not the next renewal.
 
 ## Plan
 
-### Step 1: Fix `create-asaas-checkout` — Replace `getClaims` with `getUser`
+### 1. Fix Webhook Date Calculation (`supabase/functions/asaas-webhook/index.ts`)
 
-**File:** `supabase/functions/create-asaas-checkout/index.ts`
+After fetching the Asaas subscription details, add a validation layer:
 
-Replace the broken auth block:
-```typescript
-// BROKEN
-const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-const userId = claimsData.claims.sub;
-const userEmail = claimsData.claims.email;
+- If `subData.nextDueDate` exists AND is in the future (> today), use it as-is
+- If `subData.nextDueDate` is today or in the past, **calculate** the next billing date:
+  - For `YEARLY` cycle: add 1 year to `payment.dueDate`
+  - For `MONTHLY` cycle: add 1 month to `payment.dueDate`
+- Keep existing fallback chain (payment.dueDate if API call fails)
+
+### 2. One-Time Data Fix (SQL Migration)
+
+Run a corrective migration to fix the 4 existing records:
+
+```sql
+-- Fix annual plans: next billing = created_at + 1 year
+UPDATE subscriptions
+SET next_billing_date = created_at + INTERVAL '1 year'
+WHERE plan_type = 'annual' AND next_billing_date <= now();
+
+-- Fix monthly plans: next billing = created_at + 1 month
+UPDATE subscriptions
+SET next_billing_date = created_at + INTERVAL '1 month'
+WHERE plan_type = 'monthly' AND next_billing_date <= now();
 ```
 
-With the working pattern:
-```typescript
-// FIXED
-const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-if (userError || !user) {
-  return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
-}
-const userId = user.id;
-const userEmail = user.email!;
-```
+### 3. Deploy
 
-### Step 2: Deploy and Test
+Redeploy `asaas-webhook` with the corrected logic.
 
-1. Deploy the fixed function.
-2. Invoke with a test call (unauthenticated) — expect 401 (proves it passes the auth check correctly now).
-3. Check logs to confirm no more `getClaims` crash.
+---
 
-### Step 3: Validate Asaas API Key
-
-Create a minimal one-off test: call the Asaas `/customers?limit=1` endpoint via the fixed function's internal logic, or add a temporary health-check path. Confirm the key returns a valid response (200), then remove the test path.
-
-**Alternative (faster):** Temporarily curl the Asaas API directly from a test edge function that just calls `GET /v3/customers?limit=1` with the `ASAAS_API_KEY` header and returns the status. Deploy, invoke, check response, then delete the function.
-
-### Summary of Changes
+**Changes summary:**
 
 | File | Change |
 |---|---|
-| `supabase/functions/create-asaas-checkout/index.ts` | Replace `getClaims()` with `getUser()` |
-| Deploy + test | Validate function works and Asaas API key responds |
+| `supabase/functions/asaas-webhook/index.ts` | Add date validation + calculation fallback |
+| SQL Migration | Fix existing 4 records with correct renewal dates |
 
