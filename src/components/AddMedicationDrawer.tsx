@@ -79,7 +79,7 @@ type ExtractedMed = {
   _estoqueMinimo?: string;
 };
 
-const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication }: Props) => {
+const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedication, aiData }: Props) => {
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
   const { canUsePremium } = useSubscription();
