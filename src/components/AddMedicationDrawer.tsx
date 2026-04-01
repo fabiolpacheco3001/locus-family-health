@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, Trash2, Paperclip, Eye, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
