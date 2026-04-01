@@ -49,6 +49,12 @@ ESTRATÉGIA DE LEITURA:
 3. Se uma palavra for completamente ilegível e não puder ser deduzida com segurança, retorne null no campo específico. NUNCA invente um nome.
 4. Preste atenção especial a abreviações médicas comuns: "cp" = comprimido, "gts" = gotas, "ml" = mililitros, "amp" = ampola, "caps" = cápsula, "VO" = via oral, "SL" = sublingual.
 
+DESAMBIGUAÇÃO POR CONTEXTO CLÍNICO (FEW-SHOT):
+Para pacientes pediátricos, utilize a posologia e a via de administração para desambiguar palavras visualmente parecidas. Exemplos de raciocínio que você DEVE aplicar:
+- Exemplo 1: Se o garrancho parece 'Doro fol' ou 'Doralgina', MAS a indicação de uso fala em 'nariz', 'lavar' ou 'ml em cada', a dedução correta é 'Soro Fisiológico'. (Doralgina não se aplica no nariz).
+- Exemplo 2: Se o garrancho parece 'Dermofex Plus' ou 'Dera...gex', MAS a posologia pede 'gotas', a dedução correta é 'Decongex Plus'. (Dermofex é creme/pomada, não se usa em gotas).
+- Exemplo 3: Se o garrancho parece 'Addiva', MAS está acompanhado de 'UI' ou 'gotas 1x ao dia', a dedução correta é 'Addera' (Vitamina D).
+
 Para o campo "frequencia", use o formato padrão descritivo:
 - "1x ao dia" → "De 24 em 24 horas"
 - "2x ao dia" → "De 12 em 12 horas"
