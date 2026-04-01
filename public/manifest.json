@@ -2,7 +2,7 @@
   "short_name": "Locus Vita",
   "name": "Locus Vita - Saúde Familiar",
   "description": "Seu hub inteligente de saúde familiar.",
-  "start_url": "/",
+  "start_url": "/login",
   "display": "standalone",
   "background_color": "#f2f0eb",
   "theme_color": "#A7D3CB",
