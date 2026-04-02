@@ -140,7 +140,7 @@ const Agenda = () => {
           status: normalizedStatus,
           memberName: e.family_members?.name ?? "Usuário",
           kind: "exam",
-          isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
+          isOverdue: displayDate ? isBefore(parseDateInSP(displayDate) ?? new Date(), today) : false,
           isPet: (e.family_members?.member_type || "human") === "pet",
         };
       });
