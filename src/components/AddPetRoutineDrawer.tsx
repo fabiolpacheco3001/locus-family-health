@@ -57,12 +57,13 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
   const mutation = useMutation({
     mutationFn: async () => {
       const type = routineType === "Outro" ? (customType.trim() || "Outro") : routineType;
+      const [datePart, timePart] = dateTimePerformed.split("T");
       const { error } = await supabase.from("pet_routines").insert({
         family_member_id: familyMemberId,
         user_id: user!.id,
         routine_type: type,
-        date_performed: datePerformed,
-        time_performed: timePerformed || null,
+        date_performed: datePart,
+        time_performed: timePart || null,
         next_due_date: null,
         notes: notes.trim() || null,
         recurrence: recurrence,
