@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope, CalendarPlus, CalendarCheck, CheckCircle, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope, CalendarPlus, CalendarCheck, CalendarClock, CheckCircle, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +17,10 @@ import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { calculateNextDose } from "@/lib/calculateNextDose";
+import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Medicamentos = () => {
   const { id } = useParams();
