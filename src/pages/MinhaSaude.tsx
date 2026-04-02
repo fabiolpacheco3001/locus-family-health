@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { fromSPToUTC } from "@/lib/dateUtils";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Activity, Plus, Trash2 } from "lucide-react";
@@ -100,7 +101,7 @@ const MinhaSaude = () => {
       weight: w,
       height: hM,
       bmi: bmi ? Number(bmi.toFixed(1)) : null,
-      recorded_at: formData.date ? `${formData.date}T12:00:00` : new Date().toISOString(),
+      recorded_at: formData.date ? fromSPToUTC(formData.date).toISOString() : new Date().toISOString(),
     });
 
     if (error) {

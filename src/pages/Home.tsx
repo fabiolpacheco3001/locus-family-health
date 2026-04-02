@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 
 const Home = () => {
   const { user } = useAuth();
@@ -186,7 +187,7 @@ const Home = () => {
 
       (petRes.data ?? []).forEach((p: any) => {
         const dateStr = p.date_performed;
-        if (dateStr && isBefore(new Date(dateStr + 'T12:00:00'), startOfDay(now))) return;
+        if (dateStr && isBefore(parseDateInSP(dateStr) ?? new Date(), startOfDay(now))) return;
         items.push({
           id: p.id,
           title: p.routine_type,
@@ -248,7 +249,7 @@ const Home = () => {
       if (dateOnly && med.start_time) {
         startDateISO = `${dateOnly}T${med.start_time}`;
       } else if (dateOnly) {
-        startDateISO = `${dateOnly}T12:00:00`;
+        startDateISO = dateOnly;
       }
 
       const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
@@ -567,12 +568,12 @@ const Home = () => {
                       const tomorrowDose = new Date(`${format(new Date(now.getTime() + 86400000), "yyyy-MM-dd")}T${med.start_time}`);
                       const targetDose = todayDose > now ? todayDose : tomorrowDose;
                       if (!isNaN(targetDose.getTime())) {
-                        doseLabel = `Próxima dose: ${format(targetDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                          doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
                         scheduledFor = targetDose.toISOString();
                       }
                     }
                   } else if (isValidNextDose) {
-                    doseLabel = `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                    doseLabel = `Próxima dose: ${format(toSPTime(nextDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
                     scheduledFor = nextDose.toISOString();
                   }
 
@@ -613,6 +614,9 @@ const Home = () => {
                             medicationId={med.id}
                             scheduledFor={scheduledFor}
                             doseStatus={doseStatus}
+                            frequencyHours={med.frequency_hours}
+                            endDate={med.end_date}
+                            usoContinuo={med.uso_continuo}
                           />
                         </div>
                       )}
@@ -689,7 +693,7 @@ const Home = () => {
                         <p className="text-xs text-muted-foreground truncate">
                           {item.date
                             ? format(
-                                new Date(item.date.length === 10 ? item.date + "T12:00:00" : item.date),
+                                toSPTime(item.date.length === 10 ? (parseDateInSP(item.date) ?? new Date()) : new Date(item.date)),
                                 "dd MMM · HH:mm",
                                 { locale: ptBR }
                               )

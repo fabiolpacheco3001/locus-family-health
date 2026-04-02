@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -135,7 +136,7 @@ const Clientes = () => {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "—";
     try {
-      return format(new Date(dateStr.substring(0, 10) + "T12:00:00"), "dd/MM/yyyy", { locale: ptBR });
+      return format(toSPTime(parseDateInSP(dateStr.substring(0, 10)) ?? new Date()), "dd/MM/yyyy", { locale: ptBR });
     } catch {
       return "—";
     }

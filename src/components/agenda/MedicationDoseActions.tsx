@@ -10,9 +10,22 @@ interface MedicationDoseActionsProps {
   medicationId: string;
   scheduledFor: string;
   doseStatus: "taken" | "skipped" | null;
+  /** Frequency in hours - used for auto-completion check */
+  frequencyHours?: number | null;
+  /** End date of treatment - used for auto-completion check */
+  endDate?: string | null;
+  /** Whether this is a continuous-use medication */
+  usoContinuo?: boolean;
 }
 
-export function MedicationDoseActions({ medicationId, scheduledFor, doseStatus }: MedicationDoseActionsProps) {
+export function MedicationDoseActions({
+  medicationId,
+  scheduledFor,
+  doseStatus,
+  frequencyHours,
+  endDate,
+  usoContinuo,
+}: MedicationDoseActionsProps) {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
@@ -49,14 +62,41 @@ export function MedicationDoseActions({ medicationId, scheduledFor, doseStatus }
 
       if (error) throw error;
 
+      // Only decrement stock on 'taken'
       if (status === "taken") {
         await supabase.rpc("decrement_stock", { med_id: medicationId });
+      }
+
+      // Auto-completion: check if treatment should end
+      if (!usoContinuo && frequencyHours && frequencyHours > 0 && endDate) {
+        const scheduledDate = new Date(scheduledFor);
+        const nextDoseAfterThis = new Date(scheduledDate.getTime() + frequencyHours * 60 * 60 * 1000);
+        const endStr = endDate.length === 10 ? endDate + "T23:59:59" : endDate;
+        const endDateTime = new Date(endStr);
+
+        if (!isNaN(nextDoseAfterThis.getTime()) && !isNaN(endDateTime.getTime()) && nextDoseAfterThis > endDateTime) {
+          // Next dose would be after end_date → auto-complete treatment
+          await supabase
+            .from("medications")
+            .update({ status: "Concluído" })
+            .eq("id", medicationId);
+
+          toast.success("🎉 Tratamento concluído! Medicamento marcado como Concluído.");
+          queryClient.invalidateQueries({ queryKey: ["agenda"] });
+          queryClient.invalidateQueries({ queryKey: ["medication_doses"] });
+          queryClient.invalidateQueries({ queryKey: ["medications"] });
+          queryClient.invalidateQueries({ queryKey: ["medication_doses_list"] });
+          queryClient.invalidateQueries({ queryKey: ["medication_doses_home"] });
+          return;
+        }
       }
 
       toast.success(status === "taken" ? "Dose registrada com sucesso!" : "Dose pulada.");
       queryClient.invalidateQueries({ queryKey: ["agenda"] });
       queryClient.invalidateQueries({ queryKey: ["medication_doses"] });
       queryClient.invalidateQueries({ queryKey: ["medications"] });
+      queryClient.invalidateQueries({ queryKey: ["medication_doses_list"] });
+      queryClient.invalidateQueries({ queryKey: ["medication_doses_home"] });
     } catch (err: any) {
       toast.error("Erro ao registrar dose.");
     } finally {
@@ -74,7 +114,7 @@ export function MedicationDoseActions({ medicationId, scheduledFor, doseStatus }
         className="h-7 px-2.5 text-xs bg-[#AEE2D4] text-slate-800 border-none hover:bg-[#8ed4c0] active:bg-[#8ed4c0]"
       >
         <CheckCircle className="h-3.5 w-3.5 mr-1" />
-        Tomar
+        {loading ? "..." : "Tomar"}
       </Button>
       <Button
         size="sm"
@@ -84,7 +124,7 @@ export function MedicationDoseActions({ medicationId, scheduledFor, doseStatus }
         className="h-7 px-2.5 text-xs text-muted-foreground"
       >
         <SkipForward className="h-3.5 w-3.5 mr-1" />
-        Pular
+        {loading ? "..." : "Pular"}
       </Button>
     </div>
   );

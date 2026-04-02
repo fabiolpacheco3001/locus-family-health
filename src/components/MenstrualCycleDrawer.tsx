@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState } from "react";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { Droplets, Plus, Loader2, CalendarClock } from "lucide-react";
@@ -68,7 +69,7 @@ export function getCycleDay(records: CycleRecord[]): string | null {
   if (records.length === 0) return null;
   const latest = records[0];
   if (latest.end_date) return null;
-  const start = parseISO(latest.start_date + "T12:00:00");
+  const start = toSPTime(parseDateInSP(latest.start_date) ?? new Date());
   const today = new Date();
   const day = differenceInDays(today, start) + 1;
   if (day < 1 || day > 60) return null;
@@ -78,7 +79,7 @@ export function getCycleDay(records: CycleRecord[]): string | null {
 export function getNextPeriodInfo(records: CycleRecord[]): { date: Date; daysLeft: number; formatted: string } | null {
   if (records.length === 0) return null;
   const latest = records[0];
-  const start = parseISO(latest.start_date + "T12:00:00");
+  const start = toSPTime(parseDateInSP(latest.start_date) ?? new Date());
   const nextDate = addDays(start, latest.cycle_length);
   const today = new Date();
   today.setHours(12, 0, 0, 0);
@@ -138,10 +139,10 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
 
   const formatDateRange = (start: string, end: string | null) => {
     try {
-      const s = parseISO(start + "T12:00:00");
+      const s = toSPTime(parseDateInSP(start) ?? new Date());
       const startStr = format(s, "dd/MM", { locale: ptBR });
       if (!end) return `${startStr} - Em andamento`;
-      const e = parseISO(end + "T12:00:00");
+      const e = toSPTime(parseDateInSP(end) ?? new Date());
       const endStr = format(e, "dd/MM", { locale: ptBR });
       const days = differenceInDays(e, s) + 1;
       return `${startStr} a ${endStr} — ${days} dia${days > 1 ? "s" : ""}`;

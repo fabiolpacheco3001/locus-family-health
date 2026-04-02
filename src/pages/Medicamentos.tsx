@@ -13,6 +13,7 @@ import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
@@ -280,7 +281,7 @@ const Medicamentos = () => {
                   if (dateOnly && m.start_time) {
                     startDateISO = `${dateOnly}T${m.start_time}`;
                   } else if (dateOnly) {
-                    startDateISO = `${dateOnly}T12:00:00`;
+                    startDateISO = dateOnly;
                   }
                   nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date);
                   if (nextDoseDate) {
@@ -353,7 +354,7 @@ const Medicamentos = () => {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <CalendarPlus size={14} className="shrink-0" />
                                 <span>
-                                  Início: {format(new Date(m.start_date.slice(0, 10) + "T12:00:00"), "dd/MM/yyyy")}
+                                Início: {format(toSPTime(parseDateInSP(m.start_date.slice(0, 10)) ?? new Date()), "dd/MM/yyyy")}
                                   {m.start_time ? ` às ${m.start_time.slice(0, 5)}` : ""}
                                 </span>
                               </div>
@@ -362,7 +363,7 @@ const Medicamentos = () => {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <CalendarCheck size={14} className="shrink-0" />
                                 <span>
-                                  Término: {format(new Date(m.end_date.slice(0, 10) + "T12:00:00"), "dd/MM/yyyy")}
+                                Término: {format(toSPTime(parseDateInSP(m.end_date.slice(0, 10)) ?? new Date()), "dd/MM/yyyy")}
                                   {m.start_time ? ` às ${m.start_time.slice(0, 5)}` : ""}
                                 </span>
                               </div>
@@ -370,7 +371,7 @@ const Medicamentos = () => {
                             {isAtivo && nextDoseDate && (
                               <div className="flex items-center gap-2 text-sm text-primary">
                                 <CalendarClock size={14} className="shrink-0" />
-                                <span>Próxima dose: {format(nextDoseDate, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                                <span>Próxima dose: {format(toSPTime(nextDoseDate), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
                               </div>
                             )}
                           </div>
@@ -378,11 +379,14 @@ const Medicamentos = () => {
                         <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
                       </button>
                       {isAtivo && scheduledFor && (
-                        <div className="ml-14 mt-1">
+                         <div className="ml-14 mt-1">
                           <MedicationDoseActions
                             medicationId={m.id}
                             scheduledFor={scheduledFor}
                             doseStatus={doseStatus}
+                            frequencyHours={m.frequency_hours}
+                            endDate={m.end_date}
+                            usoContinuo={m.uso_continuo}
                           />
                         </div>
                       )}

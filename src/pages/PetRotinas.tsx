@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, ShowerHead, Scissors, Bug, Pill, HelpCircle, Plus, Check } from "lucide-react";
@@ -38,7 +39,7 @@ const RECURRENCE_LABELS: Record<string, string> = {
 };
 
 function calcNextDate(dateStr: string, recurrence: string): string {
-  const base = parseISO(dateStr + "T12:00:00");
+  const base = toSPTime(parseDateInSP(dateStr) ?? new Date());
   let next: Date;
   switch (recurrence) {
     case "weekly": next = addWeeks(base, 1); break;
@@ -261,7 +262,7 @@ const PetRotinas = () => {
                 const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
                 const fullDate = r.time_performed
                   ? parseISO(`${r.date_performed}T${r.time_performed}`)
-                  : parseISO(r.date_performed + "T12:00:00");
+                  : toSPTime(parseDateInSP(r.date_performed) ?? new Date());
                 const dateStr = r.time_performed
                   ? format(fullDate, "dd MMM yyyy 'às' HH:mm", { locale: ptBR })
                   : format(fullDate, "dd MMM yyyy", { locale: ptBR });

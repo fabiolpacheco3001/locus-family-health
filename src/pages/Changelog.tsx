@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,7 +80,7 @@ const Changelog = () => {
                         </Badge>
                       </div>
                       <span className="text-[11px] text-muted-foreground">
-                        {format(new Date(cl.release_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })}
+                        {format(toSPTime(parseDateInSP(cl.release_date) ?? new Date()), "dd MMM yyyy", { locale: ptBR })}
                       </span>
                     </div>
                     <h3 className="text-sm font-semibold text-foreground mb-1">{cl.title}</h3>

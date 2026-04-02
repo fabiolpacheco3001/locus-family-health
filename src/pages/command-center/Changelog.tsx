@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,7 +131,7 @@ const CCChangelog = () => {
                     {typeBadge(cl.type)}
                   </div>
                   <span className="text-xs text-muted-foreground">
-                    {format(new Date(cl.release_date + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })}
+                    {format(toSPTime(parseDateInSP(cl.release_date) ?? new Date()), "dd MMM yyyy", { locale: ptBR })}
                   </span>
                 </div>
               </CardHeader>

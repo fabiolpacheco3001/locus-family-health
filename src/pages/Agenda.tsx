@@ -16,6 +16,7 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 
 
 type AgendaItem = {
@@ -139,7 +140,7 @@ const Agenda = () => {
           status: normalizedStatus,
           memberName: e.family_members?.name ?? "Usuário",
           kind: "exam",
-          isOverdue: displayDate ? isBefore(new Date(displayDate + 'T12:00:00'), today) : false,
+          isOverdue: displayDate ? isBefore(parseDateInSP(displayDate) ?? new Date(), today) : false,
           isPet: (e.family_members?.member_type || "human") === "pet",
         };
       });
@@ -158,7 +159,7 @@ const Agenda = () => {
           status: p.status === "Realizado" ? "Realizado" : "Agendado",
           memberName: p.family_members?.name ?? "Pet",
           kind: "pet_routine" as const,
-          isOverdue: dateStr ? isBefore(new Date(dateStr.length > 10 ? dateStr : dateStr + 'T12:00:00'), today) : false,
+          isOverdue: dateStr ? isBefore(parseDateInSP(dateStr) ?? new Date(), today) : false,
           isPet: true,
         };
       });
@@ -171,7 +172,7 @@ const Agenda = () => {
         if (dateOnly && med.start_time) {
           startDateISO = `${dateOnly}T${med.start_time}`;
         } else if (dateOnly) {
-          startDateISO = `${dateOnly}T12:00:00`;
+          startDateISO = dateOnly;
         }
 
         const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
@@ -330,7 +331,7 @@ const Agenda = () => {
                       <p className="text-sm font-bold text-black mb-1">
                         {(() => {
                           const hasTime = item.date!.length > 10;
-                          const parsed = hasTime ? parseISO(item.date!) : new Date(item.date + 'T12:00:00');
+                          const parsed = hasTime ? toSPTime(parseISO(item.date!)) : toSPTime(parseDateInSP(item.date!) ?? new Date());
                           const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
                           const dayName = format(parsed, "EEEEEE", { locale: ptBR });
                           const dayAbbr = dayName.substring(0, 3);

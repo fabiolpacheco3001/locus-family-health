@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format, parseISO } from "date-fns";
@@ -25,7 +26,7 @@ const MUTED_COLOR: [number, number, number] = [120, 120, 120];
 
 const calculateAge = (birthDate: string | null): number | null => {
   if (!birthDate) return null;
-  const birth = new Date(birthDate + "T12:00:00");
+  const birth = toSPTime(parseDateInSP(birthDate) ?? new Date());
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();

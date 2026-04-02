@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { parseDateInSP } from "@/lib/dateUtils";
 import { useNavigate } from "react-router-dom";
 import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -185,7 +186,7 @@ const Ajustes = () => {
                       <p className="text-sm text-muted-foreground">
                         Próximo pagamento:{" "}
                         <strong className="text-foreground">
-                          {format(new Date(subscription.next_billing_date.substring(0, 10) + "T12:00:00"), "dd MMM yyyy", { locale: ptBR })}
+                          {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
                         </strong>
                       </p>
                     )}
