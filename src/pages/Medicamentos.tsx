@@ -363,7 +363,7 @@ const Medicamentos = () => {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <CalendarCheck size={14} className="shrink-0" />
                                 <span>
-                                  Término: {format(new Date(m.end_date.slice(0, 10) + "T12:00:00"), "dd/MM/yyyy")}
+                                Término: {format(toSPTime(parseDateInSP(m.end_date.slice(0, 10)) ?? new Date()), "dd/MM/yyyy")}
                                   {m.start_time ? ` às ${m.start_time.slice(0, 5)}` : ""}
                                 </span>
                               </div>
