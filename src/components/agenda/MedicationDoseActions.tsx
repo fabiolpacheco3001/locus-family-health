@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle, SkipForward } from "lucide-react";
+import { CheckCircle2, XCircle, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,16 +33,16 @@ export function MedicationDoseActions({
 
   if (displayStatus === "taken") {
     return (
-      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#AEE2D4] text-slate-800 border-none">
-        ✔️ Tomado
+      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#AEE2D4] text-slate-800 border-none inline-flex items-center gap-1">
+        <CheckCircle2 size={12} /> Tomado
       </Badge>
     );
   }
 
   if (displayStatus === "skipped") {
     return (
-      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-none">
-        ❌ Pulado
+      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-none inline-flex items-center gap-1">
+        <XCircle size={12} /> Pulado
       </Badge>
     );
   }
@@ -119,7 +119,7 @@ export function MedicationDoseActions({
         onClick={(e) => handleAction("taken", e)}
         className="h-7 px-2.5 text-xs bg-[#AEE2D4] text-slate-800 border-none hover:bg-[#8ed4c0] active:bg-[#8ed4c0]"
       >
-        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
         {loading ? "..." : "Tomar"}
       </Button>
       <Button

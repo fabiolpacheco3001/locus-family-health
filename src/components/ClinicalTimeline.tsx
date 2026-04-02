@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Stethoscope, Pill, FileText, ExternalLink, X } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toZonedTime } from "date-fns-tz";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ const statusBadge: Record<string, string> = {
 
 const formatDate = (dateStr: string) => {
   try {
-    const d = parseISO(dateStr);
+    const d = toZonedTime(parseISO(dateStr), "America/Sao_Paulo");
     const day = format(d, "dd MMM yyyy", { locale: ptBR });
     const weekday = format(d, "EEEE", { locale: ptBR }).substring(0, 3);
     const time = format(d, "HH:mm");
