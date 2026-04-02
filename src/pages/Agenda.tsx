@@ -16,6 +16,7 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 
 
 type AgendaItem = {
