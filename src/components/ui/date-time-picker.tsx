@@ -1,7 +1,6 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -75,7 +74,6 @@ export function DateTimePicker({
             className
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
           {value ? (
             <span className="whitespace-nowrap text-sm">
               {format(value, "dd/MM/yyyy HH:mm", { locale: ptBR })}
@@ -98,6 +96,9 @@ export function DateTimePicker({
             selected={value}
             onSelect={handleDateSelect}
             locale={ptBR}
+            captionLayout="dropdown-buttons"
+            fromYear={1920}
+            toYear={new Date().getFullYear() + 10}
             className="p-3 pointer-events-auto"
           />
           <div className="border-t px-3 py-2 flex items-center gap-2">
