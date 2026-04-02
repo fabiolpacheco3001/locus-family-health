@@ -331,8 +331,8 @@ const Agenda = () => {
                       <p className="text-sm font-bold text-black mb-1">
                         {(() => {
                           const hasTime = item.date!.length > 10;
-                          const parsed = hasTime ? parseISO(item.date!) : (parseDateInSP(item.date!) ?? new Date());
-                          const zonedParsed = toSPTime(parsed);
+                          const parsed = hasTime ? toSPTime(parseISO(item.date!)) : toSPTime(parseDateInSP(item.date!) ?? new Date());
+                          const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
                           const dayName = format(parsed, "EEEEEE", { locale: ptBR });
                           const dayAbbr = dayName.substring(0, 3);
                           const dayCapitalized = dayAbbr.charAt(0).toUpperCase() + dayAbbr.slice(1);
