@@ -568,12 +568,12 @@ const Home = () => {
                       const tomorrowDose = new Date(`${format(new Date(now.getTime() + 86400000), "yyyy-MM-dd")}T${med.start_time}`);
                       const targetDose = todayDose > now ? todayDose : tomorrowDose;
                       if (!isNaN(targetDose.getTime())) {
-                        doseLabel = `Próxima dose: ${format(targetDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                          doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
                         scheduledFor = targetDose.toISOString();
                       }
                     }
                   } else if (isValidNextDose) {
-                    doseLabel = `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                    doseLabel = `Próxima dose: ${format(toSPTime(nextDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
                     scheduledFor = nextDose.toISOString();
                   }
 
