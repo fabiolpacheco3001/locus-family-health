@@ -1,3 +1,4 @@
+import { fromSPToUTC } from "@/lib/dateUtils";
 import { useState } from "react";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { HeartPulse, Plus, Loader2, Stethoscope } from "lucide-react";
@@ -138,7 +139,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
       familiar_id: familyMemberId,
       systolic: sys,
       diastolic: dia,
-      measurement_date: form.date ? `${form.date}T12:00:00` : new Date().toISOString(),
+      measurement_date: form.date ? fromSPToUTC(form.date).toISOString() : new Date().toISOString(),
       source: "manual",
       notes: form.notes.trim() || null,
       ...(groupId ? { group_id: groupId } : {}),

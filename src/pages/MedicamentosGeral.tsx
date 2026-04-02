@@ -1,3 +1,4 @@
+import { parseDateInSP } from "@/lib/dateUtils";
 import { ArrowLeft, Pill, Clock, ChevronRight, CalendarClock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +62,7 @@ const MedicamentosGeral = () => {
             if (dateOnly && m.start_time) {
               startDateISO = `${dateOnly}T${m.start_time}`;
             } else if (dateOnly) {
-              startDateISO = `${dateOnly}T12:00:00`;
+              startDateISO = dateOnly;
             }
             const nextDose = calculateNextDose(startDateISO, m.frequency_hours, m.end_date);
 

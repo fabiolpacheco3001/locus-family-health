@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -115,7 +116,7 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
             return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
           }).map((r) => {
             const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
-            const dateStr = format(parseISO(r.date_performed + "T12:00:00"), "dd MMM yyyy", { locale: ptBR });
+            const dateStr = format(toSPTime(parseDateInSP(r.date_performed) ?? new Date()), "dd MMM yyyy", { locale: ptBR });
             const recurrenceLabels: Record<string, string> = {
               weekly: "Semanal", biweekly: "Quinzenal", monthly: "Mensal",
               quarterly: "Trimestral", semiannually: "Semestral", annually: "Anual",

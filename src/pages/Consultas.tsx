@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle, ArrowUpDown } from "lucide-react";
@@ -258,7 +259,7 @@ const Consultas = () => {
                             <span>
                               {(() => {
                                 const hasTime = c.consultation_date!.length > 10;
-                                const parsed = hasTime ? parseISO(c.consultation_date!) : new Date(c.consultation_date + 'T12:00:00');
+                                const parsed = hasTime ? parseISO(c.consultation_date!) : toSPTime(parseDateInSP(c.consultation_date) ?? new Date());
                                 const datePart = format(parsed, "dd MMM yyyy", { locale: ptBR });
                                 const dayName = format(parsed, "EEEEEE", { locale: ptBR });
                                 const dayAbbr = dayName.substring(0, 3);

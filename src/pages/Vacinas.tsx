@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect, useRef } from "react";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useParams, useNavigate } from "react-router-dom";
@@ -80,7 +81,7 @@ const INPUT_CLASSES =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none";
 
 const formatDate = (dateStr: string) => {
-  const d = new Date(dateStr + "T12:00:00");
+  const d = toSPTime(parseDateInSP(dateStr) ?? new Date());
   const formatted = format(d, "dd MMM yyyy - EEE", { locale: ptBR });
   const parts = formatted.split(" - ");
   return `${parts[0]} - ${parts[1]?.substring(0, 3)}`;
