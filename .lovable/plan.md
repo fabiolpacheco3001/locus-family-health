@@ -1,18 +1,19 @@
 
 
-## Plano: Usar PNG com bordas arredondadas na tela de Login
+## Plano: Usar CARREGAMENTO_INICIAL.svg no splash pós-login (um pouco maior)
 
-### Alterações
+### O que muda
 
-1. **Copiar asset**: `user-uploads://Logo_Locus_Vita-2.png` → `src/assets/locus-vita-logo-login.png`
+1. **Copiar asset**: `user-uploads://CARREGAMENTO_INICIAL.svg` → `public/logo-carregamento.svg`
 
-2. **Alterar `src/pages/Login.tsx`**:
-   - Trocar o import da logo: `import locusvitaLogo from "@/assets/locus-vita-logo-login.png"`
-   - Na linha 173, adicionar classes de arredondamento e sombra à tag `<img>`:
-     ```
-     className="h-32 w-32 object-cover rounded-3xl shadow-md mb-4"
-     ```
-   - Mesma alteração na logo da view "forgot" (linha ~135) para consistência
+2. **Atualizar 3 arquivos** — trocar a referência da logo nos splash/loading screens:
 
-3. **Sem alterações** em Cadastro, Reset, PDF ou qualquer outra tela.
+   - **`src/App.tsx`** (linha 99): `/logo-locus-vita.svg?v=2` → `/logo-carregamento.svg` e classe `w-32 h-32` → `w-40 h-40`
+   - **`src/components/InviteAcceptInterceptor.tsx`** (linha 266): mesma troca, `w-40 h-40`
+   - **`src/components/AdminRoute.tsx`** (linha 35): mesma troca, `w-40 h-40`
+
+3. **Não alterar**: Login, Cadastro, Reset, PDF, CommandCenter, notificações — ficam como estão.
+
+### Resultado
+Splash de carregamento pós-login exibirá a `CARREGAMENTO_INICIAL.svg` em tamanho `w-40 h-40` (10rem × 10rem, ~25% maior que antes) com a animação breathing mantida.
 
