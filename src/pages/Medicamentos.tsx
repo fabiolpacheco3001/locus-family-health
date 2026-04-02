@@ -281,7 +281,7 @@ const Medicamentos = () => {
                   if (dateOnly && m.start_time) {
                     startDateISO = `${dateOnly}T${m.start_time}`;
                   } else if (dateOnly) {
-                    startDateISO = `${dateOnly}T12:00:00`;
+                    startDateISO = dateOnly;
                   }
                   nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date);
                   if (nextDoseDate) {
