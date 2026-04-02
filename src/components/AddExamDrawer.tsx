@@ -190,13 +190,10 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
             <div className="grid grid-cols-1 gap-3">
               <div className="space-y-1.5">
                 <Label>Data e Hora</Label>
-                <input
-                  type="datetime-local"
+                <DatePickerField
                   value={examDate}
-                  onChange={(e) => setExamDate(e.target.value)}
-                  min="1900-01-01T00:00"
-                  max="2099-12-31T23:59"
-                  className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                  onChange={setExamDate}
+                  mode="datetime"
                 />
               </div>
             </div>
