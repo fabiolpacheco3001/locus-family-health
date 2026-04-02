@@ -58,7 +58,7 @@ const Agenda = () => {
 
       let eq = supabase
         .from("exams")
-        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name, member_type)")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members!inner(name, member_type)")
         .neq("status", "Cancelado")
         .neq("status", "Realizado")
         .neq("status", "Coletado")
