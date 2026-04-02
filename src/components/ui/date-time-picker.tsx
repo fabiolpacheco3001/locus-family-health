@@ -97,6 +97,9 @@ export function DateTimePicker({
             selected={value}
             onSelect={handleDateSelect}
             locale={ptBR}
+            captionLayout="dropdown-buttons"
+            fromYear={1920}
+            toYear={new Date().getFullYear() + 10}
             className="p-3 pointer-events-auto"
           />
           <div className="border-t px-3 py-2 flex items-center gap-2">
