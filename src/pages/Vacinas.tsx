@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
@@ -606,13 +607,10 @@ const Vacinas = () => {
             <div className="flex gap-4">
               <div className="w-[50%]">
                 <label className="text-sm font-medium text-foreground mb-1 block">Data da aplicação</label>
-                <input
-                  type="date"
+                <DatePickerField
                   value={form.applied_date}
-                  onChange={(e) => setForm({ ...form, applied_date: e.target.value })}
-                  min="1900-01-01"
-                  max={new Date().toISOString().split("T")[0]}
-                  className={INPUT_CLASSES}
+                  onChange={(val) => setForm({ ...form, applied_date: val })}
+                  mode="date"
                 />
               </div>
               <div className="w-[50%]">

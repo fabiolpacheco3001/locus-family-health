@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DatePickerField } from "@/components/ui/date-picker-field";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,14 +164,10 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
 
               <div className="space-y-1.5">
                 <Label>Nascimento</Label>
-                <input
-                  type="date"
-                  lang="pt-BR"
+                <DatePickerField
                   value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  min="1900-01-01"
-                  max={new Date().toISOString().split('T')[0]}
-                  className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                  onChange={setBirthDate}
+                  mode="date"
                 />
               </div>
             </>
@@ -191,14 +188,10 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Nascimento</Label>
-                  <input
-                    type="date"
-                    lang="pt-BR"
+                  <DatePickerField
                     value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    min="1900-01-01"
-                    max={new Date().toISOString().split('T')[0]}
-                    className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                    onChange={setBirthDate}
+                    mode="date"
                   />
                 </div>
               </div>
