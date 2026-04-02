@@ -101,8 +101,8 @@ export function DateTimePicker({
             toYear={new Date().getFullYear() + 10}
             className="p-3 pointer-events-auto"
           />
-          <div className="border-t px-3 py-2 flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground shrink-0">Hora:</span>
+          <div className="border-t px-3 py-2 flex items-center justify-center w-full gap-2">
+            <span className="text-base font-medium text-foreground shrink-0">Hora:</span>
             <select
               value={selectedHour}
               onChange={(e) => handleHourChange(Number(e.target.value))}
