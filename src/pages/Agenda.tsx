@@ -16,7 +16,7 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
-import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
+
 
 type AgendaItem = {
   id: string;
@@ -208,32 +208,8 @@ const Agenda = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch dose statuses for medication items
-  const medicationIds = React.useMemo(() => {
-    return items
-      .filter((i) => i.kind === "medication" && i.medicationId)
-      .map((i) => i.medicationId!);
-  }, [items]);
 
-  const { data: doseStatuses = {} } = useQuery({
-    queryKey: ["medication_doses", medicationIds],
-    queryFn: async () => {
-      if (medicationIds.length === 0) return {};
-      const { data, error } = await supabase
-        .from("medication_doses" as any)
-        .select("medication_id, scheduled_for, status")
-        .in("medication_id", medicationIds);
-      if (error) throw error;
-      const map: Record<string, "taken" | "skipped"> = {};
-      for (const d of (data ?? []) as any[]) {
-        const key = `${d.medication_id}-${d.scheduled_for}`;
-        map[key] = d.status;
-      }
-      return map;
-    },
-    enabled: medicationIds.length > 0,
-    staleTime: 30 * 1000,
-  });
+
 
   const filteredItems = React.useMemo(() => {
     let result = items;
@@ -337,10 +313,8 @@ const Agenda = () => {
                 ? `/familiar/${item.family_member_id}/medicamentos`
                 : `/familiar/${item.family_member_id}/consultas`;
 
-              const doseKey = item.medicationId && item.scheduledFor
-                ? `${item.medicationId}-${item.scheduledFor}`
-                : null;
-              const doseStatus = doseKey ? (doseStatuses[doseKey] ?? null) : null;
+
+
 
               return (
                 <div
@@ -432,14 +406,6 @@ const Agenda = () => {
                         </Badge>
                       )}
                     </div>
-                    {/* Medication dose action buttons */}
-                    {isMedication && item.medicationId && item.scheduledFor && (
-                      <MedicationDoseActions
-                        medicationId={item.medicationId}
-                        scheduledFor={item.scheduledFor}
-                        doseStatus={doseStatus}
-                      />
-                    )}
                   </div>
                 </div>
               );
