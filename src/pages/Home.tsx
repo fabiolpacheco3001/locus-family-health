@@ -187,7 +187,7 @@ const Home = () => {
 
       (petRes.data ?? []).forEach((p: any) => {
         const dateStr = p.date_performed;
-        if (dateStr && isBefore(new Date(dateStr + 'T12:00:00'), startOfDay(now))) return;
+        if (dateStr && isBefore(parseDateInSP(dateStr) ?? new Date(), startOfDay(now))) return;
         items.push({
           id: p.id,
           title: p.routine_type,
