@@ -142,6 +142,7 @@ const App = () => (
               <Route path="/ajuda" element={<Ajuda />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
               <Route path="/seguranca" element={<Seguranca />} />
+              <Route path="/meu-plano" element={<MeuPlano />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
             </Route>
             <Route path="/command_center/login" element={<AdminLogin />} />
