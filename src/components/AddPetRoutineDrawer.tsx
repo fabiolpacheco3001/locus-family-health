@@ -146,7 +146,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Usou shampoo antialérgico"
-              className="text-[16px]"
+              className="text-base"
               rows={3}
               onFocus={(e) => {
                 setTimeout(() => {
