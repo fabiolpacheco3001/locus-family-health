@@ -284,6 +284,29 @@ const Medicamentos = () => {
                     startDateISO = dateOnly;
                   }
                   nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date);
+                  // Advance past already-recorded doses
+                  if (nextDoseDate && m.frequency_hours && m.frequency_hours > 0) {
+                    let candidate = new Date(nextDoseDate.getTime());
+                    let advanceLimit = 50;
+                    while (advanceLimit > 0) {
+                      const key = `${m.id}-${candidate.toISOString()}`;
+                      if (!medDoseStatuses[key]) break;
+                      candidate = new Date(candidate.getTime() + m.frequency_hours * 60 * 60 * 1000);
+                      advanceLimit--;
+                    }
+                    // Validate against end_date
+                    if (m.end_date) {
+                      const endStr = m.end_date.length === 10 ? m.end_date + "T23:59:59" : m.end_date;
+                      const endDt = parseDateInSP(endStr);
+                      if (endDt && candidate > endDt) {
+                        nextDoseDate = null;
+                      } else {
+                        nextDoseDate = candidate;
+                      }
+                    } else {
+                      nextDoseDate = candidate;
+                    }
+                  }
                   if (nextDoseDate) {
                     scheduledFor = nextDoseDate.toISOString();
                   }

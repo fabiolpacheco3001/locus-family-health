@@ -10,13 +10,12 @@ interface MedicationDoseActionsProps {
   medicationId: string;
   scheduledFor: string;
   doseStatus: "taken" | "skipped" | null;
-  /** Frequency in hours - used for auto-completion check */
   frequencyHours?: number | null;
-  /** End date of treatment - used for auto-completion check */
   endDate?: string | null;
-  /** Whether this is a continuous-use medication */
   usoContinuo?: boolean;
 }
+
+const INVALIDATE_KEYS = ["agenda", "medication_doses", "medications", "medication_doses_list", "medication_doses_home"];
 
 export function MedicationDoseActions({
   medicationId,
@@ -28,8 +27,11 @@ export function MedicationDoseActions({
 }: MedicationDoseActionsProps) {
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [optimisticStatus, setOptimisticStatus] = useState<"taken" | "skipped" | null>(null);
 
-  if (doseStatus === "taken") {
+  const displayStatus = optimisticStatus ?? doseStatus;
+
+  if (displayStatus === "taken") {
     return (
       <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#AEE2D4] text-slate-800 border-none">
         ✔️ Tomado
@@ -37,7 +39,7 @@ export function MedicationDoseActions({
     );
   }
 
-  if (doseStatus === "skipped") {
+  if (displayStatus === "skipped") {
     return (
       <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-none">
         ❌ Pulado
@@ -45,10 +47,15 @@ export function MedicationDoseActions({
     );
   }
 
+  const invalidateAll = () => {
+    INVALIDATE_KEYS.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
+  };
+
   const handleAction = async (status: "taken" | "skipped", e: React.MouseEvent) => {
     e.stopPropagation();
     if (loading) return;
     setLoading(true);
+    setOptimisticStatus(status);
 
     try {
       const { error } = await supabase
@@ -60,7 +67,14 @@ export function MedicationDoseActions({
           taken_at: status === "taken" ? new Date().toISOString() : null,
         });
 
-      if (error) throw error;
+      if (error) {
+        // 23505 = unique_violation — treat as success (already recorded)
+        if (error.code === "23505") {
+          invalidateAll();
+          return;
+        }
+        throw error;
+      }
 
       // Only decrement stock on 'taken'
       if (status === "taken") {
@@ -75,29 +89,21 @@ export function MedicationDoseActions({
         const endDateTime = new Date(endStr);
 
         if (!isNaN(nextDoseAfterThis.getTime()) && !isNaN(endDateTime.getTime()) && nextDoseAfterThis > endDateTime) {
-          // Next dose would be after end_date → auto-complete treatment
           await supabase
             .from("medications")
             .update({ status: "Concluído" })
             .eq("id", medicationId);
 
           toast.success("🎉 Tratamento concluído! Medicamento marcado como Concluído.");
-          queryClient.invalidateQueries({ queryKey: ["agenda"] });
-          queryClient.invalidateQueries({ queryKey: ["medication_doses"] });
-          queryClient.invalidateQueries({ queryKey: ["medications"] });
-          queryClient.invalidateQueries({ queryKey: ["medication_doses_list"] });
-          queryClient.invalidateQueries({ queryKey: ["medication_doses_home"] });
+          invalidateAll();
           return;
         }
       }
 
       toast.success(status === "taken" ? "Dose registrada com sucesso!" : "Dose pulada.");
-      queryClient.invalidateQueries({ queryKey: ["agenda"] });
-      queryClient.invalidateQueries({ queryKey: ["medication_doses"] });
-      queryClient.invalidateQueries({ queryKey: ["medications"] });
-      queryClient.invalidateQueries({ queryKey: ["medication_doses_list"] });
-      queryClient.invalidateQueries({ queryKey: ["medication_doses_home"] });
+      invalidateAll();
     } catch (err: any) {
+      setOptimisticStatus(null);
       toast.error("Erro ao registrar dose.");
     } finally {
       setLoading(false);
