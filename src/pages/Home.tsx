@@ -557,6 +557,8 @@ const Home = () => {
                   const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
 
                   let doseLabel = "";
+                  let scheduledFor: string | null = null;
+
                   if (isContinuous) {
                     if (med.start_date && med.start_time) {
                       const now = new Date();
@@ -566,37 +568,55 @@ const Home = () => {
                       const targetDose = todayDose > now ? todayDose : tomorrowDose;
                       if (!isNaN(targetDose.getTime())) {
                         doseLabel = `Próxima dose: ${format(targetDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                        scheduledFor = targetDose.toISOString();
                       }
                     }
                   } else if (isValidNextDose) {
                     doseLabel = `Próxima dose: ${format(nextDose, "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                    scheduledFor = nextDose.toISOString();
                   }
 
+                  const doseKey = scheduledFor ? `${med.id}-${scheduledFor}` : null;
+                  const doseStatus = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
+
                   return (
-                    <button
+                    <div
                       key={med.id}
-                      onClick={() => navigate(`/familiar/${med.family_member_id}/medicamentos`)}
-                      className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                      className="flex flex-col p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left w-full"
                     >
-                      <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center shrink-0">
-                        <Pill className="text-black" size={16} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">
-                          {med.name}
-                          {(() => {
-                            const firstName = med.family_members?.name?.split(' ')[0];
-                            return firstName ? <span className="font-normal text-muted-foreground"> · {firstName}</span> : null;
-                          })()}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate flex items-center gap-0">
-                          <span>{med.dosage ?? ""}</span>
-                          {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
-                          {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
-                        </p>
-                      </div>
-                      <ChevronRight size={16} className="text-black shrink-0" />
-                    </button>
+                      <button
+                        onClick={() => navigate(`/familiar/${med.family_member_id}/medicamentos`)}
+                        className="flex items-center gap-3 active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full rounded-lg"
+                      >
+                        <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                          <Pill className="text-black" size={16} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {med.name}
+                            {(() => {
+                              const firstName = med.family_members?.name?.split(' ')[0];
+                              return firstName ? <span className="font-normal text-muted-foreground"> · {firstName}</span> : null;
+                            })()}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate flex items-center gap-0">
+                            <span>{med.dosage ?? ""}</span>
+                            {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
+                            {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
+                          </p>
+                        </div>
+                        <ChevronRight size={16} className="text-black shrink-0" />
+                      </button>
+                      {scheduledFor && (
+                        <div className="ml-12 mt-1">
+                          <MedicationDoseActions
+                            medicationId={med.id}
+                            scheduledFor={scheduledFor}
+                            doseStatus={doseStatus}
+                          />
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
