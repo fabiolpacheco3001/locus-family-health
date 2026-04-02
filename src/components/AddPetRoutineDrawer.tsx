@@ -34,12 +34,13 @@ interface AddPetRoutineDrawerProps {
 const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRoutineDrawerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const todayDate = now.toISOString().split("T")[0];
+  const todayDateTime = `${todayDate}T${now.toTimeString().slice(0, 5)}`;
 
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
-  const [datePerformed, setDatePerformed] = useState(today);
-  const [timePerformed, setTimePerformed] = useState("");
+  const [dateTimePerformed, setDateTimePerformed] = useState(todayDateTime);
   const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
