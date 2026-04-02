@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle, SkipForward } from "lucide-react";
+import { CheckCircle2, XCircle, SkipForward } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
