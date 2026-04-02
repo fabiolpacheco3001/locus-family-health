@@ -59,10 +59,12 @@ const MeuPlano = () => {
   const handleCancelSubscription = async () => {
     setCancelling(true);
     try {
-      const { error } = await supabase
-        .from("subscriptions")
-        .update({ status: "canceled" } as any)
-        .eq("user_id", user!.id);
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
+
+      const { error } = await supabase.functions.invoke("cancel-asaas-subscription", {
+        headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
+      });
 
       if (error) throw error;
 
