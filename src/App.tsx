@@ -74,6 +74,7 @@ const CCAdmins = lazy(importCCAdmins);
 const CCConfig = lazy(importCCConfig);
 const CCChangelog = lazy(importCCChangelog);
 const Changelog = lazy(importChangelog);
+const MeuPlano = lazy(importMeuPlano);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
