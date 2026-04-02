@@ -261,6 +261,9 @@ const MinhaSaude = () => {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        )}
 
           {/* Adherence History */}
           <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5 flex items-center justify-between">
