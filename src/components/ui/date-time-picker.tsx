@@ -75,11 +75,11 @@ export function DateTimePicker({
           )}
         >
           {value ? (
-            <span className="whitespace-nowrap text-sm">
+            <span className="whitespace-nowrap text-base">
               {format(value, "dd/MM/yyyy HH:mm", { locale: ptBR })}
             </span>
           ) : (
-            <span className="text-sm">{placeholder}</span>
+            <span className="text-base">{placeholder}</span>
           )}
         </Button>
       </PopoverTrigger>
