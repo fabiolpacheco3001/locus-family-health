@@ -106,7 +106,7 @@ export function DateTimePicker({
             <select
               value={selectedHour}
               onChange={(e) => handleHourChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm appearance-none min-w-[52px]"
+              className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
             >
               {HOURS.map((h) => (
                 <option key={h} value={h}>
@@ -114,11 +114,11 @@ export function DateTimePicker({
                 </option>
               ))}
             </select>
-            <span className="text-sm font-bold">:</span>
+            <span className="text-base font-bold">:</span>
             <select
               value={selectedMinute}
               onChange={(e) => handleMinuteChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm appearance-none min-w-[52px]"
+              className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
             >
               {MINUTES.map((m) => (
                 <option key={m} value={m}>
