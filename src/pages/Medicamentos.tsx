@@ -371,7 +371,7 @@ const Medicamentos = () => {
                             {isAtivo && nextDoseDate && (
                               <div className="flex items-center gap-2 text-sm text-primary">
                                 <CalendarClock size={14} className="shrink-0" />
-                                <span>Próxima dose: {format(nextDoseDate, "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                                <span>Próxima dose: {format(toSPTime(nextDoseDate), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
                               </div>
                             )}
                           </div>
