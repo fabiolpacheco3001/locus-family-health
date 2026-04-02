@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format, parse } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   Drawer,
   DrawerContent,
@@ -44,7 +46,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
 
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
-  const [dateTimePerformed, setDateTimePerformed] = useState("");
+  const [dateTimePerformed, setDateTimePerformed] = useState<Date | undefined>(undefined);
   const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
@@ -54,7 +56,8 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
       setRoutineType(isKnown ? routine.routine_type : "Outro");
       setCustomType(isKnown ? "" : routine.routine_type);
       const time = (routine as any).time_performed || "12:00";
-      setDateTimePerformed(`${routine.date_performed}T${time}`);
+      const parsed = parse(`${routine.date_performed} ${time}`, "yyyy-MM-dd HH:mm", new Date());
+      setDateTimePerformed(isNaN(parsed.getTime()) ? undefined : parsed);
       setRecurrence(routine.recurrence || "none");
       setNotes(routine.notes || "");
     }
@@ -62,15 +65,16 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (!routine) return;
+      if (!routine || !dateTimePerformed) return;
       const type = routineType === "Outro" ? (customType.trim() || "Outro") : routineType;
-      const [datePart, timePart] = dateTimePerformed.split("T");
+      const datePart = format(dateTimePerformed, "yyyy-MM-dd");
+      const timePart = format(dateTimePerformed, "HH:mm");
       const { error } = await supabase
         .from("pet_routines")
         .update({
           routine_type: type,
           date_performed: datePart,
-          time_performed: timePart || null,
+          time_performed: timePart,
           notes: notes.trim() || null,
           recurrence: recurrence,
         } as any)
@@ -128,13 +132,10 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Data/Hora</label>
-              <input
-                type="datetime-local"
+              <DateTimePicker
                 value={dateTimePerformed}
-                onChange={(e) => setDateTimePerformed(e.target.value)}
-                min="1900-01-01T00:00"
-                max="2099-12-31T23:59"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
+                onChange={setDateTimePerformed}
+                placeholder="Selecione"
               />
             </div>
             <div>

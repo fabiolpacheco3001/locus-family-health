@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   Drawer,
   DrawerContent,
@@ -36,28 +38,30 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
   const queryClient = useQueryClient();
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
-  const [dateTimePerformed, setDateTimePerformed] = useState("");
+  const [dateTimePerformed, setDateTimePerformed] = useState<Date | undefined>(undefined);
   const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
   const resetForm = () => {
     setRoutineType("Banho");
     setCustomType("");
-    setDateTimePerformed("");
+    setDateTimePerformed(undefined);
     setRecurrence("none");
     setNotes("");
   };
 
   const mutation = useMutation({
     mutationFn: async () => {
+      if (!dateTimePerformed) throw new Error("Data obrigatória");
       const type = routineType === "Outro" ? (customType.trim() || "Outro") : routineType;
-      const [datePart, timePart] = dateTimePerformed.split("T");
+      const datePart = format(dateTimePerformed, "yyyy-MM-dd");
+      const timePart = format(dateTimePerformed, "HH:mm");
       const { error } = await supabase.from("pet_routines").insert({
         family_member_id: familyMemberId,
         user_id: user!.id,
         routine_type: type,
         date_performed: datePart,
-        time_performed: timePart || null,
+        time_performed: timePart,
         next_due_date: null,
         notes: notes.trim() || null,
         recurrence: recurrence,
@@ -116,13 +120,10 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Data/Hora</label>
-              <input
-                type="datetime-local"
+              <DateTimePicker
                 value={dateTimePerformed}
-                onChange={(e) => setDateTimePerformed(e.target.value)}
-                min="1900-01-01T00:00"
-                max="2099-12-31T23:59"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
+                onChange={setDateTimePerformed}
+                placeholder="Selecione"
               />
             </div>
             <div>
