@@ -75,7 +75,6 @@ export function DateTimePicker({
             className
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
           {value ? (
             <span className="whitespace-nowrap text-sm">
               {format(value, "dd/MM/yyyy HH:mm", { locale: ptBR })}
