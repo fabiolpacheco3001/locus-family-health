@@ -67,7 +67,7 @@ const Agenda = () => {
 
       let pq = supabase
         .from("pet_routines")
-        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members!inner(name, member_type)")
+        .select("id, family_member_id, routine_type, date_performed, time_performed, status, recurrence, notes, family_members!inner(name, member_type)")
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true });
 
@@ -146,7 +146,7 @@ const Agenda = () => {
           status: p.status === "Realizado" ? "Realizado" : "Agendado",
           memberName: p.family_members?.name ?? "Pet",
           kind: "pet_routine" as const,
-          isOverdue: dateStr ? isBefore(new Date(dateStr + 'T12:00:00'), today) : false,
+          isOverdue: dateStr ? isBefore(new Date(dateStr.length > 10 ? dateStr : dateStr + 'T12:00:00'), today) : false,
           isPet: true,
         };
       });
