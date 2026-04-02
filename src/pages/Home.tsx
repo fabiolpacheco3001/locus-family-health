@@ -279,7 +279,7 @@ const Home = () => {
       if (error) throw error;
       const map: Record<string, "taken" | "skipped"> = {};
       for (const d of (data ?? []) as any[]) {
-        const key = `${d.medication_id}-${d.scheduled_for}`;
+        const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
         map[key] = d.status;
       }
       return map;
@@ -559,6 +559,7 @@ const Home = () => {
 
                   let doseLabel = "";
                   let scheduledFor: string | null = null;
+                  let doseStatus: "taken" | "skipped" | null = null;
 
                   if (isContinuous) {
                     if (med.start_date && med.start_time) {
@@ -566,19 +567,49 @@ const Home = () => {
                       const todayStr = format(now, "yyyy-MM-dd");
                       const todayDose = new Date(`${todayStr}T${med.start_time}`);
                       const tomorrowDose = new Date(`${format(new Date(now.getTime() + 86400000), "yyyy-MM-dd")}T${med.start_time}`);
-                      const targetDose = todayDose > now ? todayDose : tomorrowDose;
+                      let targetDose = todayDose > now ? todayDose : tomorrowDose;
+                      // Advance past already-recorded doses
+                      let advanceLimit = 50;
+                      while (advanceLimit > 0) {
+                        const key = `${med.id}-${targetDose.toISOString()}`;
+                        if (!homeDoseStatuses[key]) break;
+                        targetDose = new Date(targetDose.getTime() + 24 * 60 * 60 * 1000);
+                        advanceLimit--;
+                      }
                       if (!isNaN(targetDose.getTime())) {
-                          doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                        doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
                         scheduledFor = targetDose.toISOString();
                       }
                     }
                   } else if (isValidNextDose) {
-                    doseLabel = `Próxima dose: ${format(toSPTime(nextDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-                    scheduledFor = nextDose.toISOString();
+                    // Advance past already-recorded doses
+                    let candidate = new Date(nextDose.getTime());
+                    let advanceLimit = 50;
+                    while (advanceLimit > 0 && med.frequency_hours && med.frequency_hours > 0) {
+                      const key = `${med.id}-${candidate.toISOString()}`;
+                      if (!homeDoseStatuses[key]) break;
+                      candidate = new Date(candidate.getTime() + med.frequency_hours * 60 * 60 * 1000);
+                      advanceLimit--;
+                    }
+                    // Validate against end_date
+                    if (med.end_date) {
+                      const endStr = med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date;
+                      const endDt = parseDateInSP(endStr);
+                      if (endDt && candidate > endDt) {
+                        // Treatment ended
+                        scheduledFor = null;
+                      } else {
+                        doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                        scheduledFor = candidate.toISOString();
+                      }
+                    } else {
+                      doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+                      scheduledFor = candidate.toISOString();
+                    }
                   }
 
                   const doseKey = scheduledFor ? `${med.id}-${scheduledFor}` : null;
-                  const doseStatus = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
+                  doseStatus = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
 
                   return (
                     <div
