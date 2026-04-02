@@ -46,6 +46,7 @@ const importCCAdmins = () => import("./pages/command-center/Admins");
 const importCCConfig = () => import("./pages/command-center/Config");
 const importCCChangelog = () => import("./pages/command-center/Changelog");
 const importChangelog = () => import("./pages/Changelog");
+const importMeuPlano = () => import("./pages/MeuPlano");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
