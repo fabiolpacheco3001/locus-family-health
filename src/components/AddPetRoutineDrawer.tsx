@@ -34,22 +34,16 @@ interface AddPetRoutineDrawerProps {
 const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRoutineDrawerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const now = new Date();
-  const todayDate = now.toISOString().split("T")[0];
-  const todayDateTime = `${todayDate}T${now.toTimeString().slice(0, 5)}`;
-
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
-  const [dateTimePerformed, setDateTimePerformed] = useState(todayDateTime);
+  const [dateTimePerformed, setDateTimePerformed] = useState("");
   const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
   const resetForm = () => {
-    const n = new Date();
-    const d = n.toISOString().split("T")[0];
     setRoutineType("Banho");
     setCustomType("");
-    setDateTimePerformed(`${d}T${n.toTimeString().slice(0, 5)}`);
+    setDateTimePerformed("");
     setRecurrence("none");
     setNotes("");
   };
@@ -85,7 +79,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex flex-col max-h-[90vh]">
+      <DrawerContent className="flex flex-col max-h-[80vh]">
         <DrawerHeader>
           <DrawerTitle>Registrar Rotina</DrawerTitle>
         </DrawerHeader>
@@ -152,7 +146,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Usou shampoo antialérgico"
-              className="text-[16px]"
+              className="text-base"
               rows={3}
               onFocus={(e) => {
                 setTimeout(() => {

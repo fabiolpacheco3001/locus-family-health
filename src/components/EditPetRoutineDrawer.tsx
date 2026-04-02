@@ -93,7 +93,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex flex-col max-h-[90vh]">
+      <DrawerContent className="flex flex-col max-h-[80vh]">
         <DrawerHeader>
           <DrawerTitle>Editar Rotina</DrawerTitle>
         </DrawerHeader>
@@ -157,7 +157,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ex: Usou shampoo antialérgico"
-              className="text-[16px]"
+              className="text-base"
               rows={3}
               onFocus={(e) => {
                 setTimeout(() => {
