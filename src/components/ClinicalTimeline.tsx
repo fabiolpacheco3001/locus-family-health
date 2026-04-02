@@ -27,10 +27,10 @@ const statusBadge: Record<string, string> = {
 
 const formatDate = (dateStr: string) => {
   try {
-    const d = toZonedTime(parseISO(dateStr), "America/Sao_Paulo");
-    const day = format(d, "dd MMM yyyy", { locale: ptBR });
-    const weekday = format(d, "EEEE", { locale: ptBR }).substring(0, 3);
-    const time = format(d, "HH:mm");
+    const parsed = parseISO(dateStr);
+    const day = formatInTimeZone(parsed, "America/Sao_Paulo", "dd MMM yyyy", { locale: ptBR });
+    const weekday = formatInTimeZone(parsed, "America/Sao_Paulo", "EEEE", { locale: ptBR }).substring(0, 3);
+    const time = formatInTimeZone(parsed, "America/Sao_Paulo", "HH:mm");
     return `${day} — ${weekday} às ${time}`;
   } catch {
     return dateStr;

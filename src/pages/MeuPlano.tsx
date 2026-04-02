@@ -208,7 +208,7 @@ const MeuPlano = () => {
             <AlertDialogTitle>Tem certeza que deseja cancelar?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                Você e sua família perderão acesso ao Histórico Inteligente, Lembretes de Medicamentos e IA do Locus Vita ao final do período vigente.
+                Tem certeza que deseja cancelar? O aplicativo Locus Vita e todos os seus recursos ficarão totalmente indisponíveis para você e sua família ao final do período vigente.
               </span>
               {renewalDate && (
                 <span className="block text-foreground font-medium">

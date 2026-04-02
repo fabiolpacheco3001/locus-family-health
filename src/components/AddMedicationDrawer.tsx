@@ -137,11 +137,15 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setName(editingMedication.name);
       setDosage(editingMedication.dosage ?? "");
       const date = editingMedication.start_date?.slice(0, 10) ?? "";
-      const time = editingMedication.start_time ?? "";
-      if (date && time) {
-        setStartDateTime(`${date}T${time}`);
-      } else if (date) {
-        setStartDateTime(`${date}T08:00`);
+      const time = editingMedication.start_time ?? "00:00";
+      if (date) {
+        const isoStr = `${date}T${time}`;
+        // Validate before setting
+        if (!isNaN(new Date(isoStr).getTime())) {
+          setStartDateTime(isoStr);
+        } else {
+          setStartDateTime(`${date}T08:00`);
+        }
       } else {
         setStartDateTime("");
       }

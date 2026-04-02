@@ -81,3 +81,13 @@
   }
 }
 
+/* iOS Safari auto-zoom prevention — force 16px on all interactive elements */
+select,
+input,
+textarea,
+[role="combobox"],
+[role="option"],
+[role="listbox"] {
+  font-size: 16px !important;
+}
+
