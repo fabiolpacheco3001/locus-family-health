@@ -261,9 +261,23 @@ const MinhaSaude = () => {
                   </div>
                 );
               })}
+
+          {/* Adherence History */}
+          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Adesão Medicamentosa</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Histórico de doses tomadas e puladas</p>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAdherenceOpen(true)}
+              className="gap-1.5 shrink-0"
+            >
+              <ClipboardList size={16} />
+              Ver Histórico
+            </Button>
           </div>
-        )}
         </div>
       </div>
 
