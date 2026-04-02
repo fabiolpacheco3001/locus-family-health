@@ -41,11 +41,9 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
   const [notes, setNotes] = useState("");
 
   const resetForm = () => {
-    const n = new Date();
-    const d = n.toISOString().split("T")[0];
     setRoutineType("Banho");
     setCustomType("");
-    setDateTimePerformed(`${d}T${n.toTimeString().slice(0, 5)}`);
+    setDateTimePerformed("");
     setRecurrence("none");
     setNotes("");
   };
