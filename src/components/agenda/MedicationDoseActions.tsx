@@ -33,8 +33,8 @@ export function MedicationDoseActions({
 
   if (displayStatus === "taken") {
     return (
-      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#AEE2D4] text-slate-800 border-none">
-        ✔️ Tomado
+      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#AEE2D4] text-slate-800 border-none inline-flex items-center gap-1">
+        <CheckCircle2 size={12} /> Tomado
       </Badge>
     );
   }
