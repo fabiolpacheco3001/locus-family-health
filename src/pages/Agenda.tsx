@@ -51,7 +51,7 @@ const Agenda = () => {
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
-        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name, member_type)")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members!inner(name, member_type)")
         .neq("status", "Cancelada")
         .neq("status", "Realizada")
         .order("consultation_date", { ascending: true });
