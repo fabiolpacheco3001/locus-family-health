@@ -159,7 +159,7 @@ const Agenda = () => {
           status: p.status === "Realizado" ? "Realizado" : "Agendado",
           memberName: p.family_members?.name ?? "Pet",
           kind: "pet_routine" as const,
-          isOverdue: dateStr ? isBefore(new Date(dateStr.length > 10 ? dateStr : dateStr + 'T12:00:00'), today) : false,
+          isOverdue: dateStr ? isBefore(parseDateInSP(dateStr) ?? new Date(), today) : false,
           isPet: true,
         };
       });
