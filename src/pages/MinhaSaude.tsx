@@ -280,13 +280,10 @@ const MinhaSaude = () => {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium text-foreground mb-1 block">Data</label>
-              <input
-                type="date"
+              <DatePickerField
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                min="1900-01-01"
-                max={new Date().toISOString().split('T')[0]}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
+                onChange={(val) => setFormData({ ...formData, date: val })}
+                mode="date"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">

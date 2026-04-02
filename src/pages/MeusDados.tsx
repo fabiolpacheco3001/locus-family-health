@@ -261,15 +261,10 @@ const MeusDados = () => {
 
           <div className="space-y-1">
             <Label>Nascimento</Label>
-            <input
-              type="date"
-              lang="pt-BR"
+            <DatePickerField
               value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              min="1900-01-01"
-              max={new Date().toISOString().split("T")[0]}
-              style={{ textAlign: "left" }}
-              className="flex h-10 w-full max-w-full box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] text-left justify-start ring-offset-background [&::-webkit-date-and-time-value]:text-left"
+              onChange={setBirthDate}
+              mode="date"
             />
           </div>
         </div>

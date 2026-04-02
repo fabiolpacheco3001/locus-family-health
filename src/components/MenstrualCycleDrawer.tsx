@@ -383,24 +383,18 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Início do Sangramento *</Label>
-                <input
-                  type="date"
+                <DatePickerField
                   value={form.start_date}
-                  onChange={(e) => setForm({ ...form, start_date: e.target.value })}
-                  min="1900-01-01"
-                  max={today}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
+                  onChange={(val) => setForm({ ...form, start_date: val })}
+                  mode="date"
                 />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Fim do Sangramento</Label>
-                <input
-                  type="date"
+                <DatePickerField
                   value={form.end_date}
-                  onChange={(e) => setForm({ ...form, end_date: e.target.value })}
-                  min={form.start_date || "1900-01-01"}
-                  max={today}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
+                  onChange={(val) => setForm({ ...form, end_date: val })}
+                  mode="date"
                 />
               </div>
             </div>

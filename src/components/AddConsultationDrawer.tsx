@@ -217,14 +217,10 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Data e Hora</Label>
-                <Input
-                  type="datetime-local"
-                  lang="pt-BR"
+                <DatePickerField
                   value={consultationDate}
-                  onChange={(e) => setConsultationDate(e.target.value)}
-                  min="1900-01-01T00:00"
-                  max="2099-12-31T23:59"
-                  className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background scroll-m-20"
+                  onChange={setConsultationDate}
+                  mode="datetime"
                 />
               </div>
 
