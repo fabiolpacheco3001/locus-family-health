@@ -1,3 +1,4 @@
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useEffect } from "react";
 import { useAuth } from "./useAuth";
 import { useFamilyGroup } from "./useFamilyGroup";
@@ -59,7 +60,7 @@ export function useMenstrualAlerts() {
         if (cancelled) return;
         if (cycle.alert_advance_days === 0) continue;
 
-        const startDate = parseISO(cycle.start_date + "T12:00:00");
+        const startDate = toSPTime(parseDateInSP(cycle.start_date) ?? new Date());
         const nextPeriod = addDays(startDate, cycle.cycle_length);
         const alertDate = addDays(nextPeriod, -cycle.alert_advance_days);
         const daysUntilAlert = differenceInDays(alertDate, today);

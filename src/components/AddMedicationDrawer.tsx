@@ -222,12 +222,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
   const calculatedEndDate = useMemo(() => {
     if (!parsedDate.date || !durationDays || Number(durationDays) <= 0) return null;
-    return format(addDays(new Date(parsedDate.date + "T12:00:00"), Number(durationDays)), "yyyy-MM-dd");
+    return format(addDays(toSPTime(parseDateInSP(parsedDate.date) ?? new Date()), Number(durationDays)), "yyyy-MM-dd");
   }, [parsedDate.date, durationDays]);
 
   const calculatedEndDateLabel = useMemo(() => {
     if (!calculatedEndDate) return null;
-    return format(new Date(calculatedEndDate + "T12:00:00"), "dd/MM/yyyy");
+    return format(toSPTime(parseDateInSP(calculatedEndDate) ?? new Date()), "dd/MM/yyyy");
   }, [calculatedEndDate]);
 
   const frequencyLabel = useMemo(() => {
@@ -357,7 +357,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
     let endDate: string | null = null;
     if (!medUsoContinuo && parsedDate.date && durNum && durNum > 0) {
-      endDate = format(addDays(new Date(parsedDate.date + "T12:00:00"), durNum), "yyyy-MM-dd");
+      endDate = format(addDays(toSPTime(parseDateInSP(parsedDate.date) ?? new Date()), durNum), "yyyy-MM-dd");
     }
 
     const estTotalNum = med._estoqueTotal ? Number(med._estoqueTotal) : null;
@@ -441,12 +441,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
               msgParts += `\nUso Contínuo`;
             }
             if (m.start_date) {
-              const startStr = format(new Date(m.start_date + "T12:00:00"), "dd/MM/yyyy");
+              const startStr = format(toSPTime(parseDateInSP(m.start_date) ?? new Date()), "dd/MM/yyyy");
               const timeStr = m.start_time ? m.start_time.slice(0, 5) : "";
               msgParts += `\nInício: ${startStr}${timeStr ? ` às ${timeStr}` : ""}`;
             }
             if (m.end_date) {
-              const endStr = format(new Date(m.end_date + "T12:00:00"), "dd/MM/yyyy");
+              const endStr = format(toSPTime(parseDateInSP(m.end_date) ?? new Date()), "dd/MM/yyyy");
               msgParts += `\nTérmino: ${endStr}`;
             }
             return {
@@ -486,12 +486,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             .single();
           const memberName = member?.name ?? "Usuário";
           const startStr = parsedDate.date
-            ? format(new Date(parsedDate.date + "T12:00:00"), "dd/MM/yyyy")
+            ? format(toSPTime(parseDateInSP(parsedDate.date) ?? new Date()), "dd/MM/yyyy")
             : "";
           const timeStr = parsedDate.time ? parsedDate.time.slice(0, 5) : "";
           const finalEndDate = usoContinuo ? null : calculatedEndDate;
           const endStr = finalEndDate
-            ? format(new Date(finalEndDate + "T12:00:00"), "dd/MM/yyyy")
+            ? format(toSPTime(parseDateInSP(finalEndDate) ?? new Date()), "dd/MM/yyyy")
             : "";
           let msgParts = `Medicamento: ${name.trim()}`;
           if (usoContinuo) {
