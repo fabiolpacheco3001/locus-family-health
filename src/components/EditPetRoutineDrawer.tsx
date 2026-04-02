@@ -64,12 +64,13 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
     mutationFn: async () => {
       if (!routine) return;
       const type = routineType === "Outro" ? (customType.trim() || "Outro") : routineType;
+      const [datePart, timePart] = dateTimePerformed.split("T");
       const { error } = await supabase
         .from("pet_routines")
         .update({
           routine_type: type,
-          date_performed: datePerformed,
-          time_performed: timePerformed || null,
+          date_performed: datePart,
+          time_performed: timePart || null,
           notes: notes.trim() || null,
           recurrence: recurrence,
         } as any)
