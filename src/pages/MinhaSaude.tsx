@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { fromSPToUTC } from "@/lib/dateUtils";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Activity, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Activity, Plus, Trash2, ClipboardList } from "lucide-react";
+import AdherenceHistoryDrawer from "@/components/AdherenceHistoryDrawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,7 @@ const MinhaSaude = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [adherenceOpen, setAdherenceOpen] = useState(false);
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
   const [graficoAtivo, setGraficoAtivo] = useState<"peso" | "altura">("peso");
 
@@ -259,9 +261,23 @@ const MinhaSaude = () => {
                   </div>
                 );
               })}
+
+          {/* Adherence History */}
+          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Adesão Medicamentosa</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Histórico de doses tomadas e puladas</p>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAdherenceOpen(true)}
+              className="gap-1.5 shrink-0"
+            >
+              <ClipboardList size={16} />
+              Ver Histórico
+            </Button>
           </div>
-        )}
         </div>
       </div>
 
@@ -320,6 +336,16 @@ const MinhaSaude = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {member && (
+        <AdherenceHistoryDrawer
+          open={adherenceOpen}
+          onOpenChange={setAdherenceOpen}
+          familyMemberId={id!}
+          memberName={member.name}
+          emitterName={user?.user_metadata?.full_name || user?.email || "Usuário"}
+        />
+      )}
     </div>
   );
 };
