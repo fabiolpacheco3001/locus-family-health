@@ -432,14 +432,6 @@ const Agenda = () => {
                         </Badge>
                       )}
                     </div>
-                    {/* Medication dose action buttons */}
-                    {isMedication && item.medicationId && item.scheduledFor && (
-                      <MedicationDoseActions
-                        medicationId={item.medicationId}
-                        scheduledFor={item.scheduledFor}
-                        doseStatus={doseStatus}
-                      />
-                    )}
                   </div>
                 </div>
               );
