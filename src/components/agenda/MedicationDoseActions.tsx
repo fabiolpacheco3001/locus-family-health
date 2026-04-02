@@ -119,7 +119,7 @@ export function MedicationDoseActions({
         onClick={(e) => handleAction("taken", e)}
         className="h-7 px-2.5 text-xs bg-[#AEE2D4] text-slate-800 border-none hover:bg-[#8ed4c0] active:bg-[#8ed4c0]"
       >
-        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
         {loading ? "..." : "Tomar"}
       </Button>
       <Button

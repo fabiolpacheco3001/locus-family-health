@@ -27,7 +27,7 @@ const statusBadge: Record<string, string> = {
 
 const formatDate = (dateStr: string) => {
   try {
-    const d = parseISO(dateStr);
+    const d = toZonedTime(parseISO(dateStr), "America/Sao_Paulo");
     const day = format(d, "dd MMM yyyy", { locale: ptBR });
     const weekday = format(d, "EEEE", { locale: ptBR }).substring(0, 3);
     const time = format(d, "HH:mm");
