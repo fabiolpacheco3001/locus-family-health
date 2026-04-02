@@ -192,7 +192,7 @@ const Ajustes = () => {
                     )}
                     <Button
                       variant="outline"
-                      onClick={() => toast.info("Portal de gerenciamento em breve.")}
+                      onClick={() => navigate("/meu-plano")}
                       className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
                     >
                       Gerenciar Assinatura

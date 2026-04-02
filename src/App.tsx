@@ -46,6 +46,7 @@ const importCCAdmins = () => import("./pages/command-center/Admins");
 const importCCConfig = () => import("./pages/command-center/Config");
 const importCCChangelog = () => import("./pages/command-center/Changelog");
 const importChangelog = () => import("./pages/Changelog");
+const importMeuPlano = () => import("./pages/MeuPlano");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
@@ -73,6 +74,7 @@ const CCAdmins = lazy(importCCAdmins);
 const CCConfig = lazy(importCCConfig);
 const CCChangelog = lazy(importCCChangelog);
 const Changelog = lazy(importChangelog);
+const MeuPlano = lazy(importMeuPlano);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
@@ -140,6 +142,7 @@ const App = () => (
               <Route path="/ajuda" element={<Ajuda />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
               <Route path="/seguranca" element={<Seguranca />} />
+              <Route path="/meu-plano" element={<MeuPlano />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
             </Route>
             <Route path="/command_center/login" element={<AdminLogin />} />
