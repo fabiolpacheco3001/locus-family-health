@@ -133,7 +133,9 @@ const Agenda = () => {
       });
 
       const petRoutines: AgendaItem[] = (petRes.data ?? []).map((p: any) => {
-        const dateStr = p.date_performed;
+        const dateStr = p.time_performed
+          ? `${p.date_performed}T${p.time_performed}`
+          : p.date_performed;
         return {
           id: p.id,
           family_member_id: p.family_member_id,
