@@ -379,11 +379,14 @@ const Medicamentos = () => {
                         <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
                       </button>
                       {isAtivo && scheduledFor && (
-                        <div className="ml-14 mt-1">
+                         <div className="ml-14 mt-1">
                           <MedicationDoseActions
                             medicationId={m.id}
                             scheduledFor={scheduledFor}
                             doseStatus={doseStatus}
+                            frequencyHours={m.frequency_hours}
+                            endDate={m.end_date}
+                            usoContinuo={m.uso_continuo}
                           />
                         </div>
                       )}
