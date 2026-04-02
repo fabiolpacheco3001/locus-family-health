@@ -173,7 +173,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
           </Button>
           <Button
             onClick={() => mutation.mutate()}
-            disabled={!datePerformed || mutation.isPending}
+            disabled={!dateTimePerformed || mutation.isPending}
             className="flex-1"
           >
             {mutation.isPending ? "Salvando..." : "Salvar"}

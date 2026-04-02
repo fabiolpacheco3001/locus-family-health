@@ -67,7 +67,7 @@ const Agenda = () => {
 
       let pq = supabase
         .from("pet_routines")
-        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members(name, member_type)")
+        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members!inner(name, member_type)")
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true });
 
