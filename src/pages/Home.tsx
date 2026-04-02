@@ -265,6 +265,28 @@ const Home = () => {
       return a.nextDose.getTime() - b.nextDose.getTime();
     }), [activeMeds]);
 
+  // Fetch dose statuses for today's meds
+  const todayMedIds = React.useMemo(() => medsWithNextDose.map(({ med }) => med.id), [medsWithNextDose]);
+  const { data: homeDoseStatuses = {} } = useQuery({
+    queryKey: ["medication_doses_home", todayMedIds],
+    queryFn: async () => {
+      if (todayMedIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("medication_doses")
+        .select("medication_id, scheduled_for, status")
+        .in("medication_id", todayMedIds);
+      if (error) throw error;
+      const map: Record<string, "taken" | "skipped"> = {};
+      for (const d of (data ?? []) as any[]) {
+        const key = `${d.medication_id}-${d.scheduled_for}`;
+        map[key] = d.status;
+      }
+      return map;
+    },
+    enabled: todayMedIds.length > 0,
+    staleTime: 30 * 1000,
+  });
+
   // Progressive rendering: each section uses its own loading state
 
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
