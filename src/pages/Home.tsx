@@ -614,6 +614,9 @@ const Home = () => {
                             medicationId={med.id}
                             scheduledFor={scheduledFor}
                             doseStatus={doseStatus}
+                            frequencyHours={med.frequency_hours}
+                            endDate={med.end_date}
+                            usoContinuo={med.uso_continuo}
                           />
                         </div>
                       )}
