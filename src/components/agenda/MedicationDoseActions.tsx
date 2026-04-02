@@ -41,8 +41,8 @@ export function MedicationDoseActions({
 
   if (displayStatus === "skipped") {
     return (
-      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-muted text-muted-foreground border-none">
-        ❌ Pulado
+      <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-none inline-flex items-center gap-1">
+        <XCircle size={12} /> Pulado
       </Badge>
     );
   }
