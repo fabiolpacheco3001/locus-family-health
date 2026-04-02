@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { fromSPToUTC } from "@/lib/dateUtils";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Activity, Plus, Trash2, ClipboardList } from "lucide-react";
+import { ArrowLeft, Activity, Plus, Trash2, ClipboardList, FileText, Pill } from "lucide-react";
 import AdherenceHistoryDrawer from "@/components/AdherenceHistoryDrawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
