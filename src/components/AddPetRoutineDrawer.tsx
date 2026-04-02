@@ -118,41 +118,31 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
             </div>
           )}
 
-          {/* Data + Hora */}
+          {/* Data/Hora + Repetição */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Data</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Data/Hora</label>
               <input
-                type="date"
-                value={datePerformed}
-                onChange={(e) => setDatePerformed(e.target.value)}
-                max={today}
+                type="datetime-local"
+                value={dateTimePerformed}
+                onChange={(e) => setDateTimePerformed(e.target.value)}
+                min="1900-01-01T00:00"
+                max="2099-12-31T23:59"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Hora (opc.)</label>
-              <input
-                type="time"
-                value={timePerformed}
-                onChange={(e) => setTimePerformed(e.target.value)}
+              <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
+              <select
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
-              />
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
-          </div>
-
-          {/* Repetição */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
-            <select
-              value={recurrence}
-              onChange={(e) => setRecurrence(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
-            >
-              {RECURRENCE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
           </div>
 
           {/* Notas */}
