@@ -37,6 +37,28 @@ const Medicamentos = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const { medications, isLoading, addMedication, updateMedication, deleteMedication } = useMedications(id!);
 
+  // Fetch dose statuses for active medications
+  const activeMedIds = useMemo(() => medications.filter(m => m.status === 'Ativo').map(m => m.id), [medications]);
+  const { data: medDoseStatuses = {} } = useQuery({
+    queryKey: ["medication_doses_list", activeMedIds],
+    queryFn: async () => {
+      if (activeMedIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("medication_doses")
+        .select("medication_id, scheduled_for, status")
+        .in("medication_id", activeMedIds);
+      if (error) throw error;
+      const map: Record<string, "taken" | "skipped"> = {};
+      for (const d of (data ?? []) as any[]) {
+        const key = `${d.medication_id}-${d.scheduled_for}`;
+        map[key] = d.status;
+      }
+      return map;
+    },
+    enabled: activeMedIds.length > 0,
+    staleTime: 30 * 1000,
+  });
+
   useEffect(() => {
     if (groupLoading) return;
     if (!isAdmin && id) {
