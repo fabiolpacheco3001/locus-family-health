@@ -217,14 +217,10 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
             {status === "Realizado" && (
               <div className="space-y-1.5">
                 <Label>Data Prevista do Resultado</Label>
-                <input
-                  type="date"
-                  lang="pt-BR"
+                <DatePickerField
                   value={resultDate}
-                  onChange={(e) => setResultDate(e.target.value)}
-                  min="1900-01-01"
-                  max="2099-12-31"
-                  className="flex h-10 w-full max-w-full block box-border appearance-none min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background"
+                  onChange={setResultDate}
+                  mode="date"
                 />
               </div>
             )}

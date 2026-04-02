@@ -682,13 +682,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                 <div className="grid grid-cols-[2fr_1fr] gap-4 items-start">
                   <div className="space-y-1.5">
                     <Label>Data/Hora Início</Label>
-                    <input
-                      type="datetime-local"
+                    <DatePickerField
                       value={startDateTime}
-                      onChange={(e) => setStartDateTime(e.target.value)}
-                      min="1900-01-01T00:00"
-                      max="2099-12-31T23:59"
-                      className={`${INPUT_CLASSES} appearance-none`}
+                      onChange={setStartDateTime}
+                      mode="datetime"
                     />
                   </div>
                   <div className="space-y-1.5">
