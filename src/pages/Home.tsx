@@ -693,7 +693,7 @@ const Home = () => {
                         <p className="text-xs text-muted-foreground truncate">
                           {item.date
                             ? format(
-                                new Date(item.date.length === 10 ? item.date + "T12:00:00" : item.date),
+                                toSPTime(item.date.length === 10 ? (parseDateInSP(item.date) ?? new Date()) : new Date(item.date)),
                                 "dd MMM · HH:mm",
                                 { locale: ptBR }
                               )
