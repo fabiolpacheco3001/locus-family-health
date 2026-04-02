@@ -15,6 +15,7 @@ interface DateTimePickerProps {
   onChange: (date: Date | undefined) => void;
   placeholder?: string;
   className?: string;
+  mode?: "date" | "datetime";
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -25,8 +26,10 @@ export function DateTimePicker({
   onChange,
   placeholder = "Selecione",
   className,
+  mode = "datetime",
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false);
+  const showTime = mode === "datetime";
 
   const selectedHour = value ? value.getHours() : 12;
   const selectedMinute = value ? value.getMinutes() : 0;
@@ -37,10 +40,18 @@ export function DateTimePicker({
       return;
     }
     const next = new Date(day);
-    next.setHours(value ? value.getHours() : 12);
-    next.setMinutes(value ? value.getMinutes() : 0);
+    if (showTime) {
+      next.setHours(value ? value.getHours() : 12);
+      next.setMinutes(value ? value.getMinutes() : 0);
+    } else {
+      next.setHours(12);
+      next.setMinutes(0);
+    }
     next.setSeconds(0);
     onChange(next);
+    if (!showTime) {
+      setOpen(false);
+    }
   };
 
   const handleHourChange = (h: number) => {
@@ -63,6 +74,8 @@ export function DateTimePicker({
     onChange(next);
   };
 
+  const displayFormat = showTime ? "dd/MM/yyyy HH:mm" : "dd/MM/yyyy";
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -75,11 +88,11 @@ export function DateTimePicker({
           )}
         >
           {value ? (
-            <span className="whitespace-nowrap text-base">
-              {format(value, "dd/MM/yyyy HH:mm", { locale: ptBR })}
+            <span className="whitespace-nowrap text-[16px]">
+              {format(value, displayFormat, { locale: ptBR })}
             </span>
           ) : (
-            <span className="text-base">{placeholder}</span>
+            <span className="text-[16px]">{placeholder}</span>
           )}
         </Button>
       </PopoverTrigger>
@@ -101,40 +114,42 @@ export function DateTimePicker({
             toYear={new Date().getFullYear() + 10}
             className="p-3 pointer-events-auto"
           />
-          <div className="flex w-full items-center justify-center gap-2 mt-4 pt-2 border-t px-3 pb-2">
-            <span className="text-base font-medium text-foreground shrink-0">Hora:</span>
-            <select
-              value={selectedHour}
-              onChange={(e) => handleHourChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
-            >
-              {HOURS.map((h) => (
-                <option key={h} value={h}>
-                  {String(h).padStart(2, "0")}
-                </option>
-              ))}
-            </select>
-            <span className="text-base font-bold">:</span>
-            <select
-              value={selectedMinute}
-              onChange={(e) => handleMinuteChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
-            >
-              {MINUTES.map((m) => (
-                <option key={m} value={m}>
-                  {String(m).padStart(2, "0")}
-                </option>
-              ))}
-            </select>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="ml-auto text-xs"
-              onClick={() => setOpen(false)}
-            >
-              OK
-            </Button>
-          </div>
+          {showTime && (
+            <div className="flex w-full items-center justify-center gap-2 mt-4 pt-2 border-t px-3 pb-2">
+              <span className="text-base font-medium text-foreground shrink-0">Hora:</span>
+              <select
+                value={selectedHour}
+                onChange={(e) => handleHourChange(Number(e.target.value))}
+                className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
+              >
+                {HOURS.map((h) => (
+                  <option key={h} value={h}>
+                    {String(h).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+              <span className="text-base font-bold">:</span>
+              <select
+                value={selectedMinute}
+                onChange={(e) => handleMinuteChange(Number(e.target.value))}
+                className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
+              >
+                {MINUTES.map((m) => (
+                  <option key={m} value={m}>
+                    {String(m).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="ml-auto text-xs"
+                onClick={() => setOpen(false)}
+              >
+                OK
+              </Button>
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>
