@@ -304,7 +304,7 @@ const PetRotinas = () => {
                             {badge.label}
                           </span>
                         </div>
-                        <p className="text-xs text-muted-foreground capitalize">{dateStr}</p>
+                        <p className="text-xs text-muted-foreground">{dateStr}</p>
                         {recurrenceLabel && (
                           <p className="text-[10px] text-muted-foreground">
                             🔁 {recurrenceLabel}
