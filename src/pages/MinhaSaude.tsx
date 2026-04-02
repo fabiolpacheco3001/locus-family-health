@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { fromSPToUTC } from "@/lib/dateUtils";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Activity, Plus, Trash2, ClipboardList } from "lucide-react";
+import { ArrowLeft, Activity, Plus, Trash2, ClipboardList, FileText, Pill } from "lucide-react";
 import AdherenceHistoryDrawer from "@/components/AdherenceHistoryDrawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -265,21 +265,35 @@ const MinhaSaude = () => {
           </div>
         )}
 
-          {/* Adherence History */}
-          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5 flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-semibold text-foreground">Adesão Medicamentosa</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Histórico de doses tomadas e puladas</p>
+          {/* Relatórios e Documentos */}
+          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5 space-y-4">
+            <h2 className="text-base font-semibold text-foreground">Relatórios e Documentos</h2>
+            <div className="space-y-2">
+              <button
+                onClick={() => navigate(`/familiar/${id}/prontuario`, { state: { from: `/familiar/${id}/saude` } })}
+                className="w-full flex items-center gap-3 p-3 bg-muted/30 rounded-xl border border-border/30 active:bg-muted/60 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                  <FileText size={16} className="text-foreground" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground">Prontuário (RES)</p>
+                  <p className="text-xs text-muted-foreground">Registro eletrônico de saúde</p>
+                </div>
+              </button>
+              <button
+                onClick={() => setAdherenceOpen(true)}
+                className="w-full flex items-center gap-3 p-3 bg-muted/30 rounded-xl border border-border/30 active:bg-muted/60 transition-colors"
+              >
+                <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center shrink-0">
+                  <Pill size={16} className="text-foreground" />
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-foreground">Adesão Medicamentosa</p>
+                  <p className="text-xs text-muted-foreground">Histórico de doses e exportar PDF</p>
+                </div>
+              </button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAdherenceOpen(true)}
-              className="gap-1.5 shrink-0"
-            >
-              <ClipboardList size={16} />
-              Ver Histórico
-            </Button>
           </div>
         </div>
       </div>
