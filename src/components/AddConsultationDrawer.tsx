@@ -213,31 +213,33 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label>Data e Hora</Label>
-              <Input
-                type="datetime-local"
-                lang="pt-BR"
-                value={consultationDate}
-                onChange={(e) => setConsultationDate(e.target.value)}
-                min="1900-01-01T00:00"
-                max="2099-12-31T23:59"
-                className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background scroll-m-20"
-              />
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>Data e Hora</Label>
+                <Input
+                  type="datetime-local"
+                  lang="pt-BR"
+                  value={consultationDate}
+                  onChange={(e) => setConsultationDate(e.target.value)}
+                  min="1900-01-01T00:00"
+                  max="2099-12-31T23:59"
+                  className="w-full max-w-full block box-border appearance-none min-w-0 text-[16px] px-3 py-2 border rounded-md bg-background scroll-m-20"
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <Label>Classificação</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="text-[16px] scroll-m-20">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Rotina">Rotina</SelectItem>
-                  <SelectItem value="Emergência">Emergência</SelectItem>
-                  <SelectItem value="Retorno">Retorno</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5">
+                <Label>Classificação</Label>
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger className="text-[16px] scroll-m-20">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Rotina">Rotina</SelectItem>
+                    <SelectItem value="Emergência">Emergência</SelectItem>
+                    <SelectItem value="Retorno">Retorno</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-1.5">
