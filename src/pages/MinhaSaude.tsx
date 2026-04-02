@@ -101,7 +101,7 @@ const MinhaSaude = () => {
       weight: w,
       height: hM,
       bmi: bmi ? Number(bmi.toFixed(1)) : null,
-      recorded_at: formData.date ? `${formData.date}T12:00:00` : new Date().toISOString(),
+      recorded_at: formData.date ? fromSPToUTC(formData.date).toISOString() : new Date().toISOString(),
     });
 
     if (error) {
