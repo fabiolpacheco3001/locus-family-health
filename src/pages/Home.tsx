@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
+import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 
 const Home = () => {
   const { user } = useAuth();
