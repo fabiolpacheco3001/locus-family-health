@@ -259,7 +259,12 @@ const PetRotinas = () => {
             <AnimatePresence mode="popLayout">
               {filteredRoutines.map((r) => {
                 const Icon = ROUTINE_ICONS[r.routine_type] || HelpCircle;
-                const dateStr = format(parseISO(r.date_performed + "T12:00:00"), "dd MMM yyyy", { locale: ptBR });
+                const fullDate = r.time_performed
+                  ? parseISO(`${r.date_performed}T${r.time_performed}`)
+                  : parseISO(r.date_performed + "T12:00:00");
+                const dateStr = r.time_performed
+                  ? format(fullDate, "dd MMM yyyy 'às' HH:mm", { locale: ptBR })
+                  : format(fullDate, "dd MMM yyyy", { locale: ptBR });
                 const recurrenceLabel = RECURRENCE_LABELS[(r as any).recurrence] || null;
                 const status = (r as any).status || "Agendado";
                 const badge = STATUS_BADGE[status] || STATUS_BADGE.Agendado;
