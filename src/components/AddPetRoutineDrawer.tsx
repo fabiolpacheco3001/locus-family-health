@@ -79,7 +79,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="flex flex-col max-h-[90vh]">
+      <DrawerContent className="flex flex-col max-h-[80vh]">
         <DrawerHeader>
           <DrawerTitle>Registrar Rotina</DrawerTitle>
         </DrawerHeader>
