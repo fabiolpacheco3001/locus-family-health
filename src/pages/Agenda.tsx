@@ -51,14 +51,14 @@ const Agenda = () => {
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
-        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name, member_type)")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members!inner(name, member_type)")
         .neq("status", "Cancelada")
         .neq("status", "Realizada")
         .order("consultation_date", { ascending: true });
 
       let eq = supabase
         .from("exams")
-        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name, member_type)")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members!inner(name, member_type)")
         .neq("status", "Cancelado")
         .neq("status", "Realizado")
         .neq("status", "Coletado")
@@ -67,7 +67,7 @@ const Agenda = () => {
 
       let pq = supabase
         .from("pet_routines")
-        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members(name, member_type)")
+        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members!inner(name, member_type)")
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true });
 

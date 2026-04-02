@@ -34,20 +34,22 @@ interface AddPetRoutineDrawerProps {
 const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRoutineDrawerProps) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const todayDate = now.toISOString().split("T")[0];
+  const todayDateTime = `${todayDate}T${now.toTimeString().slice(0, 5)}`;
 
   const [routineType, setRoutineType] = useState("Banho");
   const [customType, setCustomType] = useState("");
-  const [datePerformed, setDatePerformed] = useState(today);
-  const [timePerformed, setTimePerformed] = useState("");
+  const [dateTimePerformed, setDateTimePerformed] = useState(todayDateTime);
   const [recurrence, setRecurrence] = useState("none");
   const [notes, setNotes] = useState("");
 
   const resetForm = () => {
+    const n = new Date();
+    const d = n.toISOString().split("T")[0];
     setRoutineType("Banho");
     setCustomType("");
-    setDatePerformed(today);
-    setTimePerformed("");
+    setDateTimePerformed(`${d}T${n.toTimeString().slice(0, 5)}`);
     setRecurrence("none");
     setNotes("");
   };
@@ -55,12 +57,13 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
   const mutation = useMutation({
     mutationFn: async () => {
       const type = routineType === "Outro" ? (customType.trim() || "Outro") : routineType;
+      const [datePart, timePart] = dateTimePerformed.split("T");
       const { error } = await supabase.from("pet_routines").insert({
         family_member_id: familyMemberId,
         user_id: user!.id,
         routine_type: type,
-        date_performed: datePerformed,
-        time_performed: timePerformed || null,
+        date_performed: datePart,
+        time_performed: timePart || null,
         next_due_date: null,
         notes: notes.trim() || null,
         recurrence: recurrence,
@@ -115,41 +118,31 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
             </div>
           )}
 
-          {/* Data + Hora */}
+          {/* Data/Hora + Repetição */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Data</label>
+              <label className="text-sm font-medium text-foreground mb-1 block">Data/Hora</label>
               <input
-                type="date"
-                value={datePerformed}
-                onChange={(e) => setDatePerformed(e.target.value)}
-                max={today}
+                type="datetime-local"
+                value={dateTimePerformed}
+                onChange={(e) => setDateTimePerformed(e.target.value)}
+                min="1900-01-01T00:00"
+                max="2099-12-31T23:59"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1 block">Hora (opc.)</label>
-              <input
-                type="time"
-                value={timePerformed}
-                onChange={(e) => setTimePerformed(e.target.value)}
+              <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
+              <select
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value)}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
-              />
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
-          </div>
-
-          {/* Repetição */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-1 block">Repetição</label>
-            <select
-              value={recurrence}
-              onChange={(e) => setRecurrence(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-[16px] max-w-full box-border min-w-0 appearance-none"
-            >
-              {RECURRENCE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
           </div>
 
           {/* Notas */}
@@ -180,7 +173,7 @@ const AddPetRoutineDrawer = ({ open, onOpenChange, familyMemberId }: AddPetRouti
           </Button>
           <Button
             onClick={() => mutation.mutate()}
-            disabled={!datePerformed || mutation.isPending}
+            disabled={!dateTimePerformed || mutation.isPending}
             className="flex-1"
           >
             {mutation.isPending ? "Salvando..." : "Salvar"}
