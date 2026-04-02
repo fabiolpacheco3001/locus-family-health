@@ -685,6 +685,41 @@ export type Database = {
           },
         ]
       }
+      medication_doses: {
+        Row: {
+          created_at: string
+          id: string
+          medication_id: string
+          scheduled_for: string
+          status: string
+          taken_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          medication_id: string
+          scheduled_for: string
+          status?: string
+          taken_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          medication_id?: string
+          scheduled_for?: string
+          status?: string
+          taken_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medication_doses_medication_id_fkey"
+            columns: ["medication_id"]
+            isOneToOne: false
+            referencedRelation: "medications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medications: {
         Row: {
           consultation_id: string | null
