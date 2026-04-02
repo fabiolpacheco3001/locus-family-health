@@ -313,10 +313,8 @@ const Agenda = () => {
                 ? `/familiar/${item.family_member_id}/medicamentos`
                 : `/familiar/${item.family_member_id}/consultas`;
 
-              const doseKey = item.medicationId && item.scheduledFor
-                ? `${item.medicationId}-${item.scheduledFor}`
-                : null;
-              const doseStatus = doseKey ? (doseStatuses[doseKey] ?? null) : null;
+
+
 
               return (
                 <div
