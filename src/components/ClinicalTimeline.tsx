@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Stethoscope, Pill, FileText, ExternalLink, X } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { toZonedTime } from "date-fns-tz";
+import { formatInTimeZone } from "date-fns-tz";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
