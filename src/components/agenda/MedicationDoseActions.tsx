@@ -38,16 +38,14 @@ export function MedicationDoseActions({ medicationId, scheduledFor, doseStatus }
     setLoading(true);
 
     try {
-      const insertData: any = {
-        medication_id: medicationId,
-        scheduled_for: scheduledFor,
-        status,
-        taken_at: status === "taken" ? new Date().toISOString() : null,
-      };
-
       const { error } = await supabase
-        .from("medication_doses" as any)
-        .insert(insertData);
+        .from("medication_doses")
+        .insert({
+          medication_id: medicationId,
+          scheduled_for: scheduledFor,
+          status,
+          taken_at: status === "taken" ? new Date().toISOString() : null,
+        });
 
       if (error) throw error;
 
