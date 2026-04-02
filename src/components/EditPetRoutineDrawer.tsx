@@ -178,7 +178,7 @@ const EditPetRoutineDrawer = ({ open, onOpenChange, routine }: EditPetRoutineDra
           </Button>
           <Button
             onClick={() => mutation.mutate()}
-            disabled={!datePerformed || mutation.isPending}
+            disabled={!dateTimePerformed || mutation.isPending}
             className="flex-1"
           >
             {mutation.isPending ? "Salvando..." : "Salvar Alterações"}
