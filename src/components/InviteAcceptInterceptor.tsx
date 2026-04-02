@@ -263,9 +263,9 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-[#f2f0eb] z-50">
         <img
-           src="/logo-locus-vita.svg?v=2"
-          alt="Locus Vita"
-          className="w-32 h-32 animate-breathing"
+            src="/logo-carregamento.svg"
+           alt="Locus Vita"
+           className="w-40 h-40 animate-breathing"
         />
       </div>
     );
