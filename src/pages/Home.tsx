@@ -17,6 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import MemberAvatar from "@/components/MemberAvatar";
+import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
 
 import { toast } from "sonner";
 import { format, startOfDay, isBefore } from "date-fns";
