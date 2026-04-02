@@ -1,7 +1,10 @@
 /**
  * Calculates the next future dose for a recurring medication.
- * Blindada contra datas futuras, passadas e erros de timezone.
+ * Uses America/Sao_Paulo timezone explicitly.
  */
+import { nowInSP, parseDateInSP, APP_TIMEZONE } from "./dateUtils";
+import { toZonedTime } from "date-fns-tz";
+
 export function calculateNextDose(
   startDateStr: string | null | undefined,
   frequencyHours: number | null | undefined,
@@ -9,8 +12,8 @@ export function calculateNextDose(
 ): Date | null {
   if (!startDateStr || !frequencyHours || frequencyHours <= 0) return null;
 
-  const start = new Date(startDateStr);
-  if (isNaN(start.getTime())) return null;
+  const start = parseDateInSP(startDateStr);
+  if (!start) return null;
 
   const now = new Date();
 
@@ -27,11 +30,11 @@ export function calculateNextDose(
 
   if (isNaN(next.getTime())) return null;
 
-  // 3. Validação da Data de Término (força 23:59:59 para não cortar doses noturnas)
+  // 3. Validação da Data de Término (força 23:59:59 SP para não cortar doses noturnas)
   if (endDateStr) {
     const endStr = endDateStr.length === 10 ? endDateStr + "T23:59:59" : endDateStr;
-    const end = new Date(endStr);
-    if (!isNaN(end.getTime()) && next > end) return null;
+    const end = parseDateInSP(endStr);
+    if (end && next > end) return null;
   }
 
   return next;
