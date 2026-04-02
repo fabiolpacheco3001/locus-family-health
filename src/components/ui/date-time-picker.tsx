@@ -75,11 +75,11 @@ export function DateTimePicker({
           )}
         >
           {value ? (
-            <span className="whitespace-nowrap text-sm">
+            <span className="whitespace-nowrap text-base">
               {format(value, "dd/MM/yyyy HH:mm", { locale: ptBR })}
             </span>
           ) : (
-            <span className="text-sm">{placeholder}</span>
+            <span className="text-base">{placeholder}</span>
           )}
         </Button>
       </PopoverTrigger>
@@ -101,12 +101,12 @@ export function DateTimePicker({
             toYear={new Date().getFullYear() + 10}
             className="p-3 pointer-events-auto"
           />
-          <div className="border-t px-3 py-2 flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground shrink-0">Hora:</span>
+          <div className="border-t px-3 py-2 flex items-center justify-center w-full gap-2">
+            <span className="text-base font-medium text-foreground shrink-0">Hora:</span>
             <select
               value={selectedHour}
               onChange={(e) => handleHourChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm appearance-none min-w-[52px]"
+              className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
             >
               {HOURS.map((h) => (
                 <option key={h} value={h}>
@@ -114,11 +114,11 @@ export function DateTimePicker({
                 </option>
               ))}
             </select>
-            <span className="text-sm font-bold">:</span>
+            <span className="text-base font-bold">:</span>
             <select
               value={selectedMinute}
               onChange={(e) => handleMinuteChange(Number(e.target.value))}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm appearance-none min-w-[52px]"
+              className="h-8 rounded-md border border-input bg-background px-2 text-[16px] appearance-none min-w-[52px]"
             >
               {MINUTES.map((m) => (
                 <option key={m} value={m}>
