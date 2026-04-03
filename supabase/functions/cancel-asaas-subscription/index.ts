@@ -114,18 +114,26 @@ Deno.serve(async (req) => {
       });
     }
 
+    const formattedEndDate = cycleEndDate.split("T")[0];
+
     const cancelRes = await fetch(`https://api-sandbox.asaas.com/v3/subscriptions/${targetSubscriptionId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         access_token: apiKey,
       },
-      body: JSON.stringify({ endDate: cycleEndDate }),
+      body: JSON.stringify({ endDate: formattedEndDate }),
     });
 
     if (!cancelRes.ok) {
-      const errText = await cancelRes.text();
-      return new Response(JSON.stringify({ error: errText || "Erro ao cancelar assinatura no gateway." }), {
+      let errorData: unknown;
+      try {
+        errorData = await cancelRes.json();
+      } catch {
+        errorData = await cancelRes.text();
+      }
+      console.error("Asaas error:", JSON.stringify(errorData));
+      return new Response(JSON.stringify({ error: errorData || "Erro ao cancelar assinatura no gateway." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
