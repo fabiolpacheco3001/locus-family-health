@@ -20,7 +20,7 @@ import MemberAvatar from "@/components/MemberAvatar";
 import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
 
 import { toast } from "sonner";
-import { format, startOfDay, isBefore, isToday, isPast } from "date-fns";
+import { format, startOfDay, startOfYesterday, isBefore, isToday, isYesterday, isPast } from "date-fns";
 import { AlertCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
@@ -253,14 +253,14 @@ const Home = () => {
         startDateISO = dateOnly;
       }
 
-      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfDay(new Date()));
+      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday());
       return { med, nextDose };
     })
     .filter(({ med, nextDose }) => {
       if (!med.frequency_hours || med.frequency_hours <= 0) return true;
       if (!nextDose) return false;
-      // Keep all doses scheduled for today (including overdue ones)
-      return isToday(nextDose) || nextDose > new Date();
+      // Keep doses from yesterday and today (48h window)
+      return isToday(nextDose) || isYesterday(nextDose) || nextDose > new Date();
     })
     .sort((a, b) => {
       if (!a.nextDose && !b.nextDose) return 0;
@@ -634,21 +634,21 @@ const Home = () => {
                               return firstName ? <span className="font-normal text-muted-foreground"> · {firstName}</span> : null;
                             })()}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate flex items-center gap-0">
+                          <p className="text-xs text-muted-foreground truncate">
                             <span>{med.dosage ?? ""}</span>
                             {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
                             {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
-                            {scheduledFor && !doseStatus && isPast(new Date(scheduledFor)) && (
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border ml-2 shrink-0">
-                                <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
-                              </Badge>
-                            )}
                           </p>
                         </div>
                         <ChevronRight size={16} className="text-black shrink-0" />
                       </button>
                       {scheduledFor && (
-                        <div className="ml-12 mt-1">
+                        <div className="ml-12 mt-1 flex items-center gap-2 flex-wrap">
+                          {!doseStatus && isPast(new Date(scheduledFor)) && (
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border shrink-0">
+                              <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                            </Badge>
+                          )}
                           <MedicationDoseActions
                             medicationId={med.id}
                             scheduledFor={scheduledFor}

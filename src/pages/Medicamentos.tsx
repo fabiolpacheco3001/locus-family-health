@@ -11,7 +11,7 @@ import AiMedicationUpload from "@/components/AiMedicationUpload";
 import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
-import { format, isPast, startOfDay } from "date-fns";
+import { format, isPast, startOfYesterday } from "date-fns";
 import { AlertCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
@@ -284,7 +284,7 @@ const Medicamentos = () => {
                   } else if (dateOnly) {
                     startDateISO = dateOnly;
                   }
-                  nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, startOfDay(new Date()));
+                  nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, startOfYesterday());
                   // Advance past already-recorded doses
                   if (nextDoseDate && m.frequency_hours && m.frequency_hours > 0) {
                     let candidate = new Date(nextDoseDate.getTime());
@@ -396,11 +396,6 @@ const Medicamentos = () => {
                               <div className="flex items-center gap-2 text-sm text-primary">
                                 <CalendarClock size={14} className="shrink-0" />
                                 <span>Próxima dose: {format(toSPTime(nextDoseDate), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
-                                {!doseStatus && isPast(nextDoseDate) && (
-                                  <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border ml-1 shrink-0">
-                                    <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
-                                  </Badge>
-                                )}
                               </div>
                             )}
                           </div>
@@ -408,7 +403,12 @@ const Medicamentos = () => {
                         <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
                       </button>
                       {isAtivo && scheduledFor && (
-                         <div className="ml-14 mt-1">
+                         <div className="ml-14 mt-1 flex items-center gap-2 flex-wrap">
+                          {!doseStatus && nextDoseDate && isPast(nextDoseDate) && (
+                            <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border shrink-0">
+                              <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                            </Badge>
+                          )}
                           <MedicationDoseActions
                             medicationId={m.id}
                             scheduledFor={scheduledFor}

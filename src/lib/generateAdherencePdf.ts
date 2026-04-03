@@ -115,25 +115,30 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // Per-medication breakdown
-  const medGroups: Record<string, { taken: number; total: number }> = {};
+  const medGroups: Record<string, { taken: number; skipped: number; total: number }> = {};
   for (const d of data.doses) {
-    if (!medGroups[d.medication_name]) medGroups[d.medication_name] = { taken: 0, total: 0 };
+    if (!medGroups[d.medication_name]) medGroups[d.medication_name] = { taken: 0, skipped: 0, total: 0 };
     medGroups[d.medication_name].total++;
     if (d.status === "taken") medGroups[d.medication_name].taken++;
+    if (d.status === "skipped") medGroups[d.medication_name].skipped++;
   }
 
   sectionTitle("Adesão por Medicamento");
-  const medBody = Object.entries(medGroups).map(([name, s]) => [
-    name,
-    `${s.taken}`,
-    `${s.total - s.taken}`,
-    `${s.total > 0 ? Math.round((s.taken / s.total) * 100) : 0}%`,
-  ]);
+  const medBody = Object.entries(medGroups).map(([name, s]) => {
+    const forgotten = s.total - s.taken - (s.skipped ?? 0);
+    return [
+      name,
+      `${s.taken}`,
+      `${s.skipped ?? 0}`,
+      `${forgotten > 0 ? forgotten : 0}`,
+      `${s.total > 0 ? Math.round((s.taken / s.total) * 100) : 0}%`,
+    ];
+  });
 
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin, top: headerH + 6 },
-    head: [["Medicamento", "Tomadas", "Puladas", "Taxa"]],
+    head: [["Medicamento", "Tomadas", "Puladas", "Esquecidas", "Taxa"]],
     body: medBody,
     theme: "grid",
     headStyles: { fillColor: PRIMARY, fontSize: 9 },
@@ -147,7 +152,7 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
   sectionTitle("Histórico Detalhado");
   const timelineBody = data.doses.map((d) => {
     const dateStr = format(toSPTime(new Date(d.scheduled_for)), "dd/MM/yyyy HH:mm", { locale: ptBR });
-    return [dateStr, d.medication_name, d.status === "taken" ? "Tomado" : "Pulado"];
+    return [dateStr, d.medication_name, d.status === "taken" ? "Tomado" : d.status === "forgotten" ? "Esquecido" : "Pulado"];
   });
 
   autoTable(doc, {
@@ -168,6 +173,8 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
         const val = hookData.cell.raw;
         if (val === "Pulado") {
           hookData.cell.styles.textColor = [220, 50, 50];
+        } else if (val === "Esquecido") {
+          hookData.cell.styles.textColor = [120, 120, 120];
         } else {
           hookData.cell.styles.textColor = [16, 130, 90];
         }
