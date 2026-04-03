@@ -203,18 +203,20 @@ const MeuPlano = () => {
                 </Button>
               )}
 
-              {/* Canceled message */}
+              {/* Canceled message with renewal date and reactivation */}
               {isCanceled && (
                 <div className="bg-muted/40 rounded-lg p-3 space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Sua assinatura foi cancelada. Assine novamente para recuperar o acesso Premium.
+                    Plano cancelado.{renewalDate
+                      ? ` Você poderá utilizar o aplicativo normalmente até a data ${renewalDate}.`
+                      : " Assine novamente para recuperar o acesso Premium."}
                   </p>
                   <Button
-                    onClick={handleRegularize}
+                    onClick={handleReactivate}
                     disabled={loadingSubscription}
-                    className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                    className="w-full h-10 rounded-xl font-bold"
                   >
-                    {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Reassinar"}
+                    {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Reativar Plano"}
                   </Button>
                 </div>
               )}
