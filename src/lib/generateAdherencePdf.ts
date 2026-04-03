@@ -173,6 +173,8 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
         const val = hookData.cell.raw;
         if (val === "Pulado") {
           hookData.cell.styles.textColor = [220, 50, 50];
+        } else if (val === "Esquecido") {
+          hookData.cell.styles.textColor = [120, 120, 120];
         } else {
           hookData.cell.styles.textColor = [16, 130, 90];
         }
