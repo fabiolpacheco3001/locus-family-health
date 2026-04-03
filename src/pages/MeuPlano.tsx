@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Crown, AlertCircle, Loader2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { parseDateInSP } from "@/lib/dateUtils";
 
 const MeuPlano = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const {
     subscription, isActive, isPastDue, isCanceled, isTrialing,
@@ -59,6 +61,8 @@ const MeuPlano = () => {
   const handleCancelSubscription = async () => {
     setCancelling(true);
     try {
+      if (!user?.id) throw new Error("Sessão inválida.");
+
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
 
@@ -74,8 +78,8 @@ const MeuPlano = () => {
 
       const { data: updatedSubscription, error: confirmError } = await supabase
         .from("subscriptions")
-        .select("status")
-        .eq("user_id", user!.id)
+        .select("*")
+        .eq("user_id", user.id)
         .single();
 
       if (confirmError) throw confirmError;
@@ -83,9 +87,10 @@ const MeuPlano = () => {
         throw new Error("O cancelamento ainda não foi confirmado no banco.");
       }
 
+      queryClient.setQueryData(["subscription", user.id], updatedSubscription);
+
       toast.success("Assinatura cancelada. Seu acesso continua até o fim do período vigente.");
       setShowCancelDialog(false);
-      window.location.reload();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao cancelar assinatura. Tente novamente.");
     } finally {
@@ -106,9 +111,15 @@ const MeuPlano = () => {
     }
   };
 
-  const renewalDate = subscription?.next_billing_date
-    ? format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })
-    : null;
+  const renewalDate = (() => {
+    const endDate = subscription?.next_billing_date;
+    if (!endDate) return null;
+
+    const parsed = parseDateInSP(endDate.slice(0, 10));
+    if (!parsed || Number.isNaN(parsed.getTime())) return null;
+
+    return format(parsed, "dd MMM yyyy", { locale: ptBR });
+  })();
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
@@ -214,9 +225,9 @@ const MeuPlano = () => {
               {isCanceled && (
                 <div className="bg-muted/40 rounded-lg p-3 space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Plano cancelado.{renewalDate
-                      ? ` Você poderá utilizar o aplicativo normalmente até a data ${renewalDate}.`
-                      : " Assine novamente para recuperar o acesso Premium."}
+                    {renewalDate
+                      ? `Plano cancelado. Você poderá utilizar o aplicativo normalmente até a data ${renewalDate}.`
+                      : "Plano cancelado. Data não disponível."}
                   </p>
                   <Button
                     onClick={handleReactivate}

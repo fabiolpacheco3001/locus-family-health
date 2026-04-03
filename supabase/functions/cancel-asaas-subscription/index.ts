@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const userId = userData.user.id;
     const { data: sub, error: subErr } = await serviceClient
       .from("subscriptions")
-      .select("user_id, asaas_customer_id, asaas_subscription_id")
+      .select("user_id, asaas_customer_id, asaas_subscription_id, next_billing_date")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -103,12 +103,24 @@ Deno.serve(async (req) => {
       });
     }
 
+    const cycleEndDate = typeof sub.next_billing_date === "string"
+      ? sub.next_billing_date.slice(0, 10)
+      : null;
+
+    if (!cycleEndDate) {
+      return new Response(JSON.stringify({ error: "Data de fim do ciclo não disponível para cancelamento." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const cancelRes = await fetch(`https://api-sandbox.asaas.com/v3/subscriptions/${targetSubscriptionId}`, {
-      method: "DELETE",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
         access_token: apiKey,
       },
+      body: JSON.stringify({ endDate: cycleEndDate }),
     });
 
     if (!cancelRes.ok) {
@@ -124,6 +136,7 @@ Deno.serve(async (req) => {
       .update({
         status: "canceled",
         asaas_subscription_id: targetSubscriptionId,
+        next_billing_date: sub.next_billing_date,
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId);
@@ -135,7 +148,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true, asaasSubscriptionId: targetSubscriptionId }), {
+    return new Response(JSON.stringify({ success: true, asaasSubscriptionId: targetSubscriptionId, endDate: cycleEndDate }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
