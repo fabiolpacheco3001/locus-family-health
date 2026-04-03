@@ -264,7 +264,10 @@ const MeuPlano = () => {
           <AlertDialogFooter>
             <AlertDialogCancel className="font-semibold" disabled={cancelling}>Desistir</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleCancelSubscription}
+              onClick={(e) => {
+                e.preventDefault();
+                handleCancelSubscription();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={cancelling}
             >
