@@ -986,6 +986,7 @@ export type Database = {
       subscriptions: {
         Row: {
           asaas_customer_id: string | null
+          asaas_subscription_id: string | null
           created_at: string
           id: string
           next_billing_date: string | null
@@ -997,6 +998,7 @@ export type Database = {
         }
         Insert: {
           asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           created_at?: string
           id?: string
           next_billing_date?: string | null
@@ -1008,6 +1010,7 @@ export type Database = {
         }
         Update: {
           asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           created_at?: string
           id?: string
           next_billing_date?: string | null
