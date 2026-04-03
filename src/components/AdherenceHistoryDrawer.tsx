@@ -92,8 +92,20 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader className="text-center">
+        <DrawerHeader className="relative text-center">
           <DrawerTitle>Histórico de Adesão</DrawerTitle>
+          {totalCount > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleExportPdf}
+              disabled={generating}
+              className="absolute right-3 top-3"
+              title="Exportar PDF"
+            >
+              <Share2 size={18} />
+            </Button>
+          )}
         </DrawerHeader>
 
         <div className="px-4 pb-6 overflow-y-auto space-y-4">
