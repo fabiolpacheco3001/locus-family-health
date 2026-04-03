@@ -244,8 +244,10 @@ const MeuPlano = () => {
       </div>
 
       {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <AlertDialogContent className="max-w-[340px] rounded-[24px] w-[90vw]">
+      <AlertDialog open={showCancelDialog} onOpenChange={(open) => { if (!cancelling) setShowCancelDialog(open); }}>
+        <AlertDialogContent
+          className="max-w-[340px] rounded-[24px] w-[90vw]"
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Tem certeza que deseja cancelar?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
@@ -260,13 +262,18 @@ const MeuPlano = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="font-semibold">Desistir</AlertDialogCancel>
+            <AlertDialogCancel className="font-semibold" disabled={cancelling}>Desistir</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancelSubscription}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={cancelling}
             >
-              {cancelling ? <Loader2 className="animate-spin" size={16} /> : "Confirmar Cancelamento"}
+              {cancelling ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cancelando...
+                </span>
+              ) : "Confirmar Cancelamento"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
