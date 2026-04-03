@@ -20,7 +20,8 @@ import MemberAvatar from "@/components/MemberAvatar";
 import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
 
 import { toast } from "sonner";
-import { format, startOfDay, isBefore } from "date-fns";
+import { format, startOfDay, isBefore, isToday, isPast } from "date-fns";
+import { AlertCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
