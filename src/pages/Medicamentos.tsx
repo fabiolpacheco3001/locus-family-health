@@ -284,7 +284,7 @@ const Medicamentos = () => {
                   } else if (dateOnly) {
                     startDateISO = dateOnly;
                   }
-                  nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date);
+                  nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, startOfDay(new Date()));
                   // Advance past already-recorded doses
                   if (nextDoseDate && m.frequency_hours && m.frequency_hours > 0) {
                     let candidate = new Date(nextDoseDate.getTime());
