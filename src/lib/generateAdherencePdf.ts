@@ -115,11 +115,12 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
   y = (doc as any).lastAutoTable.finalY + 6;
 
   // Per-medication breakdown
-  const medGroups: Record<string, { taken: number; total: number }> = {};
+  const medGroups: Record<string, { taken: number; skipped: number; total: number }> = {};
   for (const d of data.doses) {
-    if (!medGroups[d.medication_name]) medGroups[d.medication_name] = { taken: 0, total: 0 };
+    if (!medGroups[d.medication_name]) medGroups[d.medication_name] = { taken: 0, skipped: 0, total: 0 };
     medGroups[d.medication_name].total++;
     if (d.status === "taken") medGroups[d.medication_name].taken++;
+    if (d.status === "skipped") medGroups[d.medication_name].skipped++;
   }
 
   sectionTitle("Adesão por Medicamento");
