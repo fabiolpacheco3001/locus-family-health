@@ -24,6 +24,7 @@ const MeuPlano = () => {
   const {
     subscription, isActive, isPastDue, isCanceled, isTrialing,
     trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium,
+    canceledButGracePeriod,
   } = useSubscription();
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -35,6 +36,9 @@ const MeuPlano = () => {
     if (subscription.plan_type === "annual") return "Locus Vita Premium Anual";
     return "Locus Vita Premium Mensal";
   })();
+
+  // Whether to render as a "premium card" (active OR canceled but in grace)
+  const showAsPremium = isActive || canceledButGracePeriod;
 
   const statusBadge = (() => {
     if (isActive) return { label: "Ativo", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" };
@@ -88,6 +92,7 @@ const MeuPlano = () => {
       }
 
       queryClient.setQueryData(["subscription", user.id], updatedSubscription);
+      queryClient.invalidateQueries({ queryKey: ["subscription", user.id] });
 
       toast.success("Assinatura cancelada. Seu acesso continua até o fim do período vigente.");
       setShowCancelDialog(false);
@@ -138,10 +143,12 @@ const MeuPlano = () => {
           {/* Plan Card */}
           <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
             <div className={`px-4 py-4 ${
-              isActive
+              isActive && !isCanceled
                 ? "bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]"
                 : isPastDue
                 ? "bg-gradient-to-r from-red-600 to-red-400"
+                : canceledButGracePeriod
+                ? "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
                 : "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
             }`}>
               <div className="flex items-center gap-2">
@@ -160,7 +167,7 @@ const MeuPlano = () => {
               </div>
 
               {/* Price */}
-              {subscription && isActive && (
+              {subscription && showAsPremium && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Valor</span>
                   <span className="text-sm font-semibold text-foreground">
@@ -169,10 +176,12 @@ const MeuPlano = () => {
                 </div>
               )}
 
-              {/* Renewal */}
-              {renewalDate && isActive && (
+              {/* Renewal / Access-until */}
+              {renewalDate && showAsPremium && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Próxima renovação</span>
+                  <span className="text-sm text-muted-foreground">
+                    {canceledButGracePeriod ? "Acesso válido até" : "Próxima renovação"}
+                  </span>
                   <span className="text-sm font-semibold text-foreground">{renewalDate}</span>
                 </div>
               )}
@@ -210,8 +219,8 @@ const MeuPlano = () => {
                 </Button>
               )}
 
-              {/* Cancel button (only for active paid subscriptions) */}
-              {isActive && subscription && (
+              {/* Cancel button (only for active — NOT canceled+grace) */}
+              {isActive && !isCanceled && subscription && (
                 <Button
                   variant="outline"
                   onClick={() => setShowCancelDialog(true)}
