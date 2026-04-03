@@ -92,9 +92,17 @@ export function useSubscription() {
 
   const trialExpired = isTrialing && trialDaysLeft <= 0;
 
-  // Hierarchy: 1) Explicit block → 2) Explicit access → 3) Implicit trial
+  // Grace period: canceled but still within paid cycle
+  const canceledButGracePeriod = (() => {
+    if (!isCanceled || !subscription?.next_billing_date) return false;
+    const endDate = new Date(subscription.next_billing_date);
+    return !isNaN(endDate.getTime()) && endDate.getTime() > Date.now();
+  })();
+
+  // Hierarchy: 1) Explicit block → 2) Grace period → 3) Explicit access → 4) Implicit trial
   const canUsePremium = (() => {
-    if (isSuspended || isCanceled) return false;
+    if (isSuspended) return false;
+    if (isCanceled) return canceledButGracePeriod;
     if (isActive) return true;
     if (isTrialing && !trialExpired) return true;
     // No subscription record: implicit trial
