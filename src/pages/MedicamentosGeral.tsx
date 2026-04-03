@@ -1,4 +1,3 @@
-import { startOfYesterday } from "date-fns";
 import { parseDateInSP } from "@/lib/dateUtils";
 import { ArrowLeft, Pill, Clock, ChevronRight, CalendarClock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
