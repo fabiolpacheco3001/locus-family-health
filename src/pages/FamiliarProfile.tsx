@@ -95,6 +95,7 @@ const FamiliarProfile = () => {
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);
   const [cycleOpen, setCycleOpen] = useState(false);
+  const [adherenceOpen, setAdherenceOpen] = useState(false);
 
   // Try cache first, fallback to individual query
   const { data: member, isLoading, error } = useQuery({
