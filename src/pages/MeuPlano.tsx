@@ -247,8 +247,6 @@ const MeuPlano = () => {
       <AlertDialog open={showCancelDialog} onOpenChange={(open) => { if (!cancelling) setShowCancelDialog(open); }}>
         <AlertDialogContent
           className="max-w-[340px] rounded-[24px] w-[90vw]"
-          onPointerDownOutside={cancelling ? (e) => e.preventDefault() : undefined}
-          onEscapeKeyDown={cancelling ? (e) => e.preventDefault() : undefined}
         >
           <AlertDialogHeader>
             <AlertDialogTitle>Tem certeza que deseja cancelar?</AlertDialogTitle>
