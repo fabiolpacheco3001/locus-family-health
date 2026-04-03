@@ -24,6 +24,7 @@ const MeuPlano = () => {
   const {
     subscription, isActive, isPastDue, isCanceled, isTrialing,
     trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium,
+    canceledButGracePeriod,
   } = useSubscription();
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
