@@ -634,15 +634,10 @@ const Home = () => {
                               return firstName ? <span className="font-normal text-muted-foreground"> · {firstName}</span> : null;
                             })()}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate flex items-center gap-0">
+                          <p className="text-xs text-muted-foreground truncate">
                             <span>{med.dosage ?? ""}</span>
                             {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
                             {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
-                            {scheduledFor && !doseStatus && isPast(new Date(scheduledFor)) && (
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border ml-2 shrink-0">
-                                <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
-                              </Badge>
-                            )}
                           </p>
                         </div>
                         <ChevronRight size={16} className="text-black shrink-0" />
