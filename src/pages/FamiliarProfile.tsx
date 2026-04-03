@@ -188,6 +188,8 @@ const FamiliarProfile = () => {
               setBpOpen(true);
             } else if (route === "__cycle__") {
               setCycleOpen(true);
+            } else if (route === "__adherence__") {
+              setAdherenceOpen(true);
             } else {
               navigate(`/familiar/${id}/${route}`);
             }
