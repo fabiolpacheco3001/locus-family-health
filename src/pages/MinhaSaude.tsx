@@ -40,7 +40,7 @@ const MinhaSaude = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [adherenceOpen, setAdherenceOpen] = useState(false);
+  
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
   const [graficoAtivo, setGraficoAtivo] = useState<"peso" | "altura">("peso");
 
