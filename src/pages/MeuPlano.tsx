@@ -92,6 +92,7 @@ const MeuPlano = () => {
       }
 
       queryClient.setQueryData(["subscription", user.id], updatedSubscription);
+      queryClient.invalidateQueries({ queryKey: ["subscription", user.id] });
 
       toast.success("Assinatura cancelada. Seu acesso continua até o fim do período vigente.");
       setShowCancelDialog(false);
