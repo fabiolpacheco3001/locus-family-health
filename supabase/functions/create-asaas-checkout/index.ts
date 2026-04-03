@@ -173,6 +173,16 @@ Deno.serve(async (req) => {
       console.log("Created Asaas subscription:", subscriptionId);
     }
 
+    await adminClient
+      .from("subscriptions")
+      .update({
+        plan_type: planType,
+        asaas_customer_id: customerId,
+        asaas_subscription_id: subscriptionId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId);
+
     // 4. Get the invoice URL
     const invoiceUrl = await getSubscriptionInvoiceUrl(subscriptionId);
 

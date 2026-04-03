@@ -63,24 +63,31 @@ const MeuPlano = () => {
       if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
 
       const { data, error } = await supabase.functions.invoke("cancel-asaas-subscription", {
+        body: {
+          asaasSubscriptionId: subscription?.asaas_subscription_id ?? null,
+        },
         headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
       });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // Wait for Edge Function to update the DB, then refresh local state
-      await supabase
+      const { data: updatedSubscription, error: confirmError } = await supabase
         .from("subscriptions")
         .select("status")
         .eq("user_id", user!.id)
         .single();
 
+      if (confirmError) throw confirmError;
+      if (updatedSubscription?.status !== "canceled") {
+        throw new Error("O cancelamento ainda não foi confirmado no banco.");
+      }
+
       toast.success("Assinatura cancelada. Seu acesso continua até o fim do período vigente.");
       setShowCancelDialog(false);
-      // Force refetch subscription
       window.location.reload();
-    } catch {
-      toast.error("Erro ao cancelar assinatura. Tente novamente.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao cancelar assinatura. Tente novamente.");
     } finally {
       setCancelling(false);
     }
@@ -232,7 +239,7 @@ const MeuPlano = () => {
             <AlertDialogTitle>Tem certeza que deseja cancelar?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
-                Tem certeza que deseja cancelar? O aplicativo Locus Vita e todos os seus recursos ficarão totalmente indisponíveis para você e sua família ao final do período vigente.
+                Você e sua família perderão acesso total ao aplicativo Locus Vita ao final do período vigente.
               </span>
               {renewalDate && (
                 <span className="block text-foreground font-medium">

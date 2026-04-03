@@ -93,7 +93,10 @@ Deno.serve(async (req) => {
         );
       }
 
-      const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+        asaas_subscription_id: sub.id,
+      };
       if (asaasData.nextDueDate) updateData.next_billing_date = asaasData.nextDueDate;
       if (asaasData.cycle === "YEARLY") updateData.plan_type = "annual";
       else if (asaasData.cycle === "MONTHLY") updateData.plan_type = "monthly";
@@ -136,6 +139,9 @@ Deno.serve(async (req) => {
 
     let newStatus: string | null = null;
     const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (payment.subscription) {
+      updateData.asaas_subscription_id = payment.subscription;
+    }
 
     switch (event) {
       case "PAYMENT_RECEIVED":

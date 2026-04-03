@@ -111,10 +111,10 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
               size="icon"
               onClick={handleExportPdf}
               disabled={generating}
-              className="absolute right-3 top-3"
+              className="absolute right-3 top-3 text-secondary hover:text-secondary"
               title="Exportar PDF"
             >
-              <Share2 size={18} />
+              <Share2 size={18} className="text-secondary" />
             </Button>
           )}
         </DrawerHeader>
