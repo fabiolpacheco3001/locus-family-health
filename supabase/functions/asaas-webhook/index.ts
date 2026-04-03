@@ -178,6 +178,8 @@ Deno.serve(async (req) => {
 
       case "PAYMENT_DELETED":
       case "PAYMENT_REFUNDED":
+        // CRITICAL: Only update status — never touch date columns.
+        // Date fields (next_billing_date) MUST be preserved for Grace Period.
         newStatus = "canceled";
         updateData.status = newStatus;
         break;
@@ -197,21 +199,43 @@ Deno.serve(async (req) => {
 
     console.log("Data to upsert:", JSON.stringify(updateData));
 
-    if (externalReference) {
-      updateData.user_id = externalReference;
-      const { data, error } = await adminClient
-        .from("subscriptions")
-        .upsert(updateData as any, { onConflict: "user_id" })
-        .select();
+    // For cancellation events, use UPDATE (not upsert) to preserve existing date columns.
+    // Upsert could INSERT a new row with null dates if the row doesn't match.
+    const isCancellation = newStatus === "canceled";
 
-      if (error) {
-        console.error("Failed to upsert subscription:", JSON.stringify(error));
-        return new Response(
-          JSON.stringify({ error: "Failed to upsert subscription", details: error }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    if (externalReference) {
+      if (isCancellation) {
+        // UPDATE only — preserve next_billing_date
+        const { data, error } = await adminClient
+          .from("subscriptions")
+          .update(updateData)
+          .eq("user_id", externalReference)
+          .select();
+
+        if (error) {
+          console.error("Failed to update subscription (cancel):", JSON.stringify(error));
+          return new Response(
+            JSON.stringify({ error: "Failed to update subscription", details: error }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        console.log("Subscription canceled (update only, dates preserved):", JSON.stringify(data));
+      } else {
+        updateData.user_id = externalReference;
+        const { data, error } = await adminClient
+          .from("subscriptions")
+          .upsert(updateData as any, { onConflict: "user_id" })
+          .select();
+
+        if (error) {
+          console.error("Failed to upsert subscription:", JSON.stringify(error));
+          return new Response(
+            JSON.stringify({ error: "Failed to upsert subscription", details: error }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        console.log("Subscription upserted successfully:", JSON.stringify(data));
       }
-      console.log("Subscription upserted successfully:", JSON.stringify(data));
     } else {
       const { data, error } = await adminClient
         .from("subscriptions")
