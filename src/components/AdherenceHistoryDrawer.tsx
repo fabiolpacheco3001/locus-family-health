@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FileDown, CheckCircle, XCircle } from "lucide-react";
+import { Share2, CheckCircle, XCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
@@ -17,12 +17,23 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   familyMemberId: string;
   memberName: string;
-  logoBase64?: string;
   emitterName: string;
 }
 
-const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName, logoBase64, emitterName }: Props) => {
+const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName, emitterName }: Props) => {
   const [generating, setGenerating] = useState(false);
+  const [logoBase64, setLogoBase64] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    fetch("/logo-locus-vita-pdf.png")
+      .then((r) => r.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoBase64(reader.result as string);
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => {});
+  }, []);
 
   const { data: doses = [], isLoading } = useQuery({
     queryKey: ["adherence_history", familyMemberId],
@@ -92,29 +103,29 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader className="text-center">
+        <DrawerHeader className="relative text-center">
           <DrawerTitle>Histórico de Adesão</DrawerTitle>
+          {totalCount > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleExportPdf}
+              disabled={generating}
+              className="absolute right-3 top-3"
+              title="Exportar PDF"
+            >
+              <Share2 size={18} />
+            </Button>
+          )}
         </DrawerHeader>
 
         <div className="px-4 pb-6 overflow-y-auto space-y-4">
           {/* Stats */}
           {!isLoading && totalCount > 0 && (
-            <div className="bg-card rounded-xl border border-border/50 p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Taxa de Adesão</p>
-                <p className="text-2xl font-bold text-foreground">{adherenceRate}%</p>
-                <p className="text-xs text-muted-foreground">{takenCount} de {totalCount} doses tomadas</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportPdf}
-                disabled={generating}
-                className="gap-1.5"
-              >
-                <FileDown size={16} />
-                {generating ? "Gerando..." : "Exportar PDF"}
-              </Button>
+            <div className="bg-card rounded-xl border border-border/50 p-4">
+              <p className="text-sm text-muted-foreground">Taxa de Adesão</p>
+              <p className="text-2xl font-bold text-foreground">{adherenceRate}%</p>
+              <p className="text-xs text-muted-foreground">{takenCount} de {totalCount} doses tomadas</p>
             </div>
           )}
 

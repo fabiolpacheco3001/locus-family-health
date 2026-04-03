@@ -22,6 +22,7 @@ import {
   Dumbbell,
   LineChart,
   ShowerHead,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -33,6 +34,7 @@ import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
+import AdherenceHistoryDrawer from "@/components/AdherenceHistoryDrawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { toast } from "sonner";
@@ -93,6 +95,7 @@ const FamiliarProfile = () => {
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);
   const [cycleOpen, setCycleOpen] = useState(false);
+  const [adherenceOpen, setAdherenceOpen] = useState(false);
 
   // Try cache first, fallback to individual query
   const { data: member, isLoading, error } = useQuery({
@@ -156,6 +159,7 @@ const FamiliarProfile = () => {
     { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
     { icon: Activity, label: "Diagnósticos Ativos", subtitle: "Histórico clínico", route: "doencas" },
     ...(tracksCycle ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }] : []),
+    { icon: ClipboardCheck, label: "Adesão Medicamentosa", subtitle: "Histórico de doses", route: "__adherence__" },
   ];
 
   const memberWeight = (member as any)?.weight as number | null ?? null;
@@ -184,6 +188,8 @@ const FamiliarProfile = () => {
               setBpOpen(true);
             } else if (route === "__cycle__") {
               setCycleOpen(true);
+            } else if (route === "__adherence__") {
+              setAdherenceOpen(true);
             } else {
               navigate(`/familiar/${id}/${route}`);
             }
@@ -336,6 +342,13 @@ const FamiliarProfile = () => {
               familyMemberId={member.id}
             />
           )}
+          <AdherenceHistoryDrawer
+            open={adherenceOpen}
+            onOpenChange={setAdherenceOpen}
+            familyMemberId={member.id}
+            memberName={member.name}
+            emitterName={user?.user_metadata?.full_name || user?.email || "Usuário"}
+          />
         </>
       )}
     </div>
