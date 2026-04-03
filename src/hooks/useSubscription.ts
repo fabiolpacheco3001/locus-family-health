@@ -95,9 +95,11 @@ export function useSubscription() {
 
   // Grace period: canceled but still within paid cycle
   const canceledButGracePeriod = (() => {
-    if (!isCanceled || !subscription?.next_billing_date) return false;
-    const endDate = new Date(subscription.next_billing_date);
-    return !isNaN(endDate.getTime()) && endDate.getTime() > Date.now();
+    if (!isCanceled) return false;
+    const endStr = subscription?.next_billing_date;
+    if (!endStr) return false;
+    const endDate = new Date(endStr);
+    return !isNaN(endDate.getTime()) && isFuture(endDate);
   })();
 
   // Hierarchy: 1) Explicit block → 2) Grace period → 3) Explicit access → 4) Implicit trial
