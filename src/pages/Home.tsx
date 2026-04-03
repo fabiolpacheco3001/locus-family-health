@@ -569,8 +569,8 @@ const Home = () => {
                       const now = new Date();
                       const todayStr = format(now, "yyyy-MM-dd");
                       const todayDose = new Date(`${todayStr}T${med.start_time}`);
-                      const tomorrowDose = new Date(`${format(new Date(now.getTime() + 86400000), "yyyy-MM-dd")}T${med.start_time}`);
-                      let targetDose = todayDose > now ? todayDose : tomorrowDose;
+                      // Start from today's dose (even if overdue) instead of skipping to tomorrow
+                      let targetDose = new Date(todayDose.getTime());
                       // Advance past already-recorded doses
                       let advanceLimit = 50;
                       while (advanceLimit > 0) {
