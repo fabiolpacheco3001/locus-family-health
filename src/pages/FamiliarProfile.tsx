@@ -342,6 +342,13 @@ const FamiliarProfile = () => {
               familyMemberId={member.id}
             />
           )}
+          <AdherenceHistoryDrawer
+            open={adherenceOpen}
+            onOpenChange={setAdherenceOpen}
+            familyMemberId={member.id}
+            memberName={member.name}
+            emitterName={user?.user_metadata?.full_name || user?.email || "Usuário"}
+          />
         </>
       )}
     </div>

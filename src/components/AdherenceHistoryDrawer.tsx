@@ -111,22 +111,10 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
         <div className="px-4 pb-6 overflow-y-auto space-y-4">
           {/* Stats */}
           {!isLoading && totalCount > 0 && (
-            <div className="bg-card rounded-xl border border-border/50 p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Taxa de Adesão</p>
-                <p className="text-2xl font-bold text-foreground">{adherenceRate}%</p>
-                <p className="text-xs text-muted-foreground">{takenCount} de {totalCount} doses tomadas</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportPdf}
-                disabled={generating}
-                className="gap-1.5"
-              >
-                <FileDown size={16} />
-                {generating ? "Gerando..." : "Exportar PDF"}
-              </Button>
+            <div className="bg-card rounded-xl border border-border/50 p-4">
+              <p className="text-sm text-muted-foreground">Taxa de Adesão</p>
+              <p className="text-2xl font-bold text-foreground">{adherenceRate}%</p>
+              <p className="text-xs text-muted-foreground">{takenCount} de {totalCount} doses tomadas</p>
             </div>
           )}
 

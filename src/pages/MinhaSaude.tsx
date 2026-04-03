@@ -323,15 +323,6 @@ const MinhaSaude = () => {
         </DialogContent>
       </Dialog>
 
-      {member && (
-        <AdherenceHistoryDrawer
-          open={adherenceOpen}
-          onOpenChange={setAdherenceOpen}
-          familyMemberId={id!}
-          memberName={member.name}
-          emitterName={user?.user_metadata?.full_name || user?.email || "Usuário"}
-        />
-      )}
     </div>
   );
 };
