@@ -30,7 +30,7 @@ import {
 import { toast } from "sonner";
 import { useMedications, Medication, NewMedication } from "@/hooks/useMedications";
 import { useConsultations } from "@/hooks/useConsultations";
-import { addDays, format, differenceInYears } from "date-fns";
+import { addDays, format, differenceInYears, parseISO } from "date-fns";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 
 interface Props {
