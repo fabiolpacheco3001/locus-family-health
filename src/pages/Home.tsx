@@ -20,7 +20,8 @@ import MemberAvatar from "@/components/MemberAvatar";
 import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
 
 import { toast } from "sonner";
-import { format, startOfDay, isBefore } from "date-fns";
+import { format, startOfDay, isBefore, isToday, isPast } from "date-fns";
+import { AlertCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { calculateNextDose } from "@/lib/calculateNextDose";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
@@ -252,12 +253,14 @@ const Home = () => {
         startDateISO = dateOnly;
       }
 
-      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
+      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfDay(new Date()));
       return { med, nextDose };
     })
     .filter(({ med, nextDose }) => {
       if (!med.frequency_hours || med.frequency_hours <= 0) return true;
-      return nextDose !== null;
+      if (!nextDose) return false;
+      // Keep all doses scheduled for today (including overdue ones)
+      return isToday(nextDose) || nextDose > new Date();
     })
     .sort((a, b) => {
       if (!a.nextDose && !b.nextDose) return 0;
@@ -566,8 +569,8 @@ const Home = () => {
                       const now = new Date();
                       const todayStr = format(now, "yyyy-MM-dd");
                       const todayDose = new Date(`${todayStr}T${med.start_time}`);
-                      const tomorrowDose = new Date(`${format(new Date(now.getTime() + 86400000), "yyyy-MM-dd")}T${med.start_time}`);
-                      let targetDose = todayDose > now ? todayDose : tomorrowDose;
+                      // Start from today's dose (even if overdue) instead of skipping to tomorrow
+                      let targetDose = new Date(todayDose.getTime());
                       // Advance past already-recorded doses
                       let advanceLimit = 50;
                       while (advanceLimit > 0) {
@@ -635,6 +638,11 @@ const Home = () => {
                             <span>{med.dosage ?? ""}</span>
                             {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
                             {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
+                            {scheduledFor && !doseStatus && isPast(new Date(scheduledFor)) && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border ml-2 shrink-0">
+                                <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                              </Badge>
+                            )}
                           </p>
                         </div>
                         <ChevronRight size={16} className="text-black shrink-0" />

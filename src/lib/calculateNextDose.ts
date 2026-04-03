@@ -9,21 +9,22 @@ export function calculateNextDose(
   startDateStr: string | null | undefined,
   frequencyHours: number | null | undefined,
   endDateStr: string | null | undefined,
+  referenceTime?: Date,
 ): Date | null {
   if (!startDateStr || !frequencyHours || frequencyHours <= 0) return null;
 
   const start = parseDateInSP(startDateStr);
   if (!start) return null;
 
-  const now = new Date();
+  const ref = referenceTime ?? new Date();
 
   // 1. Se o tratamento ainda nem começou, a próxima dose É a data de início.
-  if (start > now) return start;
+  if (start > ref) return start;
 
   // 2. Calcula a próxima dose iterando com a frequência (while loop blindado).
   const next = new Date(start.getTime());
   let maxIterations = 10000;
-  while (next <= now && maxIterations > 0) {
+  while (next <= ref && maxIterations > 0) {
     next.setTime(next.getTime() + frequencyHours * 60 * 60 * 1000);
     maxIterations--;
   }
