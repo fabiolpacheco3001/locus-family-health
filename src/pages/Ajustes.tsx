@@ -37,7 +37,7 @@ const Ajustes = () => {
   const navigate = useNavigate();
   const { members, updateMember } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
-  const { subscription, isTrialing, isActive, isPastDue, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
+  const { subscription, isTrialing, isActive, isPastDue, isCanceled, canceledButGracePeriod, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
@@ -84,7 +84,6 @@ const Ajustes = () => {
     setDeleting(true);
     try {
       if (isAdmin) {
-        // Admin: soft-delete all family members (cascade)
         if (members && members.length > 0) {
           for (const member of members) {
             await updateMember.mutateAsync({
@@ -94,14 +93,12 @@ const Ajustes = () => {
           }
         }
       } else {
-        // User: soft-delete ONLY own linked profile
         if (linkedMemberId) {
           await updateMember.mutateAsync({
             id: linkedMemberId,
             deleted_at: new Date().toISOString(),
           } as any);
         }
-        // Remove own access record from family_group_members
         if (user?.id) {
           await supabase
             .from("family_group_members" as any)
@@ -147,6 +144,8 @@ const Ajustes = () => {
                   ? "bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]"
                   : isPastDue
                   ? "bg-gradient-to-r from-red-600 to-red-400"
+                  : isCanceled
+                  ? "bg-gradient-to-r from-gray-500 to-gray-400"
                   : trialExpired
                   ? "bg-gradient-to-r from-gray-500 to-gray-400"
                   : "bg-gradient-to-r from-amber-500 to-amber-400"
@@ -161,11 +160,16 @@ const Ajustes = () => {
                           : "Plano Mensal Locus Vita"
                         : isPastDue
                         ? "Pagamento Pendente"
+                        : isCanceled
+                        ? "Assinatura Cancelada"
                         : "Assinatura"}
                     </span>
                   </div>
                   {isActive && (
                     <Badge className="bg-white/20 text-white border-none text-xs backdrop-blur-sm">Ativo</Badge>
+                  )}
+                  {isCanceled && (
+                    <Badge className="bg-white/20 text-white border-none text-xs backdrop-blur-sm">Cancelado</Badge>
                   )}
                 </div>
               </div>
@@ -173,32 +177,42 @@ const Ajustes = () => {
               {/* Body */}
               <div className="bg-card p-4 space-y-3">
                 {isActive && (
-                  <>
-                    <div className="flex justify-center items-baseline gap-1 mt-4">
-                      <span className="text-2xl font-bold text-foreground">
-                        {subscription.plan_type === "annual" ? "R$ 191,00" : "R$ 19,90"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        /{subscription.plan_type === "annual" ? "ano" : "mês"}
-                      </span>
-                    </div>
-                    {subscription.next_billing_date && (
-                      <p className="text-sm text-muted-foreground">
-                        Próximo pagamento:{" "}
-                        <strong className="text-foreground">
-                          {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
-                        </strong>
-                      </p>
-                    )}
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate("/meu-plano")}
-                      className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
-                    >
-                      Gerenciar Assinatura
-                    </Button>
-                  </>
+                  <div className="flex justify-center items-baseline gap-1 mt-4">
+                    <span className="text-2xl font-bold text-foreground">
+                      {subscription.plan_type === "annual" ? "R$ 191,00" : "R$ 19,90"}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      /{subscription.plan_type === "annual" ? "ano" : "mês"}
+                    </span>
+                  </div>
                 )}
+
+                {isActive && subscription.next_billing_date && (
+                  <p className="text-sm text-muted-foreground">
+                    Próximo pagamento:{" "}
+                    <strong className="text-foreground">
+                      {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
+                    </strong>
+                  </p>
+                )}
+
+                {isCanceled && canceledButGracePeriod && subscription.next_billing_date && (
+                  <p className="text-sm text-muted-foreground">
+                    Acesso válido até:{" "}
+                    <strong className="text-foreground">
+                      {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
+                    </strong>
+                  </p>
+                )}
+
+                {/* Always visible navigation to /meu-plano */}
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/meu-plano")}
+                  className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
+                >
+                  {isCanceled ? "Ver Meu Plano" : "Gerenciar Assinatura"}
+                </Button>
 
                 {isPastDue && (
                   <Button
