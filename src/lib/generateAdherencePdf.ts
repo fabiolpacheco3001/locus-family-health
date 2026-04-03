@@ -138,7 +138,7 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
   autoTable(doc, {
     startY: y,
     margin: { left: margin, right: margin, top: headerH + 6 },
-    head: [["Medicamento", "Tomadas", "Puladas", "Taxa"]],
+    head: [["Medicamento", "Tomadas", "Puladas", "Esquecidas", "Taxa"]],
     body: medBody,
     theme: "grid",
     headStyles: { fillColor: PRIMARY, fontSize: 9 },
