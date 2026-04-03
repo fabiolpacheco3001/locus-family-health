@@ -142,10 +142,12 @@ const MeuPlano = () => {
           {/* Plan Card */}
           <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
             <div className={`px-4 py-4 ${
-              isActive
+              isActive && !isCanceled
                 ? "bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]"
                 : isPastDue
                 ? "bg-gradient-to-r from-red-600 to-red-400"
+                : canceledButGracePeriod
+                ? "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
                 : "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
             }`}>
               <div className="flex items-center gap-2">
