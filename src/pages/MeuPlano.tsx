@@ -37,6 +37,9 @@ const MeuPlano = () => {
     return "Locus Vita Premium Mensal";
   })();
 
+  // Whether to render as a "premium card" (active OR canceled but in grace)
+  const showAsPremium = isActive || canceledButGracePeriod;
+
   const statusBadge = (() => {
     if (isActive) return { label: "Ativo", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" };
     if (isPastDue) return { label: "Pagamento Pendente", className: "bg-amber-500/15 text-amber-700 border-amber-200" };
