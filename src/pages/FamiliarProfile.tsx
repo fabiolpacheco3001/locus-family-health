@@ -159,6 +159,7 @@ const FamiliarProfile = () => {
     { icon: Syringe, label: "Vacinas", subtitle: "Carteira de vacinação", route: "vacinas" },
     { icon: Activity, label: "Diagnósticos Ativos", subtitle: "Histórico clínico", route: "doencas" },
     ...(tracksCycle ? [{ icon: Droplets, label: "Ciclo Menstrual", subtitle: "Controle do ciclo", route: "__cycle__" }] : []),
+    { icon: ClipboardCheck, label: "Adesão Medicamentosa", subtitle: "Histórico de doses", route: "__adherence__" },
   ];
 
   const memberWeight = (member as any)?.weight as number | null ?? null;
