@@ -22,6 +22,7 @@ import {
   Dumbbell,
   LineChart,
   ShowerHead,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MemberAvatar from "@/components/MemberAvatar";
