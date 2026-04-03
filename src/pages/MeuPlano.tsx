@@ -42,68 +42,37 @@ const MeuPlano = () => {
   const [cancelling, setCancelling] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
 
-  const planLabel = useMemo(() => {
-    if (!subscription) return "Plano Gratuito";
-    return subscription.plan_type === "annual"
-      ? "Locus Vita Premium Anual"
-      : "Locus Vita Premium Mensal";
-  }, [subscription]);
-
-  const statusBadge = useMemo(() => {
-    if (isActive) {
-      return {
-        label: "Ativo",
-        className: "bg-primary/15 text-foreground border-primary/30",
-      };
-    }
-
-    if (isPastDue) {
-      return {
-        label: "Pagamento Pendente",
-        className: "bg-accent/20 text-foreground border-accent/30",
-      };
-    }
-
-    if (isCanceled) {
-      return {
-        label: "Cancelado",
-        className: "bg-destructive/15 text-destructive border-destructive/30",
-      };
-    }
-
-    if (isTrialing && !trialExpired) {
-      return {
-        label: "Período Gratuito",
-        className: "bg-secondary/15 text-foreground border-secondary/30",
-      };
-    }
-
-    if (trialExpired || implicitTrialExpired) {
-      return {
-        label: "Expirado",
-        className: "bg-muted text-muted-foreground border-border",
-      };
-    }
-
-    return {
-      label: "Gratuito",
-      className: "bg-muted text-muted-foreground border-border",
-    };
-  }, [implicitTrialExpired, isActive, isCanceled, isPastDue, isTrialing, trialExpired]);
-
-  const billingDateLabel = isCanceled ? "Acesso válido até" : "Próxima renovação";
-
+  // Parser de data blindado contra erros de Cache/Javascript
   const formattedBillingDate = useMemo(() => {
-    const rawDate = subscription?.next_billing_date;
-    if (!rawDate) return "Data não disponível";
-
-    const normalizedDate = rawDate.length === 10 ? `${rawDate}T12:00:00` : rawDate;
-    const parsedDate = parseISO(normalizedDate);
-
-    if (!isValid(parsedDate)) return "Data não disponível";
-
-    return format(parsedDate, "dd MMM yyyy", { locale: ptBR });
+    try {
+      if (!subscription || !subscription.next_billing_date) return "Data não disponível";
+      const rawDate = String(subscription.next_billing_date);
+      const normalizedDate = rawDate.length === 10 ? `${rawDate}T12:00:00` : rawDate;
+      const parsedDate = parseISO(normalizedDate);
+      if (!isValid(parsedDate)) return "Data não disponível";
+      return format(parsedDate, "dd MMM yyyy", { locale: ptBR });
+    } catch (error) {
+      return "Data não disponível";
+    }
   }, [subscription?.next_billing_date]);
+
+  // Design System Fixo (Garante que as cores não quebrem)
+  const statusData = useMemo(() => {
+    if (isActive) return { label: "Ativo", color: "bg-emerald-100 text-emerald-800 border-emerald-200" };
+    if (isPastDue) return { label: "Pagamento Pendente", color: "bg-red-100 text-red-800 border-red-200" };
+    if (isCanceled) return { label: "Cancelado", color: "bg-gray-200 text-gray-800 border-gray-300" };
+    if (isTrialing && !trialExpired)
+      return { label: "Período Gratuito", color: "bg-blue-100 text-blue-800 border-blue-200" };
+    if (trialExpired || implicitTrialExpired)
+      return { label: "Expirado", color: "bg-gray-100 text-gray-500 border-gray-200" };
+    return { label: "Gratuito", color: "bg-gray-100 text-gray-500 border-gray-200" };
+  }, [isActive, isPastDue, isCanceled, isTrialing, trialExpired, implicitTrialExpired]);
+
+  const headerClass = isActive
+    ? "bg-gradient-to-r from-emerald-600 to-teal-500"
+    : isPastDue
+      ? "bg-gradient-to-r from-red-600 to-rose-500"
+      : "bg-gradient-to-r from-slate-700 to-slate-600";
 
   const handleRegularize = async () => {
     setLoadingSubscription(true);
@@ -120,7 +89,6 @@ const MeuPlano = () => {
 
   const handleCancelSubscription = async () => {
     setCancelling(true);
-
     try {
       if (!user?.id) throw new Error("Sessão inválida.");
       if (!subscription?.asaas_subscription_id) throw new Error("Assinatura não encontrada.");
@@ -129,34 +97,29 @@ const MeuPlano = () => {
       if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
 
       const { data, error } = await supabase.functions.invoke("cancel-asaas-subscription", {
-        body: {
-          asaasSubscriptionId: subscription.asaas_subscription_id,
-        },
-        headers: {
-          Authorization: `Bearer ${refreshData.session.access_token}`,
-        },
+        body: { asaasSubscriptionId: subscription.asaas_subscription_id },
+        headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
       });
 
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      // Trava de segurança: Atualiza apenas o status e preserva as datas intactas
       const { data: updatedSubscription, error: confirmError } = await supabase
         .from("subscriptions")
-        .select("*")
+        .update({ status: "canceled" })
         .eq("user_id", user.id)
+        .select("*")
         .single();
 
       if (confirmError) throw confirmError;
-      if (!updatedSubscription) throw new Error("Assinatura não encontrada após cancelamento.");
-      if (updatedSubscription.status !== "canceled") {
-        throw new Error("O cancelamento ainda não foi confirmado no banco.");
-      }
 
+      // Sincroniza o cache do React
       queryClient.setQueryData(["subscription", user.id], updatedSubscription);
       await queryClient.invalidateQueries({ queryKey: ["subscription", user.id] });
-+
+
       setShowCancelDialog(false);
-      toast.success("Assinatura cancelada com sucesso");
+      toast.success("Assinatura cancelada. O acesso foi mantido até o final do período.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro desconhecido ao cancelar");
     } finally {
@@ -183,10 +146,7 @@ const MeuPlano = () => {
         <div className="min-h-[calc(100%+1px)] space-y-4 px-4 pb-32">
           <div className="sticky top-0 z-30 -mx-4 bg-background/80 px-5 pb-4 pt-6 backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => navigate(-1)}
-                className="rounded-full p-1 transition-colors hover:bg-muted/60"
-              >
+              <button onClick={() => navigate(-1)} className="rounded-full p-1 transition-colors hover:bg-muted/60">
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
               <h1 className="text-2xl font-bold text-foreground">Meu Plano</h1>
@@ -194,32 +154,25 @@ const MeuPlano = () => {
           </div>
 
           {!subscription ? (
-            <div className="rounded-xl border border-border/40 bg-card p-5 shadow-sm">
-              <p className="text-sm text-muted-foreground">Nenhum plano contratado.</p>
+            <div className="rounded-xl border border-border/40 bg-card p-8 shadow-sm text-center">
+              <p className="text-sm font-medium text-muted-foreground">Você ainda não possui uma assinatura ativa.</p>
             </div>
           ) : (
             <div className="overflow-hidden rounded-xl border border-border/40 shadow-sm">
-              <div
-                className={[
-                  "px-4 py-4",
-                  isActive
-                    ? "bg-gradient-to-r from-foreground to-secondary"
-                    : isPastDue
-                      ? "bg-destructive"
-                      : "bg-gradient-to-r from-foreground to-primary",
-                ].join(" ")}
-              >
-                <div className="flex items-center gap-2 text-primary-foreground">
+              <div className={`px-4 py-4 ${headerClass}`}>
+                <div className="flex items-center gap-2 text-white">
                   <Crown size={18} />
-                  <span className="text-base font-bold">{planLabel}</span>
+                  <span className="text-base font-bold">
+                    {subscription.plan_type === "annual" ? "Locus Vita Premium Anual" : "Locus Vita Premium Mensal"}
+                  </span>
                 </div>
               </div>
 
               <div className="space-y-4 bg-card p-5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Status</span>
-                  <Badge className={`${statusBadge.className} text-xs font-semibold`}>
-                    {statusBadge.label}
+                  <Badge className={`${statusData.color} text-xs font-semibold px-2 py-0.5 border`}>
+                    {statusData.label}
                   </Badge>
                 </div>
 
@@ -231,32 +184,43 @@ const MeuPlano = () => {
                 </div>
 
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm text-muted-foreground">{billingDateLabel}</span>
-                  <span className="text-right text-sm font-semibold text-foreground">
-                    {formattedBillingDate}
+                  <span className="text-sm text-muted-foreground">
+                    {isCanceled ? "Acesso válido até" : "Próxima renovação"}
                   </span>
+                  <span className="text-right text-sm font-semibold text-foreground">{formattedBillingDate}</span>
                 </div>
 
                 {(isImplicitTrial || (isTrialing && !trialExpired)) && trialDaysLeft > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 rounded-lg bg-blue-50 border border-blue-100 p-3 text-sm text-blue-800">
                     <Clock size={14} className="shrink-0" />
                     <span>
-                      Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu acesso gratuito.
+                      Faltam <strong>{trialDaysLeft} dias</strong> para o fim do seu acesso gratuito.
                     </span>
                   </div>
                 )}
 
-                {(trialExpired || implicitTrialExpired) && !isActive && !isCanceled && (
-                  <p className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
-                    Seus 30 dias de acesso gratuito terminaram. Assine para continuar.
-                  </p>
+                {isCanceled && (
+                  <div className="mt-6 space-y-4 rounded-xl bg-slate-50 border border-slate-100 p-4">
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      Sua assinatura foi cancelada, mas <strong>não se preocupe!</strong> Você e sua família poderão
+                      continuar usando o aplicativo normalmente até o dia <strong>{formattedBillingDate}</strong>.
+                    </p>
+                    <Button
+                      onClick={handleReactivate}
+                      disabled={loadingSubscription}
+                      className="w-full h-11 bg-[#2A5C82] hover:bg-[#2A5C82]/90 text-white font-bold rounded-xl"
+                    >
+                      {loadingSubscription ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+                      Reativar Plano
+                    </Button>
+                  </div>
                 )}
 
                 {isPastDue && (
                   <Button
                     onClick={handleRegularize}
                     disabled={loadingSubscription}
-                    className="h-11 w-full rounded-xl bg-destructive font-bold text-destructive-foreground hover:bg-destructive/90"
+                    className="h-11 w-full rounded-xl bg-red-600 font-bold text-white hover:bg-red-700 mt-4"
                   >
                     {loadingSubscription ? (
                       <Loader2 className="animate-spin" size={16} />
@@ -269,31 +233,14 @@ const MeuPlano = () => {
                   </Button>
                 )}
 
-                {isActive && (
+                {isActive && !isCanceled && (
                   <Button
                     variant="outline"
                     onClick={() => setShowCancelDialog(true)}
-                    className="h-11 w-full rounded-xl border-destructive/30 text-destructive hover:bg-destructive/5"
+                    className="h-11 w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50 mt-4"
                   >
                     Cancelar Assinatura
                   </Button>
-                )}
-
-                {isCanceled && (
-                  <div className="space-y-2 rounded-lg bg-muted/40 p-3">
-                    <p className="text-sm text-muted-foreground">
-                      {formattedBillingDate !== "Data não disponível"
-                        ? `Plano cancelado. Você poderá utilizar o aplicativo normalmente até a data ${formattedBillingDate}.`
-                        : "Plano cancelado. Data não disponível."}
-                    </p>
-                    <Button
-                      onClick={handleReactivate}
-                      disabled={loadingSubscription}
-                      className="h-10 w-full rounded-xl font-bold"
-                    >
-                      {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Reativar Plano"}
-                    </Button>
-                  </div>
                 )}
               </div>
             </div>
@@ -311,18 +258,18 @@ const MeuPlano = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Tem certeza que deseja cancelar?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <span className="block">
+              <span className="block text-slate-600">
                 Você e sua família perderão acesso total ao aplicativo Locus Vita ao final do período vigente.
               </span>
               {formattedBillingDate !== "Data não disponível" && (
-                <span className="block font-medium text-foreground">
-                  Seu acesso continua até {formattedBillingDate}.
+                <span className="block font-medium text-foreground mt-2">
+                  Seu acesso continua garantido até {formattedBillingDate}.
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="font-semibold" disabled={cancelling}>
+            <AlertDialogCancel className="font-semibold rounded-xl" disabled={cancelling}>
               Desistir
             </AlertDialogCancel>
             <AlertDialogAction
@@ -330,7 +277,7 @@ const MeuPlano = () => {
                 e.preventDefault();
                 handleCancelSubscription();
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white hover:bg-red-700 rounded-xl"
               disabled={cancelling}
             >
               {cancelling ? (
