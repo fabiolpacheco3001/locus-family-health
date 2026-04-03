@@ -62,18 +62,40 @@ const MeuPlano = () => {
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
 
-      const { error } = await supabase.functions.invoke("cancel-asaas-subscription", {
+      const { data, error } = await supabase.functions.invoke("cancel-asaas-subscription", {
         headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
       });
 
       if (error) throw error;
 
+      // Wait for Edge Function to update the DB, then refresh local state
+      await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("user_id", user!.id)
+        .single();
+
       toast.success("Assinatura cancelada. Seu acesso continua até o fim do período vigente.");
       setShowCancelDialog(false);
+      // Force refetch subscription
+      window.location.reload();
     } catch {
       toast.error("Erro ao cancelar assinatura. Tente novamente.");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setLoadingSubscription(true);
+    try {
+      const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
+      const url = await createSubscription(planType as "monthly" | "annual");
+      window.location.href = url;
+    } catch {
+      toast.error("Erro ao gerar link de reativação.");
+    } finally {
+      setLoadingSubscription(false);
     }
   };
 
