@@ -123,12 +123,16 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
   }
 
   sectionTitle("Adesão por Medicamento");
-  const medBody = Object.entries(medGroups).map(([name, s]) => [
-    name,
-    `${s.taken}`,
-    `${s.total - s.taken}`,
-    `${s.total > 0 ? Math.round((s.taken / s.total) * 100) : 0}%`,
-  ]);
+  const medBody = Object.entries(medGroups).map(([name, s]) => {
+    const forgotten = s.total - s.taken - (s.skipped ?? 0);
+    return [
+      name,
+      `${s.taken}`,
+      `${s.skipped ?? 0}`,
+      `${forgotten > 0 ? forgotten : 0}`,
+      `${s.total > 0 ? Math.round((s.taken / s.total) * 100) : 0}%`,
+    ];
+  });
 
   autoTable(doc, {
     startY: y,
