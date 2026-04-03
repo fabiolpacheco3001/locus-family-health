@@ -166,8 +166,8 @@ const MeuPlano = () => {
                 </Badge>
               </div>
 
-              {/* Price */}
-              {subscription && showAsPremium && (
+              {/* Price — show for any existing subscription */}
+              {subscription && (isActive || canceledButGracePeriod || isCanceled) && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Valor</span>
                   <span className="text-sm font-semibold text-foreground">
@@ -176,11 +176,11 @@ const MeuPlano = () => {
                 </div>
               )}
 
-              {/* Renewal / Access-until */}
-              {renewalDate && showAsPremium && (
+              {/* Renewal / Access-until — show for active or canceled with date */}
+              {renewalDate && subscription && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    {canceledButGracePeriod ? "Acesso válido até" : "Próxima renovação"}
+                    {isCanceled ? "Acesso válido até" : "Próxima renovação"}
                   </span>
                   <span className="text-sm font-semibold text-foreground">{renewalDate}</span>
                 </div>
