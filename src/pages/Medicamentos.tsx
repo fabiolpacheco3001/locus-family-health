@@ -11,7 +11,7 @@ import AiMedicationUpload from "@/components/AiMedicationUpload";
 import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
-import { format, isPast, startOfDay } from "date-fns";
+import { format, isPast, startOfYesterday } from "date-fns";
 import { AlertCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
