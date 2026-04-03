@@ -10,7 +10,7 @@ import { parse, format } from "date-fns";
  * "yyyy-MM-ddTHH:mm" (datetime mode) format.
  */
 interface DatePickerFieldProps {
-  value: string;
+  value: string | Date | null | undefined;
   onChange: (value: string) => void;
   mode?: "date" | "datetime";
   placeholder?: string;
@@ -27,10 +27,16 @@ export function DatePickerField({
   const dateValue = React.useMemo(() => {
     if (!value) return undefined;
     try {
+      if (value instanceof Date) {
+        return isNaN(value.getTime()) ? undefined : value;
+      }
+
       if (mode === "datetime") {
-        // Parse "yyyy-MM-ddTHH:mm" or "yyyy-MM-dd HH:mm"
-        const normalized = value.replace("T", " ");
-        const parsed = parse(normalized, "yyyy-MM-dd HH:mm", new Date());
+        const normalized = value.trim().replace(" ", "T");
+        const direct = new Date(normalized);
+        if (!isNaN(direct.getTime())) return direct;
+
+        const parsed = parse(normalized.slice(0, 16).replace("T", " "), "yyyy-MM-dd HH:mm", new Date());
         return isNaN(parsed.getTime()) ? undefined : parsed;
       } else {
         const parsed = parse(value, "yyyy-MM-dd", new Date());

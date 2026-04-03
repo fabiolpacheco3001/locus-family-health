@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 export interface Subscription {
   id: string;
   user_id: string;
+  asaas_subscription_id?: string | null;
   plan_type: string;
   status: string;
   trial_end: string | null;
