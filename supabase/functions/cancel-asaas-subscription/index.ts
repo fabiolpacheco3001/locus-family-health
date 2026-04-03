@@ -39,10 +39,7 @@ Deno.serve(async (req) => {
       const payload = await req.json();
       asaasSubscriptionId = typeof payload?.asaasSubscriptionId === "string" ? payload.asaasSubscriptionId : null;
     } catch {
-      return new Response(JSON.stringify({ error: "Payload inválido." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // No body or invalid JSON — proceed with DB lookup
     }
 
     const apiKey = Deno.env.get("ASAAS_API_KEY");
@@ -69,31 +66,27 @@ Deno.serve(async (req) => {
 
     let targetSubscriptionId = asaasSubscriptionId ?? sub.asaas_subscription_id ?? null;
 
+    // Fallback: list active subscriptions from Asaas by customer
     if (!targetSubscriptionId && sub.asaas_customer_id) {
       const listRes = await fetch(
         `https://api-sandbox.asaas.com/v3/subscriptions?customer=${sub.asaas_customer_id}`,
         {
           method: "GET",
           headers: {
-            "Content-Type": "application/json",
+            accept: "application/json",
             access_token: apiKey,
           },
         }
       );
 
-      if (!listRes.ok) {
-        const errText = await listRes.text();
-        return new Response(JSON.stringify({ error: errText || "Erro ao localizar assinatura no gateway." }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        const activeSubscription = (listData.data ?? []).find(
+          (item: { status?: string; id?: string }) =>
+            ["ACTIVE", "PENDING"].includes(item.status ?? "")
+        );
+        targetSubscriptionId = activeSubscription?.id ?? null;
       }
-
-      const listData = await listRes.json();
-      const activeSubscription = (listData.data ?? []).find((item: { status?: string; id?: string }) =>
-        ["ACTIVE", "PENDING"].includes(item.status ?? "")
-      );
-      targetSubscriptionId = activeSubscription?.id ?? null;
     }
 
     if (!targetSubscriptionId) {
@@ -103,27 +96,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    const cycleEndDate = typeof sub.next_billing_date === "string"
-      ? sub.next_billing_date.slice(0, 10)
-      : null;
-
-    if (!cycleEndDate) {
-      return new Response(JSON.stringify({ error: "Data de fim do ciclo não disponível para cancelamento." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const formattedEndDate = cycleEndDate.split("T")[0];
-
-    const cancelRes = await fetch(`https://api-sandbox.asaas.com/v3/subscriptions/${targetSubscriptionId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        access_token: apiKey,
-      },
-      body: JSON.stringify({ endDate: formattedEndDate }),
-    });
+    // DELETE the subscription on Asaas
+    const cancelRes = await fetch(
+      `https://api-sandbox.asaas.com/v3/subscriptions/${targetSubscriptionId}`,
+      {
+        method: "DELETE",
+        headers: {
+          accept: "application/json",
+          access_token: apiKey,
+        },
+      }
+    );
 
     if (!cancelRes.ok) {
       let errorData: unknown;
@@ -132,34 +115,35 @@ Deno.serve(async (req) => {
       } catch {
         errorData = await cancelRes.text();
       }
-      console.error("Asaas error:", JSON.stringify(errorData));
+      console.error("Asaas DELETE error:", JSON.stringify(errorData));
       return new Response(JSON.stringify({ error: errorData || "Erro ao cancelar assinatura no gateway." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Update ONLY the status — preserve all date fields
     const { error: updateErr } = await serviceClient
       .from("subscriptions")
       .update({
         status: "canceled",
         asaas_subscription_id: targetSubscriptionId,
-        next_billing_date: sub.next_billing_date,
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId);
 
     if (updateErr) {
+      console.error("Supabase update error:", updateErr.message);
       return new Response(JSON.stringify({ error: updateErr.message }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify({ success: true, asaasSubscriptionId: targetSubscriptionId, endDate: cycleEndDate }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ success: true, asaasSubscriptionId: targetSubscriptionId }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erro interno.";
     console.error("Unexpected error:", message);
