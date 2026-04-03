@@ -178,6 +178,8 @@ Deno.serve(async (req) => {
 
       case "PAYMENT_DELETED":
       case "PAYMENT_REFUNDED":
+        // CRITICAL: Only update status — never touch date columns.
+        // Date fields (next_billing_date) MUST be preserved for Grace Period.
         newStatus = "canceled";
         updateData.status = newStatus;
         break;
