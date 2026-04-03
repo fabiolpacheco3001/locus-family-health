@@ -69,6 +69,7 @@ const MeuPlano = () => {
       const { data, error } = await supabase.functions.invoke("cancel-asaas-subscription", {
         body: {
           asaasSubscriptionId: subscription?.asaas_subscription_id ?? null,
+          endDate: subscription?.next_billing_date ?? null,
         },
         headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
       });
