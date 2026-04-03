@@ -396,6 +396,11 @@ const Medicamentos = () => {
                               <div className="flex items-center gap-2 text-sm text-primary">
                                 <CalendarClock size={14} className="shrink-0" />
                                 <span>Próxima dose: {format(toSPTime(nextDoseDate), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
+                                {!doseStatus && isPast(nextDoseDate) && (
+                                  <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border ml-1 shrink-0">
+                                    <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                                  </Badge>
+                                )}
                               </div>
                             )}
                           </div>
