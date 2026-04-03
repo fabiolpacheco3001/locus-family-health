@@ -152,7 +152,7 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
   sectionTitle("Histórico Detalhado");
   const timelineBody = data.doses.map((d) => {
     const dateStr = format(toSPTime(new Date(d.scheduled_for)), "dd/MM/yyyy HH:mm", { locale: ptBR });
-    return [dateStr, d.medication_name, d.status === "taken" ? "Tomado" : "Pulado"];
+    return [dateStr, d.medication_name, d.status === "taken" ? "Tomado" : d.status === "forgotten" ? "Esquecido" : "Pulado"];
   });
 
   autoTable(doc, {
