@@ -216,8 +216,8 @@ const MeuPlano = () => {
                 </Button>
               )}
 
-              {/* Cancel button (only for active paid subscriptions) */}
-              {isActive && subscription && (
+              {/* Cancel button (only for active — NOT canceled+grace) */}
+              {isActive && !isCanceled && subscription && (
                 <Button
                   variant="outline"
                   onClick={() => setShowCancelDialog(true)}
