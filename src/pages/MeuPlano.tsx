@@ -1,53 +1,109 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Crown, AlertCircle, Loader2, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useSubscription } from "@/hooks/useSubscription";
-import { useAuth } from "@/hooks/useAuth";
-import { createSubscription } from "@/services/asaasService";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { format } from "date-fns";
+import { AlertCircle, ArrowLeft, Clock, Crown, Loader2 } from "lucide-react";
+import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { parseDateInSP } from "@/lib/dateUtils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useAuth } from "@/hooks/useAuth";
+import { useSubscription } from "@/hooks/useSubscription";
+import { supabase } from "@/integrations/supabase/client";
+import { createSubscription } from "@/services/asaasService";
+import { toast } from "sonner";
 
 const MeuPlano = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const {
-    subscription, isActive, isPastDue, isCanceled, isTrialing,
-    trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium,
-    canceledButGracePeriod,
+    subscription,
+    isActive,
+    isPastDue,
+    isCanceled,
+    isTrialing,
+    trialDaysLeft,
+    trialExpired,
+    isImplicitTrial,
+    implicitTrialExpired,
   } = useSubscription();
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
 
-  const planLabel = (() => {
+  const planLabel = useMemo(() => {
     if (!subscription) return "Plano Gratuito";
-    if (subscription.plan_type === "annual") return "Locus Vita Premium Anual";
-    return "Locus Vita Premium Mensal";
-  })();
+    return subscription.plan_type === "annual"
+      ? "Locus Vita Premium Anual"
+      : "Locus Vita Premium Mensal";
+  }, [subscription]);
 
-  // Whether to render as a "premium card" (active OR canceled but in grace)
-  const showAsPremium = isActive || canceledButGracePeriod;
+  const statusBadge = useMemo(() => {
+    if (isActive) {
+      return {
+        label: "Ativo",
+        className: "bg-primary/15 text-foreground border-primary/30",
+      };
+    }
 
-  const statusBadge = (() => {
-    if (isActive) return { label: "Ativo", className: "bg-emerald-500/15 text-emerald-700 border-emerald-200" };
-    if (isPastDue) return { label: "Pagamento Pendente", className: "bg-amber-500/15 text-amber-700 border-amber-200" };
-    if (isCanceled) return { label: "Cancelado", className: "bg-destructive/15 text-destructive border-destructive/30" };
-    if (isTrialing && !trialExpired) return { label: "Período Gratuito", className: "bg-sky-500/15 text-sky-700 border-sky-200" };
-    if (trialExpired || implicitTrialExpired) return { label: "Expirado", className: "bg-muted text-muted-foreground border-border" };
-    return { label: "Gratuito", className: "bg-muted text-muted-foreground border-border" };
-  })();
+    if (isPastDue) {
+      return {
+        label: "Pagamento Pendente",
+        className: "bg-accent/20 text-foreground border-accent/30",
+      };
+    }
+
+    if (isCanceled) {
+      return {
+        label: "Cancelado",
+        className: "bg-destructive/15 text-destructive border-destructive/30",
+      };
+    }
+
+    if (isTrialing && !trialExpired) {
+      return {
+        label: "Período Gratuito",
+        className: "bg-secondary/15 text-foreground border-secondary/30",
+      };
+    }
+
+    if (trialExpired || implicitTrialExpired) {
+      return {
+        label: "Expirado",
+        className: "bg-muted text-muted-foreground border-border",
+      };
+    }
+
+    return {
+      label: "Gratuito",
+      className: "bg-muted text-muted-foreground border-border",
+    };
+  }, [implicitTrialExpired, isActive, isCanceled, isPastDue, isTrialing, trialExpired]);
+
+  const billingDateLabel = isCanceled ? "Acesso válido até" : "Próxima renovação";
+
+  const formattedBillingDate = useMemo(() => {
+    const rawDate = subscription?.next_billing_date;
+    if (!rawDate) return "Data não disponível";
+
+    const normalizedDate = rawDate.length === 10 ? `${rawDate}T12:00:00` : rawDate;
+    const parsedDate = parseISO(normalizedDate);
+
+    if (!isValid(parsedDate)) return "Data não disponível";
+
+    return format(parsedDate, "dd MMM yyyy", { locale: ptBR });
+  }, [subscription?.next_billing_date]);
 
   const handleRegularize = async () => {
     setLoadingSubscription(true);
@@ -64,17 +120,21 @@ const MeuPlano = () => {
 
   const handleCancelSubscription = async () => {
     setCancelling(true);
+
     try {
       if (!user?.id) throw new Error("Sessão inválida.");
+      if (!subscription?.asaas_subscription_id) throw new Error("Assinatura não encontrada.");
 
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
 
       const { data, error } = await supabase.functions.invoke("cancel-asaas-subscription", {
         body: {
-          asaasSubscriptionId: subscription?.asaas_subscription_id ?? null,
+          asaasSubscriptionId: subscription.asaas_subscription_id,
         },
-        headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
+        headers: {
+          Authorization: `Bearer ${refreshData.session.access_token}`,
+        },
       });
 
       if (error) throw error;
@@ -87,17 +147,18 @@ const MeuPlano = () => {
         .single();
 
       if (confirmError) throw confirmError;
-      if (updatedSubscription?.status !== "canceled") {
+      if (!updatedSubscription) throw new Error("Assinatura não encontrada após cancelamento.");
+      if (updatedSubscription.status !== "canceled") {
         throw new Error("O cancelamento ainda não foi confirmado no banco.");
       }
 
       queryClient.setQueryData(["subscription", user.id], updatedSubscription);
-      queryClient.invalidateQueries({ queryKey: ["subscription", user.id] });
-
-      toast.success("Assinatura cancelada. Seu acesso continua até o fim do período vigente.");
+      await queryClient.invalidateQueries({ queryKey: ["subscription", user.id] });
++
       setShowCancelDialog(false);
+      toast.success("Assinatura cancelada com sucesso");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro ao cancelar assinatura. Tente novamente.");
+      toast.error(err instanceof Error ? err.message : "Erro desconhecido ao cancelar");
     } finally {
       setCancelling(false);
     }
@@ -116,162 +177,154 @@ const MeuPlano = () => {
     }
   };
 
-  const renewalDate = (() => {
-    const endDate = subscription?.next_billing_date;
-    if (!endDate) return null;
-
-    const parsed = parseDateInSP(endDate.slice(0, 10));
-    if (!parsed || Number.isNaN(parsed.getTime())) return null;
-
-    return format(parsed, "dd MMM yyyy", { locale: ptBR });
-  })();
-
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
+    <div className="fixed inset-x-0 top-0 bottom-[72px] z-10 flex flex-col overflow-hidden bg-background">
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="px-4 pb-32 space-y-4 min-h-[calc(100%+1px)]">
-          {/* Sticky Header */}
-          <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-4 -mx-4 px-5">
+        <div className="min-h-[calc(100%+1px)] space-y-4 px-4 pb-32">
+          <div className="sticky top-0 z-30 -mx-4 bg-background/80 px-5 pb-4 pt-6 backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <button onClick={() => navigate(-1)} className="p-1 rounded-full hover:bg-muted/60 transition-colors">
+              <button
+                onClick={() => navigate(-1)}
+                className="rounded-full p-1 transition-colors hover:bg-muted/60"
+              >
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
               <h1 className="text-2xl font-bold text-foreground">Meu Plano</h1>
             </div>
           </div>
 
-          {/* Plan Card */}
-          <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
-            <div className={`px-4 py-4 ${
-              isActive && !isCanceled
-                ? "bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]"
-                : isPastDue
-                ? "bg-gradient-to-r from-red-600 to-red-400"
-                : canceledButGracePeriod
-                ? "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
-                : "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
-            }`}>
-              <div className="flex items-center gap-2">
-                <Crown size={18} className="text-white" />
-                <span className="text-base font-bold text-white">{planLabel}</span>
-              </div>
+          {!subscription ? (
+            <div className="rounded-xl border border-border/40 bg-card p-5 shadow-sm">
+              <p className="text-sm text-muted-foreground">Nenhum plano contratado.</p>
             </div>
-
-            <div className="bg-card p-5 space-y-4">
-              {/* Status */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <Badge className={`${statusBadge.className} text-xs font-semibold`}>
-                  {statusBadge.label}
-                </Badge>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-border/40 shadow-sm">
+              <div
+                className={[
+                  "px-4 py-4",
+                  isActive
+                    ? "bg-gradient-to-r from-foreground to-secondary"
+                    : isPastDue
+                      ? "bg-destructive"
+                      : "bg-gradient-to-r from-foreground to-primary",
+                ].join(" ")}
+              >
+                <div className="flex items-center gap-2 text-primary-foreground">
+                  <Crown size={18} />
+                  <span className="text-base font-bold">{planLabel}</span>
+                </div>
               </div>
 
-              {/* Price — show for any existing subscription */}
-              {subscription && (isActive || canceledButGracePeriod || isCanceled) && (
+              <div className="space-y-4 bg-card p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Status</span>
+                  <Badge className={`${statusBadge.className} text-xs font-semibold`}>
+                    {statusBadge.label}
+                  </Badge>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Valor</span>
                   <span className="text-sm font-semibold text-foreground">
                     {subscription.plan_type === "annual" ? "R$ 191,00/ano" : "R$ 19,90/mês"}
                   </span>
                 </div>
-              )}
 
-              {/* Renewal / Access-until — show for active or canceled with date */}
-              {renewalDate && subscription && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    {isCanceled ? "Acesso válido até" : "Próxima renovação"}
-                  </span>
-                  <span className="text-sm font-semibold text-foreground">{renewalDate}</span>
-                </div>
-              )}
-
-              {/* Trial countdown */}
-              {(isImplicitTrial || (isTrialing && !trialExpired)) && trialDaysLeft > 0 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 rounded-lg p-3">
-                  <Clock size={14} className="shrink-0" />
-                  <span>
-                    Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu acesso gratuito.
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-muted-foreground">{billingDateLabel}</span>
+                  <span className="text-right text-sm font-semibold text-foreground">
+                    {formattedBillingDate}
                   </span>
                 </div>
-              )}
 
-              {/* Expired message */}
-              {(trialExpired || implicitTrialExpired) && !isActive && (
-                <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg p-3">
-                  Seus 30 dias de acesso gratuito terminaram. Assine para continuar.
-                </p>
-              )}
-
-              {/* Past due action */}
-              {isPastDue && (
-                <Button
-                  onClick={handleRegularize}
-                  disabled={loadingSubscription}
-                  className="w-full h-11 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold shadow-md"
-                >
-                  {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : (
-                    <span className="flex items-center gap-2">
-                      <AlertCircle size={16} />
-                      Regularizar Pagamento
+                {(isImplicitTrial || (isTrialing && !trialExpired)) && trialDaysLeft > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
+                    <Clock size={14} className="shrink-0" />
+                    <span>
+                      Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu acesso gratuito.
                     </span>
-                  )}
-                </Button>
-              )}
+                  </div>
+                )}
 
-              {/* Cancel button (only for active — NOT canceled+grace) */}
-              {isActive && !isCanceled && subscription && (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCancelDialog(true)}
-                  className="w-full h-11 rounded-xl border-destructive/30 text-destructive hover:bg-destructive/5 font-semibold"
-                >
-                  Cancelar Assinatura
-                </Button>
-              )}
-
-              {/* Canceled message with renewal date and reactivation */}
-              {isCanceled && (
-                <div className="bg-muted/40 rounded-lg p-3 space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    {renewalDate
-                      ? `Plano cancelado. Você poderá utilizar o aplicativo normalmente até a data ${renewalDate}.`
-                      : "Plano cancelado. Data não disponível."}
+                {(trialExpired || implicitTrialExpired) && !isActive && !isCanceled && (
+                  <p className="rounded-lg bg-muted/40 p-3 text-sm text-muted-foreground">
+                    Seus 30 dias de acesso gratuito terminaram. Assine para continuar.
                   </p>
+                )}
+
+                {isPastDue && (
                   <Button
-                    onClick={handleReactivate}
+                    onClick={handleRegularize}
                     disabled={loadingSubscription}
-                    className="w-full h-10 rounded-xl font-bold"
+                    className="h-11 w-full rounded-xl bg-destructive font-bold text-destructive-foreground hover:bg-destructive/90"
                   >
-                    {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Reativar Plano"}
+                    {loadingSubscription ? (
+                      <Loader2 className="animate-spin" size={16} />
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <AlertCircle size={16} />
+                        Regularizar Pagamento
+                      </span>
+                    )}
                   </Button>
-                </div>
-              )}
+                )}
+
+                {isActive && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCancelDialog(true)}
+                    className="h-11 w-full rounded-xl border-destructive/30 text-destructive hover:bg-destructive/5"
+                  >
+                    Cancelar Assinatura
+                  </Button>
+                )}
+
+                {isCanceled && (
+                  <div className="space-y-2 rounded-lg bg-muted/40 p-3">
+                    <p className="text-sm text-muted-foreground">
+                      {formattedBillingDate !== "Data não disponível"
+                        ? `Plano cancelado. Você poderá utilizar o aplicativo normalmente até a data ${formattedBillingDate}.`
+                        : "Plano cancelado. Data não disponível."}
+                    </p>
+                    <Button
+                      onClick={handleReactivate}
+                      disabled={loadingSubscription}
+                      className="h-10 w-full rounded-xl font-bold"
+                    >
+                      {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Reativar Plano"}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Cancel Confirmation Dialog */}
-      <AlertDialog open={showCancelDialog} onOpenChange={(open) => { if (!cancelling) setShowCancelDialog(open); }}>
-        <AlertDialogContent
-          className="max-w-[340px] rounded-[24px] w-[90vw]"
-        >
+      <AlertDialog
+        open={showCancelDialog}
+        onOpenChange={(open) => {
+          if (!cancelling) setShowCancelDialog(open);
+        }}
+      >
+        <AlertDialogContent className="w-[90vw] max-w-[340px] rounded-[24px]">
           <AlertDialogHeader>
             <AlertDialogTitle>Tem certeza que deseja cancelar?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <span className="block">
                 Você e sua família perderão acesso total ao aplicativo Locus Vita ao final do período vigente.
               </span>
-              {renewalDate && (
-                <span className="block text-foreground font-medium">
-                  Seu acesso continua até {renewalDate}.
+              {formattedBillingDate !== "Data não disponível" && (
+                <span className="block font-medium text-foreground">
+                  Seu acesso continua até {formattedBillingDate}.
                 </span>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="font-semibold" disabled={cancelling}>Desistir</AlertDialogCancel>
+            <AlertDialogCancel className="font-semibold" disabled={cancelling}>
+              Desistir
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
@@ -285,7 +338,9 @@ const MeuPlano = () => {
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Cancelando...
                 </span>
-              ) : "Confirmar Cancelamento"}
+              ) : (
+                "Confirmar Cancelamento"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
