@@ -124,6 +124,7 @@ export function useSubscription() {
     isActive,
     isPastDue,
     isCanceled,
+    canceledButGracePeriod,
     trialDaysLeft,
     trialExpired: trialExpired || implicitTrialExpired,
     canUsePremium,
