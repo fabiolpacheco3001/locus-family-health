@@ -62,18 +62,40 @@ const MeuPlano = () => {
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
 
-      const { error } = await supabase.functions.invoke("cancel-asaas-subscription", {
+      const { data, error } = await supabase.functions.invoke("cancel-asaas-subscription", {
         headers: { Authorization: `Bearer ${refreshData.session.access_token}` },
       });
 
       if (error) throw error;
 
+      // Wait for Edge Function to update the DB, then refresh local state
+      await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("user_id", user!.id)
+        .single();
+
       toast.success("Assinatura cancelada. Seu acesso continua até o fim do período vigente.");
       setShowCancelDialog(false);
+      // Force refetch subscription
+      window.location.reload();
     } catch {
       toast.error("Erro ao cancelar assinatura. Tente novamente.");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    setLoadingSubscription(true);
+    try {
+      const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
+      const url = await createSubscription(planType as "monthly" | "annual");
+      window.location.href = url;
+    } catch {
+      toast.error("Erro ao gerar link de reativação.");
+    } finally {
+      setLoadingSubscription(false);
     }
   };
 
@@ -181,18 +203,20 @@ const MeuPlano = () => {
                 </Button>
               )}
 
-              {/* Canceled message */}
+              {/* Canceled message with renewal date and reactivation */}
               {isCanceled && (
                 <div className="bg-muted/40 rounded-lg p-3 space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    Sua assinatura foi cancelada. Assine novamente para recuperar o acesso Premium.
+                    Plano cancelado.{renewalDate
+                      ? ` Você poderá utilizar o aplicativo normalmente até a data ${renewalDate}.`
+                      : " Assine novamente para recuperar o acesso Premium."}
                   </p>
                   <Button
-                    onClick={handleRegularize}
+                    onClick={handleReactivate}
                     disabled={loadingSubscription}
-                    className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold"
+                    className="w-full h-10 rounded-xl font-bold"
                   >
-                    {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Reassinar"}
+                    {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : "Reativar Plano"}
                   </Button>
                 </div>
               )}
