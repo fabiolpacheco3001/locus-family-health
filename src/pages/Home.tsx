@@ -253,12 +253,14 @@ const Home = () => {
         startDateISO = dateOnly;
       }
 
-      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
+      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfDay(new Date()));
       return { med, nextDose };
     })
     .filter(({ med, nextDose }) => {
       if (!med.frequency_hours || med.frequency_hours <= 0) return true;
-      return nextDose !== null;
+      if (!nextDose) return false;
+      // Keep all doses scheduled for today (including overdue ones)
+      return isToday(nextDose) || nextDose > new Date();
     })
     .sort((a, b) => {
       if (!a.nextDose && !b.nextDose) return 0;
