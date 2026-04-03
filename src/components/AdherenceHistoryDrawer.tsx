@@ -17,12 +17,23 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   familyMemberId: string;
   memberName: string;
-  logoBase64?: string;
   emitterName: string;
 }
 
-const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName, logoBase64, emitterName }: Props) => {
+const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName, emitterName }: Props) => {
   const [generating, setGenerating] = useState(false);
+  const [logoBase64, setLogoBase64] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    fetch("/logo-locus-vita-pdf.png")
+      .then((r) => r.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setLogoBase64(reader.result as string);
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => {});
+  }, []);
 
   const { data: doses = [], isLoading } = useQuery({
     queryKey: ["adherence_history", familyMemberId],
