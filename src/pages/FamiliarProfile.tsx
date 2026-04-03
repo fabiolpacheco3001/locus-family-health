@@ -34,6 +34,7 @@ import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
 
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
 import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
+import AdherenceHistoryDrawer from "@/components/AdherenceHistoryDrawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { toast } from "sonner";
