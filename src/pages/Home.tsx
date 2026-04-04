@@ -619,65 +619,7 @@ const Home = () => {
                   </button>
                 ))}
                 {/* Medications */}
-                {(showAllActions ? medsWithNextDose : medsWithNextDose.slice(0, DISPLAY_LIMIT)).map(({ med, nextDose }) => {
-                  const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
-                  const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
-
-                  let doseLabel = "";
-                  let scheduledFor: string | null = null;
-                  let doseStatus: "taken" | "skipped" | null = null;
-
-                  if (isContinuous) {
-                    if (med.start_date && med.start_time) {
-                      const now = new Date();
-                      const todayStr = format(now, "yyyy-MM-dd");
-                      const todayDose = new Date(`${todayStr}T${med.start_time}`);
-                      // Start from today's dose (even if overdue) instead of skipping to tomorrow
-                      let targetDose = new Date(todayDose.getTime());
-                      // Advance past already-recorded doses
-                      let advanceLimit = 50;
-                      while (advanceLimit > 0) {
-                        const key = `${med.id}-${targetDose.toISOString()}`;
-                        if (!homeDoseStatuses[key]) break;
-                        targetDose = new Date(targetDose.getTime() + 24 * 60 * 60 * 1000);
-                        advanceLimit--;
-                      }
-                      if (!isNaN(targetDose.getTime())) {
-                        doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-                        scheduledFor = targetDose.toISOString();
-                      }
-                    }
-                  } else if (isValidNextDose) {
-                    // Advance past already-recorded doses
-                    let candidate = new Date(nextDose.getTime());
-                    let advanceLimit = 50;
-                    while (advanceLimit > 0 && med.frequency_hours && med.frequency_hours > 0) {
-                      const key = `${med.id}-${candidate.toISOString()}`;
-                      if (!homeDoseStatuses[key]) break;
-                      candidate = new Date(candidate.getTime() + med.frequency_hours * 60 * 60 * 1000);
-                      advanceLimit--;
-                    }
-                    // Validate against end_date
-                    if (med.end_date) {
-                      const endStr = med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date;
-                      const endDt = parseDateInSP(endStr);
-                      if (endDt && candidate > endDt) {
-                        // Treatment ended
-                        scheduledFor = null;
-                      } else {
-                        doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-                        scheduledFor = candidate.toISOString();
-                      }
-                    } else {
-                      doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-                      scheduledFor = candidate.toISOString();
-                    }
-                  }
-
-                  const doseKey = scheduledFor ? `${med.id}-${scheduledFor}` : null;
-                  doseStatus = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
-
-                  return (
+                {(showAllActions ? medsWithNextDose : medsWithNextDose.slice(0, DISPLAY_LIMIT)).map(({ med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous }) => (
                     <div
                       key={med.id}
                       className="flex flex-col p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left w-full"
@@ -705,19 +647,19 @@ const Home = () => {
                         </div>
                         <ChevronRight size={16} className="text-black shrink-0" />
                       </button>
-                      {scheduledFor && (
+                      {effectiveScheduledFor && (
                         <div className="flex flex-row items-center justify-between w-full mt-4 pt-3 border-t border-border/30">
-                          <div className="flex items-center justify-start min-w-[85px]">
-                            {!doseStatus && isPast(new Date(scheduledFor)) && (
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-1">
-                                <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                          <div className="flex items-center justify-start h-full">
+                            {!doseStatus && isOverdue && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-1 inline-flex items-center justify-center gap-1 my-auto leading-none h-[22px]">
+                                <AlertCircle className="w-3 h-3 flex-shrink-0" /> Atrasado
                               </Badge>
                             )}
                           </div>
                           <div className="flex items-center justify-end gap-2">
                             <MedicationDoseActions
                               medicationId={med.id}
-                              scheduledFor={scheduledFor}
+                              scheduledFor={effectiveScheduledFor}
                               doseStatus={doseStatus}
                               frequencyHours={med.frequency_hours}
                               endDate={med.end_date}
@@ -727,8 +669,7 @@ const Home = () => {
                         </div>
                       )}
                     </div>
-                  );
-                })}
+                  ))}
                 {medsWithNextDose.length > DISPLAY_LIMIT && (
                   <button
                     onClick={() => setShowAllActions(prev => !prev)}
