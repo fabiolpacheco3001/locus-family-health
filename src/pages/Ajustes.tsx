@@ -123,7 +123,7 @@ const Ajustes = () => {
         <div className="px-4 pb-32 space-y-4 min-h-[calc(100%+1px)]">
           {/* Sticky Header with Glassmorphism */}
           <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-4 -mx-4 px-5">
-            <h1 className="text-2xl font-bold text-foreground px-1">Ajustes</h1>
+            <h1 className="font-bold text-foreground px-1 text-lg">Ajustes</h1>
           </div>
 
           {/* Profile Card */}
