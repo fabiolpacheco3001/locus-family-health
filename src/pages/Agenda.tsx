@@ -79,8 +79,7 @@ const Agenda = () => {
 
 
       if (isAdmin && groupId) {
-        cq = cq.eq("group_id", groupId);
-        eq = eq.eq("group_id", groupId);
+        // Trust RLS — no explicit group_id filter for admins (matches Home behavior)
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
