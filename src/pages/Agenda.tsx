@@ -92,12 +92,11 @@ const Agenda = () => {
         pq = pq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes, petRes, medRes] = await Promise.all([cq, eq, pq, mq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
       if (petRes.error) throw petRes.error;
-      if (medRes.error) throw medRes.error;
 
       const consultations: AgendaItem[] = (consultRes.data ?? []).map((c: any) => {
         const dateStr = c.consultation_date;
