@@ -172,7 +172,6 @@ const Agenda = () => {
     let result = items;
     if (currentFilter === "consultas") result = items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
     else if (currentFilter === "exames") result = items.filter((i) => i.kind === "exam");
-    else if (currentFilter === "medicamentos") result = items.filter((i) => i.kind === "medication");
     else if (currentFilter === "upcoming") result = items.filter((i) =>
       i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Pronto"
     );
