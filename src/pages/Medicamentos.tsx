@@ -403,20 +403,24 @@ const Medicamentos = () => {
                         <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
                       </button>
                       {isAtivo && scheduledFor && (
-                        <div className="flex flex-row items-center justify-center gap-3 mt-3 w-full">
-                          {!doseStatus && nextDoseDate && isPast(nextDoseDate) && (
-                            <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border shrink-0">
-                              <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
-                            </Badge>
-                          )}
-                          <MedicationDoseActions
-                            medicationId={m.id}
-                            scheduledFor={scheduledFor}
-                            doseStatus={doseStatus}
-                            frequencyHours={m.frequency_hours}
-                            endDate={m.end_date}
-                            usoContinuo={m.uso_continuo}
-                          />
+                        <div className="flex flex-row items-center justify-between w-full mt-4 pt-3 border-t border-border/30">
+                          <div className="flex items-center justify-start min-w-[85px]">
+                            {!doseStatus && nextDoseDate && isPast(nextDoseDate) && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-1">
+                                <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-end gap-2">
+                            <MedicationDoseActions
+                              medicationId={m.id}
+                              scheduledFor={scheduledFor}
+                              doseStatus={doseStatus}
+                              frequencyHours={m.frequency_hours}
+                              endDate={m.end_date}
+                              usoContinuo={m.uso_continuo}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

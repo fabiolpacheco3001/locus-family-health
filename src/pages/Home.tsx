@@ -645,20 +645,24 @@ const Home = () => {
                         <ChevronRight size={16} className="text-black shrink-0" />
                       </button>
                       {scheduledFor && (
-                        <div className="flex flex-row items-center justify-center gap-3 mt-3 w-full">
-                          {!doseStatus && isPast(new Date(scheduledFor)) && (
-                            <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border shrink-0">
-                              <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
-                            </Badge>
-                          )}
-                          <MedicationDoseActions
-                            medicationId={med.id}
-                            scheduledFor={scheduledFor}
-                            doseStatus={doseStatus}
-                            frequencyHours={med.frequency_hours}
-                            endDate={med.end_date}
-                            usoContinuo={med.uso_continuo}
-                          />
+                        <div className="flex flex-row items-center justify-between w-full mt-4 pt-3 border-t border-border/30">
+                          <div className="flex items-center justify-start min-w-[85px]">
+                            {!doseStatus && isPast(new Date(scheduledFor)) && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-1">
+                                <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-end gap-2">
+                            <MedicationDoseActions
+                              medicationId={med.id}
+                              scheduledFor={scheduledFor}
+                              doseStatus={doseStatus}
+                              frequencyHours={med.frequency_hours}
+                              endDate={med.end_date}
+                              usoContinuo={med.uso_continuo}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -669,7 +673,7 @@ const Home = () => {
                     onClick={() => setShowAllActions(prev => !prev)}
                     className="w-full py-2.5 text-sm font-medium text-primary hover:text-primary/80 active:text-primary/60 transition-colors rounded-xl border border-border/50 bg-card"
                   >
-                    {showAllActions ? "Ocultar" : `Ver mais ${medsWithNextDose.length - DISPLAY_LIMIT} ações pendentes`}
+                    {showAllActions ? "Ocultar Ações" : "Ver mais Ações"}
                   </button>
                 )}
               </div>
