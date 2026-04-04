@@ -643,14 +643,14 @@ const Home = () => {
                       </button>
                       {effectiveScheduledFor && (
                          <div className="flex w-full items-center justify-between mt-4 pt-3 border-t border-border/30">
-                            <div className="flex items-center h-[32px]">
+                            <div className="flex items-center">
                              {!doseStatus && isOverdue && (
-                               <Badge className="bg-destructive text-destructive-foreground border-destructive text-[10px] font-bold px-2 py-0.5 inline-flex items-center gap-1 translate-y-[1px] m-0">
-                                <AlertCircle className="w-3 h-3 relative -top-[0.5px]" /> Atrasado
+                               <Badge className="bg-destructive text-destructive-foreground border-destructive text-[10px] font-bold px-2.5 h-7 m-0 inline-flex items-center justify-center gap-1">
+                                <AlertCircle className="w-3 h-3" /> Atrasado
                               </Badge>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center">
                             <MedicationDoseActions
                               medicationId={med.id}
                               scheduledFor={effectiveScheduledFor}
