@@ -558,7 +558,7 @@ const Home = () => {
                   </button>
                 ))}
                 {/* Medications */}
-                {medsWithNextDose.slice(0, 5).map(({ med, nextDose }) => {
+                {(showAllActions ? medsWithNextDose : medsWithNextDose.slice(0, DISPLAY_LIMIT)).map(({ med, nextDose }) => {
                   const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
                   const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
 
