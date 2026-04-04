@@ -326,48 +326,12 @@ const Medicamentos = () => {
               {medicamentosFiltrados.map((m) => {
                 const isAtivo = m.status === 'Ativo';
 
-                // Calculate next dose for active meds
-                let nextDoseDate: Date | null = null;
-                let scheduledFor: string | null = null;
-                if (isAtivo) {
-                  const dateOnly = m.start_date?.slice(0, 10);
-                  let startDateISO: string | null = null;
-                  if (dateOnly && m.start_time) {
-                    startDateISO = `${dateOnly}T${m.start_time}`;
-                  } else if (dateOnly) {
-                    startDateISO = dateOnly;
-                  }
-                  nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, startOfYesterday());
-                  // Advance past already-recorded doses
-                  if (nextDoseDate && m.frequency_hours && m.frequency_hours > 0) {
-                    let candidate = new Date(nextDoseDate.getTime());
-                    let advanceLimit = 50;
-                    while (advanceLimit > 0) {
-                      const key = `${m.id}-${candidate.toISOString()}`;
-                      if (!medDoseStatuses[key]) break;
-                      candidate = new Date(candidate.getTime() + m.frequency_hours * 60 * 60 * 1000);
-                      advanceLimit--;
-                    }
-                    // Validate against end_date
-                    if (m.end_date) {
-                      const endStr = m.end_date.length === 10 ? m.end_date + "T23:59:59" : m.end_date;
-                      const endDt = parseDateInSP(endStr);
-                      if (endDt && candidate > endDt) {
-                        nextDoseDate = null;
-                      } else {
-                        nextDoseDate = candidate;
-                      }
-                    } else {
-                      nextDoseDate = candidate;
-                    }
-                  }
-                  if (nextDoseDate) {
-                    scheduledFor = nextDoseDate.toISOString();
-                  }
-                }
-
-                const doseKey = scheduledFor ? `${m.id}-${scheduledFor}` : null;
-                const doseStatus = doseKey ? (medDoseStatuses[doseKey] ?? null) : null;
+                // Look up pre-computed values for active meds
+                const precomputed = isAtivo ? activeMedsWithEffective.find(a => a.med.id === m.id) : null;
+                const nextDoseDate = precomputed?.nextDoseDate ?? null;
+                const scheduledFor = precomputed?.scheduledFor ?? null;
+                const doseStatus = precomputed?.doseStatus ?? null;
+                const isOverdue = precomputed?.isOverdue ?? false;
 
                 return (
                   <SwipeableActionCard
