@@ -156,40 +156,7 @@ const Agenda = () => {
         };
       });
 
-      // Build medication agenda items from next dose
-      const medicationItems: AgendaItem[] = [];
-      for (const med of (medRes.data ?? []) as any[]) {
-        const dateOnly = med.start_date?.slice(0, 10);
-        let startDateISO: string | null = null;
-        if (dateOnly && med.start_time) {
-          startDateISO = `${dateOnly}T${med.start_time}`;
-        } else if (dateOnly) {
-          startDateISO = dateOnly;
-        }
-
-        const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
-        if (!nextDose) continue;
-
-        const scheduledFor = nextDose.toISOString();
-
-        medicationItems.push({
-          id: `med-${med.id}-${scheduledFor}`,
-          family_member_id: med.family_member_id,
-          title: med.name,
-          subtitle: med.dosage ? med.dosage : null,
-          date: scheduledFor,
-          type: "medication",
-          status: "Ativo",
-          memberName: med.family_members?.name ?? "Usuário",
-          kind: "medication",
-          isOverdue: isBefore(nextDose, new Date()),
-          isPet: (med.family_members?.member_type || "human") === "pet",
-          medicationId: med.id,
-          scheduledFor,
-        });
-      }
-
-      const merged = [...consultations, ...exams, ...petRoutines, ...medicationItems];
+      const merged = [...consultations, ...exams, ...petRoutines];
       merged.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
