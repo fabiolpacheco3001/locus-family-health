@@ -77,10 +77,6 @@ const Agenda = () => {
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true });
 
-      let mq = supabase
-        .from("medications")
-        .select("id, family_member_id, name, dosage, frequency_hours, start_date, start_time, end_date, status, uso_continuo, estoque_total, family_members!inner(name, member_type)")
-        .eq("status", "Ativo");
 
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
