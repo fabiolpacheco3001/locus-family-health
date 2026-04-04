@@ -244,32 +244,93 @@ const Home = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Build list of active meds with their next dose
-  const medsWithNextDose = React.useMemo(() => activeMeds
-    .map((med) => {
-      const dateOnly = med.start_date?.slice(0, 10);
-      let startDateISO: string | null = null;
-      if (dateOnly && med.start_time) {
-        startDateISO = `${dateOnly}T${med.start_time}`;
-      } else if (dateOnly) {
-        startDateISO = dateOnly;
-      }
+  // Build list of active meds with their effective next dose (pre-computed for correct sorting)
+  const medsWithNextDose = React.useMemo(() => {
+    const now = new Date();
+    const todayStr = format(now, "yyyy-MM-dd");
 
-      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday());
-      return { med, nextDose };
-    })
-    .filter(({ med, nextDose }) => {
-      if (!med.frequency_hours || med.frequency_hours <= 0) return true;
-      if (!nextDose) return false;
-      // Keep doses from yesterday and today (48h window)
-      return isToday(nextDose) || isYesterday(nextDose) || nextDose > new Date();
-    })
-    .sort((a, b) => {
-      if (!a.nextDose && !b.nextDose) return 0;
-      if (!a.nextDose) return 1;
-      if (!b.nextDose) return -1;
-      return a.nextDose.getTime() - b.nextDose.getTime();
-    }), [activeMeds]);
+    return activeMeds
+      .map((med) => {
+        const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
+        const dateOnly = med.start_date?.slice(0, 10);
+        let startDateISO: string | null = null;
+        if (dateOnly && med.start_time) {
+          startDateISO = `${dateOnly}T${med.start_time}`;
+        } else if (dateOnly) {
+          startDateISO = dateOnly;
+        }
+
+        let effectiveScheduledFor: string | null = null;
+        let doseLabel = "";
+
+        if (isContinuous) {
+          // Continuous meds: build today's dose from start_time, advance past recorded
+          if (med.start_date && med.start_time) {
+            let targetDose = new Date(`${todayStr}T${med.start_time}`);
+            let advanceLimit = 50;
+            while (advanceLimit > 0) {
+              const key = `${med.id}-${targetDose.toISOString()}`;
+              if (!homeDoseStatuses[key]) break;
+              targetDose = new Date(targetDose.getTime() + 24 * 60 * 60 * 1000);
+              advanceLimit--;
+            }
+            if (!isNaN(targetDose.getTime())) {
+              effectiveScheduledFor = targetDose.toISOString();
+              doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+            }
+          }
+        } else {
+          // Recurring meds: calculate next dose, advance past recorded
+          const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday());
+          if (nextDose && !isNaN(nextDose.getTime())) {
+            let candidate = new Date(nextDose.getTime());
+            let advanceLimit = 50;
+            while (advanceLimit > 0 && med.frequency_hours && med.frequency_hours > 0) {
+              const key = `${med.id}-${candidate.toISOString()}`;
+              if (!homeDoseStatuses[key]) break;
+              candidate = new Date(candidate.getTime() + med.frequency_hours * 60 * 60 * 1000);
+              advanceLimit--;
+            }
+            // Validate against end_date
+            if (med.end_date) {
+              const endStr = med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date;
+              const endDt = parseDateInSP(endStr);
+              if (endDt && candidate > endDt) {
+                effectiveScheduledFor = null;
+              } else {
+                effectiveScheduledFor = candidate.toISOString();
+                doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+              }
+            } else {
+              effectiveScheduledFor = candidate.toISOString();
+              doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+            }
+          }
+        }
+
+        // Determine if overdue
+        const effectiveDate = effectiveScheduledFor ? new Date(effectiveScheduledFor) : null;
+        const isOverdue = effectiveDate ? isPast(effectiveDate) : false;
+
+        // Determine dose status from cache
+        const doseKey = effectiveScheduledFor ? `${med.id}-${effectiveScheduledFor}` : null;
+        const doseStatus: "taken" | "skipped" | null = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
+
+        return { med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous };
+      })
+      .filter(({ med, effectiveScheduledFor, isContinuous }) => {
+        if (isContinuous) return true;
+        if (!effectiveScheduledFor) return false;
+        const d = new Date(effectiveScheduledFor);
+        return isToday(d) || isYesterday(d) || d > now;
+      })
+      .sort((a, b) => {
+        if (!a.effectiveScheduledFor && !b.effectiveScheduledFor) return 0;
+        if (!a.effectiveScheduledFor) return 1;
+        if (!b.effectiveScheduledFor) return -1;
+        return new Date(a.effectiveScheduledFor).getTime() - new Date(b.effectiveScheduledFor).getTime();
+      });
+  }, [activeMeds, homeDoseStatuses]);
 
   // Fetch dose statuses for today's meds
   const todayMedIds = React.useMemo(() => medsWithNextDose.map(({ med }) => med.id), [medsWithNextDose]);
