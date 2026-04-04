@@ -64,10 +64,7 @@ const Agenda = () => {
         .from("exams")
         .select("id, family_member_id, name, exam_date, location, status, result_date, family_members!inner(name, member_type)")
         .is("family_members.deleted_at", null)
-        .neq("status", "Cancelado")
-        .neq("status", "Realizado")
-        .neq("status", "Coletado")
-        .or("status.eq.Agendado")
+        .in("status", ["Agendado", "Pendente", "Coletado", "Realizado"])
         .order("exam_date", { ascending: true });
 
       let pq = supabase
