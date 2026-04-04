@@ -338,7 +338,7 @@ const Agenda = () => {
                           {item.type === "Retorno" ? "Retorno" : item.type === "Emergência" ? "Emergência" : "Consulta"}
                         </Badge>
                       )}
-                      {!isMedication && (
+                      {(
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 border-none ${
