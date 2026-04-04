@@ -646,7 +646,7 @@ const Home = () => {
                             <div className="flex items-center h-[32px]">
                              {!doseStatus && isOverdue && (
                                <Badge className="bg-destructive text-destructive-foreground border-destructive text-[10px] font-bold px-2 py-0.5 inline-flex items-center gap-1 translate-y-[1px] m-0">
-                                <AlertCircle className="w-3 h-3" /> Atrasado
+                                <AlertCircle className="w-3 h-3 relative -top-[0.5px]" /> Atrasado
                               </Badge>
                             )}
                           </div>
