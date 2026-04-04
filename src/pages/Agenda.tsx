@@ -81,18 +81,15 @@ const Agenda = () => {
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
-        mq = mq.eq("group_id", groupId);
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
         pq = pq.in("family_member_id", allowedIds);
-        mq = mq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
         pq = pq.eq("user_id", user!.id);
-        mq = mq.eq("user_id", user!.id);
       }
 
       const [consultRes, examRes, petRes, medRes] = await Promise.all([cq, eq, pq, mq]);
