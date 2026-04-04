@@ -27,11 +27,9 @@ type AgendaItem = {
   type: string | null;
   status: string;
   memberName: string;
-  kind: "consultation" | "exam" | "pet_routine" | "medication";
+  kind: "consultation" | "exam" | "pet_routine";
   isOverdue: boolean;
   isPet: boolean;
-  medicationId?: string;
-  scheduledFor?: string;
 };
 
 const filterLabels: Record<string, string> = {
