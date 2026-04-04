@@ -2,7 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown, Pill } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useSmartBack from "@/hooks/useSmartBack";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,7 +15,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { format, startOfDay, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { calculateNextDose } from "@/lib/calculateNextDose";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 
 
@@ -28,17 +27,15 @@ type AgendaItem = {
   type: string | null;
   status: string;
   memberName: string;
-  kind: "consultation" | "exam" | "pet_routine" | "medication";
+  kind: "consultation" | "exam" | "pet_routine";
   isOverdue: boolean;
   isPet: boolean;
-  medicationId?: string;
-  scheduledFor?: string;
 };
 
 const filterLabels: Record<string, string> = {
   consultas: "Consultas Pendentes",
   exames: "Exames Pendentes",
-  medicamentos: "Medicamentos Ativos",
+  
   upcoming: "Compromissos em Aberto",
 };
 
@@ -77,34 +74,26 @@ const Agenda = () => {
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true });
 
-      let mq = supabase
-        .from("medications")
-        .select("id, family_member_id, name, dosage, frequency_hours, start_date, start_time, end_date, status, uso_continuo, estoque_total, family_members!inner(name, member_type)")
-        .eq("status", "Ativo");
 
       if (isAdmin && groupId) {
         cq = cq.eq("group_id", groupId);
         eq = eq.eq("group_id", groupId);
-        mq = mq.eq("group_id", groupId);
       } else if (linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
         pq = pq.in("family_member_id", allowedIds);
-        mq = mq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
         pq = pq.eq("user_id", user!.id);
-        mq = mq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes, petRes, medRes] = await Promise.all([cq, eq, pq, mq]);
+      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
       if (petRes.error) throw petRes.error;
-      if (medRes.error) throw medRes.error;
 
       const consultations: AgendaItem[] = (consultRes.data ?? []).map((c: any) => {
         const dateStr = c.consultation_date;
@@ -164,40 +153,7 @@ const Agenda = () => {
         };
       });
 
-      // Build medication agenda items from next dose
-      const medicationItems: AgendaItem[] = [];
-      for (const med of (medRes.data ?? []) as any[]) {
-        const dateOnly = med.start_date?.slice(0, 10);
-        let startDateISO: string | null = null;
-        if (dateOnly && med.start_time) {
-          startDateISO = `${dateOnly}T${med.start_time}`;
-        } else if (dateOnly) {
-          startDateISO = dateOnly;
-        }
-
-        const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
-        if (!nextDose) continue;
-
-        const scheduledFor = nextDose.toISOString();
-
-        medicationItems.push({
-          id: `med-${med.id}-${scheduledFor}`,
-          family_member_id: med.family_member_id,
-          title: med.name,
-          subtitle: med.dosage ? med.dosage : null,
-          date: scheduledFor,
-          type: "medication",
-          status: "Ativo",
-          memberName: med.family_members?.name ?? "Usuário",
-          kind: "medication",
-          isOverdue: isBefore(nextDose, new Date()),
-          isPet: (med.family_members?.member_type || "human") === "pet",
-          medicationId: med.id,
-          scheduledFor,
-        });
-      }
-
-      const merged = [...consultations, ...exams, ...petRoutines, ...medicationItems];
+      const merged = [...consultations, ...exams, ...petRoutines];
       merged.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
@@ -216,7 +172,6 @@ const Agenda = () => {
     let result = items;
     if (currentFilter === "consultas") result = items.filter((i) => i.kind === "consultation" && (i.status === "Agendada"));
     else if (currentFilter === "exames") result = items.filter((i) => i.kind === "exam");
-    else if (currentFilter === "medicamentos") result = items.filter((i) => i.kind === "medication");
     else if (currentFilter === "upcoming") result = items.filter((i) =>
       i.status !== "Realizada" && i.status !== "Cancelada" && i.status !== "Pronto"
     );
@@ -304,14 +259,11 @@ const Agenda = () => {
             {filteredItems.map((item) => {
               const isExam = item.kind === "exam";
               const isPetRoutine = item.kind === "pet_routine";
-              const isMedication = item.kind === "medication";
-              const Icon = isMedication ? Pill : isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+              const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
               const route = isPetRoutine
                 ? `/familiar/${item.family_member_id}/rotinas-pet`
                 : isExam
                 ? `/familiar/${item.family_member_id}/exames`
-                : isMedication
-                ? `/familiar/${item.family_member_id}/medicamentos`
                 : `/familiar/${item.family_member_id}/consultas`;
 
 
@@ -323,7 +275,7 @@ const Agenda = () => {
                   onClick={() => navigate(route, { state: { from: '/agenda' } })}
                   className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full cursor-pointer"
                 >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${isMedication ? 'bg-[#DCC5F1]' : 'bg-[#A7D3CB]'}`}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-[#A7D3CB]">
                     <Icon className="text-black" size={20} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -369,12 +321,7 @@ const Agenda = () => {
                            Exame
                         </Badge>
                       )}
-                      {isMedication && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#DCC5F1] text-black border-none">
-                          💊 Medicamento
-                        </Badge>
-                      )}
-                      {!isExam && !isPetRoutine && !isMedication && (
+                      {!isExam && !isPetRoutine && (
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 border-none ${
@@ -388,7 +335,7 @@ const Agenda = () => {
                           {item.type === "Retorno" ? "Retorno" : item.type === "Emergência" ? "Emergência" : "Consulta"}
                         </Badge>
                       )}
-                      {!isMedication && (
+                      {(
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 border-none ${
