@@ -120,7 +120,7 @@ const Ajuda = () => {
               >
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
-              <h1 className="text-2xl font-bold text-foreground">Ajuda e Suporte</h1>
+              <h1 className="font-bold text-foreground text-lg">Ajuda e Suporte</h1>
             </div>
           </div>
 
