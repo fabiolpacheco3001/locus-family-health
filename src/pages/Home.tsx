@@ -664,6 +664,14 @@ const Home = () => {
                     </div>
                   );
                 })}
+                {medsWithNextDose.length > DISPLAY_LIMIT && (
+                  <button
+                    onClick={() => setShowAllActions(prev => !prev)}
+                    className="w-full py-2.5 text-sm font-medium text-primary hover:text-primary/80 active:text-primary/60 transition-colors rounded-xl border border-border/50 bg-card"
+                  >
+                    {showAllActions ? "Ocultar" : `Ver mais ${medsWithNextDose.length - DISPLAY_LIMIT} ações pendentes`}
+                  </button>
+                )}
               </div>
             )}
           </AccordionContent>
