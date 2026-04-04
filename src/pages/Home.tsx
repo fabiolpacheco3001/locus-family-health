@@ -33,6 +33,8 @@ const Home = () => {
   const { members, isLoading: membersLoading } = useFamilyMembers();
   const { groupId, isAdmin, linkedMemberId, managedProfiles, role } = useFamilyGroup();
   const [quickAction, setQuickAction] = React.useState<'consultas' | 'exames' | 'medicamentos' | null>(null);
+  const [showAllActions, setShowAllActions] = React.useState(false);
+  const DISPLAY_LIMIT = 4;
 
   const getFilteredMembers = () => {
     const allowedIds = role === "user" && linkedMemberId
