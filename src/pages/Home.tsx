@@ -244,43 +244,16 @@ const Home = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Build list of active meds with their next dose
-  const medsWithNextDose = React.useMemo(() => activeMeds
-    .map((med) => {
-      const dateOnly = med.start_date?.slice(0, 10);
-      let startDateISO: string | null = null;
-      if (dateOnly && med.start_time) {
-        startDateISO = `${dateOnly}T${med.start_time}`;
-      } else if (dateOnly) {
-        startDateISO = dateOnly;
-      }
-
-      const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday());
-      return { med, nextDose };
-    })
-    .filter(({ med, nextDose }) => {
-      if (!med.frequency_hours || med.frequency_hours <= 0) return true;
-      if (!nextDose) return false;
-      // Keep doses from yesterday and today (48h window)
-      return isToday(nextDose) || isYesterday(nextDose) || nextDose > new Date();
-    })
-    .sort((a, b) => {
-      if (!a.nextDose && !b.nextDose) return 0;
-      if (!a.nextDose) return 1;
-      if (!b.nextDose) return -1;
-      return a.nextDose.getTime() - b.nextDose.getTime();
-    }), [activeMeds]);
-
-  // Fetch dose statuses for today's meds
-  const todayMedIds = React.useMemo(() => medsWithNextDose.map(({ med }) => med.id), [medsWithNextDose]);
+  // Fetch dose statuses for all active meds (must be before useMemo that depends on it)
+  const activeMedIds = React.useMemo(() => activeMeds.map(m => m.id), [activeMeds]);
   const { data: homeDoseStatuses = {} } = useQuery({
-    queryKey: ["medication_doses_home", todayMedIds],
+    queryKey: ["medication_doses_home", activeMedIds],
     queryFn: async () => {
-      if (todayMedIds.length === 0) return {};
+      if (activeMedIds.length === 0) return {};
       const { data, error } = await supabase
         .from("medication_doses")
         .select("medication_id, scheduled_for, status")
-        .in("medication_id", todayMedIds);
+        .in("medication_id", activeMedIds);
       if (error) throw error;
       const map: Record<string, "taken" | "skipped"> = {};
       for (const d of (data ?? []) as any[]) {
@@ -289,9 +262,91 @@ const Home = () => {
       }
       return map;
     },
-    enabled: todayMedIds.length > 0,
+    enabled: activeMedIds.length > 0,
     staleTime: 30 * 1000,
   });
+
+  // Build list of active meds with their effective next dose (pre-computed for correct sorting)
+  const medsWithNextDose = React.useMemo(() => {
+    const now = new Date();
+    const todayStr = format(now, "yyyy-MM-dd");
+
+    return activeMeds
+      .map((med) => {
+        const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
+        const dateOnly = med.start_date?.slice(0, 10);
+        let startDateISO: string | null = null;
+        if (dateOnly && med.start_time) {
+          startDateISO = `${dateOnly}T${med.start_time}`;
+        } else if (dateOnly) {
+          startDateISO = dateOnly;
+        }
+
+        let effectiveScheduledFor: string | null = null;
+        let doseLabel = "";
+
+        if (isContinuous) {
+          if (med.start_date && med.start_time) {
+            let targetDose = new Date(`${todayStr}T${med.start_time}`);
+            let advanceLimit = 50;
+            while (advanceLimit > 0) {
+              const key = `${med.id}-${targetDose.toISOString()}`;
+              if (!homeDoseStatuses[key]) break;
+              targetDose = new Date(targetDose.getTime() + 24 * 60 * 60 * 1000);
+              advanceLimit--;
+            }
+            if (!isNaN(targetDose.getTime())) {
+              effectiveScheduledFor = targetDose.toISOString();
+              doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+            }
+          }
+        } else {
+          const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday());
+          if (nextDose && !isNaN(nextDose.getTime())) {
+            let candidate = new Date(nextDose.getTime());
+            let advanceLimit = 50;
+            while (advanceLimit > 0 && med.frequency_hours && med.frequency_hours > 0) {
+              const key = `${med.id}-${candidate.toISOString()}`;
+              if (!homeDoseStatuses[key]) break;
+              candidate = new Date(candidate.getTime() + med.frequency_hours * 60 * 60 * 1000);
+              advanceLimit--;
+            }
+            if (med.end_date) {
+              const endStr = med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date;
+              const endDt = parseDateInSP(endStr);
+              if (endDt && candidate > endDt) {
+                effectiveScheduledFor = null;
+              } else {
+                effectiveScheduledFor = candidate.toISOString();
+                doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+              }
+            } else {
+              effectiveScheduledFor = candidate.toISOString();
+              doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+            }
+          }
+        }
+
+        const effectiveDate = effectiveScheduledFor ? new Date(effectiveScheduledFor) : null;
+        const isOverdue = effectiveDate ? isPast(effectiveDate) : false;
+        const doseKey = effectiveScheduledFor ? `${med.id}-${effectiveScheduledFor}` : null;
+        const doseStatus: "taken" | "skipped" | null = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
+
+        return { med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous };
+      })
+      .filter(({ effectiveScheduledFor, isContinuous }) => {
+        if (isContinuous) return true;
+        if (!effectiveScheduledFor) return false;
+        const d = new Date(effectiveScheduledFor);
+        return isToday(d) || isYesterday(d) || d > now;
+      })
+      .sort((a, b) => {
+        if (!a.effectiveScheduledFor && !b.effectiveScheduledFor) return 0;
+        if (!a.effectiveScheduledFor) return 1;
+        if (!b.effectiveScheduledFor) return -1;
+        return new Date(a.effectiveScheduledFor).getTime() - new Date(b.effectiveScheduledFor).getTime();
+      });
+  }, [activeMeds, homeDoseStatuses]);
 
   // Progressive rendering: each section uses its own loading state
 
@@ -558,65 +613,7 @@ const Home = () => {
                   </button>
                 ))}
                 {/* Medications */}
-                {(showAllActions ? medsWithNextDose : medsWithNextDose.slice(0, DISPLAY_LIMIT)).map(({ med, nextDose }) => {
-                  const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
-                  const isValidNextDose = nextDose && !isNaN(nextDose.getTime());
-
-                  let doseLabel = "";
-                  let scheduledFor: string | null = null;
-                  let doseStatus: "taken" | "skipped" | null = null;
-
-                  if (isContinuous) {
-                    if (med.start_date && med.start_time) {
-                      const now = new Date();
-                      const todayStr = format(now, "yyyy-MM-dd");
-                      const todayDose = new Date(`${todayStr}T${med.start_time}`);
-                      // Start from today's dose (even if overdue) instead of skipping to tomorrow
-                      let targetDose = new Date(todayDose.getTime());
-                      // Advance past already-recorded doses
-                      let advanceLimit = 50;
-                      while (advanceLimit > 0) {
-                        const key = `${med.id}-${targetDose.toISOString()}`;
-                        if (!homeDoseStatuses[key]) break;
-                        targetDose = new Date(targetDose.getTime() + 24 * 60 * 60 * 1000);
-                        advanceLimit--;
-                      }
-                      if (!isNaN(targetDose.getTime())) {
-                        doseLabel = `Próxima dose: ${format(toSPTime(targetDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-                        scheduledFor = targetDose.toISOString();
-                      }
-                    }
-                  } else if (isValidNextDose) {
-                    // Advance past already-recorded doses
-                    let candidate = new Date(nextDose.getTime());
-                    let advanceLimit = 50;
-                    while (advanceLimit > 0 && med.frequency_hours && med.frequency_hours > 0) {
-                      const key = `${med.id}-${candidate.toISOString()}`;
-                      if (!homeDoseStatuses[key]) break;
-                      candidate = new Date(candidate.getTime() + med.frequency_hours * 60 * 60 * 1000);
-                      advanceLimit--;
-                    }
-                    // Validate against end_date
-                    if (med.end_date) {
-                      const endStr = med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date;
-                      const endDt = parseDateInSP(endStr);
-                      if (endDt && candidate > endDt) {
-                        // Treatment ended
-                        scheduledFor = null;
-                      } else {
-                        doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-                        scheduledFor = candidate.toISOString();
-                      }
-                    } else {
-                      doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-                      scheduledFor = candidate.toISOString();
-                    }
-                  }
-
-                  const doseKey = scheduledFor ? `${med.id}-${scheduledFor}` : null;
-                  doseStatus = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
-
-                  return (
+                {(showAllActions ? medsWithNextDose : medsWithNextDose.slice(0, DISPLAY_LIMIT)).map(({ med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous }) => (
                     <div
                       key={med.id}
                       className="flex flex-col p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left w-full"
@@ -644,19 +641,19 @@ const Home = () => {
                         </div>
                         <ChevronRight size={16} className="text-black shrink-0" />
                       </button>
-                      {scheduledFor && (
+                      {effectiveScheduledFor && (
                         <div className="flex flex-row items-center justify-between w-full mt-4 pt-3 border-t border-border/30">
-                          <div className="flex items-center justify-start min-w-[85px]">
-                            {!doseStatus && isPast(new Date(scheduledFor)) && (
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-1">
-                                <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
+                          <div className="flex items-center justify-start h-full">
+                            {!doseStatus && isOverdue && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-1 inline-flex items-center justify-center gap-1 my-auto leading-none h-[22px]">
+                                <AlertCircle className="w-3 h-3 flex-shrink-0" /> Atrasado
                               </Badge>
                             )}
                           </div>
                           <div className="flex items-center justify-end gap-2">
                             <MedicationDoseActions
                               medicationId={med.id}
-                              scheduledFor={scheduledFor}
+                              scheduledFor={effectiveScheduledFor}
                               doseStatus={doseStatus}
                               frequencyHours={med.frequency_hours}
                               endDate={med.end_date}
@@ -666,8 +663,7 @@ const Home = () => {
                         </div>
                       )}
                     </div>
-                  );
-                })}
+                  ))}
                 {medsWithNextDose.length > DISPLAY_LIMIT && (
                   <button
                     onClick={() => setShowAllActions(prev => !prev)}
