@@ -244,6 +244,28 @@ const Home = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch dose statuses for all active meds (must be before useMemo that depends on it)
+  const activeMedIds = React.useMemo(() => activeMeds.map(m => m.id), [activeMeds]);
+  const { data: homeDoseStatuses = {} } = useQuery({
+    queryKey: ["medication_doses_home", activeMedIds],
+    queryFn: async () => {
+      if (activeMedIds.length === 0) return {};
+      const { data, error } = await supabase
+        .from("medication_doses")
+        .select("medication_id, scheduled_for, status")
+        .in("medication_id", activeMedIds);
+      if (error) throw error;
+      const map: Record<string, "taken" | "skipped"> = {};
+      for (const d of (data ?? []) as any[]) {
+        const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
+        map[key] = d.status;
+      }
+      return map;
+    },
+    enabled: activeMedIds.length > 0,
+    staleTime: 30 * 1000,
+  });
+
   // Build list of active meds with their effective next dose (pre-computed for correct sorting)
   const medsWithNextDose = React.useMemo(() => {
     const now = new Date();
@@ -264,7 +286,6 @@ const Home = () => {
         let doseLabel = "";
 
         if (isContinuous) {
-          // Continuous meds: build today's dose from start_time, advance past recorded
           if (med.start_date && med.start_time) {
             let targetDose = new Date(`${todayStr}T${med.start_time}`);
             let advanceLimit = 50;
@@ -280,7 +301,6 @@ const Home = () => {
             }
           }
         } else {
-          // Recurring meds: calculate next dose, advance past recorded
           const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday());
           if (nextDose && !isNaN(nextDose.getTime())) {
             let candidate = new Date(nextDose.getTime());
@@ -291,7 +311,6 @@ const Home = () => {
               candidate = new Date(candidate.getTime() + med.frequency_hours * 60 * 60 * 1000);
               advanceLimit--;
             }
-            // Validate against end_date
             if (med.end_date) {
               const endStr = med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date;
               const endDt = parseDateInSP(endStr);
@@ -308,17 +327,14 @@ const Home = () => {
           }
         }
 
-        // Determine if overdue
         const effectiveDate = effectiveScheduledFor ? new Date(effectiveScheduledFor) : null;
         const isOverdue = effectiveDate ? isPast(effectiveDate) : false;
-
-        // Determine dose status from cache
         const doseKey = effectiveScheduledFor ? `${med.id}-${effectiveScheduledFor}` : null;
         const doseStatus: "taken" | "skipped" | null = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
 
         return { med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous };
       })
-      .filter(({ med, effectiveScheduledFor, isContinuous }) => {
+      .filter(({ effectiveScheduledFor, isContinuous }) => {
         if (isContinuous) return true;
         if (!effectiveScheduledFor) return false;
         const d = new Date(effectiveScheduledFor);
@@ -331,23 +347,6 @@ const Home = () => {
         return new Date(a.effectiveScheduledFor).getTime() - new Date(b.effectiveScheduledFor).getTime();
       });
   }, [activeMeds, homeDoseStatuses]);
-
-  // Fetch dose statuses for today's meds
-  const todayMedIds = React.useMemo(() => medsWithNextDose.map(({ med }) => med.id), [medsWithNextDose]);
-  const { data: homeDoseStatuses = {} } = useQuery({
-    queryKey: ["medication_doses_home", todayMedIds],
-    queryFn: async () => {
-      if (todayMedIds.length === 0) return {};
-      const { data, error } = await supabase
-        .from("medication_doses")
-        .select("medication_id, scheduled_for, status")
-        .in("medication_id", todayMedIds);
-      if (error) throw error;
-      const map: Record<string, "taken" | "skipped"> = {};
-      for (const d of (data ?? []) as any[]) {
-        const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
-        map[key] = d.status;
-      }
       return map;
     },
     enabled: todayMedIds.length > 0,
