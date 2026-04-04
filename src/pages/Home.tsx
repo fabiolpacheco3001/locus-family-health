@@ -347,11 +347,6 @@ const Home = () => {
         return new Date(a.effectiveScheduledFor).getTime() - new Date(b.effectiveScheduledFor).getTime();
       });
   }, [activeMeds, homeDoseStatuses]);
-      return map;
-    },
-    enabled: todayMedIds.length > 0,
-    staleTime: 30 * 1000,
-  });
 
   // Progressive rendering: each section uses its own loading state
 
