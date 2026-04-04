@@ -324,11 +324,6 @@ const Agenda = () => {
                            Exame
                         </Badge>
                       )}
-                      {isMedication && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#DCC5F1] text-black border-none">
-                          💊 Medicamento
-                        </Badge>
-                      )}
                       {!isExam && !isPetRoutine && !isMedication && (
                         <Badge
                           variant="outline"
