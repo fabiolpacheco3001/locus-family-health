@@ -106,21 +106,24 @@ const Home = () => {
     queryFn: async () => {
       let cq = supabase
         .from("consultations")
-        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members(name, member_type)")
+        .select("id, family_member_id, specialty, professional_name, consultation_date, type, status, family_members!inner(name, member_type, deleted_at)")
+        .is("family_members.deleted_at", null)
         .in("status", ["Agendada"])
         .order("consultation_date", { ascending: true })
         .limit(5);
 
       let eq = supabase
         .from("exams")
-        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members(name, member_type)")
+        .select("id, family_member_id, name, exam_date, location, status, result_date, family_members!inner(name, member_type, deleted_at)")
+        .is("family_members.deleted_at", null)
         .or("status.eq.Agendado,and(status.eq.Realizado,result_date.not.is.null),and(status.eq.Coletado,result_date.not.is.null)")
         .order("exam_date", { ascending: true })
         .limit(5);
 
       let pq = supabase
         .from("pet_routines")
-        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members(name, member_type)")
+        .select("id, family_member_id, routine_type, date_performed, status, recurrence, notes, family_members!inner(name, member_type, deleted_at)")
+        .is("family_members.deleted_at", null)
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true })
         .limit(5);
