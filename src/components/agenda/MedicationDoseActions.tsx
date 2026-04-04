@@ -111,7 +111,7 @@ export function MedicationDoseActions({
   };
 
   return (
-    <div className="flex items-center gap-2 mt-2">
+    <div className="flex items-center gap-2">
       <Button
         size="sm"
         variant="outline"
