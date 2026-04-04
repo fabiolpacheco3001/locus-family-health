@@ -82,7 +82,8 @@ export const useMedications = (familyMemberId?: string) => {
     queryFn: async () => {
       let q = supabase
         .from("medications")
-        .select("*, consultations(professional_name, specialty), family_members(name)")
+        .select("*, consultations(professional_name, specialty), family_members!inner(name)")
+        .is("family_members.deleted_at", null)
         .order("created_at", { ascending: false });
 
       if (familyMemberId) {
