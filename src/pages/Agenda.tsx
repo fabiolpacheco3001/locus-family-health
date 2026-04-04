@@ -262,14 +262,11 @@ const Agenda = () => {
             {filteredItems.map((item) => {
               const isExam = item.kind === "exam";
               const isPetRoutine = item.kind === "pet_routine";
-              const isMedication = item.kind === "medication";
-              const Icon = isMedication ? Pill : isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+              const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
               const route = isPetRoutine
                 ? `/familiar/${item.family_member_id}/rotinas-pet`
                 : isExam
                 ? `/familiar/${item.family_member_id}/exames`
-                : isMedication
-                ? `/familiar/${item.family_member_id}/medicamentos`
                 : `/familiar/${item.family_member_id}/consultas`;
 
 
