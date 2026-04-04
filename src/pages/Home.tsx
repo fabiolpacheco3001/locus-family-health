@@ -645,7 +645,7 @@ const Home = () => {
                         <ChevronRight size={16} className="text-black shrink-0" />
                       </button>
                       {scheduledFor && (
-                        <div className="ml-12 mt-1 flex items-center gap-2 flex-wrap">
+                        <div className="flex flex-row items-center justify-center gap-3 mt-3 w-full">
                           {!doseStatus && isPast(new Date(scheduledFor)) && (
                             <Badge className="bg-amber-100 text-amber-800 border-amber-200 text-[10px] uppercase font-bold px-2 py-0.5 border shrink-0">
                               <AlertCircle className="w-3 h-3 mr-1 inline" /> Atrasado
