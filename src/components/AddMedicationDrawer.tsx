@@ -159,7 +159,22 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       } else {
         setStartDateTime("");
       }
-      setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
+      // Populate frequency type fields
+      const editFreqType = (editingMedication as any).frequency_type ?? "fixed_interval";
+      setFrequencyType(editFreqType);
+      if (editFreqType === "specific_times") {
+        setFrequencyHours("specific_times");
+        setSpecificTimes(Array.isArray((editingMedication as any).specific_times) ? (editingMedication as any).specific_times : []);
+        setSpecificDays([]);
+      } else if (editFreqType === "specific_days") {
+        setFrequencyHours("specific_days");
+        setSpecificTimes(Array.isArray((editingMedication as any).specific_times) ? (editingMedication as any).specific_times : []);
+        setSpecificDays(Array.isArray((editingMedication as any).specific_days) ? (editingMedication as any).specific_days : []);
+      } else {
+        setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
+        setSpecificTimes([]);
+        setSpecificDays([]);
+      }
       setDurationDays(editingMedication.duration_days?.toString() ?? "");
       setStatus(editingMedication.status);
       setConsultationId(editingMedication.consultation_id ?? "none");
