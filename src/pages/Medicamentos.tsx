@@ -19,10 +19,10 @@ import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { calculateNextDose } from "@/lib/calculateNextDose";
 import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { advancePastTakenDoses } from "@/lib/advancePastTakenDoses";
 
 const Medicamentos = () => {
   const { id } = useParams();
@@ -82,29 +82,18 @@ const Medicamentos = () => {
       } else if (dateOnly) {
         startDateISO = dateOnly;
       }
-      let nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, startOfYesterday(), m.frequency_type, m.specific_times as string[] | null, m.specific_days as number[] | null);
+      let nextDoseDate = advancePastTakenDoses({
+        medicationId: m.id,
+        startDateISO,
+        frequencyHours: m.frequency_hours,
+        endDate: m.end_date,
+        referenceTime: startOfYesterday(),
+        frequencyType: m.frequency_type,
+        specificTimes: m.specific_times as string[] | null,
+        specificDays: m.specific_days as number[] | null,
+        doseStatuses: medDoseStatuses,
+      });
       let scheduledFor: string | null = null;
-      if (nextDoseDate && m.frequency_hours && m.frequency_hours > 0) {
-        let candidate = new Date(nextDoseDate.getTime());
-        let advanceLimit = 50;
-        while (advanceLimit > 0) {
-          const key = `${m.id}-${candidate.toISOString()}`;
-          if (!medDoseStatuses[key]) break;
-          candidate = new Date(candidate.getTime() + m.frequency_hours * 60 * 60 * 1000);
-          advanceLimit--;
-        }
-        if (m.end_date) {
-          const endStr = m.end_date.length === 10 ? m.end_date + "T23:59:59" : m.end_date;
-          const endDt = parseDateInSP(endStr);
-          if (endDt && candidate > endDt) {
-            nextDoseDate = null;
-          } else {
-            nextDoseDate = candidate;
-          }
-        } else {
-          nextDoseDate = candidate;
-        }
-      }
       if (nextDoseDate) {
         scheduledFor = nextDoseDate.toISOString();
       }
