@@ -867,11 +867,17 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
 
                 <div className="grid grid-cols-[2fr_1fr] gap-4 items-start">
                   <div className="space-y-1.5">
-                    <Label>Data/Hora Início</Label>
+                    <Label>{frequencyType === "fixed_interval" ? "Data/Hora Início" : "Data de Início"}</Label>
                     <DatePickerField
-                      value={startDateTime}
-                      onChange={setStartDateTime}
-                      mode="datetime"
+                      value={frequencyType === "fixed_interval" ? startDateTime : (startDateTime?.split("T")[0] ?? "")}
+                      onChange={(val) => {
+                        if (frequencyType !== "fixed_interval") {
+                          setStartDateTime(val ? `${val}T00:00` : "");
+                        } else {
+                          setStartDateTime(val);
+                        }
+                      }}
+                      mode={frequencyType === "fixed_interval" ? "datetime" : "date"}
                     />
                   </div>
                   <div className="space-y-1.5">
