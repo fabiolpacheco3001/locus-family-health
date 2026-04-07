@@ -304,7 +304,7 @@ const Home = () => {
             }
           }
         } else {
-          const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday());
+          const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday(), med.frequency_type, med.specific_times as string[] | null, med.specific_days as number[] | null);
           if (nextDose && !isNaN(nextDose.getTime())) {
             let candidate = new Date(nextDose.getTime());
             let advanceLimit = 50;

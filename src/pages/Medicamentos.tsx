@@ -82,7 +82,7 @@ const Medicamentos = () => {
       } else if (dateOnly) {
         startDateISO = dateOnly;
       }
-      let nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, startOfYesterday());
+      let nextDoseDate = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, startOfYesterday(), m.frequency_type, m.specific_times as string[] | null, m.specific_days as number[] | null);
       let scheduledFor: string | null = null;
       if (nextDoseDate && m.frequency_hours && m.frequency_hours > 0) {
         let candidate = new Date(nextDoseDate.getTime());

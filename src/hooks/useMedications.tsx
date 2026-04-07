@@ -11,6 +11,9 @@ export type Medication = {
   dosage: string | null;
   frequency: string | null;
   frequency_hours: number | null;
+  frequency_type: string;
+  specific_times: string[];
+  specific_days: number[];
   duration: string | null;
   duration_days: number | null;
   start_date: string | null;
@@ -36,6 +39,9 @@ export type NewMedication = {
   dosage?: string | null;
   frequency?: string | null;
   frequency_hours?: number | null;
+  frequency_type?: string;
+  specific_times?: string[];
+  specific_days?: number[];
   duration?: string | null;
   duration_days?: number | null;
   start_date?: string | null;
@@ -57,6 +63,9 @@ export type UpdateMedication = {
   dosage?: string | null;
   frequency?: string | null;
   frequency_hours?: number | null;
+  frequency_type?: string;
+  specific_times?: string[];
+  specific_days?: number[];
   duration?: string | null;
   duration_days?: number | null;
   start_date?: string | null;

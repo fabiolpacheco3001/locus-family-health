@@ -64,7 +64,7 @@ const MedicamentosGeral = () => {
             } else if (dateOnly) {
               startDateISO = dateOnly;
             }
-            const nextDose = calculateNextDose(startDateISO, m.frequency_hours, m.end_date);
+            const nextDose = calculateNextDose(startDateISO, m.frequency_hours, m.end_date, undefined, m.frequency_type, m.specific_times as string[] | null, m.specific_days as number[] | null);
 
             return (
               <button
