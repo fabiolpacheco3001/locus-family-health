@@ -174,6 +174,7 @@ export type Database = {
           cancel_reason: string | null
           consultation_date: string | null
           created_at: string
+          deleted_at: string | null
           family_member_id: string
           group_id: string | null
           id: string
@@ -189,6 +190,7 @@ export type Database = {
           cancel_reason?: string | null
           consultation_date?: string | null
           created_at?: string
+          deleted_at?: string | null
           family_member_id: string
           group_id?: string | null
           id?: string
@@ -204,6 +206,7 @@ export type Database = {
           cancel_reason?: string | null
           consultation_date?: string | null
           created_at?: string
+          deleted_at?: string | null
           family_member_id?: string
           group_id?: string | null
           id?: string
@@ -375,6 +378,7 @@ export type Database = {
           cancel_reason: string | null
           consultation_id: string | null
           created_at: string
+          deleted_at: string | null
           exam_date: string | null
           family_member_id: string
           file_url: string | null
@@ -390,6 +394,7 @@ export type Database = {
           cancel_reason?: string | null
           consultation_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           exam_date?: string | null
           family_member_id: string
           file_url?: string | null
@@ -405,6 +410,7 @@ export type Database = {
           cancel_reason?: string | null
           consultation_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           exam_date?: string | null
           family_member_id?: string
           file_url?: string | null
@@ -724,6 +730,7 @@ export type Database = {
         Row: {
           consultation_id: string | null
           created_at: string
+          deleted_at: string | null
           dosage: string | null
           duration: string | null
           duration_days: number | null
@@ -749,6 +756,7 @@ export type Database = {
         Insert: {
           consultation_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           dosage?: string | null
           duration?: string | null
           duration_days?: number | null
@@ -774,6 +782,7 @@ export type Database = {
         Update: {
           consultation_id?: string | null
           created_at?: string
+          deleted_at?: string | null
           dosage?: string | null
           duration?: string | null
           duration_days?: number | null
@@ -1113,6 +1122,7 @@ export type Database = {
           booster_date: string | null
           city: string | null
           created_at: string
+          deleted_at: string | null
           details: string | null
           dose_type: string | null
           facility: string | null
@@ -1130,6 +1140,7 @@ export type Database = {
           booster_date?: string | null
           city?: string | null
           created_at?: string
+          deleted_at?: string | null
           details?: string | null
           dose_type?: string | null
           facility?: string | null
@@ -1147,6 +1158,7 @@ export type Database = {
           booster_date?: string | null
           city?: string | null
           created_at?: string
+          deleted_at?: string | null
           details?: string | null
           dose_type?: string | null
           facility?: string | null
