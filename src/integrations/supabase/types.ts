@@ -740,6 +740,7 @@ export type Database = {
           family_member_id: string
           frequency: string | null
           frequency_hours: number | null
+          frequency_type: string
           group_id: string | null
           id: string
           last_stock_decrement: string | null
@@ -747,6 +748,8 @@ export type Database = {
           name: string
           reason: string | null
           receita_url: string | null
+          specific_days: Json
+          specific_times: Json
           start_date: string | null
           start_time: string | null
           status: string
@@ -766,6 +769,7 @@ export type Database = {
           family_member_id: string
           frequency?: string | null
           frequency_hours?: number | null
+          frequency_type?: string
           group_id?: string | null
           id?: string
           last_stock_decrement?: string | null
@@ -773,6 +777,8 @@ export type Database = {
           name: string
           reason?: string | null
           receita_url?: string | null
+          specific_days?: Json
+          specific_times?: Json
           start_date?: string | null
           start_time?: string | null
           status?: string
@@ -792,6 +798,7 @@ export type Database = {
           family_member_id?: string
           frequency?: string | null
           frequency_hours?: number | null
+          frequency_type?: string
           group_id?: string | null
           id?: string
           last_stock_decrement?: string | null
@@ -799,6 +806,8 @@ export type Database = {
           name?: string
           reason?: string | null
           receita_url?: string | null
+          specific_days?: Json
+          specific_times?: Json
           start_date?: string | null
           start_time?: string | null
           status?: string
