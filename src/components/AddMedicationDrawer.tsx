@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { DatePickerField } from "@/components/ui/date-picker-field";
-import { Loader2, Trash2, Paperclip, Eye, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Loader2, Trash2, Paperclip, Eye, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle, Plus, X } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import PaywallModal from "@/components/PaywallModal";
@@ -49,6 +49,8 @@ const FREQUENCY_OPTIONS = [
   { label: "4/4 h", value: "4" },
   { label: "2/2 h", value: "2" },
   { label: "1/1 h", value: "1" },
+  { label: "Horários Específicos", value: "specific_times" },
+  { label: "Dias da Semana", value: "specific_days" },
 ];
 
 const FREQ_MAP: Record<string, string> = {
@@ -61,6 +63,9 @@ const FREQ_MAP: Record<string, string> = {
   "De 2 em 2 horas": "2",
   "De 1 em 1 hora": "1",
 };
+
+const DAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
+const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
 
@@ -99,6 +104,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [estoqueTotal, setEstoqueTotal] = useState("");
   const [estoqueMinimo, setEstoqueMinimo] = useState("");
   const [reason, setReason] = useState("");
+  const [frequencyType, setFrequencyType] = useState<string>("fixed_interval");
+  const [specificTimes, setSpecificTimes] = useState<string[]>([]);
+  const [specificDays, setSpecificDays] = useState<number[]>([]);
+  const [newTimeInput, setNewTimeInput] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [receitaFile, setReceitaFile] = useState<File | null>(null);
   const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
@@ -150,7 +159,22 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       } else {
         setStartDateTime("");
       }
-      setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
+      // Populate frequency type fields
+      const editFreqType = (editingMedication as any).frequency_type ?? "fixed_interval";
+      setFrequencyType(editFreqType);
+      if (editFreqType === "specific_times") {
+        setFrequencyHours("specific_times");
+        setSpecificTimes(Array.isArray((editingMedication as any).specific_times) ? (editingMedication as any).specific_times : []);
+        setSpecificDays([]);
+      } else if (editFreqType === "specific_days") {
+        setFrequencyHours("specific_days");
+        setSpecificTimes(Array.isArray((editingMedication as any).specific_times) ? (editingMedication as any).specific_times : []);
+        setSpecificDays(Array.isArray((editingMedication as any).specific_days) ? (editingMedication as any).specific_days : []);
+      } else {
+        setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
+        setSpecificTimes([]);
+        setSpecificDays([]);
+      }
       setDurationDays(editingMedication.duration_days?.toString() ?? "");
       setStatus(editingMedication.status);
       setConsultationId(editingMedication.consultation_id ?? "none");
@@ -203,6 +227,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setDosage("");
     setStartDateTime("");
     setFrequencyHours("");
+    setFrequencyType("fixed_interval");
+    setSpecificTimes([]);
+    setSpecificDays([]);
+    setNewTimeInput("");
     setDurationDays("");
     setStatus("Ativo");
     setConsultationId("none");
@@ -239,6 +267,38 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     const opt = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours);
     return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
+
+  const handleFrequencySelect = (value: string) => {
+    setFrequencyHours(value);
+    if (value === "specific_times") {
+      setFrequencyType("specific_times");
+      setSpecificDays([]);
+    } else if (value === "specific_days") {
+      setFrequencyType("specific_days");
+    } else {
+      setFrequencyType("fixed_interval");
+      setSpecificTimes([]);
+      setSpecificDays([]);
+      setNewTimeInput("");
+    }
+  };
+
+  const handleAddTime = () => {
+    const t = newTimeInput.trim();
+    if (!t || specificTimes.includes(t)) return;
+    setSpecificTimes((prev) => [...prev, t].sort());
+    setNewTimeInput("");
+  };
+
+  const handleRemoveTime = (time: string) => {
+    setSpecificTimes((prev) => prev.filter((tt) => tt !== time));
+  };
+
+  const toggleDay = (day: number) => {
+    setSpecificDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)
+    );
+  };
 
   const currentConfidence = useMemo(() => {
     if (!aiReviewMode || extractedMeds.length === 0) return null;
@@ -324,7 +384,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   };
 
   const buildMedPayload = () => {
-    const freqNum = frequencyHours ? Number(frequencyHours) : null;
+    const isSpecific = frequencyType === "specific_times" || frequencyType === "specific_days";
+    const freqNum = isSpecific ? null : (frequencyHours ? Number(frequencyHours) : null);
     const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
     const finalEndDate = usoContinuo ? null : calculatedEndDate;
     const estTotalNum = estoqueTotal ? Number(estoqueTotal) : null;
@@ -334,9 +395,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     return {
       name: name.trim(),
       dosage: dosage.trim() || null,
-      start_time: parsedDate.time || null,
+      start_time: isSpecific ? null : (parsedDate.time || null),
       frequency_hours: freqNum,
       frequency: freqLbl || null,
+      frequency_type: frequencyType,
+      specific_times: isSpecific ? specificTimes : [],
+      specific_days: frequencyType === "specific_days" ? specificDays : [],
       duration_days: durNum,
       duration: durNum ? `${durNum} dias` : null,
       start_date: parsedDate.date || null,
@@ -675,24 +739,145 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   </div>
                   <div className="space-y-1.5">
                     <Label>Frequência</Label>
-                    <Select value={frequencyHours} onValueChange={setFrequencyHours}>
+                    <Select value={frequencyHours} onValueChange={handleFrequencySelect}>
                       <SelectTrigger className="text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {FREQUENCY_OPTIONS.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          <SelectItem key={o.value} value={o.value} className="text-base">{o.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
+                {/* Progressive Disclosure: Horários Específicos */}
+                {frequencyType === "specific_times" && (
+                  <div className="space-y-2">
+                    <Label>Horários das Doses</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={newTimeInput}
+                        onChange={(e) => setNewTimeInput(e.target.value)}
+                        className="text-[16px] flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleAddTime}
+                        disabled={!newTimeInput.trim()}
+                        className="h-10 px-3"
+                      >
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                    {specificTimes.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {specificTimes.map((t) => (
+                          <span
+                            key={t}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                          >
+                            {t}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTime(t)}
+                              className="rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Progressive Disclosure: Dias da Semana */}
+                {frequencyType === "specific_days" && (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Dias da Semana</Label>
+                      <div className="flex items-center justify-between gap-1.5">
+                        {DAY_LABELS.map((label, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => toggleDay(idx)}
+                            className={`w-9 h-9 rounded-full text-xs font-semibold transition-colors flex items-center justify-center ${
+                              specificDays.includes(idx)
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {specificDays.length > 0 && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {specificDays.map((d) => DAY_NAMES[d]).join(", ")}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Horários das Doses</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={newTimeInput}
+                          onChange={(e) => setNewTimeInput(e.target.value)}
+                          className="text-[16px] flex-1"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleAddTime}
+                          disabled={!newTimeInput.trim()}
+                          className="h-10 px-3"
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
+                      {specificTimes.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {specificTimes.map((t) => (
+                            <span
+                              key={t}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                            >
+                              {t}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTime(t)}
+                                className="rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                              >
+                                <X size={12} />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-[2fr_1fr] gap-4 items-start">
                   <div className="space-y-1.5">
-                    <Label>Data/Hora Início</Label>
+                    <Label>{frequencyType === "fixed_interval" ? "Data/Hora Início" : "Data de Início"}</Label>
                     <DatePickerField
-                      value={startDateTime}
-                      onChange={setStartDateTime}
-                      mode="datetime"
+                      value={frequencyType === "fixed_interval" ? startDateTime : (startDateTime?.split("T")[0] ?? "")}
+                      onChange={(val) => {
+                        if (frequencyType !== "fixed_interval") {
+                          setStartDateTime(val ? `${val}T00:00` : "");
+                        } else {
+                          setStartDateTime(val);
+                        }
+                      }}
+                      mode={frequencyType === "fixed_interval" ? "datetime" : "date"}
                     />
                   </div>
                   <div className="space-y-1.5">
