@@ -73,11 +73,18 @@ type ExtractedMed = {
   nome_medicamento: string;
   dosagem?: string | null;
   frequencia?: string | null;
+  frequency_type?: "fixed_interval" | "specific_times" | "specific_days" | null;
+  frequency_hours?: number | null;
+  specific_times?: string[] | null;
+  specific_days?: number[] | null;
   duracao_dias?: number | null;
   confianca?: "alta" | "media" | "baixa" | null;
   _name?: string;
   _dosage?: string;
   _frequencyHours?: string;
+  _frequencyType?: string;
+  _specificTimes?: string[];
+  _specificDays?: number[];
   _durationDays?: string;
   _usoContinuo?: boolean;
   _estoqueTotal?: string;
@@ -310,8 +317,31 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const populateFromExtracted = (med: ExtractedMed) => {
     setName(med._name ?? med.nome_medicamento ?? "");
     setDosage(med._dosage ?? med.dosagem ?? "");
-    const freq = med._frequencyHours ?? (med.frequencia ? FREQ_MAP[med.frequencia] ?? "" : "");
-    setFrequencyHours(freq);
+
+    // Resolve frequency type from AI output or saved wizard state
+    const aiFreqType = med._frequencyType ?? med.frequency_type ?? null;
+
+    if (aiFreqType === "specific_times") {
+      setFrequencyType("specific_times");
+      setFrequencyHours("specific_times");
+      setSpecificTimes(med._specificTimes ?? med.specific_times ?? []);
+      setSpecificDays([]);
+    } else if (aiFreqType === "specific_days") {
+      setFrequencyType("specific_days");
+      setFrequencyHours("specific_days");
+      setSpecificTimes(med._specificTimes ?? med.specific_times ?? []);
+      setSpecificDays(med._specificDays ?? med.specific_days ?? []);
+    } else {
+      // fixed_interval or legacy fallback
+      setFrequencyType("fixed_interval");
+      const freq = med._frequencyHours
+        ?? (med.frequency_hours ? String(med.frequency_hours) : null)
+        ?? (med.frequencia ? FREQ_MAP[med.frequencia] ?? "" : "");
+      setFrequencyHours(freq);
+      setSpecificTimes([]);
+      setSpecificDays([]);
+    }
+
     const dur = med._durationDays ?? (med.duracao_dias ? String(med.duracao_dias) : "");
     setDurationDays(dur);
     setUsoContinuo(med._usoContinuo ?? false);
@@ -328,6 +358,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           _name: name,
           _dosage: dosage,
           _frequencyHours: frequencyHours,
+          _frequencyType: frequencyType,
+          _specificTimes: specificTimes,
+          _specificDays: specificDays,
           _durationDays: durationDays,
           _usoContinuo: usoContinuo,
           _estoqueTotal: estoqueTotal,

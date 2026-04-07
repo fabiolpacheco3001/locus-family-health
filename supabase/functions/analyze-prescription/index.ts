@@ -55,11 +55,29 @@ Para pacientes pediátricos, utilize a posologia e a via de administração para
 - Exemplo 2: Se o garrancho parece 'Dermofex Plus' ou 'Dera...gex', MAS a posologia pede 'gotas', a dedução correta é 'Decongex Plus'. (Dermofex é creme/pomada, não se usa em gotas).
 - Exemplo 3: Se o garrancho parece 'Addiva', MAS está acompanhado de 'UI' ou 'gotas 1x ao dia', a dedução correta é 'Addera' (Vitamina D).
 
-Para o campo "frequencia", use o formato padrão descritivo:
-- "1x ao dia" → "De 24 em 24 horas"
-- "2x ao dia" → "De 12 em 12 horas"
-- "3x ao dia" → "De 8 em 8 horas"
-- "4x ao dia" → "De 6 em 6 horas"
+REGRAS DE FREQUÊNCIA E POSOLOGIA (frequency_type):
+Analise a posologia prescrita e classifique-a em um dos 3 tipos:
+
+1. "fixed_interval" — Quando a receita indica intervalos regulares:
+   - "1x ao dia" → frequency_type: "fixed_interval", frequency_hours: 24
+   - "2x ao dia" ou "12/12h" → frequency_type: "fixed_interval", frequency_hours: 12
+   - "3x ao dia" ou "8/8h" → frequency_type: "fixed_interval", frequency_hours: 8
+   - "4x ao dia" ou "6/6h" → frequency_type: "fixed_interval", frequency_hours: 6
+
+2. "specific_times" — Quando a receita especifica HORÁRIOS EXATOS (não-lineares):
+   - "Tomar às 8h, 14h e 22h" → frequency_type: "specific_times", specific_times: ["08:00", "14:00", "22:00"]
+   - "1 cp no almoço (12h) e jantar (19h)" → frequency_type: "specific_times", specific_times: ["12:00", "19:00"]
+   - "Manhã e noite" → frequency_type: "specific_times", specific_times: ["08:00", "20:00"]
+   - "Em jejum e antes de dormir" → frequency_type: "specific_times", specific_times: ["07:00", "22:00"]
+
+3. "specific_days" — Quando a receita indica DIAS DA SEMANA específicos:
+   - "Tomar segundas e quartas" → frequency_type: "specific_days", specific_days: [1, 3], specific_times: ["08:00"]
+   - "Apenas às sextas-feiras" → frequency_type: "specific_days", specific_days: [5], specific_times: ["08:00"]
+   - Dias da semana: 0=Domingo, 1=Segunda, 2=Terça, 3=Quarta, 4=Quinta, 5=Sexta, 6=Sábado
+   - Se o horário não estiver explícito na receita, use ["08:00"] como padrão.
+
+IMPORTANTE: Se a posologia for ambígua ou simplesmente "2x ao dia" sem horários específicos, prefira "fixed_interval".
+O campo "frequencia" (string descritiva) DEVE continuar sendo preenchido como fallback legível (ex: "De 8 em 8 horas", "Às 08:00 e 20:00", "Segundas e Quartas às 08:00").
 
 Para "duracao_dias", extraia o número de dias do tratamento (ex: "por 7 dias" → 7). Se for uso contínuo, retorne null.
 
@@ -135,7 +153,26 @@ Se não conseguir identificar algum campo com segurança, use null.`;
                           },
                           frequencia: {
                             type: "string",
-                            description: "Frequency in descriptive format (e.g. 'De 8 em 8 horas')",
+                            description: "Frequency in descriptive format as fallback (e.g. 'De 8 em 8 horas', 'Às 08:00 e 20:00')",
+                          },
+                          frequency_type: {
+                            type: "string",
+                            enum: ["fixed_interval", "specific_times", "specific_days"],
+                            description: "Type of frequency: fixed_interval for regular intervals, specific_times for exact daily times, specific_days for weekly schedule",
+                          },
+                          frequency_hours: {
+                            type: "number",
+                            description: "Interval in hours (only for fixed_interval, e.g. 8 for 8/8h)",
+                          },
+                          specific_times: {
+                            type: "array",
+                            items: { type: "string" },
+                            description: "Array of HH:mm times (for specific_times and specific_days, e.g. ['08:00', '20:00'])",
+                          },
+                          specific_days: {
+                            type: "array",
+                            items: { type: "number" },
+                            description: "Array of weekday numbers 0=Sun to 6=Sat (only for specific_days, e.g. [1, 3, 5])",
                           },
                           duracao_dias: {
                             type: "number",
