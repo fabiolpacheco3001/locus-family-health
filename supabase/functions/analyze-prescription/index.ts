@@ -153,7 +153,26 @@ Se não conseguir identificar algum campo com segurança, use null.`;
                           },
                           frequencia: {
                             type: "string",
-                            description: "Frequency in descriptive format (e.g. 'De 8 em 8 horas')",
+                            description: "Frequency in descriptive format as fallback (e.g. 'De 8 em 8 horas', 'Às 08:00 e 20:00')",
+                          },
+                          frequency_type: {
+                            type: "string",
+                            enum: ["fixed_interval", "specific_times", "specific_days"],
+                            description: "Type of frequency: fixed_interval for regular intervals, specific_times for exact daily times, specific_days for weekly schedule",
+                          },
+                          frequency_hours: {
+                            type: "number",
+                            description: "Interval in hours (only for fixed_interval, e.g. 8 for 8/8h)",
+                          },
+                          specific_times: {
+                            type: "array",
+                            items: { type: "string" },
+                            description: "Array of HH:mm times (for specific_times and specific_days, e.g. ['08:00', '20:00'])",
+                          },
+                          specific_days: {
+                            type: "array",
+                            items: { type: "number" },
+                            description: "Array of weekday numbers 0=Sun to 6=Sat (only for specific_days, e.g. [1, 3, 5])",
                           },
                           duracao_dias: {
                             type: "number",

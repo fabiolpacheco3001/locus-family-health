@@ -73,11 +73,18 @@ type ExtractedMed = {
   nome_medicamento: string;
   dosagem?: string | null;
   frequencia?: string | null;
+  frequency_type?: "fixed_interval" | "specific_times" | "specific_days" | null;
+  frequency_hours?: number | null;
+  specific_times?: string[] | null;
+  specific_days?: number[] | null;
   duracao_dias?: number | null;
   confianca?: "alta" | "media" | "baixa" | null;
   _name?: string;
   _dosage?: string;
   _frequencyHours?: string;
+  _frequencyType?: string;
+  _specificTimes?: string[];
+  _specificDays?: number[];
   _durationDays?: string;
   _usoContinuo?: boolean;
   _estoqueTotal?: string;
