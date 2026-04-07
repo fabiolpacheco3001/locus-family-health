@@ -49,6 +49,8 @@ const FREQUENCY_OPTIONS = [
   { label: "4/4 h", value: "4" },
   { label: "2/2 h", value: "2" },
   { label: "1/1 h", value: "1" },
+  { label: "Horários Específicos", value: "specific_times" },
+  { label: "Dias da Semana", value: "specific_days" },
 ];
 
 const FREQ_MAP: Record<string, string> = {
