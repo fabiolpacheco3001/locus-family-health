@@ -739,16 +739,131 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                   </div>
                   <div className="space-y-1.5">
                     <Label>Frequência</Label>
-                    <Select value={frequencyHours} onValueChange={setFrequencyHours}>
+                    <Select value={frequencyHours} onValueChange={handleFrequencySelect}>
                       <SelectTrigger className="text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {FREQUENCY_OPTIONS.map((o) => (
-                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                          <SelectItem key={o.value} value={o.value} className="text-base">{o.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
+
+                {/* Progressive Disclosure: Horários Específicos */}
+                {frequencyType === "specific_times" && (
+                  <div className="space-y-2">
+                    <Label>Horários das Doses</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="time"
+                        value={newTimeInput}
+                        onChange={(e) => setNewTimeInput(e.target.value)}
+                        className="text-[16px] flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleAddTime}
+                        disabled={!newTimeInput.trim()}
+                        className="h-10 px-3"
+                      >
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                    {specificTimes.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {specificTimes.map((t) => (
+                          <span
+                            key={t}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                          >
+                            {t}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTime(t)}
+                              className="rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Progressive Disclosure: Dias da Semana */}
+                {frequencyType === "specific_days" && (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Dias da Semana</Label>
+                      <div className="flex items-center justify-between gap-1.5">
+                        {DAY_LABELS.map((label, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => toggleDay(idx)}
+                            className={`w-9 h-9 rounded-full text-xs font-semibold transition-colors flex items-center justify-center ${
+                              specificDays.includes(idx)
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      {specificDays.length > 0 && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {specificDays.map((d) => DAY_NAMES[d]).join(", ")}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Horários das Doses</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={newTimeInput}
+                          onChange={(e) => setNewTimeInput(e.target.value)}
+                          className="text-[16px] flex-1"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleAddTime}
+                          disabled={!newTimeInput.trim()}
+                          className="h-10 px-3"
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
+                      {specificTimes.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {specificTimes.map((t) => (
+                            <span
+                              key={t}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                            >
+                              {t}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTime(t)}
+                                className="rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                              >
+                                <X size={12} />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-[2fr_1fr] gap-4 items-start">
                   <div className="space-y-1.5">
