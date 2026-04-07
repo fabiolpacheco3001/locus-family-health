@@ -268,6 +268,38 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     return opt?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : "");
   }, [frequencyHours]);
 
+  const handleFrequencySelect = (value: string) => {
+    setFrequencyHours(value);
+    if (value === "specific_times") {
+      setFrequencyType("specific_times");
+      setSpecificDays([]);
+    } else if (value === "specific_days") {
+      setFrequencyType("specific_days");
+    } else {
+      setFrequencyType("fixed_interval");
+      setSpecificTimes([]);
+      setSpecificDays([]);
+      setNewTimeInput("");
+    }
+  };
+
+  const handleAddTime = () => {
+    const t = newTimeInput.trim();
+    if (!t || specificTimes.includes(t)) return;
+    setSpecificTimes((prev) => [...prev, t].sort());
+    setNewTimeInput("");
+  };
+
+  const handleRemoveTime = (time: string) => {
+    setSpecificTimes((prev) => prev.filter((tt) => tt !== time));
+  };
+
+  const toggleDay = (day: number) => {
+    setSpecificDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)
+    );
+  };
+
   const currentConfidence = useMemo(() => {
     if (!aiReviewMode || extractedMeds.length === 0) return null;
     return extractedMeds[currentMedIndex]?.confianca ?? null;
