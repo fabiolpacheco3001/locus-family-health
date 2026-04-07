@@ -23,8 +23,8 @@ import { toast } from "sonner";
 import { format, startOfDay, startOfYesterday, isBefore, isToday, isYesterday, isPast } from "date-fns";
 import { AlertCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
-import { calculateNextDose } from "@/lib/calculateNextDose";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
+import { advancePastTakenDoses } from "@/lib/advancePastTakenDoses";
 
 const Home = () => {
   const { user } = useAuth();
@@ -276,7 +276,11 @@ const Home = () => {
 
     return activeMeds
       .map((med) => {
-        const isContinuous = !med.frequency_hours || med.frequency_hours <= 0;
+        // A med is truly "continuous" only if it has no frequency mechanism at all
+        const freqType = (med.frequency_type as string) || "fixed_interval";
+        const hasSpecificSchedule = freqType === "specific_times" || freqType === "specific_days";
+        const isContinuous = !hasSpecificSchedule && (!med.frequency_hours || med.frequency_hours <= 0);
+
         const dateOnly = med.start_date?.slice(0, 10);
         let startDateISO: string | null = null;
         if (dateOnly && med.start_time) {
@@ -304,29 +308,21 @@ const Home = () => {
             }
           }
         } else {
-          const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, startOfYesterday(), med.frequency_type, med.specific_times as string[] | null, med.specific_days as number[] | null);
-          if (nextDose && !isNaN(nextDose.getTime())) {
-            let candidate = new Date(nextDose.getTime());
-            let advanceLimit = 50;
-            while (advanceLimit > 0 && med.frequency_hours && med.frequency_hours > 0) {
-              const key = `${med.id}-${candidate.toISOString()}`;
-              if (!homeDoseStatuses[key]) break;
-              candidate = new Date(candidate.getTime() + med.frequency_hours * 60 * 60 * 1000);
-              advanceLimit--;
-            }
-            if (med.end_date) {
-              const endStr = med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date;
-              const endDt = parseDateInSP(endStr);
-              if (endDt && candidate > endDt) {
-                effectiveScheduledFor = null;
-              } else {
-                effectiveScheduledFor = candidate.toISOString();
-                doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-              }
-            } else {
-              effectiveScheduledFor = candidate.toISOString();
-              doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
-            }
+          const candidate = advancePastTakenDoses({
+            medicationId: med.id,
+            startDateISO,
+            frequencyHours: med.frequency_hours,
+            endDate: med.end_date,
+            referenceTime: startOfYesterday(),
+            frequencyType: med.frequency_type,
+            specificTimes: med.specific_times as string[] | null,
+            specificDays: med.specific_days as number[] | null,
+            doseStatuses: homeDoseStatuses,
+          });
+
+          if (candidate && !isNaN(candidate.getTime())) {
+            effectiveScheduledFor = candidate.toISOString();
+            doseLabel = `Próxima dose: ${format(toSPTime(candidate), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
           }
         }
 
