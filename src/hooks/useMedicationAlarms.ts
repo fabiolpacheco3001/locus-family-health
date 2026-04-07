@@ -169,7 +169,7 @@ export function useMedicationAlarms(medications: Medication[]) {
           startDateISO = dateOnly;
         }
 
-        const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date);
+        const nextDose = calculateNextDose(startDateISO, med.frequency_hours, med.end_date, undefined, med.frequency_type, med.specific_times as string[] | null, med.specific_days as number[] | null);
         if (!nextDose) continue;
 
         const doseH = nextDose.getHours();
