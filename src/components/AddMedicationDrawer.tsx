@@ -384,7 +384,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   };
 
   const buildMedPayload = () => {
-    const freqNum = frequencyHours ? Number(frequencyHours) : null;
+    const isSpecific = frequencyType === "specific_times" || frequencyType === "specific_days";
+    const freqNum = isSpecific ? null : (frequencyHours ? Number(frequencyHours) : null);
     const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
     const finalEndDate = usoContinuo ? null : calculatedEndDate;
     const estTotalNum = estoqueTotal ? Number(estoqueTotal) : null;
@@ -394,9 +395,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     return {
       name: name.trim(),
       dosage: dosage.trim() || null,
-      start_time: parsedDate.time || null,
+      start_time: isSpecific ? null : (parsedDate.time || null),
       frequency_hours: freqNum,
       frequency: freqLbl || null,
+      frequency_type: frequencyType,
+      specific_times: isSpecific ? specificTimes : [],
+      specific_days: frequencyType === "specific_days" ? specificDays : [],
       duration_days: durNum,
       duration: durNum ? `${durNum} dias` : null,
       start_date: parsedDate.date || null,
