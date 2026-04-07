@@ -227,6 +227,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setDosage("");
     setStartDateTime("");
     setFrequencyHours("");
+    setFrequencyType("fixed_interval");
+    setSpecificTimes([]);
+    setSpecificDays([]);
+    setNewTimeInput("");
     setDurationDays("");
     setStatus("Ativo");
     setConsultationId("none");
