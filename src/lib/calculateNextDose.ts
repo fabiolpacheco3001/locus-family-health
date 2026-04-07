@@ -1,42 +1,157 @@
 /**
  * Calculates the next future dose for a recurring medication.
- * Uses America/Sao_Paulo timezone explicitly.
+ * Supports three frequency types:
+ *   - fixed_interval: legacy hourly loop (start_time + frequency_hours)
+ *   - specific_times: array of clock times (e.g. ["08:00","14:00","22:00"])
+ *   - specific_days: array of weekday numbers (0=Sun..6=Sat) + specific_times
  */
-import { nowInSP, parseDateInSP, APP_TIMEZONE } from "./dateUtils";
+import { parseDateInSP, APP_TIMEZONE } from "./dateUtils";
 import { toZonedTime } from "date-fns-tz";
+
+export type FrequencyType = "fixed_interval" | "specific_times" | "specific_days";
 
 export function calculateNextDose(
   startDateStr: string | null | undefined,
   frequencyHours: number | null | undefined,
   endDateStr: string | null | undefined,
   referenceTime?: Date,
+  frequencyType?: FrequencyType | string | null,
+  specificTimes?: string[] | null,
+  specificDays?: number[] | null,
 ): Date | null {
-  if (!startDateStr || !frequencyHours || frequencyHours <= 0) return null;
-
-  const start = parseDateInSP(startDateStr);
-  if (!start) return null;
-
   const ref = referenceTime ?? new Date();
+  const refSP = toZonedTime(ref, APP_TIMEZONE);
 
-  // 1. Se o tratamento ainda nem começou, a próxima dose É a data de início.
-  if (start > ref) return start;
+  // Determine effective frequency type (retrocompatibility)
+  const effType: FrequencyType =
+    (frequencyType as FrequencyType) || "fixed_interval";
 
-  // 2. Calcula a próxima dose iterando com a frequência (while loop blindado).
-  const next = new Date(start.getTime());
-  let maxIterations = 10000;
-  while (next <= ref && maxIterations > 0) {
-    next.setTime(next.getTime() + frequencyHours * 60 * 60 * 1000);
-    maxIterations--;
-  }
-
-  if (isNaN(next.getTime())) return null;
-
-  // 3. Validação da Data de Término (força 23:59:59 SP para não cortar doses noturnas)
-  if (endDateStr) {
+  // Helper: parse end date with 23:59:59 ceiling
+  const parseEnd = (): Date | null => {
+    if (!endDateStr) return null;
     const endStr = endDateStr.length === 10 ? endDateStr + "T23:59:59" : endDateStr;
-    const end = parseDateInSP(endStr);
-    if (end && next > end) return null;
+    return parseDateInSP(endStr);
+  };
+
+  // Helper: validate against end date
+  const withinEnd = (d: Date): Date | null => {
+    const end = parseEnd();
+    if (end && d > end) return null;
+    return d;
+  };
+
+  // ──── FIXED INTERVAL (legacy) ────
+  if (effType === "fixed_interval") {
+    if (!startDateStr || !frequencyHours || frequencyHours <= 0) return null;
+
+    const start = parseDateInSP(startDateStr);
+    if (!start) return null;
+
+    if (start > ref) return withinEnd(start);
+
+    const next = new Date(start.getTime());
+    let maxIterations = 10000;
+    while (next <= ref && maxIterations > 0) {
+      next.setTime(next.getTime() + frequencyHours * 60 * 60 * 1000);
+      maxIterations--;
+    }
+
+    if (isNaN(next.getTime())) return null;
+    return withinEnd(next);
   }
 
-  return next;
+  // ──── SPECIFIC TIMES (e.g. ["08:00", "14:00", "22:00"]) ────
+  if (effType === "specific_times") {
+    const times = specificTimes && specificTimes.length > 0 ? specificTimes : null;
+    if (!times) return null;
+
+    // Sort times chronologically
+    const sorted = [...times].sort();
+
+    // Check start date: if treatment hasn't started yet, return first time on start day
+    if (startDateStr) {
+      const start = parseDateInSP(startDateStr);
+      if (start && start > ref) {
+        const startSP = toZonedTime(start, APP_TIMEZONE);
+        const dateStr = `${startSP.getFullYear()}-${String(startSP.getMonth() + 1).padStart(2, "0")}-${String(startSP.getDate()).padStart(2, "0")}`;
+        const candidate = parseDateInSP(`${dateStr}T${sorted[0]}`);
+        return candidate ? withinEnd(candidate) : null;
+      }
+    }
+
+    // Current SP date parts
+    const todayStr = `${refSP.getFullYear()}-${String(refSP.getMonth() + 1).padStart(2, "0")}-${String(refSP.getDate()).padStart(2, "0")}`;
+    const nowTimeStr = `${String(refSP.getHours()).padStart(2, "0")}:${String(refSP.getMinutes()).padStart(2, "0")}`;
+
+    // Find the next time TODAY that hasn't passed yet
+    for (const t of sorted) {
+      if (t > nowTimeStr) {
+        const candidate = parseDateInSP(`${todayStr}T${t}`);
+        if (candidate) {
+          const result = withinEnd(candidate);
+          if (result) return result;
+        }
+      }
+    }
+
+    // All times passed today → first time TOMORROW
+    const tomorrow = new Date(refSP);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
+    const candidate = parseDateInSP(`${tomorrowStr}T${sorted[0]}`);
+    return candidate ? withinEnd(candidate) : null;
+  }
+
+  // ──── SPECIFIC DAYS (e.g. [1, 3, 5] for Mon/Wed/Fri) + specific_times ────
+  if (effType === "specific_days") {
+    const days = specificDays && specificDays.length > 0 ? specificDays : null;
+    const times = specificTimes && specificTimes.length > 0 ? [...specificTimes].sort() : ["08:00"];
+    if (!days) return null;
+
+    const sortedDays = [...days].sort((a, b) => a - b);
+
+    // Check start date
+    if (startDateStr) {
+      const start = parseDateInSP(startDateStr);
+      if (start && start > ref) {
+        const startSP = toZonedTime(start, APP_TIMEZONE);
+        const dateStr = `${startSP.getFullYear()}-${String(startSP.getMonth() + 1).padStart(2, "0")}-${String(startSP.getDate()).padStart(2, "0")}`;
+        const candidate = parseDateInSP(`${dateStr}T${times[0]}`);
+        return candidate ? withinEnd(candidate) : null;
+      }
+    }
+
+    const currentDayOfWeek = refSP.getDay(); // 0=Sun
+    const nowTimeStr = `${String(refSP.getHours()).padStart(2, "0")}:${String(refSP.getMinutes()).padStart(2, "0")}`;
+
+    // Check if TODAY is one of the allowed days and there's a future time
+    if (sortedDays.includes(currentDayOfWeek)) {
+      for (const t of times) {
+        if (t > nowTimeStr) {
+          const todayStr = `${refSP.getFullYear()}-${String(refSP.getMonth() + 1).padStart(2, "0")}-${String(refSP.getDate()).padStart(2, "0")}`;
+          const candidate = parseDateInSP(`${todayStr}T${t}`);
+          if (candidate) {
+            const result = withinEnd(candidate);
+            if (result) return result;
+          }
+        }
+      }
+    }
+
+    // Find the next allowed day
+    for (let offset = 1; offset <= 7; offset++) {
+      const futureDate = new Date(refSP);
+      futureDate.setDate(futureDate.getDate() + offset);
+      const futureDow = futureDate.getDay();
+      if (sortedDays.includes(futureDow)) {
+        const dateStr = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")}`;
+        const candidate = parseDateInSP(`${dateStr}T${times[0]}`);
+        return candidate ? withinEnd(candidate) : null;
+      }
+    }
+
+    return null;
+  }
+
+  return null;
 }
