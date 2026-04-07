@@ -64,6 +64,9 @@ const FREQ_MAP: Record<string, string> = {
   "De 1 em 1 hora": "1",
 };
 
+const DAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
+const DAY_NAMES = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
 const INPUT_CLASSES = "flex h-10 w-full max-w-full min-w-0 rounded-md border border-input bg-background px-3 py-2 text-[16px] ring-offset-background box-border";
 
 type ExtractedMed = {
@@ -101,6 +104,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [estoqueTotal, setEstoqueTotal] = useState("");
   const [estoqueMinimo, setEstoqueMinimo] = useState("");
   const [reason, setReason] = useState("");
+  const [frequencyType, setFrequencyType] = useState<string>("fixed_interval");
+  const [specificTimes, setSpecificTimes] = useState<string[]>([]);
+  const [specificDays, setSpecificDays] = useState<number[]>([]);
+  const [newTimeInput, setNewTimeInput] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [receitaFile, setReceitaFile] = useState<File | null>(null);
   const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
