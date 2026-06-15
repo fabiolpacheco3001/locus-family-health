@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { toast } from "sonner";
 import { useMedications } from "@/hooks/useMedications";
+import { getEdgeSignedUrl } from "@/lib/storage";
 import { differenceInYears } from "date-fns";
 
 interface Props {
@@ -67,7 +68,11 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
     setIsAnalyzing(true);
     try {
       const tempId = crypto.randomUUID();
-      const receitaUrl = await uploadReceita(receitaFile, tempId);
+      const receitaPath = await uploadReceita(receitaFile, tempId);
+
+      // Generate a short-lived signed URL for the edge function (private bucket)
+      const receitaUrl = await getEdgeSignedUrl(receitaPath);
+      if (!receitaUrl) throw new Error("Não foi possível gerar URL para análise.");
 
       const { data, error } = await supabase.functions.invoke("analyze-prescription", {
         body: { fileUrl: receitaUrl, ...(patientAge !== null ? { patientAge } : {}) },
@@ -78,7 +83,7 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
 
       logAiUsage("receita", 0);
       onOpenChange(false);
-      onAnalysisComplete(data, receitaUrl);
+      onAnalysisComplete(data, receitaPath); // pass path (not signed URL) so callers store the stable path
     } catch (err: any) {
       console.error("Prescription OCR error:", err);
       toast.error(err?.message || "Não foi possível ler a receita. Tente novamente.");

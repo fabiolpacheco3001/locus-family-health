@@ -27,6 +27,7 @@ import {
 import { toast } from "sonner";
 import { useExams, Exam, NewExam } from "@/hooks/useExams";
 import ConsultationSelect from "@/components/ConsultationSelect";
+import { getEdgeSignedUrl, getDisplaySignedUrl } from "@/lib/storage";
 
 interface Props {
   open: boolean;
@@ -52,6 +53,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
   const [cancelReason, setCancelReason] = useState("");
   const [uploading, setUploading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerSignedUrl, setViewerSignedUrl] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [lgpdConsent, setLgpdConsent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -254,7 +256,11 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                 <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-md border border-border">
                   <Paperclip size={16} className="text-muted-foreground shrink-0" />
                   <span className="text-sm text-foreground truncate flex-1">Arquivo existente</span>
-                  <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
+                  <Button variant="ghost" size="sm" className="h-auto p-1" onClick={async () => {
+                    const url = await getDisplaySignedUrl(existingFileUrl);
+                    setViewerSignedUrl(url);
+                    setViewerOpen(true);
+                  }}>
                     <Eye size={16} className="text-primary" />
                   </Button>
                   <Button variant="ghost" size="icon" className="text-red-500 h-8 w-8 ml-auto" onClick={() => { setExistingFileUrl(null); setFile(null); }}>
@@ -300,20 +306,25 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
                     }
                     setIsAnalyzing(true);
                     try {
-                      let urlToAnalyze = existingFileUrl;
+                      // Upload first (if a new file was selected), get back the storage path
+                      let filePath = existingFileUrl;
                       if (file) {
                         const tempId = editingExam?.id ?? crypto.randomUUID();
-                        urlToAnalyze = await uploadFile(file, tempId);
-                        setExistingFileUrl(urlToAnalyze);
+                        filePath = await uploadFile(file, tempId);
+                        setExistingFileUrl(filePath);
                       }
 
-                      if (!urlToAnalyze) {
+                      if (!filePath) {
                         toast.error("Nenhum arquivo disponível para análise.");
                         return;
                       }
 
+                      // Generate a short-lived signed URL for the edge function (private bucket)
+                      const signedUrl = await getEdgeSignedUrl(filePath);
+                      if (!signedUrl) throw new Error("Não foi possível gerar URL para análise.");
+
                       const { data, error } = await supabase.functions.invoke("analyze-exam", {
-                        body: { fileUrl: urlToAnalyze },
+                        body: { fileUrl: signedUrl },
                       });
 
                       if (error) throw error;
@@ -395,11 +406,11 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
             <DialogTitle className="text-primary">Visualizar Exame</DialogTitle>
           </DialogHeader>
           <div className="px-4 pb-4 flex-1 overflow-auto">
-            {existingFileUrl && (
+            {viewerSignedUrl && (
               isPdf ? (
-                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(existingFileUrl)}&embedded=true`} className="w-full h-[70vh] rounded-md border-0" />
+                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(viewerSignedUrl)}&embedded=true`} className="w-full h-[70vh] rounded-md border-0" />
               ) : (
-                <img src={existingFileUrl} alt="Resultado do exame" className="w-full object-contain max-h-[70vh] rounded-md" />
+                <img src={viewerSignedUrl} alt="Resultado do exame" className="w-full object-contain max-h-[70vh] rounded-md" />
               )
             )}
           </div>

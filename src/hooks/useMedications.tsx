@@ -164,17 +164,15 @@ export const useMedications = (familyMemberId?: string) => {
     },
   });
 
-  const uploadReceita = async (file: File, medicationId: string) => {
+  // Returns the storage PATH (not a URL) — callers must use getEdgeSignedUrl to pass to edge functions
+  const uploadReceita = async (file: File, medicationId: string): Promise<string> => {
     const ext = file.name.split(".").pop() ?? "jpg";
     const path = `${user!.id}/${medicationId}/receita.${ext}`;
     const { error: upErr } = await supabase.storage
       .from("exam-files")
       .upload(path, file, { upsert: true });
     if (upErr) throw upErr;
-    const { data: urlData } = supabase.storage
-      .from("exam-files")
-      .getPublicUrl(path);
-    return urlData.publicUrl;
+    return path; // store path, not public URL (private bucket)
   };
 
   return {

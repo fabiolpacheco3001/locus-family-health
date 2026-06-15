@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Stethoscope, Pill, FileText, ExternalLink, X } from "lucide-react";
+import { getDisplaySignedUrl } from "@/lib/storage";
 import { parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatInTimeZone } from "date-fns-tz";
@@ -37,6 +38,7 @@ const formatDate = (dateStr: string) => {
   }
 };
 
+// Works for both full URLs (legacy) and storage paths (new) — checks extension only
 const isImageUrl = (url: string) => /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
 
 interface Props {
@@ -98,7 +100,10 @@ const ClinicalTimeline = ({ events }: Props) => {
 
                   {ev.fileUrl && (
                     <button
-                      onClick={() => setViewerUrl(ev.fileUrl)}
+                      onClick={async () => {
+                        const signed = await getDisplaySignedUrl(ev.fileUrl);
+                        setViewerUrl(signed);
+                      }}
                       className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium text-primary hover:underline"
                     >
                       <ExternalLink size={12} />

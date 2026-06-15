@@ -16,10 +16,10 @@ interface FamilyGroupContextType {
 
 const FamilyGroupContext = createContext<FamilyGroupContextType>({
   groupId: null,
-  role: "admin",
+  role: "user",      // least-privilege default during loading (#6 security fix)
   linkedMemberId: null,
   managedProfiles: [],
-  isAdmin: true,
+  isAdmin: false,    // least-privilege default during loading (#6 security fix)
   isLoading: true,
 });
 
@@ -46,10 +46,10 @@ export const FamilyGroupProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo<FamilyGroupContextType>(() => ({
     groupId: (query.data as any)?.group_id ?? null,
-    role: ((query.data as any)?.role as AppRole) ?? "admin",
+    role: ((query.data as any)?.role as AppRole) ?? "user",
     linkedMemberId: (query.data as any)?.family_member_id ?? null,
     managedProfiles: (query.data as any)?.managed_profiles ?? [],
-    isAdmin: ((query.data as any)?.role ?? "admin") === "admin",
+    isAdmin: ((query.data as any)?.role ?? "user") === "admin",
     isLoading: query.isLoading,
   }), [query.data, query.isLoading]);
 

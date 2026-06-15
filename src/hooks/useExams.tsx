@@ -117,6 +117,7 @@ export const useExams = (familyMemberId: string) => {
     },
   });
 
+  // Returns the storage PATH (not a URL) — callers must use getDisplaySignedUrl/getEdgeSignedUrl to generate URLs
   const uploadFile = async (file: File, examId: string): Promise<string> => {
     const ext = file.name.split(".").pop();
     const path = `${user!.id}/${examId}.${ext}`;
@@ -124,10 +125,7 @@ export const useExams = (familyMemberId: string) => {
       .from("exam-files")
       .upload(path, file, { upsert: true });
     if (error) throw error;
-    const { data: urlData } = supabase.storage
-      .from("exam-files")
-      .getPublicUrl(path);
-    return urlData.publicUrl;
+    return path; // store path, not public URL (private bucket)
   };
 
   return {

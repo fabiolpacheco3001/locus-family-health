@@ -35,6 +35,17 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // ── ROLE CHECK: all actions require super_admin (#3) ──
+    const { data: callerRole } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("id", caller.id)
+      .maybeSingle();
+
+    if (callerRole?.role !== "super_admin") {
+      return json({ error: "Apenas Super Admins podem acessar este recurso." }, 403);
+    }
+
     // ── LIST EMAILS (batch) ──
     if (action === "list-emails") {
       const { userIds } = body;
@@ -70,17 +81,6 @@ Deno.serve(async (req) => {
       }
 
       return json({ admins });
-    }
-
-    // ── MUTATIONS: super_admin only ──
-    const { data: callerRole } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("id", caller.id)
-      .maybeSingle();
-
-    if (callerRole?.role !== "super_admin") {
-      return json({ error: "Apenas Super Admins podem alterar cargos." }, 403);
     }
 
     // ── PROMOTE ──

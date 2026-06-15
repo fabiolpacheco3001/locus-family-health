@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { Loader2, Trash2, Paperclip, Eye, ChevronRight, CheckCheck, ArrowLeft, AlertTriangle, Plus, X } from "lucide-react";
+import { getDisplaySignedUrl } from "@/lib/storage";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import PaywallModal from "@/components/PaywallModal";
@@ -120,6 +121,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [existingReceitaUrl, setExistingReceitaUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerSignedUrl, setViewerSignedUrl] = useState<string | null>(null);
   const [patientAge, setPatientAge] = useState<number | null>(null);
   const [patientName, setPatientName] = useState<string | null>(null);
   const isEditing = !!editingMedication;
@@ -727,7 +729,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                     <div className="flex items-center gap-2 p-3 bg-background rounded-md border border-border">
                       <Paperclip size={16} className="text-muted-foreground shrink-0" />
                       <span className="text-sm text-foreground truncate flex-1">Receita anexada</span>
-                      <Button variant="ghost" size="sm" className="h-auto p-1" onClick={() => setViewerOpen(true)}>
+                      <Button variant="ghost" size="sm" className="h-auto p-1" onClick={async () => {
+                        const url = await getDisplaySignedUrl(existingReceitaUrl);
+                        setViewerSignedUrl(url);
+                        setViewerOpen(true);
+                      }}>
                         <Eye size={16} className="text-primary" />
                       </Button>
                     </div>
@@ -1071,11 +1077,11 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             <DialogTitle className="text-primary">Receita Médica</DialogTitle>
           </DialogHeader>
           <div className="px-4 pb-4 flex-1 overflow-auto">
-            {existingReceitaUrl && (
+            {viewerSignedUrl && (
               isReceitaPdf ? (
-                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(existingReceitaUrl)}&embedded=true`} className="w-full h-[70vh] rounded-md border-0" />
+                <iframe src={`https://docs.google.com/gview?url=${encodeURIComponent(viewerSignedUrl)}&embedded=true`} className="w-full h-[70vh] rounded-md border-0" />
               ) : (
-                <img src={existingReceitaUrl} alt="Receita médica" className="w-full object-contain max-h-[70vh] rounded-md" />
+                <img src={viewerSignedUrl} alt="Receita médica" className="w-full object-contain max-h-[70vh] rounded-md" />
               )
             )}
           </div>
