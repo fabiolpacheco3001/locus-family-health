@@ -453,7 +453,14 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     const medFreqHours = med._frequencyHours ?? (med.frequencia ? FREQ_MAP[med.frequencia] ?? "" : "");
     const medDurDays = med._durationDays ?? (med.duracao_dias ? String(med.duracao_dias) : "");
     const medUsoContinuo = med._usoContinuo ?? false;
-    const freqNum = medFreqHours ? Number(medFreqHours) : null;
+
+    // Resolve advanced frequency type from OCR data
+    const aiFreqType: string = med._frequencyType ?? med.frequency_type ?? "fixed_interval";
+    const isSpecific = aiFreqType === "specific_times" || aiFreqType === "specific_days";
+    const medSpecificTimes: string[] = isSpecific ? (med._specificTimes ?? med.specific_times ?? []) : [];
+    const medSpecificDays: number[] = aiFreqType === "specific_days" ? (med._specificDays ?? med.specific_days ?? []) : [];
+
+    const freqNum = isSpecific ? null : (medFreqHours ? Number(medFreqHours) : null);
     const durNum = medUsoContinuo ? null : (medDurDays ? Number(medDurDays) : null);
     const freqLbl = FREQUENCY_OPTIONS.find((o) => o.value === medFreqHours)?.label ?? (medFreqHours ? `A cada ${medFreqHours}h` : null);
 
@@ -468,9 +475,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     return {
       name: medName,
       dosage: medDosage,
-      start_time: parsedDate.time || null,
+      start_time: isSpecific ? null : (parsedDate.time || null),
       frequency_hours: freqNum,
       frequency: freqLbl || null,
+      frequency_type: aiFreqType,
+      specific_times: medSpecificTimes,
+      specific_days: medSpecificDays,
       duration_days: durNum,
       duration: durNum ? `${durNum} dias` : null,
       start_date: parsedDate.date || null,

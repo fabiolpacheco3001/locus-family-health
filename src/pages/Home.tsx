@@ -278,7 +278,21 @@ const Home = () => {
       .map((med) => {
         // A med is truly "continuous" only if it has no frequency mechanism at all
         const freqType = (med.frequency_type as string) || "fixed_interval";
-        const hasSpecificSchedule = freqType === "specific_times" || freqType === "specific_days";
+        // Defensive: also detect specific schedule by checking populated arrays —
+        // guards against frequency_type being null/missing (legacy rows or OCR batch-save bug)
+        const hasSpecificTimes =
+          freqType === "specific_times" ||
+          (Array.isArray(med.specific_times) && med.specific_times.length > 0);
+        const hasSpecificDays =
+          freqType === "specific_days" ||
+          (Array.isArray(med.specific_days) && med.specific_days.length > 0);
+        const hasSpecificSchedule = hasSpecificTimes || hasSpecificDays;
+        // Resolve the effective type so advancePastTakenDoses uses the right branch
+        const effectiveFreqType: string = hasSpecificDays
+          ? "specific_days"
+          : hasSpecificTimes
+          ? "specific_times"
+          : freqType;
         const isContinuous = !hasSpecificSchedule && (!med.frequency_hours || med.frequency_hours <= 0);
 
         const dateOnly = med.start_date?.slice(0, 10);
@@ -314,7 +328,7 @@ const Home = () => {
             frequencyHours: med.frequency_hours,
             endDate: med.end_date,
             referenceTime: startOfYesterday(),
-            frequencyType: med.frequency_type,
+            frequencyType: effectiveFreqType,
             specificTimes: med.specific_times as string[] | null,
             specificDays: med.specific_days as number[] | null,
             doseStatuses: homeDoseStatuses,
