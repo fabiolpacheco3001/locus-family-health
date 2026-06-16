@@ -411,13 +411,13 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     const stateMatch2 = rawState.match(/\b[A-Z]{2}\b/)?.[0] || rawCity.match(/\b[A-Z]{2}$/)?.[0] || "";
     const cleanState = stateMatch2 || undefined;
 
-    let cleanCity = rawCity;
+    let cleanCity: string | undefined = rawCity;
     if (cleanState) {
       cleanCity = cleanCity.replace(new RegExp(`\\s*${cleanState}$`, "i"), "").trim();
     }
     cleanCity = cleanCity || undefined;
 
-    let cleanFacility = rawFacility;
+    let cleanFacility: string | undefined = rawFacility;
     if (cleanCity) {
       cleanFacility = cleanFacility
         .replace(new RegExp(`\\s*${cleanCity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"), "")
