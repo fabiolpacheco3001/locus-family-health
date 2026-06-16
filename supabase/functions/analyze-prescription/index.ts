@@ -42,6 +42,23 @@ serve(async (req) => {
       });
     }
 
+    // ── SSRF PROTECTION — only allow Supabase Storage URLs ──
+    const allowedHost = new URL(Deno.env.get("SUPABASE_URL")!).host;
+    try {
+      const parsedUrl = new URL(fileUrl);
+      if (parsedUrl.host !== allowedHost || !parsedUrl.pathname.startsWith("/storage/")) {
+        return new Response(JSON.stringify({ error: "Invalid fileUrl: must be a Supabase Storage URL" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid fileUrl" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const isPediatric = typeof patientAge === "number" && patientAge < 12;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
