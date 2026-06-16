@@ -48,6 +48,7 @@ const importCCChangelog = () => import("./pages/command-center/Changelog");
 const importChangelog = () => import("./pages/Changelog");
 const importMeuPlano = () => import("./pages/MeuPlano");
 const importPoliticaPrivacidade = () => import("./pages/PoliticaPrivacidade");
+const importTermosUso = () => import("./pages/TermosUso");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
@@ -77,6 +78,7 @@ const CCChangelog = lazy(importCCChangelog);
 const Changelog = lazy(importChangelog);
 const MeuPlano = lazy(importMeuPlano);
 const PoliticaPrivacidade = lazy(importPoliticaPrivacidade);
+const TermosUso = lazy(importTermosUso);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
@@ -122,8 +124,9 @@ const App = () => (
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
             <Route path="/cadastro" element={<Suspense fallback={<RouteLoader />}><Cadastro /></Suspense>} />
             <Route path="/reset-password" element={<Suspense fallback={<RouteLoader />}><ResetPassword /></Suspense>} />
-            {/* Pública — acessível sem login (LGPD exige disponibilidade pré-consentimento) */}
+            {/* Públicas — acessíveis sem login (LGPD exige disponibilidade pré-consentimento) */}
             <Route path="/politica-de-privacidade" element={<Suspense fallback={<RouteLoader />}><PoliticaPrivacidade /></Suspense>} />
+            <Route path="/termos-de-uso" element={<Suspense fallback={<RouteLoader />}><TermosUso /></Suspense>} />
             <Route element={<AppLayout />}>
               <Route path="/home" element={<Home />} />
               <Route path="/agenda" element={<Agenda />} />

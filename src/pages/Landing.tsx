@@ -1,4 +1,4 @@
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, Navigate, Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -536,12 +536,12 @@ const Landing = () => {
             className="h-14 w-auto opacity-80"
           />
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs" style={{ color: "#888" }}>
-            <a href="#" className="hover:underline">
+            <Link to="/termos-de-uso" className="hover:underline">
               Termos de Uso
-            </a>
-            <a href="#" className="hover:underline">
+            </Link>
+            <Link to="/politica-de-privacidade" className="hover:underline">
               Privacidade (LGPD)
-            </a>
+            </Link>
             <a href="mailto:suporte.vita@locustech.com.br" className="flex items-center gap-1 hover:underline">
               <Mail size={12} /> suporte.vita@locustech.com.br
             </a>
