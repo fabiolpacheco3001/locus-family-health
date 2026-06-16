@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.4 | **Atualizado em:** junho/2026 (sessão 5)  
+> **Versão:** 2.5 | **Atualizado em:** junho/2026 (sessão 6)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -15,6 +15,7 @@
 | Sessão 3 | C3, A2, M14, A15 — Biometria, Senha, Revogação, Portabilidade | Sprint 2 ✅ CONCLUÍDO |
 | Sessão 4 | A1, A4, C10 — CORS restrito, Rate limiting IA, Preços centralizados | Sprint 3 ✅ CONCLUÍDO |
 | Sessão 5 | Fix 4 Lovable warnings (erros Asaas, ownership clínico, ai_usage_logs, check_group_access) + UX admin + badge fix | Segurança ✅ CONCLUÍDO |
+| Sessão 6 | P0 cancel-asaas-subscription body bypass; P1 decrement_stock ownership + error sanitization (5 funções); migration 000017 ownership completo; lib/tz.ts; restructure deploy doc | Segurança ✅ CONCLUÍDO |
 
 ---
 

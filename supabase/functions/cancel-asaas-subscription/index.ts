@@ -30,13 +30,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    let asaasSubscriptionId: string | null = null;
-    try {
-      const payload = await req.json();
-      asaasSubscriptionId = typeof payload?.asaasSubscriptionId === "string" ? payload.asaasSubscriptionId : null;
-    } catch {
-      // No body or invalid JSON — proceed with DB lookup
-    }
+    // Security: do NOT read asaasSubscriptionId from the request body.
+    // Accepting it from the client would allow any authenticated user to cancel
+    // another customer's subscription by passing their Asaas ID.
+    // The ID is always sourced exclusively from the DB row of the authenticated user.
 
     const apiKey = Deno.env.get("ASAAS_API_KEY");
     if (!apiKey) {
@@ -68,7 +65,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    let targetSubscriptionId = asaasSubscriptionId ?? sub.asaas_subscription_id ?? null;
+    let targetSubscriptionId = sub.asaas_subscription_id ?? null;
 
     // Fallback: list active subscriptions from Asaas by customer
     if (!targetSubscriptionId && sub.asaas_customer_id) {
@@ -113,14 +110,10 @@ Deno.serve(async (req) => {
     );
 
     if (!cancelRes.ok) {
-      let errorData: unknown;
-      try {
-        errorData = await cancelRes.json();
-      } catch {
-        errorData = await cancelRes.text();
-      }
-      console.error("Asaas DELETE error:", JSON.stringify(errorData));
-      return new Response(JSON.stringify({ error: errorData || "Erro ao cancelar assinatura no gateway." }), {
+      const errorBody = await cancelRes.text().catch(() => "(unreadable)");
+      // Log full details server-side only — never forward raw gateway error bodies to clients
+      console.error(`Asaas DELETE error ${cancelRes.status}:`, errorBody);
+      return new Response(JSON.stringify({ error: "Erro ao cancelar assinatura. Tente novamente ou entre em contato com o suporte." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -138,7 +131,7 @@ Deno.serve(async (req) => {
 
     if (updateErr) {
       console.error("Supabase update error:", updateErr.message);
-      return new Response(JSON.stringify({ error: updateErr.message }), {
+      return new Response(JSON.stringify({ error: "Erro ao atualizar status da assinatura. Entre em contato com o suporte." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -149,9 +142,8 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Erro interno.";
-    console.error("Unexpected error:", message);
-    return new Response(JSON.stringify({ error: message }), {
+    console.error("cancel-asaas-subscription unexpected error:", err);
+    return new Response(JSON.stringify({ error: "Erro interno. Tente novamente ou entre em contato com o suporte." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -302,7 +302,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
   } catch (e) {
     console.error("analyze-prescription error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }),
+      JSON.stringify({ error: "Erro interno. Tente novamente mais tarde." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

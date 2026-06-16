@@ -330,8 +330,7 @@ Deno.serve(async (req) => {
     console.log(`delete-user-account: auth user ${userId} deleted successfully`);
     return json({ success: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Erro interno";
-    console.error("delete-user-account unexpected error:", message);
-    return json({ error: message }, 500);
+    console.error("delete-user-account unexpected error:", err);
+    return json({ error: "Erro interno. Tente novamente ou entre em contato com o suporte." }, 500);
   }
 });
