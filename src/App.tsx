@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { FamilyGroupProvider } from "@/hooks/useFamilyGroup";
 import Login from "./pages/Login";
@@ -112,6 +113,7 @@ const RouteLoader = () => (
 const queryClient = new QueryClient();
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <FamilyGroupProvider>
@@ -167,6 +169,7 @@ const App = () => (
       </FamilyGroupProvider>
     </AuthProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

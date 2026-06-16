@@ -43,13 +43,23 @@ serve(async (req) => {
       );
     }
 
-    const { fileUrl, patientAge } = await req.json();
+    const { fileUrl, patientAge: rawPatientAge } = await req.json();
     if (!fileUrl) {
       return new Response(JSON.stringify({ error: "fileUrl is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ── A17: Sanitize patientAge — must be a positive integer ≤ 130 ──
+    // Validate before interpolating into the AI system prompt to prevent
+    // prompt injection via a crafted patientAge string.
+    const patientAge: number | null = (
+      typeof rawPatientAge === "number" &&
+      Number.isInteger(rawPatientAge) &&
+      rawPatientAge >= 0 &&
+      rawPatientAge <= 130
+    ) ? rawPatientAge : null;
 
     // ── SSRF PROTECTION — only allow Supabase Storage URLs ──
     const allowedHost = new URL(Deno.env.get("SUPABASE_URL")!).host;
@@ -68,7 +78,7 @@ serve(async (req) => {
       });
     }
 
-    const isPediatric = typeof patientAge === "number" && patientAge < 12;
+    const isPediatric = patientAge !== null && patientAge < 12;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
