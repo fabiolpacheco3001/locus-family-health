@@ -1,7 +1,7 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.0 | **Atualizado em:** junho/2026  
-> **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessão de segurança junho/2026  
+> **Versão:** 2.1 | **Atualizado em:** junho/2026 (sessão 2)  
+> **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
 ---
@@ -19,26 +19,25 @@
 
 ## 🔴 CRÍTICO — Bloqueadores de produção ou risco imediato de dados
 
-### C1 · `.env` commitado no repositório
-- **Risco:** `.env` com `SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_SUPABASE_PROJECT_ID` versionados no Git. Os valores são chaves públicas (anon key — seguras por design com RLS), mas o arquivo não deveria estar no repositório.
-- **Ação:**
-  1. Adicionar `.env` ao `.gitignore`
-  2. Usar `git rm --cached .env` para remover do tracking
-  3. Verificar se existem secrets reais (SERVICE_ROLE_KEY, ASAAS_API_KEY) no histórico — se sim, fazer BFG Repo Cleaner
+### C1 · `.env` commitado no repositório ✅
+- **Risco resolvido:** `.env` estava versionado no Git, mas análise do histórico (`git show 871280c:.env`) confirmou que **apenas chaves públicas** foram commitadas: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`. Nenhuma rotação de secret foi necessária.
+- **Resolução:**
+  1. `.env` adicionado ao `.gitignore`
+  2. `git rm --cached` confirmou que o arquivo já não estava sendo rastreado
+  3. Histórico auditado — nenhum secret real (SERVICE_ROLE_KEY, ASAAS_API_KEY) exposto
 - **Arquivos:** `.env`, `.gitignore`
-- **Status:** 🔴 Pendente
+- **Status:** ✅ Resolvido
 
 ---
 
-### C2 · Asaas hardcoded em `sandbox.asaas.com` — go-live vai falhar
-- **Risco:** Todo o fluxo financeiro aponta para o sandbox. Em produção, cobranças não serão processadas.
-- **Detalhe extra (C9):** URLs inconsistentes entre funções — `create-asaas-checkout` e `asaas-webhook` usam `sandbox.asaas.com/api/v3`; `cancel-asaas-subscription` usa `api-sandbox.asaas.com/v3` (host diferente).
-- **Fix:** Criar secret `ASAAS_BASE_URL` no Supabase → `https://api.asaas.com/v3`. Substituir todas as ocorrências hardcoded.
-- **Arquivos:**
-  - `supabase/functions/create-asaas-checkout/index.ts` (linhas 15, 78)
-  - `supabase/functions/asaas-webhook/index.ts` (linha 17)
-  - `supabase/functions/cancel-asaas-subscription/index.ts` (linhas 72, 101)
-- **Status:** 🔴 Pendente
+### C2 + C9 · Asaas hardcoded em `sandbox.asaas.com` — go-live vai falhar ✅
+- **Risco resolvido:** URLs de sandbox hardcoded (e inconsistentes) em 3 Edge Functions.
+- **Resolução:** Secret `ASAAS_API_URL` criado no Supabase Dashboard. Todas as 3 funções agora usam `Deno.env.get("ASAAS_API_URL")` com validação de null check. Para go-live: atualizar `ASAAS_API_URL` de `https://sandbox.asaas.com/api/v3` para `https://api.asaas.com/v3` no Supabase Secrets.
+- **Arquivos modificados:**
+  - `supabase/functions/create-asaas-checkout/index.ts` — linha 15–16 com throw se não configurado
+  - `supabase/functions/asaas-webhook/index.ts` — `fetchAsaasSubscription()` usa ASAAS_API_URL
+  - `supabase/functions/cancel-asaas-subscription/index.ts` — linhas 53–59 com validação
+- **Status:** ✅ Resolvido
 
 ---
 
@@ -51,31 +50,25 @@
 
 ---
 
-### C4 · `family_group_members` sem índice em `auth_user_id` e `group_id`
-- **Risco:** Toda query autenticada que acessa tabelas clínicas executa `EXISTS (SELECT 1 FROM family_group_members WHERE auth_user_id = auth.uid())` — **full scan** na tabela. Afeta 100% das RLS policies group-aware (medications, consultations, exams, vaccines, diseases, notifications...).
-- **Fix:** Migration com dois índices. Ver **migration 000007** (criada nesta sessão).
-- **Status:** 🔴 Pendente (migration criada, aguarda apply)
+### C4 · `family_group_members` sem índice em `auth_user_id` e `group_id` ✅
+- **Risco resolvido:** Full scan em cada verificação de RLS.
+- **Resolução:** Migration `20260615000007` — 3 índices criados: `idx_family_group_members_auth_user_id`, `idx_family_group_members_group_id`, `idx_family_group_members_auth_user_group` (composto com `auth_user_id` como líder para cobrir `EXISTS` checks de RLS). Nota: existia `UNIQUE (group_id, auth_user_id)` pré-existente — mantido; o novo composto tem ordem invertida que é mais eficiente para RLS.
+- **Status:** ✅ Resolvido (migration 000007 aplicada)
 
 ---
 
-### C5 · `subscriptions` sem `UNIQUE` constraint em `user_id`
-- **Risco:** `asaas-webhook` faz `upsert onConflict="user_id"` — sem a constraint UNIQUE, o PostgreSQL não resolve o conflito e pode inserir linhas duplicadas de assinatura silenciosamente.
-- **Fix:** Migration com `ALTER TABLE subscriptions ADD UNIQUE (user_id)`. Ver **migration 000007**.
-- **Status:** 🔴 Pendente (migration criada, aguarda apply)
+### C5 · `subscriptions` sem `UNIQUE` constraint em `user_id` ✅
+- **Risco resolvido:** `upsert onConflict="user_id"` falhava silenciosamente sem a constraint.
+- **Resolução:** Migration `20260615000007` — `subscriptions_user_id_unique` adicionada. Havia uma `subscriptions_user_id_key` pré-existente; a antiga foi removida via `ALTER TABLE DROP CONSTRAINT` (não `DROP INDEX`) e substituída pela nova nomeada explicitamente.
+- **Status:** ✅ Resolvido (migration 000007 aplicada)
 
 ---
 
-### C6 · `asaas-webhook`: `externalReference` usado como `user_id` sem validação UUID
-- **Risco:** `body.payment.externalReference` é injetado diretamente em `upsert({ user_id: externalReference })`. Se o Asaas enviar um valor malformado ou o webhook token for comprometido, um `user_id` arbitrário pode ser inserido na tabela `subscriptions`.
-- **Fix:** Adicionar validação UUID antes do upsert:
-  ```typescript
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!UUID_RE.test(externalReference)) {
-    return json({ error: "Invalid externalReference format" }, 400);
-  }
-  ```
-- **Arquivos:** `supabase/functions/asaas-webhook/index.ts` (linhas 129–144)
-- **Status:** 🔴 Pendente
+### C6 · `asaas-webhook`: `externalReference` usado como `user_id` sem validação UUID ✅
+- **Risco resolvido:** Injeção de `user_id` arbitrário via payload malformado.
+- **Resolução:** `isValidUUID()` adicionada no topo de `asaas-webhook/index.ts` com regex `UUID_RE`. Aplicada em dois pontos: `SUBSCRIPTION_UPDATED` (rejeita com 200 + warning se inválido) e eventos de pagamento (`externalReference` normalizado para `null` se inválido, com fallback para `customerId`).
+- **Arquivos:** `supabase/functions/asaas-webhook/index.ts` (linhas 4–9, 120–127, 153–157)
+- **Status:** ✅ Resolvido
 
 ---
 
@@ -115,8 +108,8 @@
 
 ### C11 · `get_admin_clients` RPC sem verificação de role ✅
 - **Risco resolvido:** Qualquer usuário autenticado podia obter lista completa de usuários (nome, email, assinatura) via `supabase.rpc("get_admin_clients")`.
-- **Resolução:** Migration `20260615000006` — adicionado `RAISE EXCEPTION` para não-admins, `SET search_path`, `REVOKE ALL FROM PUBLIC`.
-- **Status:** ✅ Resolvido (aguarda apply no SQL Editor)
+- **Resolução:** Migration `20260615000006` — recriada com `RAISE EXCEPTION 'Access denied'` (`ERRCODE = insufficient_privilege`) para não-admins, `SET search_path = public, pg_catalog`, `REVOKE ALL FROM PUBLIC`, `REVOKE ALL FROM anon`. Validado: não-admin recebe 403 com mensagem correta. DROP necessário antes do CREATE por mudança de tipo de retorno (`date` → `text` em `next_billing_date`).
+- **Status:** ✅ Resolvido (migration 000006 aplicada e validada)
 
 ---
 
@@ -190,17 +183,17 @@
 
 ---
 
-### A10 · `subscriptions.asaas_customer_id` sem índice + `user_id` sem índice
-- **Risco:** Webhook fallback por `asaas_customer_id` faz full scan. Toda verificação de assinatura ativa filtra por `user_id` sem índice.
-- **Fix:** Ver **migration 000007**.
-- **Status:** 🔴 Pendente (migration criada, aguarda apply)
+### A10 · `subscriptions.asaas_customer_id` sem índice + `user_id` sem índice ✅
+- **Risco resolvido:** Full scan na tabela `subscriptions` para webhook fallback e verificações de status de assinatura.
+- **Resolução:** Migration `20260615000007` — dois índices parciais: `idx_subscriptions_asaas_customer_id` (`WHERE asaas_customer_id IS NOT NULL`) e `idx_subscriptions_active_user` (`WHERE status = 'active'`).
+- **Status:** ✅ Resolvido (migration 000007 aplicada)
 
 ---
 
-### A11 · Tabelas clínicas sem índice em `family_member_id` e `user_id`
-- **Afeta:** `consultations`, `exams`, `medications`, `vaccines`, `allergies`, `diseases`, `health_measurements`, `blood_pressure_history`, `menstrual_cycles`
-- **Fix:** Ver **migration 000008** (a criar).
-- **Status:** 🔴 Pendente
+### A11 · Tabelas clínicas sem índice em `family_member_id` e `user_id` ✅
+- **Risco resolvido:** Full scan em listagens clínicas — afetava 100% das queries de perfil familiar.
+- **Resolução:** Migration `20260615000008` — índices em `family_member_id` e `user_id` para todas as 9 tabelas. Índices compostos com ordenação temporal (`DESC`) para `consultations`, `exams`, `health_measurements`, `blood_pressure_history`, `menstrual_cycles`.
+- **Status:** ✅ Resolvido (migration 000008 aplicada)
 
 ---
 
@@ -345,17 +338,17 @@
 
 ---
 
-### M15 · Índices parciais ausentes
-- **Afeta:** `medications WHERE status='Ativo'`, `notifications WHERE is_read=false`, `subscriptions WHERE status='active'`, `email_send_log WHERE status='pending'`
-- **Fix:** Ver **migration 000008**.
-- **Status:** 🔴 Pendente
+### M15 · Índices parciais ausentes ✅
+- **Risco resolvido:** Queries frequentes (medicamentos ativos, notificações não lidas, emails pendentes) executavam full scan.
+- **Resolução:** Migration `20260615000008` — 4 índices parciais: `idx_medications_active` (`WHERE status = 'Ativo'`), `idx_consultations_active` e `idx_exams_active` (WHERE excluindo cancelados), `idx_notifications_unread` (`WHERE is_read = false`), `idx_email_send_log_pending` (`WHERE status = 'pending'`). Parcial de `subscriptions` resolvido em migration 000007.
+- **Status:** ✅ Resolvido (migration 000008 aplicada)
 
 ---
 
-### M16 · `blood_pressure_history.familiar_id` e `menstrual_cycles.familiar_id` sem FK constraint
-- **Fix:** Migration com `ADD CONSTRAINT ... FOREIGN KEY (familiar_id) REFERENCES family_members(id)`.
-- **Fix:** Ver **migration 000008**.
-- **Status:** 🔴 Pendente
+### M16 · `blood_pressure_history.familiar_id` e `menstrual_cycles.familiar_id` sem FK constraint ✅
+- **Risco resolvido:** Dados orfãos podiam persistir após soft-delete de `family_members`, quebrando joins e vazando dados.
+- **Resolução:** Migration `20260615000008` — FKs adicionadas com `ON DELETE CASCADE`: `fk_blood_pressure_history_family_member` e `fk_menstrual_cycles_family_member`. Alinha com o padrão de cascade do trigger `cascade_soft_delete_family_member`.
+- **Status:** ✅ Resolvido (migration 000008 aplicada)
 
 ---
 
@@ -420,9 +413,10 @@
 
 ---
 
-### B7 · `changelogs` e `group_invites` sem índices nas colunas de filtro
-- **Fix:** Ver **migration 000008**.
-- **Status:** 🔴 Pendente
+### B7 · `changelogs` e `group_invites` sem índices nas colunas de filtro ✅
+- **Risco resolvido:** Ordenação e busca por email de convite sem índice.
+- **Resolução:** Migration `20260615000008` — `idx_changelogs_created_at` e `idx_changelogs_release_date` (DESC); `idx_group_invites_group_id`, `idx_group_invites_email` e `idx_group_invites_email_group` (composto para aceitar convite por email + grupo). Também adicionado `idx_ai_usage_logs_user_id` para future rate limiting.
+- **Status:** ✅ Resolvido (migration 000008 aplicada)
 
 ---
 
@@ -448,7 +442,9 @@
 
 ---
 
-## Itens Resolvidos nesta Sessão (junho/2026)
+## Itens Resolvidos (junho/2026)
+
+### Sessão 1
 
 | Item | Resolução |
 |------|-----------|
@@ -456,44 +452,62 @@
 | HIBP (Leaked Password) | ✅ Habilitado em Auth Settings |
 | 16 findings do scanner Lovable | ✅ 0 erros, 23 warnings by-design |
 | TypeScript Fase 1 (`strictNullChecks`) | ✅ Habilitado + 9 `as any` removidos + type augmentation jspdf-autotable |
-| `get_admin_clients` sem role check | ✅ Migration 000006 com RAISE EXCEPTION para não-admins |
+| Bug ∞ — Dipirona Bug (Fase 401) | ✅ `useUpcomingAppointments` refatorado para consumir `calculateNextDose.ts`; fix de skip de horários passados no dia de início |
+
+### Sessão 2
+
+| Item | ID | Migration / Arquivo | Resolução |
+|------|----|---------------------|-----------|
+| C11 — `get_admin_clients` sem role check | C11 | `000006` | `RAISE EXCEPTION` para não-admins + `SET search_path` + `REVOKE FROM PUBLIC` |
+| Indexes `family_group_members` | C4 | `000007` | 3 índices: `auth_user_id`, `group_id`, composto |
+| UNIQUE constraint em `subscriptions.user_id` | C5 | `000007` | `ALTER TABLE ADD CONSTRAINT subscriptions_user_id_unique` |
+| Indexes `subscriptions` para webhook | A10 | `000007` | Parciais: `asaas_customer_id IS NOT NULL`, `status = 'active'` |
+| Indexes tabelas clínicas | A11 | `000008` | `family_member_id` + `user_id` em 9 tabelas |
+| Índices parciais | M15 | `000008` | 5 parciais: medicamentos ativos, consultas/exames ativos, notificações não lidas, emails pendentes |
+| FK constraints `blood_pressure` + `menstrual_cycles` | M16 | `000008` | `ON DELETE CASCADE` para `family_members(id)` |
+| Indexes `changelogs` e `group_invites` | B7 | `000008` | Ordenação + busca por email de convite |
+| UUID validation em `asaas-webhook` | C6 | `asaas-webhook/index.ts` | `isValidUUID()` antes de qualquer upsert com `externalReference` |
+| Asaas URLs hardcoded | C2 + C9 | 3 Edge Functions | `ASAAS_API_URL` env var em `create-asaas-checkout`, `asaas-webhook`, `cancel-asaas-subscription` |
+| `.env` no repositório | C1 | `.gitignore` | Histórico auditado — apenas chaves públicas; arquivo não rastreado |
 
 ---
 
 ## Roadmap Sugerido de Execução
 
 ```
-Sprint 1 — Segurança e integridade de dados (AGORA)
-├── C4 + C5 + A10 + A11 + M15–M16 + B7  → Migrations 000007 + 000008 (indexes)
-├── C2 + C9                               → Asaas: ASAAS_BASE_URL como env var
-├── C6                                    → asaas-webhook: validação UUID
-└── C1                                    → .gitignore + verificar histórico
+Sprint 1 — Segurança e integridade de dados ✅ CONCLUÍDO
+├── ✅ C4 + C5 + A10                       → Migration 000007 (indexes + UNIQUE subscriptions)
+├── ✅ A11 + M15–M16 + B7                  → Migration 000008 (índices clínicos + FKs + parciais)
+├── ✅ C2 + C9                             → Asaas: ASAAS_API_URL como env var nas 3 funções
+├── ✅ C6                                  → asaas-webhook: validação UUID externalReference
+├── ✅ C1                                  → .gitignore + histórico git auditado
+└── ✅ C11                                 → get_admin_clients: role check + search_path + REVOKE
 
-Sprint 2 — Compliance LGPD (bloqueador legal)
+Sprint 2 — Compliance LGPD (bloqueador legal para go-live) ← PRÓXIMO
 ├── C7 + A14                              → Política de privacidade + consentimento no cadastro
-├── C8                                    → Edge Function delete-user-account
-├── A15 + M12                             → Export de dados (portabilidade)
-└── M14                                   → Revogação de consentimento
+├── C8                                    → Edge Function delete-user-account (Art. 18-IV)
+├── A15 + M12                             → Export de dados em JSON/CSV (portabilidade)
+└── M14                                   → Revogação de consentimento (Art. 18-IX)
 
 Sprint 3 — Go-live readiness
-├── C3                                    → Biometria: remover fake ou implementar WebAuthn
-├── A2                                    → "Senha Atual" — validar ou remover
+├── C3                                    → Biometria: remover toggle fake ou implementar WebAuthn
+├── A2                                    → "Senha Atual" — validar no backend ou remover campo
 ├── A1                                    → CORS: restringir ao domínio da app
-├── A4                                    → Rate limiting nas funções de IA
-└── C10                                   → Preços: fonte única de verdade
+├── A4                                    → Rate limiting nas funções de IA (fail-closed)
+└── C10                                   → Preços: tabela plan_configs ou env vars
 
 Sprint 4 — Qualidade e performance
-├── A5 (Fase 2 TypeScript)                → Regenerar types.ts, noImplicitAny
-├── A6                                    → ErrorBoundary global
-├── A7                                    → Testes (hooks críticos + E2E)
-├── A13 + B5                              → Dynamic imports PDF + lazy routes
-└── M5 + M6 + M7                          → Otimizações de queries e renders
+├── A5 (Fase 2 TypeScript)                → Regenerar types.ts via supabase gen, noImplicitAny
+├── A6                                    → <ErrorBoundary> global em App.tsx
+├── A7                                    → Testes: hooks críticos (calculateNextDose) + E2E Playwright
+├── A13 + B5                              → Dynamic imports PDF + lazy routes em App.tsx
+└── M5 + M6 + M7                          → Otimizações de queries e re-renders
 
 Sprint 5 — Observabilidade e manutenibilidade
 ├── M1                                    → Sentry / APM
-├── M2                                    → CI/CD (GitHub Actions)
+├── M2                                    → CI/CD (GitHub Actions: lint+typecheck+vitest)
 ├── M4 + B1                               → import_map.json + Deno std atualizado
-└── M9                                    → Logs estruturados nas Edge Functions
+└── M9                                    → Logs estruturados (JSON) nas Edge Functions
 ```
 
 ---

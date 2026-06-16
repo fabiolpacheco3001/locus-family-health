@@ -35,7 +35,7 @@ const Ajustes = () => {
   const { signOut, user } = useAuth();
   const { isAdmin } = useFamilyGroup();
   const navigate = useNavigate();
-  const { members, updateMember } = useFamilyMembers();
+  const { members } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
   const { subscription, isTrialing, isActive, isPastDue, isCanceled, canceledButGracePeriod, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
@@ -83,31 +83,31 @@ const Ajustes = () => {
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
-      if (isAdmin) {
-        if (members && members.length > 0) {
-          for (const member of members) {
-            await updateMember.mutateAsync({
-              id: member.id,
-              deleted_at: new Date().toISOString(),
-            } as any);
-          }
-        }
-      } else {
-        if (linkedMemberId) {
-          await updateMember.mutateAsync({
-            id: linkedMemberId,
-            deleted_at: new Date().toISOString(),
-          } as any);
-        }
-        if (user?.id) {
-          await supabase
-            .from("family_group_members" as any)
-            .delete()
-            .eq("auth_user_id", user.id);
-        }
+      // Get the current session token to authenticate the Edge Function call
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
       }
-      await supabase.auth.signOut();
-      toast.success("Conta excluída com sucesso.");
+
+      // Call the delete-user-account Edge Function which handles:
+      // 1. Storage files (exam-files, receitas, vaccine_documents, avatars)
+      // 2. Asaas subscription cancellation (best-effort)
+      // 3. All DB records (clinical data via CASCADE, subscriptions, notifications, etc.)
+      // 4. auth.users deletion (last step)
+      const response = await supabase.functions.invoke("delete-user-account", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (response.error) {
+        console.error("delete-user-account error:", response.error);
+        toast.error("Erro ao excluir conta. Entre em contato com o suporte.");
+        return;
+      }
+
+      // Token is now invalid — just navigate, no signOut needed
+      toast.success("Conta e todos os dados excluídos com sucesso.");
       navigate("/login", { replace: true });
     } catch {
       toast.error("Erro ao excluir conta. Tente novamente.");
