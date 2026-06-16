@@ -1,11 +1,16 @@
 # Deploy — Correções de Segurança (Lovable Scanner)
 
-> **Data:** junho/2026  
+> **Data:** junho/2026 | **Atualizado:** sessão 5  
 > **Itens corrigidos:**
 > - 🔴 **Critical:** `family_group_members` INSERT policy — auto-assign de admin / adição de terceiros
 > - 🟡 **Warning:** `system_configs` SELECT policy — exposição de configurações a todos os usuários
+> - 🟡 **Warning:** Erros raw da API Asaas expostos ao frontend (`create-asaas-checkout`)
+> - 🟡 **Warning:** INSERT policies de tabelas clínicas sem verificação de ownership do `family_member_id`
+> - 🟡 **Warning:** `ai_usage_logs` sem SELECT policy para os próprios registros
+> - 🟡 **Warning:** Função `check_group_access` sem guard de NULL e sem check de autenticação
 
-> ✅ Migrations já aplicadas no Supabase SQL Editor (confirmado).
+> ✅ Migrations 000011 e 000012 já aplicadas no Supabase SQL Editor (confirmado).  
+> ⏳ Migrations 000013–000015 e fixes de código ainda precisam de commit e aplicação.
 
 ---
 
@@ -144,10 +149,105 @@ Após o push, abra o Lovable e aguarde o re-deploy automático. Então:
 
 ## Resumo das migrations aplicadas nesta sessão
 
-| Migration | Tabela | Tipo de fix |
-|-----------|--------|-------------|
-| `20260616000011` | `family_group_members` | INSERT policy: + `auth_user_id = auth.uid()` + `role = 'user'` |
-| `20260616000012` | `system_configs` | SELECT policy: whitelist de chaves para usuários comuns |
+| Migration | Tabela / Componente | Tipo de fix | Status |
+|-----------|---------------------|-------------|--------|
+| `20260616000011` | `family_group_members` | INSERT policy: + `auth_user_id = auth.uid()` + `role = 'user'` | ✅ Aplicada |
+| `20260616000012` | `system_configs` | SELECT policy: whitelist de chaves para usuários comuns | ✅ Aplicada |
+| `20260616000013` | 7 tabelas clínicas | INSERT policy: + EXISTS check de ownership do `family_member_id` | ⏳ Aplicar |
+| `20260616000014` | `ai_usage_logs` | SELECT policy: usuários leem próprios registros | ⏳ Aplicar |
+| `20260616000015` | `check_group_access` | Reescrever função com NULL guard + auth check | ⏳ Aplicar |
+
+---
+
+## Sessão 5 — Fixes adicionais (código + UX)
+
+### Warning — Erros raw da API Asaas expostos ao frontend
+
+**Problema:** `asaasFetch()` em `create-asaas-checkout/index.ts` fazia `throw new Error(...)` com o body raw da resposta do Asaas, que incluía detalhes internos (status, campos da API). Esse erro propagava para o frontend via JSON `{ "error": "<texto raw>" }`.
+
+**Correção (código — não requer migration):**
+```typescript
+// Antes:
+throw new Error(`Falha no Asaas (${res.status}): ${body}`);
+// Depois:
+console.error(`Asaas API error ${res.status} on ${path}: ${body}`);  // server-side only
+throw new Error("Falha ao processar pagamento. Tente novamente ou entre em contato com o suporte.");
+```
+
+**Arquivo:** `supabase/functions/create-asaas-checkout/index.ts`
+
+### UX — Badge "Convidado" → "Usuário"
+
+**Problema:** Em Gerenciar Família, membros com `role = 'user'` exibiam badge "Convidado" em vez de "Usuário" (inconsistência com Gestão de Acessos).
+
+**Correção:** `GerenciarFamilia.tsx` linha 118: `"Convidado"` → `"Usuário"`.
+
+### UX — Promoção de membro a Admin em Gestão de Acessos
+
+**Problema:** Após remover o seletor de papel do formulário de convite (fix de segurança da sessão anterior), não havia forma de promover um membro existente a Admin.
+
+**Correção:** Cards de membros agora são clicáveis para TODOS os membros (não só usuários). O drawer de permissões exibe:
+- Para `role = 'user'`: botão "Promover a Admin" (Crown) + controles de perfis gerenciados
+- Para `role = 'admin'`: botão "Rebaixar a Usuário" (ShieldOff) + texto informativo
+
+**Arquivo:** `src/pages/GestaoAcessos.tsx`
+
+---
+
+## Passo 2 — Commit e push (sessão 5)
+
+```bash
+cd /Users/fabio/locus-family-health
+
+git add \
+  supabase/migrations/20260616000013_security_health_record_insert_ownership.sql \
+  supabase/migrations/20260616000014_security_ai_usage_logs_select_policy.sql \
+  supabase/migrations/20260616000015_security_check_group_access_null_safety.sql \
+  supabase/functions/create-asaas-checkout/index.ts \
+  src/pages/GerenciarFamilia.tsx \
+  src/pages/GestaoAcessos.tsx \
+  DEPLOY_SEGURANCA_LOVABLE.md \
+  TECH_DEBT.md
+
+git commit -m "Security: fix 4 Lovable warnings + UX admin promotion + badge fix
+
+Warning 1: create-asaas-checkout — sanitizar erros raw da API Asaas
+  - asaasFetch() agora loga body server-side e retorna mensagem genérica ao cliente
+
+Warning 2: INSERT policies clínicas — verificar ownership de family_member_id
+  - consultations, exams, medications, vaccines, allergies, diseases, health_measurements
+  - Subquery EXISTS garante que family_member pertence ao grupo do usuário
+  - FOR ALL policies (vaccines, allergies, health_measurements) divididas em 4 policies
+
+Warning 3: ai_usage_logs — adicionar SELECT policy para próprios registros
+  - Usuários agora podem ler seus próprios logs de IA
+
+Warning 4: check_group_access — NULL safety + unauthenticated guard
+  - Função reescrita com CASE: NULL group_id → FALSE; uid NULL → FALSE
+
+UX: GerenciarFamilia badge 'Convidado' → 'Usuário'
+UX: GestaoAcessos — promoção/rebaixamento de Admin via drawer"
+
+git push origin main
+```
+
+---
+
+## Passo 3 — Aplicar migrations no Supabase SQL Editor
+
+Aplicar em ordem no Supabase Dashboard → SQL Editor:
+
+1. `20260616000013_security_health_record_insert_ownership.sql`
+2. `20260616000014_security_ai_usage_logs_select_policy.sql`
+3. `20260616000015_security_check_group_access_null_safety.sql`
+
+---
+
+## Passo 4 — Verificar scanner Lovable
+
+Após o push e re-deploy:
+1. Lovable → Database → Security Advisor → Re-run scan
+2. Os 4 warnings adicionais não devem mais aparecer
 
 ---
 
