@@ -1,5 +1,5 @@
 /**
- * _shared/cors.ts — Locus Vita
+ * _shared/cors.ts — Locus Vita (v2025-06-16)
  *
  * A1 fix: CORS headers restritos ao domínio configurado em APP_ORIGIN.
  *
