@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.8 | **Atualizado em:** junho/2026 (sessão 11)  
+> **Versão:** 2.9 | **Atualizado em:** junho/2026 (sessão 12)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -21,6 +21,7 @@
 | Sessão 9 | M5 Promise.all em useSubscription, M6 batch dedup+insert em Stock/Menstrual alerts, M7 React.memo em 4 componentes + useCallback BottomNav | Sprint 4 🟡 Em progresso |
 | Sessão 10 | A5 Fase 2 completa: `noImplicitAny: true` habilitado, 93→0 `as any` eliminados — FamilyMember type augmentado, 22 `.from() as any` via sed, 71 casts explícitos resolvidos por categoria | Sprint 4 ✅ CONCLUÍDO |
 | Sessão 11 | Sprint 5: M4+B1 import_map.json Deno (std@0.224, supabase-js@2.49.4); M9 logs JSON estruturados (shared logger.ts, 9 Edge Functions, 66→0 console.* não estruturados); M2 CI/CD GitHub Actions (lint+typecheck+test); A7 testes unitários calculateNextDose (3 describe, 24 it, fake timers); M1 Sentry integração preparada (@sentry/react, lib/sentry.ts, initSentry em main.tsx, captureException em ErrorBoundary) | Sprint 5 ✅ CONCLUÍDO |
+| Sessão 12 | Sprint 6: Bug ∞ Dipirona (Fase 401) — homeDoseStatuses date filter (.gte -7d), useMedicationAlarms catch-up (loop calculateNextDose para specific_times/specific_days), MedicationDoseActions auto-conclusão (3 frequency_types, 4 novas props); Fix analyze-prescription "Failed to send" — APP_ORIGIN secret corrigido para `https://vita.locustech.com.br` (sem path); Lovable corrigiu 6 erros TS residuais em Home.tsx, Medicamentos.tsx, Ajustes.tsx, EditPetRoutineDrawer.tsx | Sprint 6 ✅ CONCLUÍDO |
 
 ---
 
@@ -542,10 +543,12 @@ Sprint 5 — Observabilidade e manutenibilidade ✅ CONCLUÍDO
 ├── ✅ A7 (parcial)                       → calculateNextDose.test.ts (24 testes, 3 frequency_types)
 └── ✅ M1                                 → @sentry/react + src/lib/sentry.ts (⚠️ DSN pendente do Fábio)
 
-Sprint 6 — Bug ∞ Dipirona (Fase 401) ✅ CONCLUÍDO
+Sprint 6 — Bug ∞ Dipirona (Fase 401) + OCR Receitas ✅ CONCLUÍDO
 ├── ✅ homeDoseStatuses date filter       → .gte("scheduled_for", -7d) em Home.tsx + Medicamentos.tsx
 ├── ✅ useMedicationAlarms catch-up       → loop calculateNextDose para specific_times/specific_days
-└── ✅ MedicationDoseActions auto-conclusão → suporta os 3 frequency_types; props startDateISO, frequencyType, specificTimes, specificDays adicionados
+├── ✅ MedicationDoseActions auto-conclusão → suporta os 3 frequency_types; props startDateISO, frequencyType, specificTimes, specificDays adicionados
+├── ✅ Fix analyze-prescription CORS      → APP_ORIGIN corrigido: `https://vita.locustech.com.br` (sem /login)
+└── ✅ 6 erros TS residuais              → time_performed, effectiveFreqType, startDateISO (Lovable auto-fix)
 ```
 
 ---
