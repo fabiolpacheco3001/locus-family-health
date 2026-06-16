@@ -19,7 +19,7 @@ export function useAiStatus() {
         return true; // fail-open: don't block users on error
       }
 
-      return (data?.value as any)?.is_active ?? true;
+      return (data?.value as { is_active?: boolean } | null)?.is_active ?? true;
     },
     enabled: !!user,
     staleTime: 30_000, // refresh every 30s

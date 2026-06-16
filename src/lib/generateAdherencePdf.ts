@@ -112,7 +112,7 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
     },
     didDrawPage: () => { drawHeader(); },
   });
-  y = (doc as any).lastAutoTable.finalY + 6;
+  y = doc.lastAutoTable.finalY + 6;
 
   // Per-medication breakdown
   const medGroups: Record<string, { taken: number; skipped: number; total: number }> = {};
@@ -146,7 +146,7 @@ export const generateAdherencePdf = (data: AdherencePdfData): Blob => {
     bodyStyles: { fontSize: 9, textColor: PRIMARY },
     didDrawPage: () => { drawHeader(); },
   });
-  y = (doc as any).lastAutoTable.finalY + 6;
+  y = doc.lastAutoTable.finalY + 6;
 
   // Detailed timeline
   sectionTitle("Histórico Detalhado");

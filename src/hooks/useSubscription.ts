@@ -32,7 +32,7 @@ export function useSubscription() {
         .maybeSingle();
       if (error) throw error;
 
-      if (ownSub && (ownSub as any).status === "active") {
+      if (ownSub && ownSub.status === "active") {
         return ownSub as Subscription;
       }
 
@@ -57,7 +57,7 @@ export function useSubscription() {
             .eq("user_id", group.created_by)
             .maybeSingle();
 
-          if (ownerSub && (ownerSub as any).status === "active") {
+          if (ownerSub && ownerSub.status === "active") {
             return ownerSub as Subscription;
           }
         }

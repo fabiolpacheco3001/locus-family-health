@@ -169,7 +169,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     },
     didDrawPage: () => { drawHeader(); },
   });
-  y = (doc as any).lastAutoTable.finalY + 6;
+  y = doc.lastAutoTable.finalY + 6;
 
   // ── Bloco 2: Alergias ──
   sectionTitle("Alergias e Restrições");
@@ -192,7 +192,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       columnStyles: { 0: { cellWidth: contentW * 0.65 }, 1: { cellWidth: contentW * 0.35 } },
       didDrawPage: () => { drawHeader(); },
     });
-    y = (doc as any).lastAutoTable.finalY + 6;
+    y = doc.lastAutoTable.finalY + 6;
   }
 
   // ── Bloco 3: Doenças Crônicas ──
@@ -215,7 +215,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       bodyStyles: { fontSize: 9, textColor: PRIMARY_COLOR },
       didDrawPage: () => { drawHeader(); },
     });
-    y = (doc as any).lastAutoTable.finalY + 6;
+    y = doc.lastAutoTable.finalY + 6;
   }
 
   // ── Bloco 4: Histórico Clínico agrupado por Mês/Ano ──
@@ -286,7 +286,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
       },
       didDrawPage: () => { drawHeader(); },
     });
-    y = (doc as any).lastAutoTable.finalY + 6;
+    y = doc.lastAutoTable.finalY + 6;
   }
 
   // ── Draw footers on all pages ──
