@@ -16,6 +16,7 @@
 | Sessão 4 | A1, A4, C10 — CORS restrito, Rate limiting IA, Preços centralizados | Sprint 3 ✅ CONCLUÍDO |
 | Sessão 5 | Fix 4 Lovable warnings (erros Asaas, ownership clínico, ai_usage_logs, check_group_access) + UX admin + badge fix | Segurança ✅ CONCLUÍDO |
 | Sessão 6 | P0 cancel-asaas-subscription body bypass; P1 decrement_stock ownership + error sanitization (5 funções); migration 000017 ownership completo; lib/tz.ts; restructure deploy doc | Segurança ✅ CONCLUÍDO |
+| Sessão 7 | Migration 000018: blood_pressure_history + menstrual_cycles INSERT policies com familiar_id ownership (RAIO X 3.0 findings #1/#2) | Segurança ✅ CONCLUÍDO |
 
 ---
 

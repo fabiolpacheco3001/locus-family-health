@@ -13,7 +13,7 @@
 > - 🟡 **Warning:** Função `check_group_access` sem guard de NULL e sem check de autenticação
 
 > ✅ Migrations 000011 e 000012 já aplicadas no Supabase SQL Editor (confirmado).  
-> ⏳ Migrations 000013–000017 e fixes de código precisam de commit e aplicação.
+> ⏳ Migrations 000013–000018 e fixes de código precisam de commit e aplicação.
 
 ---
 
@@ -91,7 +91,7 @@ Se você rodar os testes ANTES de fazer o commit e aplicar as migrations, os tes
 
 ---
 
-## Passo 1 — Commit e push (sessão 6)
+## Passo 1 — Commit e push (sessões 6 + 7)
 
 > **Faça isso PRIMEIRO, antes de qualquer teste.**
 
@@ -104,6 +104,7 @@ git add \
   supabase/migrations/20260616000015_security_check_group_access_null_safety.sql \
   supabase/migrations/20260616000016_security_decrement_stock_ownership.sql \
   supabase/migrations/20260616000017_security_health_record_insert_ownership_complete.sql \
+  supabase/migrations/20260616000018_security_blood_pressure_menstrual_insert_ownership.sql \
   supabase/functions/create-asaas-checkout/index.ts \
   supabase/functions/cancel-asaas-subscription/index.ts \
   supabase/functions/analyze-exam/index.ts \
@@ -115,7 +116,7 @@ git add \
   DEPLOY_SEGURANCA_LOVABLE.md \
   TECH_DEBT.md
 
-git commit -m "Security: Sprint 3 hardening — P0/P1/P2 fixes + complete clinical INSERT policies
+git commit -m "Security: Sprint 3 hardening — P0/P1/P2 fixes + all 9 clinical INSERT policies
 
 P0: cancel-asaas-subscription — remove asaasSubscriptionId from body
   - Body bypass permitia cancelar assinatura de outro cliente via Asaas ID
@@ -130,9 +131,10 @@ P1: Sanitizar erros raw em 5 Edge Functions
   - create-asaas-checkout: asaasFetch() loga server-side, retorna mensagem genérica
   - analyze-exam, analyze-prescription, delete-user-account: catch blocks sanitizados
 
-P2: INSERT policies clínicas — versão completa (migration 000017 supersede 000013)
-  - Adiciona fm.deleted_at IS NULL
-  - Adiciona role check: admin OR creator OR managed_profiles
+P2: INSERT policies — todas as 9 tabelas clínicas com ownership completo
+  - 000013/000017: 7 tabelas via family_member_id
+  - 000018: blood_pressure_history + menstrual_cycles via familiar_id
+  - Todas: fm.deleted_at IS NULL + role check (admin OR creator OR managed_profiles)
 
 Novas migrations:
   - 000013: clinical tables INSERT + ownership EXISTS subquery
@@ -140,6 +142,7 @@ Novas migrations:
   - 000015: check_group_access NULL safety
   - 000016: decrement_stock ownership check
   - 000017: clinical INSERT policies completas (supersede 000013)
+  - 000018: blood_pressure_history + menstrual_cycles INSERT policies
 
 UX: GerenciarFamilia badge 'Convidado' -> 'Usuário'
 UX: GestaoAcessos promoção/rebaixamento de Admin via drawer
@@ -159,6 +162,7 @@ Aplicar **em ordem** no Supabase Dashboard → SQL Editor:
 3. `20260616000015_security_check_group_access_null_safety.sql`
 4. `20260616000016_security_decrement_stock_ownership.sql`
 5. `20260616000017_security_health_record_insert_ownership_complete.sql`
+6. `20260616000018_security_blood_pressure_menstrual_insert_ownership.sql`
 
 ---
 
@@ -254,6 +258,7 @@ Após o push e re-deploy:
 | `20260616000015` | `check_group_access` | Reescrever função com NULL guard + auth check | ⏳ Aplicar |
 | `20260616000016` | `decrement_stock` | Ownership check: `user_id = auth.uid()` ou grupo | ⏳ Aplicar |
 | `20260616000017` | 7 tabelas clínicas | INSERT policies completas: + `deleted_at IS NULL` + role check | ⏳ Aplicar |
+| `20260616000018` | `blood_pressure_history` + `menstrual_cycles` | INSERT policies: split FOR ALL + ownership via `familiar_id` | ⏳ Aplicar |
 
 ---
 
