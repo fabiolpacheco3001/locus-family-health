@@ -1,5 +1,13 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+// C6: Validate that externalReference is a valid UUID before using as user_id.
+// Prevents arbitrary user_id injection if webhook token is compromised or
+// Asaas sends a malformed externalReference.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function isValidUUID(value: string | null | undefined): value is string {
+  return typeof value === "string" && UUID_RE.test(value);
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -108,6 +116,14 @@ Deno.serve(async (req) => {
 
       const extRef = sub.externalReference as string | null;
       if (extRef) {
+        // C6: reject non-UUID externalReference to prevent user_id injection
+        if (!isValidUUID(extRef)) {
+          console.warn("SUBSCRIPTION_UPDATED: invalid UUID in externalReference, skipping upsert:", extRef);
+          return new Response(
+            JSON.stringify({ received: true, warning: "invalid externalReference format" }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
         updateData.user_id = extRef;
         const { data, error } = await adminClient
           .from("subscriptions")
@@ -131,11 +147,17 @@ Deno.serve(async (req) => {
       );
     }
 
-    const externalReference = payment.externalReference as string | null;
+    const externalReferenceRaw = payment.externalReference as string | null;
     const customerId = payment.customer as string | null;
 
+    // C6: validate UUID format before using as user_id
+    const externalReference = isValidUUID(externalReferenceRaw) ? externalReferenceRaw : null;
+    if (externalReferenceRaw && !externalReference) {
+      console.warn("Payment externalReference is not a valid UUID, ignoring:", externalReferenceRaw);
+    }
+
     if (!externalReference && !customerId) {
-      console.warn("No externalReference or customer ID in payment payload");
+      console.warn("No valid externalReference or customer ID in payment payload");
       return new Response(
         JSON.stringify({ received: true, warning: "no identifier" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
