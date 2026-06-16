@@ -9,7 +9,7 @@
 ## 1. Commit e push
 
 ```bash
-cd /caminho/para/locus-family-health
+cd /Users/fabio/locus-family-health
 
 git add \
   supabase/functions/_shared/cors.ts \
@@ -55,9 +55,17 @@ git push origin main
 | `AI_CALLS_PER_HOUR` | `10` | Limite de chamadas de IA por usuário/hora (ajustar conforme custo) |
 | `PLAN_MONTHLY_PRICE` | `19.90` | Preço mensal em decimal (sem R$) |
 | `PLAN_ANNUAL_PRICE` | `191.00` | Preço anual em decimal (sem R$) |
-| `PLAN_ANNUAL_THRESHOLD` | `150` | Valor mínimo para classificar pagamento como plano anual no webhook |
+| `PLAN_ANNUAL_THRESHOLD` | `150` | **Ver nota abaixo** — Limiar de valor para classificar plano anual no webhook Asaas |
 
 > ⚠️ Se `APP_ORIGIN` não for configurado, o CORS mantém o fallback `"*"` (compatível com previews Lovable). Configure antes do go-live em produção.
+
+#### Por que o `PLAN_ANNUAL_THRESHOLD` existe?
+
+Quando o Asaas envia um evento de pagamento via webhook, ele **não diz diretamente "este pagamento é mensal ou anual"** — ele diz apenas o valor cobrado (ex: `"value": 191.00`). O webhook precisa classificar esse pagamento para atualizar o campo `plan_type` no banco.
+
+A lógica original estava hardcoded: `if (value >= 150) plan_type = "annual"`. O problema: se você mudar o preço anual para R$170,00 mas esquecer de atualizar o código, pagamentos anuais de R$170 seriam classificados como mensais, quebrando silenciosamente o acesso dos clientes.
+
+Com o secret `PLAN_ANNUAL_THRESHOLD=150`, você controla esse limiar sem precisar fazer deploy. A regra de dedo é: defina como um valor que fique **entre o preço mensal e o anual** — ex: com R$19,90 mensal e R$191,00 anual, qualquer valor entre R$20 e R$190 funciona como threshold. O default de `150` foi escolhido como ponto médio seguro.
 
 ---
 
@@ -85,10 +93,60 @@ Funções que precisam de re-deploy obrigatório (novas dependências de env var
 
 ### A1 — CORS restrito
 
-- [ ] **Teste de origin bloqueada:** No DevTools (Postman ou curl), fazer request para uma Edge Function com header `Origin: https://site-malicioso.com`. Deve retornar `Access-Control-Allow-Origin: <APP_ORIGIN>` (não o site malicioso).
-- [ ] **Teste de origin permitida:** Request da app em produção deve funcionar normalmente.
-- [ ] **Lovable preview:** Confirmar que previews do Lovable continuam funcionando (enquanto `APP_ORIGIN` não estiver configurado, o fallback `"*"` garante isso).
-- [ ] **asaas-webhook:** Confirmar que webhook do Asaas continua funcionando (não tem CORS — server-to-server).
+> **O que estamos verificando:** depois de configurar `APP_ORIGIN=https://seu-dominio.com`, o servidor deve retornar exatamente aquele domínio no header `Access-Control-Allow-Origin` — e não o domínio do atacante. Um browser real bloquearia o atacante; aqui estamos confirmando que o header está correto.
+
+#### Opção A — DevTools do Chrome (sem instalar nada)
+
+1. Abra a app em produção no Chrome.
+2. Pressione **F12** → aba **Console**.
+3. Cole e execute o trecho abaixo, substituindo a URL pela de qualquer Edge Function sua:
+
+```js
+fetch("https://<SEU_PROJECT_REF>.supabase.co/functions/v1/search-meds", {
+  method: "OPTIONS",
+  headers: {
+    "Origin": "https://site-malicioso.com",
+    "Access-Control-Request-Method": "POST"
+  }
+}).then(r => {
+  console.log("Status:", r.status);
+  console.log("ACAO:", r.headers.get("Access-Control-Allow-Origin"));
+});
+```
+
+**Resultado esperado:**
+```
+Status: 200
+ACAO: https://seu-dominio.com   ← domínio configurado em APP_ORIGIN, não o do atacante
+```
+
+Se `APP_ORIGIN` ainda não estiver configurado (fallback `"*"`):
+```
+ACAO: *    ← aceitável em preview, mas deve ser corrigido antes do go-live
+```
+
+#### Opção B — Postman (passo a passo visual)
+
+1. Abra o Postman. Crie uma nova requisição.
+2. **Method:** `OPTIONS`
+3. **URL:** `https://<SEU_PROJECT_REF>.supabase.co/functions/v1/search-meds`
+4. Aba **Headers**, adicione:
+   | Key | Value |
+   |-----|-------|
+   | `Origin` | `https://site-malicioso.com` |
+   | `Access-Control-Request-Method` | `POST` |
+5. Clique em **Send**.
+6. Na resposta, vá em **Headers** e localize `Access-Control-Allow-Origin`.
+
+**Resultado esperado:** valor deve ser `https://seu-dominio.com`, não `https://site-malicioso.com` e não `*`.
+
+#### Checklist de confirmação
+
+- [ ] `Access-Control-Allow-Origin` retorna o domínio de `APP_ORIGIN` (não `*` e não o domínio do atacante).
+- [ ] `Vary: Origin` está presente na resposta (confirma que o servidor varia o header por origem).
+- [ ] Request normal da app em produção continua funcionando (fluxo feliz não quebrou).
+- [ ] Lovable preview continua funcionando (enquanto `APP_ORIGIN` não configurado, o fallback `"*"` garante).
+- [ ] `asaas-webhook` continua recebendo eventos do Asaas (sem CORS — server-to-server, não afetado).
 
 ### A4 — Rate limiting IA
 

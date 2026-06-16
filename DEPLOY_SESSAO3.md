@@ -72,29 +72,29 @@ Após o `git push`, o Lovable vai detectar as mudanças automaticamente.
 ## 5. Testes manuais — checklist rápido
 
 ### Segurança (`/seguranca`)
-- [ ] Card de biometria mostra **"Em breve"** (sem toggle)
-- [ ] Alterar senha com **senha atual errada** → toast "Senha atual incorreta"
-- [ ] Alterar senha com **senha atual correta** → toast "Senha atualizada com sucesso"
-- [ ] Regra de senha fraca exibida corretamente (maiúscula + número + especial)
+- [X] Card de biometria mostra **"Em breve"** (sem toggle)
+- [X] Alterar senha com **senha atual errada** → toast "Senha atual incorreta"
+- [X] Alterar senha com **senha atual correta** → toast "Senha atualizada com sucesso"
+- [X] Regra de senha fraca exibida corretamente (maiúscula + número + especial)
 
 ### Ajustes (`/ajustes`)
-- [ ] Botão **"Exportar Meus Dados"** aparece (ícone verde)
-- [ ] Ao clicar → loading → download do arquivo `.json`
-- [ ] Abrir o JSON baixado → verificar campos: `familyMembers`, `clinicalData`, `consentHistory`
-- [ ] Botão **"Revogar Consentimento"** aparece (ícone âmbar)
-- [ ] Ao clicar → AlertDialog aparece com aviso de que não apaga dados
-- [ ] Confirmar revogação → toast "Consentimento revogado e registrado"
-- [ ] Verificar em Supabase → `consent_log` → novo registro com `consent_type = 'revoked'`
+- [X] Botão **"Exportar Meus Dados"** aparece (ícone verde)
+- [X] Ao clicar → loading → download do arquivo `.json`
+- [X] Abrir o JSON baixado → verificar campos: `familyMembers`, `clinicalData`, `consentHistory`
+- [X] Botão **"Revogar Consentimento"** aparece (ícone âmbar)
+- [X] Ao clicar → AlertDialog aparece com aviso de que não apaga dados
+- [X] Confirmar revogação → toast "Consentimento revogado e registrado"
+- [X] Verificar em Supabase → `consent_log` → novo registro com `consent_type = 'revoked'`
 
 ### Landing Page (`/`)
-- [ ] Footer: link **"Termos de Uso"** → abre `/termos-de-uso`
-- [ ] Footer: link **"Privacidade (LGPD)"** → abre `/politica-de-privacidade`
+- [X] Footer: link **"Termos de Uso"** → abre `/termos-de-uso`
+- [X] Footer: link **"Privacidade (LGPD)"** → abre `/politica-de-privacidade`
 
 ### Termos de Uso (`/termos-de-uso`)
-- [ ] Página abre sem login
-- [ ] 12 seções renderizadas corretamente
-- [ ] Link interno para Política de Privacidade funciona
-- [ ] Botão Voltar funciona
+- [X] Página abre sem login
+- [X] 12 seções renderizadas corretamente
+- [X] Link interno para Política de Privacidade funciona
+- [X] Botão Voltar funciona
 
 ---
 
