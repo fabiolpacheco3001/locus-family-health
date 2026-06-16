@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
@@ -8,6 +8,20 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
+
+/** Registra o consentimento LGPD na tabela consent_log após o cadastro. */
+async function logConsent(userId: string) {
+  const userAgent = navigator.userAgent.slice(0, 500);
+  const records = [
+    { user_id: userId, consent_type: "privacy_policy",  policy_version: "1.0", user_agent: userAgent },
+    { user_id: userId, consent_type: "health_data",     policy_version: "1.0", user_agent: userAgent },
+  ];
+  const { error } = await supabase.from("consent_log" as any).insert(records);
+  if (error) {
+    // Non-blocking — log but don't prevent the user from continuing
+    console.error("consent_log insert error:", error.message);
+  }
+}
 
 const Cadastro = () => {
   const navigate = useNavigate();
@@ -23,6 +37,8 @@ const Cadastro = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [confirmError, setConfirmError] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [consentError, setConsentError] = useState(false);
 
   // Clear any stale cached session to prevent auth limbo
   useEffect(() => {
@@ -32,6 +48,7 @@ const Cadastro = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setConfirmError("");
+    setConsentError(false);
 
     if (password !== confirmPassword) {
       setConfirmError("As senhas não coincidem.");
@@ -40,6 +57,12 @@ const Cadastro = () => {
 
     if (password.length < 8) {
       toast.error("A senha deve ter no mínimo 8 caracteres.");
+      return;
+    }
+
+    // LGPD Art. 11 — consentimento obrigatório para dados de saúde
+    if (!consentAccepted) {
+      setConsentError(true);
       return;
     }
 
@@ -55,6 +78,13 @@ const Cadastro = () => {
         : error.message || "Erro ao criar conta. Tente novamente.";
       toast.error(msg);
       return;
+    }
+
+    // Registra consentimento LGPD — busca userId da sessão criada pelo signUp
+    // (non-blocking — não impede o fluxo se falhar)
+    const { data: sessionData } = await supabase.auth.getUser();
+    if (sessionData?.user?.id) {
+      await logConsent(sessionData.user.id);
     }
 
     // Express checkout tunnel — wait for session to stabilize
@@ -155,6 +185,48 @@ const Cadastro = () => {
             </div>
             {confirmError && (
               <p className="text-sm text-red-500 font-medium">{confirmError}</p>
+            )}
+          </div>
+
+          {/* LGPD Art. 11 — Consentimento para tratamento de dados de saúde */}
+          <div className="space-y-1">
+            <label
+              className={`flex items-start gap-3 cursor-pointer select-none p-3 rounded-xl border transition-colors ${
+                consentError
+                  ? "border-red-400 bg-red-50"
+                  : consentAccepted
+                  ? "border-[#78C2AD]/60 bg-[#78C2AD]/5"
+                  : "border-border/40 bg-card"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={consentAccepted}
+                onChange={(e) => {
+                  setConsentAccepted(e.target.checked);
+                  setConsentError(false);
+                }}
+                className="mt-0.5 w-4 h-4 accent-[#78C2AD] shrink-0 cursor-pointer"
+              />
+              <span className="text-sm text-muted-foreground leading-relaxed">
+                Concordo com a{" "}
+                <Link
+                  to="/politica-de-privacidade"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#78C2AD] underline underline-offset-2 font-medium"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Política de Privacidade
+                </Link>{" "}
+                e autorizo o tratamento dos meus dados de saúde pelo Locus Vita,
+                conforme a LGPD (Art. 11).
+              </span>
+            </label>
+            {consentError && (
+              <p className="text-xs text-red-500 font-medium pl-1">
+                Você precisa aceitar a Política de Privacidade para criar sua conta.
+              </p>
             )}
           </div>
 

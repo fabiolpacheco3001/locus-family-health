@@ -72,26 +72,23 @@
 
 ---
 
-### C7 · Art. 11 LGPD — Cadastro sem consentimento para tratamento de dados de saúde
-- **Risco:** O cadastro coleta nome/email e cria conta sem mencionar que dados de saúde serão tratados. A política de privacidade tem `path: null` em Ajustes.tsx — link quebrado.
-- **Fix:**
-  1. Adicionar checkbox de consentimento no cadastro com link para política de privacidade
-  2. Criar página `/politica-de-privacidade`
-  3. Criar tabela `consent_log` para registrar consentimentos com timestamp
-- **Arquivos:** `src/pages/Cadastro.tsx`, `src/pages/Ajustes.tsx` (linha 28)
-- **Status:** 🔴 Pendente
+### C7 · Art. 11 LGPD — Cadastro sem consentimento para tratamento de dados de saúde ✅
+- **Risco resolvido:** Cadastro criava conta sem consentimento explícito para dados de saúde; link da política estava quebrado (`path: null`).
+- **Resolução:**
+  1. Checkbox de consentimento adicionado em `Cadastro.tsx` com link para `/politica-de-privacidade` (abre em nova aba). Botão "Criar Conta" bloqueado sem aceite. Feedback visual (borda vermelha) ao tentar submeter sem marcar.
+  2. `logConsent()` — após signup bem-sucedido, insere 2 registros em `consent_log` (`privacy_policy` + `health_data`) com versão `1.0` e `user_agent`. Non-blocking (não impede o fluxo se falhar).
+  3. Tabela `consent_log` criada na migration `20260616000009` com RLS (SELECT + INSERT por `auth.uid()`, sem UPDATE/DELETE via cliente).
+  4. Link corrigido em `Ajustes.tsx`: `path: null` → `"/politica-de-privacidade"`.
+- **Arquivos:** `src/pages/Cadastro.tsx`, `src/pages/Ajustes.tsx`, `supabase/migrations/20260616000009_lgpd_consent_log.sql`
+- **Status:** ✅ Resolvido
 
 ---
 
-### C8 · Art. 18-IV LGPD — `handleDeleteAccount` não deleta dados do usuário
-- **Risco:** O botão "Excluir Conta" faz apenas soft-delete de `family_members` e signOut. Não deleta `auth.users`, dados clínicos (medications, consultations, exams, vaccines...), arquivos de Storage, `ai_usage_logs`, `email_send_log` ou `subscriptions`.
-- **Fix:** Criar Edge Function `delete-user-account` que:
-  1. Deleta arquivos de Storage do usuário (receitas, exames, avatares)
-  2. Deleta registros clínicos via cascade ou DELETE explícito
-  3. Deleta `subscriptions`, `ai_usage_logs`, `email_send_log`, `notifications`
-  4. Chama `supabase.auth.admin.deleteUser(userId)` como último passo
-- **Arquivos:** `src/pages/Ajustes.tsx` (linhas 83–117)
-- **Status:** 🔴 Pendente
+### C8 · Art. 18-IV LGPD — `handleDeleteAccount` não deleta dados do usuário ✅
+- **Risco resolvido:** "Excluir Conta" só fazia soft-delete e signOut — dados clínicos, arquivos, assinatura e `auth.users` permaneciam intactos.
+- **Resolução:** Edge Function `delete-user-account` criada (`supabase/functions/delete-user-account/index.ts`). Sequência: Storage (exam-files, receitas, vaccine_documents, avatars) → Asaas cancel (best-effort) → notifications/ai_usage_logs/email_send_log/subscriptions → family_members+cascade clínico → family_group_members → family_groups (admin) → group_invites → user_roles → `auth.admin.deleteUser()`. `Ajustes.tsx` atualizado para chamar a função via `supabase.functions.invoke()`.
+- **Arquivos:** `supabase/functions/delete-user-account/index.ts` (novo), `src/pages/Ajustes.tsx`, `supabase/config.toml`
+- **Status:** ✅ Resolvido
 
 ---
 
@@ -212,9 +209,11 @@
 
 ---
 
-### A14 · Art. 7 LGPD — Política de privacidade não implementada
-- **Fix:** Criar página `/politica-de-privacidade` com finalidade do tratamento, base legal, compartilhamento de dados e canal de contato (DPO).
-- **Status:** ⬜ Backlog
+### A14 · Art. 7 LGPD — Política de privacidade não implementada ✅
+- **Risco resolvido:** Sem política de privacidade acessível aos titulares antes do aceite.
+- **Resolução:** Página `src/pages/PoliticaPrivacidade.tsx` criada com 10 seções (controlador, dados coletados, finalidade + base legal LGPD Art. 7/11, compartilhamento, retenção, direitos Art. 18, segurança, incidentes Art. 48, DPO, alterações). Rota `/politica-de-privacidade` adicionada em `App.tsx` fora do `AppLayout` (pública, sem autenticação). Acessível a partir do link no cadastro e de Ajustes.
+- **Arquivos:** `src/pages/PoliticaPrivacidade.tsx` (novo), `src/App.tsx`
+- **Status:** ✅ Resolvido
 
 ---
 
@@ -483,10 +482,10 @@ Sprint 1 — Segurança e integridade de dados ✅ CONCLUÍDO
 ├── ✅ C1                                  → .gitignore + histórico git auditado
 └── ✅ C11                                 → get_admin_clients: role check + search_path + REVOKE
 
-Sprint 2 — Compliance LGPD (bloqueador legal para go-live) ← PRÓXIMO
-├── C7 + A14                              → Política de privacidade + consentimento no cadastro
-├── C8                                    → Edge Function delete-user-account (Art. 18-IV)
-├── A15 + M12                             → Export de dados em JSON/CSV (portabilidade)
+Sprint 2 — Compliance LGPD (bloqueador legal para go-live) 🟡 Em progresso
+├── ✅ C8                                  → Edge Function delete-user-account (Art. 18-IV)
+├── ✅ C7 + A14                            → Consentimento no cadastro + Política de privacidade
+├── A15 + M12                             → Export de dados em JSON/CSV (portabilidade) ← PRÓXIMO
 └── M14                                   → Revogação de consentimento (Art. 18-IX)
 
 Sprint 3 — Go-live readiness

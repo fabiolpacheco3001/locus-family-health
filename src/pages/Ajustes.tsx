@@ -25,7 +25,7 @@ const menuItems = [
   { icon: Users, label: "Gerenciar Família", path: "/gerenciar-familia" },
   { icon: Bell, label: "Notificações", path: "/notificacoes" },
   { icon: Shield, label: "Segurança e Senha", path: "/seguranca" },
-  { icon: FileText, label: "Política de Privacidade", path: null },
+  { icon: FileText, label: "Política de Privacidade", path: "/politica-de-privacidade" },
   { icon: Sparkles, label: "Novidades do Locus Vita", path: "/changelog" },
   { icon: HelpCircle, label: "Ajuda e Suporte", path: "/ajuda" },
   { icon: Mail, label: "Fale Conosco", path: "__support__" },
