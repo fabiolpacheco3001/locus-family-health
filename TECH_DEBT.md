@@ -485,6 +485,7 @@
 | 16 findings do scanner Lovable | ✅ 0 erros, 23 warnings by-design |
 | TypeScript Fase 1 (`strictNullChecks`) | ✅ Habilitado + 9 `as any` removidos + type augmentation jspdf-autotable |
 | Bug ∞ — Dipirona Bug (Fase 401) | ✅ `useUpcomingAppointments` refatorado para consumir `calculateNextDose.ts`; fix de skip de horários passados no dia de início |
+| Bug ∞ — Fase 401 (sessão 12) | ✅ 3 causas raiz corrigidas: (1) `homeDoseStatuses` sem filtro de data → truncamento de 1000 linhas → mapa incompleto; (2) `useMedicationAlarms` catch-up ignorava `specific_times`/`specific_days`; (3) `MedicationDoseActions` auto-conclusão só para `fixed_interval` |
 
 ### Sessão 2
 
@@ -540,6 +541,11 @@ Sprint 5 — Observabilidade e manutenibilidade ✅ CONCLUÍDO
 ├── ✅ M2                                 → .github/workflows/ci.yml (lint + typecheck + vitest)
 ├── ✅ A7 (parcial)                       → calculateNextDose.test.ts (24 testes, 3 frequency_types)
 └── ✅ M1                                 → @sentry/react + src/lib/sentry.ts (⚠️ DSN pendente do Fábio)
+
+Sprint 6 — Bug ∞ Dipirona (Fase 401) ✅ CONCLUÍDO
+├── ✅ homeDoseStatuses date filter       → .gte("scheduled_for", -7d) em Home.tsx + Medicamentos.tsx
+├── ✅ useMedicationAlarms catch-up       → loop calculateNextDose para specific_times/specific_days
+└── ✅ MedicationDoseActions auto-conclusão → suporta os 3 frequency_types; props startDateISO, frequencyType, specificTimes, specificDays adicionados
 ```
 
 ---

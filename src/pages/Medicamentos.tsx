@@ -45,10 +45,14 @@ const Medicamentos = () => {
     queryKey: ["medication_doses_list", activeMedIds],
     queryFn: async () => {
       if (activeMedIds.length === 0) return {};
+      // Limit to last 7 days to avoid Supabase 1000-row truncation on high-volume patients.
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       const { data, error } = await supabase
         .from("medication_doses")
         .select("medication_id, scheduled_for, status")
-        .in("medication_id", activeMedIds);
+        .in("medication_id", activeMedIds)
+        .gte("scheduled_for", sevenDaysAgo.toISOString());
       if (error) throw error;
       const map: Record<string, "taken" | "skipped"> = {};
       for (const d of (data ?? [])) {
@@ -423,6 +427,16 @@ const Medicamentos = () => {
                               scheduledFor={scheduledFor}
                               doseStatus={doseStatus}
                               frequencyHours={m.frequency_hours}
+                              frequencyType={m.frequency_type}
+                              specificTimes={m.specific_times as string[] | null}
+                              specificDays={m.specific_days as number[] | null}
+                              startDateISO={
+                                m.start_date
+                                  ? m.start_time
+                                    ? `${m.start_date.slice(0, 10)}T${m.start_time}`
+                                    : m.start_date.slice(0, 10)
+                                  : null
+                              }
                               endDate={m.end_date}
                               usoContinuo={m.uso_continuo}
                             />

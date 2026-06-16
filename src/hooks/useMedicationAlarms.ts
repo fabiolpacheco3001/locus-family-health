@@ -117,17 +117,59 @@ export function useMedicationAlarms(medications: Medication[]) {
       for (const med of medications) {
         if (med.status !== "Ativo") continue;
         if (med.estoque_total == null || med.estoque_total <= 0) continue;
-        if (!med.frequency_hours || med.frequency_hours <= 0) continue;
 
-        let refTime: Date | null = null;
-        if (med.last_stock_decrement) {
-          refTime = new Date(med.last_stock_decrement);
-        } else if (med.start_date) {
-          const dateOnly = med.start_date.slice(0, 10);
-          refTime = med.start_time
-            ? new Date(`${dateOnly}T${med.start_time}`)
-            : parseDateInSP(dateOnly) ?? new Date();
+        const effFreqType = (med.frequency_type as string) || "fixed_interval";
+        const isSpecificTimes = effFreqType === "specific_times" ||
+          (Array.isArray(med.specific_times) && med.specific_times.length > 0);
+        const isSpecificDays = effFreqType === "specific_days" ||
+          (Array.isArray(med.specific_days) && med.specific_days.length > 0);
+        const isSpecific = isSpecificTimes || isSpecificDays;
+
+        // ── FIXED INTERVAL: legacy hourly loop ──────────────────────────────
+        if (!isSpecific) {
+          if (!med.frequency_hours || med.frequency_hours <= 0) continue;
+
+          let refTime: Date | null = null;
+          if (med.last_stock_decrement) {
+            refTime = new Date(med.last_stock_decrement);
+          } else if (med.start_date) {
+            const dateOnly = med.start_date.slice(0, 10);
+            refTime = med.start_time
+              ? new Date(`${dateOnly}T${med.start_time}`)
+              : parseDateInSP(dateOnly) ?? new Date();
+          }
+
+          if (!refTime || isNaN(refTime.getTime())) continue;
+          if (refTime >= now) continue;
+
+          if (med.end_date) {
+            const endDate = new Date(`${med.end_date}T23:59:59`);
+            if (now > endDate) continue;
+          }
+
+          const elapsedHours = (now.getTime() - refTime.getTime()) / (1000 * 60 * 60);
+          const isFirstRun = !med.last_stock_decrement;
+          const missedDoses = Math.floor(elapsedHours / med.frequency_hours) + (isFirstRun ? 1 : 0);
+
+          if (missedDoses > 0) {
+            const safeDoses = Math.min(missedDoses, med.estoque_total);
+            if (safeDoses > 0) {
+              decrements.push({ id: med.id, amount: safeDoses });
+            }
+          }
+          continue;
         }
+
+        // ── SPECIFIC TIMES / SPECIFIC DAYS: count missed slots ───────────────
+        // Reference: last_stock_decrement if set, otherwise start_date
+        const dateOnly = med.start_date?.slice(0, 10);
+        const startDateISO = dateOnly && med.start_time
+          ? `${dateOnly}T${med.start_time}`
+          : (dateOnly ?? null);
+
+        const refTime = med.last_stock_decrement
+          ? new Date(med.last_stock_decrement)
+          : (startDateISO ? parseDateInSP(startDateISO) : null);
 
         if (!refTime || isNaN(refTime.getTime())) continue;
         if (refTime >= now) continue;
@@ -137,12 +179,30 @@ export function useMedicationAlarms(medications: Medication[]) {
           if (now > endDate) continue;
         }
 
-        const elapsedHours = (now.getTime() - refTime.getTime()) / (1000 * 60 * 60);
-        const isFirstRun = !med.last_stock_decrement;
-        const missedDoses = Math.floor(elapsedHours / med.frequency_hours) + (isFirstRun ? 1 : 0);
+        // Walk forward from refTime, counting slots that have already passed
+        // without being recorded. Cap at 60 to avoid runaway loops.
+        let cursor = refTime;
+        let missedCount = 0;
+        const MAX_ITER = 60;
+        let iter = 0;
+        while (iter < MAX_ITER) {
+          const next = calculateNextDose(
+            startDateISO,
+            null,
+            med.end_date,
+            cursor,
+            effFreqType,
+            med.specific_times as string[] | null,
+            med.specific_days as number[] | null,
+          );
+          if (!next || next >= now) break;
+          missedCount++;
+          cursor = next;
+          iter++;
+        }
 
-        if (missedDoses > 0) {
-          const safeDoses = Math.min(missedDoses, med.estoque_total);
+        if (missedCount > 0) {
+          const safeDoses = Math.min(missedCount, med.estoque_total);
           if (safeDoses > 0) {
             decrements.push({ id: med.id, amount: safeDoses });
           }

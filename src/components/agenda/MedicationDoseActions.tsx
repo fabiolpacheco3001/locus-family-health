@@ -5,12 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { calculateNextDose } from "@/lib/calculateNextDose";
 
 interface MedicationDoseActionsProps {
   medicationId: string;
   scheduledFor: string;
   doseStatus: "taken" | "skipped" | null;
   frequencyHours?: number | null;
+  frequencyType?: string | null;
+  specificTimes?: string[] | null;
+  specificDays?: number[] | null;
+  startDateISO?: string | null;
   endDate?: string | null;
   usoContinuo?: boolean;
 }
@@ -22,6 +27,10 @@ export function MedicationDoseActions({
   scheduledFor,
   doseStatus,
   frequencyHours,
+  frequencyType,
+  specificTimes,
+  specificDays,
+  startDateISO,
   endDate,
   usoContinuo,
 }: MedicationDoseActionsProps) {
@@ -81,14 +90,44 @@ export function MedicationDoseActions({
         await supabase.rpc("decrement_stock", { med_id: medicationId });
       }
 
-      // Auto-completion: check if treatment should end
-      if (!usoContinuo && frequencyHours && frequencyHours > 0 && endDate) {
+      // Auto-completion: mark treatment as Concluído when next dose would be past end_date.
+      // Supports all frequency types (fixed_interval, specific_times, specific_days).
+      if (!usoContinuo && endDate) {
         const scheduledDate = new Date(scheduledFor);
-        const nextDoseAfterThis = new Date(scheduledDate.getTime() + frequencyHours * 60 * 60 * 1000);
-        const endStr = endDate.length === 10 ? endDate + "T23:59:59" : endDate;
-        const endDateTime = new Date(endStr);
+        let nextDoseAfterThis: Date | null = null;
+        let checkedAutoComplete = false;
 
-        if (!isNaN(nextDoseAfterThis.getTime()) && !isNaN(endDateTime.getTime()) && nextDoseAfterThis > endDateTime) {
+        // Guard: only use specific-schedule engine when data is actually present.
+        const hasSpecificTimesData = Array.isArray(specificTimes) && specificTimes.length > 0;
+        const hasSpecificDaysData = Array.isArray(specificDays) && specificDays.length > 0;
+        const isSpecific = hasSpecificTimesData || hasSpecificDaysData;
+
+        if (isSpecific) {
+          checkedAutoComplete = true;
+          const doseFreqType = hasSpecificDaysData ? "specific_days" : "specific_times";
+          // calculateNextDose returns null when next slot is past endDate (withinEnd guard)
+          nextDoseAfterThis = calculateNextDose(
+            startDateISO ?? null,
+            null,
+            endDate,
+            scheduledDate,
+            doseFreqType,
+            specificTimes ?? null,
+            specificDays ?? null,
+          );
+        } else if (frequencyHours && frequencyHours > 0) {
+          checkedAutoComplete = true;
+          const candidate = new Date(scheduledDate.getTime() + frequencyHours * 60 * 60 * 1000);
+          const endStr = endDate.length === 10 ? endDate + "T23:59:59" : endDate;
+          const endDateTime = new Date(endStr);
+          // nextDoseAfterThis stays null if candidate is past endDate → triggers Concluído
+          if (!isNaN(candidate.getTime()) && !isNaN(endDateTime.getTime()) && candidate <= endDateTime) {
+            nextDoseAfterThis = candidate;
+          }
+        }
+
+        // Only auto-complete when we had enough data to make the determination
+        if (checkedAutoComplete && !nextDoseAfterThis) {
           await supabase
             .from("medications")
             .update({ status: "Concluído" })
