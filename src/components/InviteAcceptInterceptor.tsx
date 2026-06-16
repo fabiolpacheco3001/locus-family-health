@@ -219,12 +219,14 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
         finalMemberId = (newMember as any).id;
       }
 
+      // Security: always join as 'user' — DB policy enforces this.
+      // Admin promotion is a separate action performed by an existing group admin.
       const { error: insertErr } = await supabase
         .from("family_group_members" as any)
         .insert({
           group_id: invite.group_id,
           auth_user_id: user.id,
-          role: invite.role,
+          role: "user" as const,
           family_member_id: finalMemberId,
           accepted_at: new Date().toISOString(),
         } as any);

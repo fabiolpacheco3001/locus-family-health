@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, UserPlus, Crown, User as UserIcon, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Settings2, Info } from "lucide-react";
+import { ArrowLeft, Shield, UserPlus, Crown, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Settings2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,7 +59,7 @@ const GestaoAcessos = () => {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "user">("user");
+  // inviteRole removed — invitees always join as 'user' (DB enforces via RLS policy)
   const [inviteMemberId, setInviteMemberId] = useState("");
   const [saving, setSaving] = useState(false);
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
@@ -114,7 +114,7 @@ const GestaoAcessos = () => {
       const { error } = await supabase.from("group_invites" as any).insert({
         group_id: groupId,
         email: inviteEmail.trim().toLowerCase(),
-        role: inviteRole,
+        role: "user" as const, // always 'user' — DB policy forbids self-assigning 'admin'
         family_member_id: inviteMemberId || null,
         invited_by: user.id,
       } as any);
@@ -160,7 +160,7 @@ const GestaoAcessos = () => {
 
   const resetForm = () => {
     setInviteEmail("");
-    setInviteRole("user");
+
     setInviteMemberId("");
     setSuccessEmail(null);
     setCopied(false);
@@ -421,47 +421,10 @@ const GestaoAcessos = () => {
                   />
                 </div>
 
-                {/* Role */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Nível de Acesso</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setInviteRole("admin")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        inviteRole === "admin"
-                          ? "border-[#1C3333] bg-[#1C3333]/5"
-                          : "border-border bg-card"
-                      }`}
-                    >
-                      <Crown size={24} className={inviteRole === "admin" ? "text-[#1C3333]" : "text-muted-foreground"} />
-                      <span className={`text-sm font-semibold ${inviteRole === "admin" ? "text-[#1C3333]" : "text-muted-foreground"}`}>
-                        Admin
-                      </span>
-                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                        Vê e edita tudo
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setInviteRole("user")}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                        inviteRole === "user"
-                          ? "border-[#A7D3CB] bg-[#A7D3CB]/10"
-                          : "border-border bg-card"
-                      }`}
-                    >
-                      <UserIcon size={24} className={inviteRole === "user" ? "text-[#1C3333]" : "text-muted-foreground"} />
-                      <span className={`text-sm font-semibold ${inviteRole === "user" ? "text-[#1C3333]" : "text-muted-foreground"}`}>
-                        Usuário
-                      </span>
-                      <span className="text-[10px] text-muted-foreground text-center leading-tight">
-                        Só vê o seu perfil
-                      </span>
-                    </button>
-                  </div>
-                </div>
-
                 {/* Linked Profile (optional — auto-created on accept if empty) */}
-                {inviteRole === "user" && (
+                {/* Security: invitees always join as 'user' — admin promotion is
+                    a separate action. Role selector removed (DB enforces role = 'user'). */}
+                {(
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Perfil Vinculado (opcional)</Label>
                     <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
