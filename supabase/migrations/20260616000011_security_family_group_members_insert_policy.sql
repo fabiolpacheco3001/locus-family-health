@@ -23,13 +23,15 @@ WITH CHECK (
   auth_user_id = auth.uid()
   -- (2) Can only join as 'user', never self-assign 'admin'
   AND role = 'user'::app_role
-  -- (3) A pending invite must exist for the current user's email + target group
+  -- (3) A pending invite must exist for the current user's email + target group.
+  --     Uses auth.jwt() ->> 'email' instead of JOIN auth.users to avoid
+  --     "permission denied for table users" — authenticated role has no SELECT on auth schema.
+  --     The JWT is signed by Supabase and cannot be forged.
   AND EXISTS (
     SELECT 1
     FROM public.group_invites gi
-    JOIN auth.users u ON u.email = gi.email
-    WHERE gi.group_id = family_group_members.group_id
-      AND u.id         = auth.uid()
+    WHERE gi.group_id    = family_group_members.group_id
+      AND gi.email       = (auth.jwt() ->> 'email')
       AND gi.accepted_at IS NULL
   )
 );

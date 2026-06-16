@@ -11,7 +11,16 @@ import type { Medication } from "./useMedications";
  * then fires both an OS Notification and an in-app toast.
  * Receives medications externally to avoid duplicate useQuery calls.
  */
-let permissionToastShown = false;
+
+// sessionStorage-backed flag — persists across HMR reloads and soft navigations
+// within the same browser session, preventing the toast from appearing repeatedly.
+const PERM_TOAST_KEY = "locus_notif_toast_shown";
+function wasPermissionToastShown(): boolean {
+  try { return sessionStorage.getItem(PERM_TOAST_KEY) === "1"; } catch { return false; }
+}
+function markPermissionToastShown(): void {
+  try { sessionStorage.setItem(PERM_TOAST_KEY, "1"); } catch { /* ignore */ }
+}
 
 export function useMedicationAlarms(medications: Medication[]) {
   const queryClient = useQueryClient();
@@ -30,16 +39,16 @@ export function useMedicationAlarms(medications: Medication[]) {
     }
     if (Notification.permission === "denied") {
       permissionRef.current = "denied";
-      if (!permissionToastShown) {
-        permissionToastShown = true;
+      if (!wasPermissionToastShown()) {
+        markPermissionToastShown();
         toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
       }
       return;
     }
     Notification.requestPermission().then((perm) => {
       permissionRef.current = perm;
-      if (perm === "denied" && !permissionToastShown) {
-        permissionToastShown = true;
+      if (perm === "denied" && !wasPermissionToastShown()) {
+        markPermissionToastShown();
         toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
       }
     });
@@ -204,7 +213,10 @@ export function useMedicationAlarms(medications: Medication[]) {
 
     const onVisibility = () => {
       if (document.visibilityState === "visible") {
-        catchUpDoneRef.current = false;
+        // Note: catchUpDoneRef is intentionally NOT reset here.
+        // Resetting it caused a cascade: visibility change → catch-up → stock decrement
+        // → scheduleRefresh → invalidateQueries → re-render → repeat.
+        // checkAlarms() alone is sufficient to fire any due doses on return.
         checkAlarms();
       }
     };
