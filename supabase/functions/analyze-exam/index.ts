@@ -1,9 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "std/http/server";
+import { createClient } from "@supabase/supabase-js";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
 // A4: Rate limiting de chamadas de IA
 import { checkAiRateLimit, logAiUsage } from "../_shared/rate-limit.ts";
+import { log } from "../_shared/logger.ts";
 
 const bytesToBase64 = (bytes: Uint8Array) => {
   const chunkSize = 0x8000;
@@ -99,7 +100,7 @@ Se não conseguir identificar algum campo, use null. Retorne SOMENTE o JSON, sem
 
     const fileResponse = await fetch(fileUrl);
     if (!fileResponse.ok) {
-      console.error("Failed to download file:", fileResponse.status);
+      log("error", "file_download_failed", { status: fileResponse.status });
       return new Response(JSON.stringify({ error: "Não foi possível baixar o arquivo." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -193,7 +194,7 @@ Se não conseguir identificar algum campo, use null. Retorne SOMENTE o JSON, sem
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      log("error", "ai_gateway_error", { status: response.status, body: errorText });
 
       if (response.status === 429) {
         return new Response(
@@ -241,7 +242,7 @@ Se não conseguir identificar algum campo, use null. Retorne SOMENTE o JSON, sem
       { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
-    console.error("analyze-exam error:", e);
+    log("error", "analyze_exam_unexpected_error", { error: e instanceof Error ? e.message : String(e) });
     return new Response(
       JSON.stringify({ error: "Erro interno. Tente novamente mais tarde." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

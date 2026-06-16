@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
 

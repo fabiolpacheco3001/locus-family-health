@@ -2,9 +2,10 @@
 // Busca medicamentos via API externa (MED_API_URL) ou fallback local.
 // TODO: Configurar MED_API_URL com a URL da API da Memed quando disponível.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "@supabase/supabase-js";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
+import { log } from "../_shared/logger.ts";
 
 const MAX_RESULTS = 15;
 
@@ -82,7 +83,7 @@ Deno.serve(async (req) => {
       try {
         items = await fetchExternalMeds(apiUrl);
       } catch (fetchErr) {
-        console.error('Fetch externo falhou, usando fallback local:', fetchErr);
+        log("warn", "external_fetch_failed_using_fallback", { error: fetchErr instanceof Error ? fetchErr.message : String(fetchErr) });
         items = LOCAL_MEDS;
       }
     } else {

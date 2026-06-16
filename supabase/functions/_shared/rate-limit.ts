@@ -10,7 +10,8 @@
  *   import { checkAiRateLimit, logAiUsage } from "../_shared/rate-limit.ts";
  */
 
-import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SupabaseClient } from "@supabase/supabase-js";
+import { log } from "./logger.ts";
 
 /** Máximo de chamadas de IA por hora por usuário (configurável via env var). */
 const AI_CALLS_PER_HOUR = parseInt(Deno.env.get("AI_CALLS_PER_HOUR") ?? "10", 10);
@@ -35,7 +36,7 @@ export async function checkAiRateLimit(
 
   if (error) {
     // Fail-closed: erro ao verificar → bloqueia por segurança
-    console.error(`[rate-limit] Erro ao verificar cota para ${userId}/${feature}:`, error.message);
+    log("error", "ai_rate_limit_check_failed", { userId, feature, error: error.message });
     return { allowed: false, count: -1, limit: AI_CALLS_PER_HOUR };
   }
 
@@ -62,6 +63,6 @@ export async function logAiUsage(
     .insert({ user_id: userId, feature, tokens_used: tokensUsed });
 
   if (error) {
-    console.error(`[rate-limit] Falha ao registrar uso de IA (${feature}):`, error.message);
+    log("error", "ai_usage_log_failed", { userId, feature, error: error.message });
   }
 }

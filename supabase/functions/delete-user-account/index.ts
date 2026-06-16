@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { log } from "../_shared/logger.ts";
+import { createClient } from "@supabase/supabase-js";
 
 /**
  * delete-user-account — Edge Function (Art. 18-IV LGPD)
@@ -42,7 +43,7 @@ async function deleteStorageFolder(
       .list(prefix, { limit, offset });
 
     if (error) {
-      console.warn(`Storage list error (${bucket}/${prefix}):`, error.message);
+      log("warn", "storage_list_error", { bucket, prefix, error: error.message });
       break;
     }
     if (!files || files.length === 0) break;
@@ -62,13 +63,9 @@ async function deleteStorageFolder(
         .from(bucket)
         .remove(filePaths);
       if (removeError) {
-        console.warn(
-          `Storage remove error (${bucket}):`,
-          removeError.message,
-          filePaths
-        );
+        log("warn", "storage_remove_error", { bucket, prefix, error: removeError.message, paths: filePaths });
       } else {
-        console.log(`Deleted ${filePaths.length} files from ${bucket}/${prefix}`);
+        log("info", "storage_files_deleted", { bucket, prefix, count: filePaths.length });
       }
     }
 
@@ -110,9 +107,9 @@ async function deleteAvatarFiles(
   if (paths.length > 0) {
     const { error } = await client.storage.from("avatars").remove(paths);
     if (error) {
-      console.warn("Avatar remove error:", error.message, paths);
+      log("warn", "avatar_remove_error", { error: error.message, count: paths.length });
     } else {
-      console.log(`Deleted ${paths.length} avatar(s)`);
+      log("info", "avatars_deleted", { count: paths.length });
     }
   }
 }
@@ -138,7 +135,7 @@ async function cancelAsaasSubscription(
     const asaasApiUrl = Deno.env.get("ASAAS_API_URL");
     const apiKey = Deno.env.get("ASAAS_API_KEY");
     if (!asaasApiUrl || !apiKey) {
-      console.warn("ASAAS_API_URL or ASAAS_API_KEY not configured — skipping Asaas cancel");
+      log("warn", "asaas_cancel_skipped_no_config");
       return;
     }
 
@@ -151,13 +148,13 @@ async function cancelAsaasSubscription(
     );
 
     if (res.ok) {
-      console.log("Asaas subscription canceled:", sub.asaas_subscription_id);
+      log("info", "asaas_subscription_canceled", { subscriptionId: sub.asaas_subscription_id });
     } else {
       const body = await res.text();
-      console.warn("Asaas cancel failed (non-blocking):", res.status, body);
+      log("warn", "asaas_cancel_failed_non_blocking", { status: res.status, body });
     }
   } catch (err) {
-    console.warn("Asaas cancel error (non-blocking):", err);
+    log("warn", "asaas_cancel_error_non_blocking", { error: err instanceof Error ? err.message : String(err) });
   }
 }
 
@@ -191,7 +188,7 @@ Deno.serve(async (req) => {
 
     const userId = userData.user.id;
     const userEmail = userData.user.email ?? null;
-    console.log(`delete-user-account: starting for user ${userId}`);
+    log("info", "delete_user_started", { userId });
 
     // ── 2. DETERMINE ROLE ────────────────────────────────────────────────────
     const { data: groupMember } = await serviceClient
@@ -220,7 +217,7 @@ Deno.serve(async (req) => {
       if (myMember) memberIds = [myMember.id];
     }
 
-    console.log(`Role: ${isGroupAdmin ? "group admin" : "member"} | members to delete: ${memberIds.length}`);
+    log("info", "delete_user_role_determined", { isGroupAdmin, memberCount: memberIds.length });
 
     // ── 3. STORAGE ───────────────────────────────────────────────────────────
     // Buckets with user-scoped folders (userId/ prefix)
@@ -247,8 +244,8 @@ Deno.serve(async (req) => {
         .from(table as any)
         .delete()
         .eq("user_id", userId);
-      if (error) console.warn(`Delete error (${table}):`, error.message);
-      else console.log(`Deleted ${table} rows for user ${userId}`);
+      if (error) log("warn", "table_delete_error", { table, error: error.message });
+      else log("info", "table_rows_deleted", { table, userId });
     }
 
     // ── 6. DELETE FAMILY DATA (admin vs member) ───────────────────────────────
@@ -259,23 +256,23 @@ Deno.serve(async (req) => {
         .from("family_members")
         .delete()
         .eq("group_id", groupId);
-      if (fmErr) console.warn("family_members delete error:", fmErr.message);
-      else console.log(`Deleted all family_members for group ${groupId}`);
+      if (fmErr) log("warn", "family_members_delete_error", { error: fmErr.message });
+      else log("info", "family_members_deleted", { groupId });
 
       // Delete all family_group_members for this group
       const { error: fgmErr } = await serviceClient
         .from("family_group_members")
         .delete()
         .eq("group_id", groupId);
-      if (fgmErr) console.warn("family_group_members delete error:", fgmErr.message);
+      if (fgmErr) log("warn", "family_group_members_delete_error", { error: fgmErr.message });
 
       // Delete the family group itself
       const { error: fgErr } = await serviceClient
         .from("family_groups")
         .delete()
         .eq("id", groupId);
-      if (fgErr) console.warn("family_groups delete error:", fgErr.message);
-      else console.log(`Deleted family_group ${groupId}`);
+      if (fgErr) log("warn", "family_groups_delete_error", { error: fgErr.message });
+      else log("info", "family_group_deleted", { groupId });
     } else {
       // Member: delete only own family_member(s)
       // → ON DELETE CASCADE handles clinical data
@@ -284,8 +281,8 @@ Deno.serve(async (req) => {
           .from("family_members")
           .delete()
           .in("id", memberIds);
-        if (fmErr) console.warn("family_members delete error:", fmErr.message);
-        else console.log(`Deleted ${memberIds.length} family_member(s)`);
+        if (fmErr) log("warn", "family_members_delete_error", { error: fmErr.message });
+        else log("info", "family_members_deleted", { count: memberIds.length });
       }
 
       // Remove from family_group_members
@@ -293,7 +290,7 @@ Deno.serve(async (req) => {
         .from("family_group_members")
         .delete()
         .eq("auth_user_id", userId);
-      if (fgmErr) console.warn("family_group_members delete error:", fgmErr.message);
+      if (fgmErr) log("warn", "family_group_members_delete_error", { error: fgmErr.message });
     }
 
     // ── 7. CLEAN UP REMAINING RECORDS ────────────────────────────────────────
@@ -311,7 +308,7 @@ Deno.serve(async (req) => {
       .delete()
       .eq("id", userId);
 
-    console.log(`delete-user-account: DB cleanup complete for user ${userId}`);
+    log("info", "delete_user_db_cleanup_complete", { userId });
 
     // ── 8. DELETE AUTH USER — LAST STEP ──────────────────────────────────────
     // This invalidates all tokens immediately.
@@ -320,17 +317,17 @@ Deno.serve(async (req) => {
       await serviceClient.auth.admin.deleteUser(userId);
 
     if (deleteUserError) {
-      console.error("auth.admin.deleteUser failed:", deleteUserError.message);
+      log("error", "auth_delete_user_failed", { userId, error: deleteUserError.message });
       return json(
         { error: "Conta parcialmente removida. Entre em contato com o suporte." },
         500
       );
     }
 
-    console.log(`delete-user-account: auth user ${userId} deleted successfully`);
+    log("info", "delete_user_auth_deleted", { userId });
     return json({ success: true });
   } catch (err) {
-    console.error("delete-user-account unexpected error:", err);
+    log("error", "delete_user_unexpected_error", { error: err instanceof Error ? err.message : String(err) });
     return json({ error: "Erro interno. Tente novamente ou entre em contato com o suporte." }, 500);
   }
 });

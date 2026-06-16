@@ -1,6 +1,7 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createClient } from "@supabase/supabase-js";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
+import { log } from "../_shared/logger.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -77,7 +78,7 @@ Deno.serve(async (req) => {
     });
 
     if (usersError) {
-      console.error("Error listing users:", usersError);
+      log("error", "list_users_failed", { error: usersError });
       // Changelog was created successfully, just skip notifications
       return new Response(JSON.stringify({ changelog, notified: 0 }), {
         status: 200,
@@ -105,7 +106,7 @@ Deno.serve(async (req) => {
 
       const { error: notifError } = await adminClient.from("notifications").insert(batch);
       if (notifError) {
-        console.error(`Batch insert error (offset ${i}):`, notifError.message);
+        log("error", "notification_batch_insert_failed", { offset: i, error: notifError.message });
       } else {
         totalNotified += batch.length;
       }
@@ -119,7 +120,7 @@ Deno.serve(async (req) => {
       }
     );
   } catch (err: any) {
-    console.error("publish-changelog error:", err);
+    log("error", "publish_changelog_unexpected_error", { error: err instanceof Error ? err.message : String(err) });
     return new Response(JSON.stringify({ error: err.message || "Erro interno" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

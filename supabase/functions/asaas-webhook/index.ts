@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "@supabase/supabase-js";
+import { log } from "../_shared/logger.ts";
 
 // C6: Validate that externalReference is a valid UUID before using as user_id.
 // Prevents arbitrary user_id injection if webhook token is compromised or
@@ -25,7 +26,7 @@ async function fetchAsaasSubscription(subscriptionId: string): Promise<{ nextDue
   try {
     const asaasApiUrl = Deno.env.get("ASAAS_API_URL");
     if (!asaasApiUrl) {
-      console.error("ASAAS_API_URL not configured");
+      log("error", "asaas_api_url_missing");
       return null;
     }
     const resp = await fetch(
@@ -33,17 +34,17 @@ async function fetchAsaasSubscription(subscriptionId: string): Promise<{ nextDue
       { headers: { access_token: asaasKey } }
     );
     if (!resp.ok) {
-      console.warn("Failed to fetch Asaas subscription:", resp.status, await resp.text());
+      log("warn", "asaas_subscription_fetch_failed", { subscriptionId, status: resp.status, body: await resp.text() });
       return null;
     }
     const data = await resp.json();
-    console.log("Asaas subscription details:", JSON.stringify(data));
+    log("info", "asaas_subscription_fetched", { subscriptionId, nextDueDate: data.nextDueDate, cycle: data.cycle });
     return {
       nextDueDate: data.nextDueDate ?? null,
       cycle: data.cycle ?? null,
     };
   } catch (err) {
-    console.error("Error fetching Asaas subscription:", err);
+    log("error", "asaas_subscription_fetch_error", { subscriptionId, error: err instanceof Error ? err.message : String(err) });
     return null;
   }
 }
@@ -56,7 +57,7 @@ Deno.serve(async (req) => {
     const expectedToken = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
 
     if (!expectedToken || !incomingToken || incomingToken !== expectedToken) {
-      console.warn("Webhook rejected: invalid or missing asaas-access-token header");
+      log("warn", "webhook_token_invalid");
       return new Response(
         JSON.stringify({ error: "Forbidden" }),
         { status: 403, headers: jsonHeaders }
@@ -68,15 +69,14 @@ Deno.serve(async (req) => {
     const payment = body.payment;
 
     if (!event) {
-      console.warn("Webhook received without event:", JSON.stringify(body));
+      log("warn", "webhook_missing_event", { body });
       return new Response(
         JSON.stringify({ received: true }),
         { status: 200, headers: jsonHeaders }
       );
     }
 
-    console.log(`Asaas webhook event: ${event}, payment ID: ${payment?.id}`);
-    console.log("Full payload:", JSON.stringify(body));
+    log("info", "webhook_received", { event, paymentId: payment?.id });
 
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     if (event === "SUBSCRIPTION_UPDATED") {
       const sub = body.subscription;
       if (!sub?.id) {
-        console.warn("SUBSCRIPTION_UPDATED without subscription object");
+        log("warn", "subscription_updated_missing_object");
         return new Response(
           JSON.stringify({ received: true }),
           { status: 200, headers: jsonHeaders }
@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
       if (extRef) {
         // C6: reject non-UUID externalReference to prevent user_id injection
         if (!isValidUUID(extRef)) {
-          console.warn("SUBSCRIPTION_UPDATED: invalid UUID in externalReference, skipping upsert:", extRef);
+          log("warn", "subscription_updated_invalid_ext_ref", { externalReference: extRef });
           return new Response(
             JSON.stringify({ received: true, warning: "invalid externalReference format" }),
             { status: 200, headers: jsonHeaders }
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
           .from("subscriptions")
           .upsert(updateData as any, { onConflict: "user_id" })
           .select();
-        console.log("SUBSCRIPTION_UPDATED upsert:", JSON.stringify({ data, error }));
+        log("info", "subscription_updated_upserted", { data, error });
       }
 
       return new Response(
@@ -139,7 +139,7 @@ Deno.serve(async (req) => {
 
     // ─── PAYMENT EVENTS ───
     if (!payment) {
-      console.warn("Unhandled event without payment:", event);
+      log("warn", "webhook_event_without_payment", { event });
       return new Response(
         JSON.stringify({ received: true, event }),
         { status: 200, headers: jsonHeaders }
@@ -152,11 +152,11 @@ Deno.serve(async (req) => {
     // C6: validate UUID format before using as user_id
     const externalReference = isValidUUID(externalReferenceRaw) ? externalReferenceRaw : null;
     if (externalReferenceRaw && !externalReference) {
-      console.warn("Payment externalReference is not a valid UUID, ignoring:", externalReferenceRaw);
+      log("warn", "payment_invalid_external_reference", { externalReference: externalReferenceRaw });
     }
 
     if (!externalReference && !customerId) {
-      console.warn("No valid externalReference or customer ID in payment payload");
+      log("warn", "payment_missing_identifier");
       return new Response(
         JSON.stringify({ received: true, warning: "no identifier" }),
         { status: 200, headers: jsonHeaders }
@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
             // Use the Asaas nextDueDate EXACTLY as-is — no local calculations
             if (asaasData.nextDueDate) {
               updateData.next_billing_date = asaasData.nextDueDate;
-              console.log("Using Asaas nextDueDate (SSOT):", asaasData.nextDueDate);
+              log("info", "payment_next_due_date_set", { nextDueDate: asaasData.nextDueDate });
             }
             if (asaasData.cycle === "YEARLY") updateData.plan_type = "annual";
             else if (asaasData.cycle === "MONTHLY") updateData.plan_type = "monthly";
@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
         break;
 
       default:
-        console.log(`Unhandled Asaas event: ${event}`);
+        log("info", "webhook_event_unhandled", { event });
         return new Response(
           JSON.stringify({ received: true, event }),
           { status: 200, headers: jsonHeaders }
@@ -223,7 +223,7 @@ Deno.serve(async (req) => {
       updateData.asaas_customer_id = customerId;
     }
 
-    console.log("Data to upsert:", JSON.stringify(updateData));
+    log("info", "subscription_update_payload", { updateData });
 
     // For cancellation events, use UPDATE (not upsert) to preserve existing date columns.
     // Upsert could INSERT a new row with null dates if the row doesn't match.
@@ -239,13 +239,13 @@ Deno.serve(async (req) => {
           .select();
 
         if (error) {
-          console.error("Failed to update subscription (cancel):", JSON.stringify(error));
+          log("error", "subscription_cancel_update_failed", { error });
           return new Response(
             JSON.stringify({ error: "Failed to update subscription", details: error }),
             { status: 500, headers: jsonHeaders }
           );
         }
-        console.log("Subscription canceled (update only, dates preserved):", JSON.stringify(data));
+        log("info", "subscription_canceled", { rowsAffected: Array.isArray(data) ? data.length : null });
       } else {
         updateData.user_id = externalReference;
         const { data, error } = await adminClient
@@ -254,13 +254,13 @@ Deno.serve(async (req) => {
           .select();
 
         if (error) {
-          console.error("Failed to upsert subscription:", JSON.stringify(error));
+          log("error", "subscription_upsert_failed", { error });
           return new Response(
             JSON.stringify({ error: "Failed to upsert subscription", details: error }),
             { status: 500, headers: jsonHeaders }
           );
         }
-        console.log("Subscription upserted successfully:", JSON.stringify(data));
+        log("info", "subscription_upserted", { rowsAffected: Array.isArray(data) ? data.length : null });
       }
     } else {
       const { data, error } = await adminClient
@@ -270,13 +270,13 @@ Deno.serve(async (req) => {
         .select();
 
       if (error) {
-        console.error("Failed to update subscription by customer_id:", JSON.stringify(error));
+        log("error", "subscription_update_by_customer_failed", { error });
         return new Response(
           JSON.stringify({ error: "Failed to update subscription", details: error }),
           { status: 500, headers: jsonHeaders }
         );
       }
-      console.log("Subscription updated by customer_id:", JSON.stringify(data));
+      log("info", "subscription_updated_by_customer", { rowsAffected: Array.isArray(data) ? data.length : null });
     }
 
     return new Response(
@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: jsonHeaders }
     );
   } catch (error) {
-    console.error("asaas-webhook error:", error);
+    log("error", "asaas_webhook_unexpected_error", { error: error instanceof Error ? error.message : String(error) });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: jsonHeaders }

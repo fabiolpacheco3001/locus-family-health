@@ -1,5 +1,8 @@
 project_id = "xazlrdwdkafhzwkezfxz"
 
+[functions]
+import_map = "./functions/import_map.json"
+
 [functions.process-email-queue]
 verify_jwt = true
 

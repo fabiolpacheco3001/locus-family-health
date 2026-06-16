@@ -1,7 +1,8 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { z } from "https://esm.sh/zod@3.25.76";
+import { createClient } from "@supabase/supabase-js";
+import { z } from "zod";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
+import { log } from "../_shared/logger.ts";
 
 const BodySchema = z.object({
   planType: z.enum(["monthly", "annual"]),
@@ -45,7 +46,7 @@ async function asaasFetch(path: string, options: RequestInit) {
   if (!res.ok) {
     const body = await res.text();
     // Log full details server-side only — never forward raw third-party error bodies to clients
-    console.error(`Asaas API error ${res.status} on ${path}: ${body}`);
+    log("error", "asaas_api_error", { status: res.status, path, body });
     throw new Error("Falha ao processar pagamento. Tente novamente ou entre em contato com o suporte.");
   }
 
@@ -56,7 +57,7 @@ async function asaasFetch(path: string, options: RequestInit) {
 async function findOrCreateCustomer(email: string, name: string): Promise<string> {
   const search = await asaasFetch(`/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
   if (search.data && search.data.length > 0) {
-    console.log("Found existing Asaas customer:", search.data[0].id);
+    log("info", "asaas_customer_found", { customerId: search.data[0].id });
     return search.data[0].id;
   }
 
@@ -64,7 +65,7 @@ async function findOrCreateCustomer(email: string, name: string): Promise<string
     method: "POST",
     body: JSON.stringify({ name, email }),
   });
-  console.log("Created new Asaas customer:", created.id);
+  log("info", "asaas_customer_created", { customerId: created.id });
   return created.id;
 }
 
@@ -110,7 +111,7 @@ Deno.serve(async (req) => {
 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
-      console.error("Auth error:", userError);
+      log("error", "auth_failed", { error: userError?.message ?? null });
       return new Response(
         JSON.stringify({ error: "Auth failed", details: userError?.message ?? null }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -156,7 +157,7 @@ Deno.serve(async (req) => {
 
     if (existingSubs.data && existingSubs.data.length > 0) {
       subscriptionId = existingSubs.data[0].id;
-      console.log("Reusing existing Asaas subscription:", subscriptionId);
+      log("info", "asaas_subscription_reused", { subscriptionId });
     } else {
       // 3. Create subscription with CREDIT_CARD only
       const nextDueDate = new Date();
@@ -177,7 +178,7 @@ Deno.serve(async (req) => {
       });
 
       subscriptionId = subscription.id;
-      console.log("Created Asaas subscription:", subscriptionId);
+      log("info", "asaas_subscription_created", { subscriptionId });
     }
 
     await adminClient
@@ -198,7 +199,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("create-asaas-checkout error:", error);
+    log("error", "create_checkout_unexpected_error", { error: error instanceof Error ? error.message : String(error) });
     return new Response(
       JSON.stringify({ error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

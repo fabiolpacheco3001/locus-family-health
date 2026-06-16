@@ -1,5 +1,6 @@
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { log } from '../_shared/logger.ts'
+import { createClient } from "@supabase/supabase-js"
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10
@@ -74,7 +75,7 @@ async function moveToDlq(
     payload,
   })
   if (error) {
-    console.error('Failed to move message to DLQ', { queue, msg_id: msg.msg_id, reason, error })
+    log('error', 'dlq_move_failed', { queue, msg_id: msg.msg_id, reason, error: String(error) })
   }
 }
 
@@ -84,7 +85,7 @@ Deno.serve(async (req) => {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
   if (!apiKey || !supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing required environment variables')
+    log('error', 'missing_env_vars')
     return new Response(
       JSON.stringify({ error: 'Server configuration error' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
@@ -144,7 +145,7 @@ Deno.serve(async (req) => {
     })
 
     if (readError) {
-      console.error('Failed to read email batch', { queue, error: readError })
+      log('error', 'email_batch_read_failed', { queue, error: String(readError) })
       continue
     }
 
@@ -173,10 +174,7 @@ Deno.serve(async (req) => {
         .eq('status', 'failed')
 
       if (failedRowsError) {
-        console.error('Failed to load failed-attempt counters', {
-          queue,
-          error: failedRowsError,
-        })
+        log('error', 'failed_attempt_counters_load_failed', { queue, error: String(failedRowsError) })
       } else {
         for (const row of failedRows ?? []) {
           const messageId = row?.message_id
@@ -202,12 +200,7 @@ Deno.serve(async (req) => {
         const ageMs = Date.now() - new Date(payload.queued_at).getTime()
         const maxAgeMs = ttlMinutes[queue] * 60 * 1000
         if (ageMs > maxAgeMs) {
-          console.warn('Email expired (TTL exceeded)', {
-            queue,
-            msg_id: msg.msg_id,
-            queued_at: payload.queued_at,
-            ttl_minutes: ttlMinutes[queue],
-          })
+          log('warn', 'email_expired_ttl', { queue, msg_id: msg.msg_id, queued_at: payload.queued_at, ttl_minutes: ttlMinutes[queue] })
           await moveToDlq(supabase, queue, msg, `TTL exceeded (${ttlMinutes[queue]} minutes)`)
           continue
         }
@@ -229,17 +222,13 @@ Deno.serve(async (req) => {
           .maybeSingle()
 
         if (alreadySent) {
-          console.warn('Skipping duplicate send (already sent)', {
-            queue,
-            msg_id: msg.msg_id,
-            message_id: payload.message_id,
-          })
+          log('warn', 'email_duplicate_skipped', { queue, msg_id: msg.msg_id, message_id: payload.message_id })
           const { error: dupDelError } = await supabase.rpc('delete_email', {
             queue_name: queue,
             message_id: msg.msg_id,
           })
           if (dupDelError) {
-            console.error('Failed to delete duplicate message from queue', { queue, msg_id: msg.msg_id, error: dupDelError })
+            log('error', 'email_duplicate_delete_failed', { queue, msg_id: msg.msg_id, error: String(dupDelError) })
           }
           continue
         }
@@ -281,18 +270,12 @@ Deno.serve(async (req) => {
           message_id: msg.msg_id,
         })
         if (delError) {
-          console.error('Failed to delete sent message from queue', { queue, msg_id: msg.msg_id, error: delError })
+          log('error', 'email_sent_delete_failed', { queue, msg_id: msg.msg_id, error: String(delError) })
         }
         totalProcessed++
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error)
-        console.error('Email send failed', {
-          queue,
-          msg_id: msg.msg_id,
-          read_ct: msg.read_ct,
-          failed_attempts: failedAttempts,
-          error: errorMsg,
-        })
+        log('error', 'email_send_failed', { queue, msg_id: msg.msg_id, read_ct: msg.read_ct, failed_attempts: failedAttempts, error: errorMsg })
 
         if (isRateLimited(error)) {
           await supabase.from('email_send_log').insert({

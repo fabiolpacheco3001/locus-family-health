@@ -1,9 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "std/http/server";
+import { createClient } from "@supabase/supabase-js";
 // A1: CORS restrito ao APP_ORIGIN (env var no Supabase Dashboard)
 import { corsHeaders } from "../_shared/cors.ts";
 // A4: Rate limiting de chamadas de IA
 import { checkAiRateLimit, logAiUsage } from "../_shared/rate-limit.ts";
+import { log } from "../_shared/logger.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -262,7 +263,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      log("error", "ai_gateway_error", { status: response.status, body: errorText });
 
       if (response.status === 429) {
         return new Response(
@@ -310,7 +311,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
       { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
-    console.error("analyze-prescription error:", e);
+    log("error", "analyze_prescription_unexpected_error", { error: e instanceof Error ? e.message : String(e) });
     return new Response(
       JSON.stringify({ error: "Erro interno. Tente novamente mais tarde." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

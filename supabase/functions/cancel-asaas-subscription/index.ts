@@ -1,6 +1,7 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "@supabase/supabase-js";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
+import { log } from "../_shared/logger.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -112,7 +113,7 @@ Deno.serve(async (req) => {
     if (!cancelRes.ok) {
       const errorBody = await cancelRes.text().catch(() => "(unreadable)");
       // Log full details server-side only — never forward raw gateway error bodies to clients
-      console.error(`Asaas DELETE error ${cancelRes.status}:`, errorBody);
+      log("error", "asaas_delete_subscription_failed", { status: cancelRes.status, body: errorBody });
       return new Response(JSON.stringify({ error: "Erro ao cancelar assinatura. Tente novamente ou entre em contato com o suporte." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -130,7 +131,7 @@ Deno.serve(async (req) => {
       .eq("user_id", userId);
 
     if (updateErr) {
-      console.error("Supabase update error:", updateErr.message);
+      log("error", "subscription_status_update_failed", { error: updateErr.message });
       return new Response(JSON.stringify({ error: "Erro ao atualizar status da assinatura. Entre em contato com o suporte." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("cancel-asaas-subscription unexpected error:", err);
+    log("error", "cancel_subscription_unexpected_error", { error: err instanceof Error ? err.message : String(err) });
     return new Response(JSON.stringify({ error: "Erro interno. Tente novamente ou entre em contato com o suporte." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

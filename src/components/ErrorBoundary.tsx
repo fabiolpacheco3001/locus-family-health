@@ -7,12 +7,11 @@
  * Must be a class component — React only supports error boundaries via
  * getDerivedStateFromError / componentDidCatch lifecycle methods.
  *
- * When Sentry (M1) is added, replace the console.error with:
- *   import * as Sentry from "@sentry/react";
- *   Sentry.captureException(error, { extra: errorInfo });
+ * Sentry (M1): captureException is a no-op when VITE_SENTRY_DSN is not set.
  */
 
 import { Component, ErrorInfo, ReactNode } from "react";
+import { captureException } from "@/lib/sentry";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -40,8 +39,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // TODO (M1): Replace with Sentry.captureException(error, { extra: errorInfo })
-    console.error("[ErrorBoundary] Unhandled error:", error, errorInfo);
+    captureException(error, { componentStack: errorInfo.componentStack ?? "" });
   }
 
   private handleReload = () => {

@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.7 | **Atualizado em:** junho/2026 (sessão 10)  
+> **Versão:** 2.8 | **Atualizado em:** junho/2026 (sessão 11)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -20,6 +20,7 @@
 | Sessão 8 | A6 ErrorBoundary global, A13 dynamic PDF imports, A17 patientAge sanitização, B3 tz.ts, B5 lazy routes (27 páginas) — Sprint 4 início | Sprint 4 🟡 Em progresso |
 | Sessão 9 | M5 Promise.all em useSubscription, M6 batch dedup+insert em Stock/Menstrual alerts, M7 React.memo em 4 componentes + useCallback BottomNav | Sprint 4 🟡 Em progresso |
 | Sessão 10 | A5 Fase 2 completa: `noImplicitAny: true` habilitado, 93→0 `as any` eliminados — FamilyMember type augmentado, 22 `.from() as any` via sed, 71 casts explícitos resolvidos por categoria | Sprint 4 ✅ CONCLUÍDO |
+| Sessão 11 | Sprint 5: M4+B1 import_map.json Deno (std@0.224, supabase-js@2.49.4); M9 logs JSON estruturados (shared logger.ts, 9 Edge Functions, 66→0 console.* não estruturados); M2 CI/CD GitHub Actions (lint+typecheck+test); A7 testes unitários calculateNextDose (3 describe, 24 it, fake timers); M1 Sentry integração preparada (@sentry/react, lib/sentry.ts, initSentry em main.tsx, captureException em ErrorBoundary) | Sprint 5 ✅ CONCLUÍDO |
 
 ---
 
@@ -190,7 +191,7 @@
 
 ### A7 · Cobertura de testes ~0% (apenas 1 smoke test)
 - **Fix prioritário:** Hooks críticos (`useUpcomingAppointments`, `calculateNextDose`, `useSubscription`) + fluxos E2E com Playwright (login, cadastro de medicamento, marcação de dose).
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido parcialmente (sessão 11) — `calculateNextDose.test.ts` com 24 testes unitários cobrindo os 3 `frequency_types` (fixed_interval, specific_times, specific_days) incluindo `vi.useFakeTimers` para branch "start=hoje". E2E Playwright permanece como backlog.
 
 ---
 
@@ -277,13 +278,13 @@
 
 ### M1 · Sem APM/Sentry
 - **Fix:** Instrumentar `@sentry/react` + `@sentry/node` nas Edge Functions. Adicionar ao `<ErrorBoundary>`.
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 11) — `@sentry/react@^8.54.0` adicionado ao `package.json`; `src/lib/sentry.ts` com `initSentry()` (no-op se `VITE_SENTRY_DSN` não configurado) e `captureException()`; `main.tsx` inicializa Sentry antes do render; `ErrorBoundary.tsx` usa `captureException`. **Ação pendente do Fábio:** criar projeto em sentry.io e adicionar DSN em `.env` → `VITE_SENTRY_DSN=https://...`; depois rodar `npm install`.
 
 ---
 
 ### M2 · Sem CI/CD no repositório
 - **Fix:** GitHub Actions com: `lint` → `typecheck` → `vitest` → `supabase db test`.
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 11) — `.github/workflows/ci.yml` criado: Node 20 + npm ci + lint + `tsc --noEmit` + `npm test`. Disparado em push/PR para `main`. `supabase db test` fica para quando houver SQL tests.
 
 ---
 
@@ -296,7 +297,7 @@
 ### M4 · Edge Functions sem `import_map.json` — versões inconsistentes
 - **Risco:** `std@0.168.0` em 2 funções, `supabase-js@2` (sem versão) em 2, `supabase-js@2.49.1` em 4.
 - **Fix:** Criar `supabase/functions/import_map.json` centralizando todas as dependências Deno.
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 11) — `import_map.json` com `std@0.224.0`, `@supabase/supabase-js@2.49.4`, `zod@3.25.76`; `config.toml` atualizado com `[functions] import_map`; todos os 9 `index.ts` usando bare specifiers.
 
 ---
 
@@ -328,7 +329,7 @@
 
 ### M9 · Logs não estruturados nas Edge Functions
 - **Fix:** Substituir `console.log(string)` por `console.log(JSON.stringify({ level, event, userId, ... }))`.
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 11) — `_shared/logger.ts` criado com `log(level, event, data?)`; todos os 66 `console.*` bare de 9 funções + `_shared/rate-limit.ts` convertidos para `log("info"|"warn"|"error", "snake_case_event", {...})`. Zero `console.*` restantes fora do logger.
 
 ---
 
@@ -531,13 +532,14 @@ Sprint 4 — Qualidade e performance ✅ CONCLUÍDO
 ├── ✅ A6                                 → <ErrorBoundary> global em App.tsx
 ├── ✅ A13 + B5                           → Dynamic imports PDF + lazy routes em App.tsx
 ├── ✅ M5 + M6 + M7                       → Otimizações de queries e re-renders
-└── ⬜ A7                                 → Testes: hooks críticos (calculateNextDose) + E2E Playwright
+└── ✅ A7 (parcial)                       → 24 testes unitários calculateNextDose (E2E Playwright: backlog)
 
-Sprint 5 — Observabilidade e manutenibilidade
-├── M1                                    → Sentry / APM
-├── M2                                    → CI/CD (GitHub Actions: lint+typecheck+vitest)
-├── M4 + B1                               → import_map.json + Deno std atualizado
-└── M9                                    → Logs estruturados (JSON) nas Edge Functions
+Sprint 5 — Observabilidade e manutenibilidade ✅ CONCLUÍDO
+├── ✅ M4 + B1                            → import_map.json + Deno std@0.224 + supabase-js@2.49.4
+├── ✅ M9                                 → _shared/logger.ts + 66 console.* → log() JSON estruturado
+├── ✅ M2                                 → .github/workflows/ci.yml (lint + typecheck + vitest)
+├── ✅ A7 (parcial)                       → calculateNextDose.test.ts (24 testes, 3 frequency_types)
+└── ✅ M1                                 → @sentry/react + src/lib/sentry.ts (⚠️ DSN pendente do Fábio)
 ```
 
 ---
