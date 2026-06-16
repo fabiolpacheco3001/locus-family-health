@@ -57,7 +57,7 @@ const Medicamentos = () => {
       const map: Record<string, "taken" | "skipped"> = {};
       for (const d of (data ?? [])) {
         const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
-        map[key] = d.status;
+        map[key] = d.status as "taken" | "skipped";
       }
       return map;
     },
