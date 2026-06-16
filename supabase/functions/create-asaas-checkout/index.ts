@@ -199,9 +199,8 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error("create-asaas-checkout error:", error);
-    const message = error instanceof Error ? error.message : "Erro interno no servidor";
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte." }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
