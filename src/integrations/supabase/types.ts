@@ -134,6 +134,13 @@ export type Database = {
             referencedRelation: "family_groups"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_blood_pressure_history_family_member"
+            columns: ["familiar_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
         ]
       }
       changelogs: {
@@ -166,6 +173,33 @@ export type Database = {
           title?: string
           type?: string
           version?: string
+        }
+        Relationships: []
+      }
+      consent_log: {
+        Row: {
+          consent_type: string
+          granted_at: string
+          id: string
+          policy_version: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          consent_type: string
+          granted_at?: string
+          id?: string
+          policy_version?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          consent_type?: string
+          granted_at?: string
+          id?: string
+          policy_version?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -882,6 +916,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_menstrual_cycles_family_member"
+            columns: ["familiar_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menstrual_cycles_group_id_fkey"
             columns: ["group_id"]
