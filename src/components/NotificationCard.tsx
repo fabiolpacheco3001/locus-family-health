@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Pill, Stethoscope, FileText, ChevronDown, AlertTriangle, Droplets } from "lucide-react";
 import { Notification } from "@/hooks/useNotifications";
 import { format } from "date-fns";
@@ -106,4 +106,5 @@ const NotificationCard = ({ notification, onRead }: NotificationCardProps) => {
   );
 };
 
-export default NotificationCard;
+// M7: memo prevents re-renders when parent re-renders but notification/onRead haven't changed
+export default memo(NotificationCard);

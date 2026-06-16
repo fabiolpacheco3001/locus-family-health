@@ -24,25 +24,28 @@ export function useSubscription() {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // 1. Check own subscription
-      const { data: ownSub, error } = await supabase
-        .from("subscriptions")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // M5: Run Q1 (own subscription) and Q2 (family membership) in parallel —
+      // they're independent; saves one round-trip for non-active subscribers.
+      const [{ data: ownSub, error }, { data: membership }] = await Promise.all([
+        supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("family_group_members")
+          .select("group_id")
+          .eq("auth_user_id", user.id)
+          .maybeSingle(),
+      ]);
       if (error) throw error;
 
+      // 1. Active own subscription — fast path
       if (ownSub && ownSub.status === "active") {
         return ownSub as Subscription;
       }
 
       // 2. If no active own sub, check family owner's subscription (Tenant Billing)
-      const { data: membership } = await supabase
-        .from("family_group_members")
-        .select("group_id")
-        .eq("auth_user_id", user.id)
-        .maybeSingle();
-
       if (membership?.group_id) {
         const { data: group } = await supabase
           .from("family_groups")

@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.5 | **Atualizado em:** junho/2026 (sessão 6)  
+> **Versão:** 2.6 | **Atualizado em:** junho/2026 (sessão 8)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -17,6 +17,8 @@
 | Sessão 5 | Fix 4 Lovable warnings (erros Asaas, ownership clínico, ai_usage_logs, check_group_access) + UX admin + badge fix | Segurança ✅ CONCLUÍDO |
 | Sessão 6 | P0 cancel-asaas-subscription body bypass; P1 decrement_stock ownership + error sanitization (5 funções); migration 000017 ownership completo; lib/tz.ts; restructure deploy doc | Segurança ✅ CONCLUÍDO |
 | Sessão 7 | Migration 000018: blood_pressure_history + menstrual_cycles INSERT policies com familiar_id ownership (RAIO X 3.0 findings #1/#2) | Segurança ✅ CONCLUÍDO |
+| Sessão 8 | A6 ErrorBoundary global, A13 dynamic PDF imports, A17 patientAge sanitização, B3 tz.ts, B5 lazy routes (27 páginas) — Sprint 4 início | Sprint 4 🟡 Em progresso |
+| Sessão 9 | M5 Promise.all em useSubscription, M6 batch dedup+insert em Stock/Menstrual alerts, M7 React.memo em 4 componentes + useCallback BottomNav | Sprint 4 🟡 Em progresso |
 
 ---
 
@@ -167,10 +169,10 @@
 
 ---
 
-### A6 · Sem `<ErrorBoundary>` global → white screens silenciosos
-- **Fix:** Adicionar `<ErrorBoundary>` em `src/App.tsx` com fallback UI e log para Sentry.
-- **Arquivos:** `src/App.tsx`
-- **Status:** ⬜ Backlog
+### A6 · Sem `<ErrorBoundary>` global → white screens silenciosos ✅
+- **Fix:** `src/components/ErrorBoundary.tsx` criado (class component com `getDerivedStateFromError` + `componentDidCatch`, errorId para suporte, botões Reload/Home). Wrapping completo em `src/App.tsx`.
+- **Arquivos:** `src/components/ErrorBoundary.tsx` (novo), `src/App.tsx`
+- **Status:** ✅ Resolvido (sessão 8)
 
 ---
 
@@ -217,11 +219,10 @@
 
 ---
 
-### A13 · `pdfjs-dist` (~900KB) + `jspdf` (~250KB) importados estaticamente
-- **Risco:** Bundle inicial inclui ~1.1MB de libs de PDF que só são usadas ao clicar "Exportar".
-- **Fix:** Converter para `dynamic import()` dentro dos handlers de clique.
-- **Arquivos:** `src/pages/Vacinas.tsx`, `src/pages/FamiliarProfile.tsx`, `src/components/AdherenceHistoryDrawer.tsx`
-- **Status:** ⬜ Backlog
+### A13 · `pdfjs-dist` (~900KB) + `jspdf` (~250KB) importados estaticamente ✅
+- **Risco resolvido:** ~1.15MB removidos do bundle inicial.
+- **Fix:** `dynamic import()` aplicado em `Vacinas.tsx` (parseSusVaccinePdf), `Prontuario.tsx` (generateProntuarioPdf), `AdherenceHistoryDrawer.tsx` (generateAdherencePdf). Libs carregadas apenas quando o usuário clica em exportar.
+- **Status:** ✅ Resolvido (sessão 8)
 
 ---
 
@@ -247,10 +248,9 @@
 
 ---
 
-### A17 · `patientAge` injetado no system prompt da IA sem sanitização
-- **Fix:** Sanitizar/validar `patientAge` antes de interpolar no prompt (número inteiro positivo, máximo 150).
-- **Arquivos:** `supabase/functions/analyze-prescription/index.ts` (linhas 62–76)
-- **Status:** ⬜ Backlog
+### A17 · `patientAge` injetado no system prompt da IA sem sanitização ✅
+- **Fix:** Validação em `analyze-prescription/index.ts`: tipo `number`, inteiro, ≥ 0, ≤ 130. Qualquer outro valor → `null` (contexto pediátrico desabilitado). Fecha vetor de prompt injection via campo numérico.
+- **Status:** ✅ Resolvido (sessão 8)
 
 ---
 
@@ -288,24 +288,23 @@
 
 ---
 
-### M5 · `useSubscription` — 4 queries sequenciais (2 poderiam ser paralelas)
-- **Fix:** Paralelizar queries 1 e 2 com `Promise.all`.
-- **Arquivos:** `src/hooks/useSubscription.ts` (linhas 27–64)
-- **Status:** ⬜ Backlog
+### M5 · `useSubscription` — 4 queries sequenciais (2 poderiam ser paralelas) ✅
+- **Fix:** `Promise.all([ownSub, membership])` — Q1 e Q2 agora executam em paralelo. Reduz latência de subscrição em ~50% para usuários em trial ou billing familiar.
+- **Arquivos:** `src/hooks/useSubscription.ts`
+- **Status:** ✅ Resolvido (sessão 9)
 
 ---
 
-### M6 · `useStockAlerts` e `useMenstrualAlerts` — N×2 queries sequenciais
-- **Fix:** Substituir loops por single batch dedup query + single batch insert.
+### M6 · `useStockAlerts` e `useMenstrualAlerts` — N×2 queries sequenciais ✅
+- **Fix:** Loop N×(SELECT + INSERT) → 1 SELECT batch com `.in()` + 1 INSERT batch com array. Para 5 meds em estoque baixo: de 10 queries para 2.
 - **Arquivos:** `src/hooks/useStockAlerts.ts`, `src/hooks/useMenstrualAlerts.ts`
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 9)
 
 ---
 
-### M7 · Componentes sem `React.memo`
-- **Afeta:** `NotificationCard`, `BottomNav`, `MemberAvatar`, `ClinicalTimeline`
-- **Fix:** Adicionar `React.memo` + `useCallback` nas funções inline do `BottomNav`.
-- **Status:** ⬜ Backlog
+### M7 · Componentes sem `React.memo` ✅
+- **Fix:** `memo()` adicionado em `NotificationCard`, `MemberAvatar`, `ClinicalTimeline`, `BottomNav`. `useCallback` aplicado em `handlePrefetch`, `getFilteredMembers` e `handleClick` do BottomNav. Lógica duplicada de filtro no drawer unificada em `getFilteredMembers()`.
+- **Status:** ✅ Resolvido (sessão 9)
 
 ---
 
@@ -409,9 +408,9 @@
 
 ---
 
-### B3 · Helper de timezone espalhado
-- **Fix:** Criar `src/lib/tz.ts` com `formatTZ`, `parseTZ` e constante `TZ = 'America/Sao_Paulo'`.
-- **Status:** ⬜ Backlog
+### B3 · Helper de timezone espalhado ✅
+- **Fix:** `src/lib/tz.ts` criado com `TZ_SAO_PAULO`, `parseDate`, `toSaoPaulo`, `formatDate`, `formatDateTime`, `formatTime`, `formatDateTimeSeconds`, `formatISOSaoPaulo`, `todaySaoPaulo`, `nowSaoPaulo`. SSOT para todas as operações de data no frontend.
+- **Status:** ✅ Resolvido (sessão 8)
 
 ---
 
@@ -421,10 +420,9 @@
 
 ---
 
-### B5 · Login, Cadastro, ResetPassword sem `lazy()` — Suspense inútil
-- **Fix:** Converter imports estáticos para `const X = lazy(() => import('./pages/X'))`.
-- **Arquivos:** `src/App.tsx` (linhas 10–19)
-- **Status:** ⬜ Backlog
+### B5 · Login, Cadastro, ResetPassword sem `lazy()` — Suspense inútil ✅
+- **Fix:** Todos os 27 imports de páginas convertidos para `lazy()` em `src/App.tsx`. Funções de import extraídas para permitir prefetch via `prefetchByRoute` e `prefetchCriticalChunks`. `<Suspense>` adicionado nas 4 rotas que faltavam (Landing, Home, AdminLogin, NotFound).
+- **Status:** ✅ Resolvido (sessão 8)
 
 ---
 

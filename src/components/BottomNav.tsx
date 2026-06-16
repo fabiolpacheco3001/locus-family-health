@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Calendar, Activity, Users, Settings, ChevronRight } from "lucide-react";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -26,36 +26,34 @@ const BottomNav = () => {
 
   const isSaudeActive = location.pathname.startsWith("/familiar/");
 
-  // Intent-to-navigate prefetch: start loading chunk on touch/hover
-  const handlePrefetch = (path: string) => {
-    import("@/App").then(m => m.prefetchByRoute?.[path]?.());
-  };
+  // M7: useCallback — stabilize function references to avoid unnecessary child re-renders
 
-  const getFilteredMembers = () => {
+  // Intent-to-navigate prefetch: start loading chunk on touch/hover
+  const handlePrefetch = useCallback((path: string) => {
+    import("@/App").then(m => m.prefetchByRoute?.[path]?.());
+  }, []);
+
+  const getFilteredMembers = useCallback(() => {
     const allowedIds = role === "user" && linkedMemberId
       ? [linkedMemberId, ...managedProfiles]
       : null;
     return allowedIds
       ? members.filter(m => allowedIds.includes(m.id))
       : members;
-  };
+  }, [role, linkedMemberId, managedProfiles, members]);
 
-  const handleClick = (path: string) => {
+  const handleClick = useCallback((path: string) => {
     if (path === "__drawer_saude__") {
       const filtered = getFilteredMembers();
       if (filtered.length === 1) {
         navigate(`/familiar/${filtered[0].id}`, { state: { from: location.pathname } });
-      } else if (filtered.length > 1) {
-        setDrawerOpen(true);
-      }
-      // length === 0: open drawer to show empty state
-      else {
+      } else {
         setDrawerOpen(true);
       }
     } else {
       navigate(path);
     }
-  };
+  }, [getFilteredMembers, navigate, location.pathname]);
 
   return (
     <>
@@ -89,13 +87,7 @@ const BottomNav = () => {
           </DrawerHeader>
           <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-6 space-y-2">
             {(() => {
-              // For user role, filter to own profile + managed profiles
-              const allowedIds = role === "user" && linkedMemberId
-                ? [linkedMemberId, ...managedProfiles]
-                : null;
-              const filtered = allowedIds
-                ? members.filter(m => allowedIds.includes(m.id))
-                : members;
+              const filtered = getFilteredMembers();
               return sortFamilyMembers(filtered).map((member) => (
                 <button
                   key={member.id}
@@ -139,4 +131,5 @@ const BottomNav = () => {
   );
 };
 
-export default BottomNav;
+// M7: memo prevents re-renders when AppLayout re-renders for unrelated reasons
+export default memo(BottomNav);

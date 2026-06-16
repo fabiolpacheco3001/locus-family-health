@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { PawPrint } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -46,4 +47,5 @@ const MemberAvatar = ({ avatarUrl, name, size = "md", className = "", memberType
   );
 };
 
-export default MemberAvatar;
+// M7: pure rendering component — memo avoids re-renders in lists when props are stable
+export default memo(MemberAvatar);

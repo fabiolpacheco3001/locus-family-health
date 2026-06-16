@@ -4,7 +4,7 @@ import { useAuth } from "./useAuth";
 import { useFamilyGroup } from "./useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { addDays, differenceInDays, parseISO } from "date-fns";
+import { addDays, differenceInDays } from "date-fns";
 import type { CycleRecord } from "@/components/MenstrualCycleDrawer";
 
 const menstrualAlertSessionRuns = new Set<string>();
@@ -49,15 +49,17 @@ export function useMenstrualAlerts() {
         }
       }
 
-      let hasInserted = false;
       const today = new Date();
       today.setHours(12, 0, 0, 0);
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
+      // M6: First pass — compute eligible alerts synchronously (no await needed)
+      interface PendingAlert { familiarId: string; daysLeft: number }
+      const pendingAlerts: PendingAlert[] = [];
+
       for (const [familiarId, cycle] of latestByFamiliar) {
-        if (cancelled) return;
         if (cycle.alert_advance_days === 0) continue;
 
         const startDate = toSPTime(parseDateInSP(cycle.start_date) ?? new Date());
@@ -66,44 +68,49 @@ export function useMenstrualAlerts() {
         const daysUntilAlert = differenceInDays(alertDate, today);
 
         if (daysUntilAlert !== 0) continue;
-
-        const daysLeft = cycle.alert_advance_days;
-
-        // Per-familiar dedup: check if menstrual notification already exists TODAY
-        let dedupQuery = supabase
-          .from("notifications")
-          .select("id", { count: "exact", head: true })
-          .eq("type", "menstrual")
-          .eq("family_member_id", familiarId)
-          .gte("created_at", todayStart.toISOString());
-
-        if (groupId) {
-          dedupQuery = dedupQuery.eq("group_id", groupId);
-        } else {
-          dedupQuery = dedupQuery.eq("user_id", user.id);
-        }
-
-        const { count } = await dedupQuery;
-
-        if (cancelled) return;
-        if ((count ?? 0) > 0) continue;
-
-        const { error: insertError } = await supabase.from("notifications").insert({
-          user_id: user.id,
-          family_member_id: familiarId,
-          title: "Ciclo Menstrual se Aproxima",
-          message: `Faltam ${daysLeft} dia${daysLeft > 1 ? "s" : ""} para o seu próximo ciclo menstrual. Prepare-se e cuide-se!`,
-          type: "menstrual",
-          scheduled_for: new Date().toISOString(),
-          ...(groupId ? { group_id: groupId } : {}),
-        } as never);
-
-        if (!insertError) {
-          hasInserted = true;
-        }
+        pendingAlerts.push({ familiarId, daysLeft: cycle.alert_advance_days });
       }
 
-      if (!cancelled && hasInserted) {
+      if (pendingAlerts.length === 0 || cancelled) return;
+
+      // M6: Batch dedup — one SELECT for ALL eligible familiar IDs instead of N individual queries
+      const eligibleFamiliarIds = pendingAlerts.map((a) => a.familiarId);
+      let dedupQuery = supabase
+        .from("notifications")
+        .select("family_member_id")
+        .eq("type", "menstrual")
+        .in("family_member_id", eligibleFamiliarIds)
+        .gte("created_at", todayStart.toISOString());
+
+      if (groupId) {
+        dedupQuery = dedupQuery.eq("group_id", groupId);
+      } else {
+        dedupQuery = dedupQuery.eq("user_id", user.id);
+      }
+
+      const { data: existingNotifs } = await dedupQuery;
+      if (cancelled) return;
+
+      const alreadyNotifiedIds = new Set(existingNotifs?.map((n) => n.family_member_id) ?? []);
+      const alertsToInsert = pendingAlerts.filter((a) => !alreadyNotifiedIds.has(a.familiarId));
+      if (alertsToInsert.length === 0) return;
+
+      // M6: Batch INSERT — one insert for ALL new notifications instead of N individual inserts
+      const notificationsToInsert = alertsToInsert.map(({ familiarId, daysLeft }) => ({
+        user_id: user.id,
+        family_member_id: familiarId,
+        title: "Ciclo Menstrual se Aproxima",
+        message: `Faltam ${daysLeft} dia${daysLeft > 1 ? "s" : ""} para o seu próximo ciclo menstrual. Prepare-se e cuide-se!`,
+        type: "menstrual",
+        scheduled_for: new Date().toISOString(),
+        ...(groupId ? { group_id: groupId } : {}),
+      }));
+
+      const { error: insertError } = await supabase
+        .from("notifications")
+        .insert(notificationsToInsert as never[]);
+
+      if (!cancelled && !insertError) {
         queryClient.invalidateQueries({ queryKey: ["notifications"] });
         queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
       }

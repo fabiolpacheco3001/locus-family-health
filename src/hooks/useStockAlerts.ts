@@ -40,51 +40,48 @@ export function useStockAlerts(medications: Medication[]) {
 
     const timer = setTimeout(async () => {
       if (cancelled) return;
-      let hasInserted = false;
 
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      for (const med of lowStockMeds) {
-        if (cancelled) return;
+      // M6: Batch dedup — one SELECT for ALL low-stock meds instead of N individual queries
+      let dedupQuery = supabase
+        .from("notifications")
+        .select("medication_id")
+        .eq("type", "stock")
+        .in("medication_id", lowStockMeds.map((m) => m.id))
+        .gte("created_at", todayStart.toISOString());
 
-        // Per-medication dedup: check if notification already exists TODAY
-        let dedupQuery = supabase
-          .from("notifications")
-          .select("id", { count: "exact", head: true })
-          .eq("type", "stock")
-          .eq("medication_id", med.id)
-          .gte("created_at", todayStart.toISOString());
-
-        if (groupId) {
-          dedupQuery = dedupQuery.eq("group_id", groupId);
-        } else {
-          dedupQuery = dedupQuery.eq("user_id", user.id);
-        }
-
-        const { count } = await dedupQuery;
-
-        if (cancelled) return;
-        if ((count ?? 0) > 0) continue;
-
-        const memberName = med.family_members?.name ?? "o usuário";
-        const { error } = await supabase.from("notifications").insert({
-          user_id: user.id,
-          family_member_id: med.family_member_id,
-          medication_id: med.id,
-          title: `Estoque Baixo: ${med.name}`,
-          message: `Restam apenas ${med.estoque_total} comprimidos para ${memberName}. Lembre-se de comprar uma nova caixa.`,
-          type: "stock",
-          scheduled_for: new Date().toISOString(),
-          ...(groupId ? { group_id: groupId } : {}),
-        } as never);
-
-        if (!error) {
-          hasInserted = true;
-        }
+      if (groupId) {
+        dedupQuery = dedupQuery.eq("group_id", groupId);
+      } else {
+        dedupQuery = dedupQuery.eq("user_id", user.id);
       }
 
-      if (!cancelled && hasInserted) {
+      const { data: existingNotifs } = await dedupQuery;
+      if (cancelled) return;
+
+      const alreadyNotifiedIds = new Set(existingNotifs?.map((n) => n.medication_id) ?? []);
+      const medsToNotify = lowStockMeds.filter((m) => !alreadyNotifiedIds.has(m.id));
+      if (medsToNotify.length === 0) return;
+
+      // M6: Batch INSERT — one insert for ALL new notifications instead of N individual inserts
+      const notificationsToInsert = medsToNotify.map((med) => ({
+        user_id: user.id,
+        family_member_id: med.family_member_id,
+        medication_id: med.id,
+        title: `Estoque Baixo: ${med.name}`,
+        message: `Restam apenas ${med.estoque_total} comprimidos para ${med.family_members?.name ?? "o usuário"}. Lembre-se de comprar uma nova caixa.`,
+        type: "stock",
+        scheduled_for: new Date().toISOString(),
+        ...(groupId ? { group_id: groupId } : {}),
+      }));
+
+      const { error } = await supabase
+        .from("notifications")
+        .insert(notificationsToInsert as never[]);
+
+      if (!cancelled && !error) {
         queryClient.invalidateQueries({ queryKey: ["notifications"] });
         queryClient.invalidateQueries({ queryKey: ["unread-notifications"] });
       }

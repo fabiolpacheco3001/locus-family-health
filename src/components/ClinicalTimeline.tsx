@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Stethoscope, Pill, FileText, ExternalLink, X } from "lucide-react";
 import { getDisplaySignedUrl } from "@/lib/storage";
 import { parseISO } from "date-fns";
@@ -145,4 +145,5 @@ const ClinicalTimeline = ({ events }: Props) => {
   );
 };
 
-export default ClinicalTimeline;
+// M7: memo prevents re-renders when Prontuario re-renders but events array reference is stable
+export default memo(ClinicalTimeline);
