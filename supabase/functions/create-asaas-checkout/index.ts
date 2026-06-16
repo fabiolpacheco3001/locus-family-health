@@ -12,7 +12,8 @@ const BodySchema = z.object({
   planType: z.enum(["monthly", "annual"]),
 });
 
-const ASAAS_BASE = "https://sandbox.asaas.com/api/v3";
+const ASAAS_API_URL = Deno.env.get("ASAAS_API_URL");
+if (!ASAAS_API_URL) throw new Error("ASAAS_API_URL secret not configured");
 
 const PLAN_CONFIG = {
   monthly: {
@@ -33,7 +34,7 @@ async function asaasFetch(path: string, options: RequestInit) {
   const apiKey = Deno.env.get("ASAAS_API_KEY");
   if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
 
-  const res = await fetch(`${ASAAS_BASE}${path}`, {
+  const res = await fetch(`${ASAAS_API_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -75,7 +76,13 @@ async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string
   if (payments.data && payments.data.length > 0) {
     const payment = payments.data[0];
     if (payment.invoiceUrl) return payment.invoiceUrl;
-    return `https://sandbox.asaas.com/i/${payment.id}`;
+    // Fallback: deriva o base web da API URL removendo o path da API.
+    // Em produção, payment.invoiceUrl é sempre retornado pelo Asaas e esta linha nunca executa.
+    const webBase = ASAAS_API_URL
+      .replace(/\/api\/v3\/?$/, "")
+      .replace(/\/v3\/?$/, "")
+      .replace("api-sandbox.", "sandbox.");
+    return `${webBase}/i/${payment.id}`;
   }
 
   throw new Error("Nenhuma cobrança gerada para a assinatura. Tente novamente.");

@@ -50,6 +50,14 @@ Deno.serve(async (req) => {
       });
     }
 
+    const asaasApiUrl = Deno.env.get("ASAAS_API_URL");
+    if (!asaasApiUrl) {
+      return new Response(JSON.stringify({ error: "URL da API de pagamento não configurada." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const userId = userData.user.id;
     const { data: sub, error: subErr } = await serviceClient
       .from("subscriptions")
@@ -69,7 +77,7 @@ Deno.serve(async (req) => {
     // Fallback: list active subscriptions from Asaas by customer
     if (!targetSubscriptionId && sub.asaas_customer_id) {
       const listRes = await fetch(
-        `https://api-sandbox.asaas.com/v3/subscriptions?customer=${sub.asaas_customer_id}`,
+        `${asaasApiUrl}/subscriptions?customer=${sub.asaas_customer_id}`,
         {
           method: "GET",
           headers: {
@@ -98,7 +106,7 @@ Deno.serve(async (req) => {
 
     // DELETE the subscription on Asaas
     const cancelRes = await fetch(
-      `https://api-sandbox.asaas.com/v3/subscriptions/${targetSubscriptionId}`,
+      `${asaasApiUrl}/subscriptions/${targetSubscriptionId}`,
       {
         method: "DELETE",
         headers: {

@@ -13,8 +13,13 @@ const corsHeaders = {
 async function fetchAsaasSubscription(subscriptionId: string): Promise<{ nextDueDate: string | null; cycle: string | null } | null> {
   const asaasKey = Deno.env.get("ASAAS_API_KEY") || "";
   try {
+    const asaasApiUrl = Deno.env.get("ASAAS_API_URL");
+    if (!asaasApiUrl) {
+      console.error("ASAAS_API_URL not configured");
+      return null;
+    }
     const resp = await fetch(
-      `https://sandbox.asaas.com/api/v3/subscriptions/${subscriptionId}`,
+      `${asaasApiUrl}/subscriptions/${subscriptionId}`,
       { headers: { access_token: asaasKey } }
     );
     if (!resp.ok) {
