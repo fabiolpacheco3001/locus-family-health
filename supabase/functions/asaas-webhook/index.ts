@@ -8,11 +8,13 @@ function isValidUUID(value: string | null | undefined): value is string {
   return typeof value === "string" && UUID_RE.test(value);
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+// A1: asaas-webhook é chamado server-to-server (Asaas → Supabase).
+// Não há browser envolvido, portanto CORS headers são desnecessários.
+// Respostas usam apenas Content-Type: application/json.
+const jsonHeaders = { "Content-Type": "application/json" };
+
+// C10: limiar de valor para classificar plano anual vs mensal via env var
+const PLAN_ANNUAL_THRESHOLD = parseFloat(Deno.env.get("PLAN_ANNUAL_THRESHOLD") ?? "150");
 
 /**
  * Fetch the real subscription data from Asaas API.
@@ -47,10 +49,7 @@ async function fetchAsaasSubscription(subscriptionId: string): Promise<{ nextDue
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+  // Webhook server-to-server — sem preflight CORS necessário
   try {
     // Validate Asaas webhook token
     const incomingToken = req.headers.get("asaas-access-token");
@@ -60,7 +59,7 @@ Deno.serve(async (req) => {
       console.warn("Webhook rejected: invalid or missing asaas-access-token header");
       return new Response(
         JSON.stringify({ error: "Forbidden" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 403, headers: jsonHeaders }
       );
     }
 
@@ -72,7 +71,7 @@ Deno.serve(async (req) => {
       console.warn("Webhook received without event:", JSON.stringify(body));
       return new Response(
         JSON.stringify({ received: true }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: jsonHeaders }
       );
     }
 
@@ -93,7 +92,7 @@ Deno.serve(async (req) => {
         console.warn("SUBSCRIPTION_UPDATED without subscription object");
         return new Response(
           JSON.stringify({ received: true }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: jsonHeaders }
         );
       }
 
@@ -102,7 +101,7 @@ Deno.serve(async (req) => {
       if (!asaasData) {
         return new Response(
           JSON.stringify({ received: true, warning: "could not fetch subscription" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: jsonHeaders }
         );
       }
 
@@ -121,7 +120,7 @@ Deno.serve(async (req) => {
           console.warn("SUBSCRIPTION_UPDATED: invalid UUID in externalReference, skipping upsert:", extRef);
           return new Response(
             JSON.stringify({ received: true, warning: "invalid externalReference format" }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 200, headers: jsonHeaders }
           );
         }
         updateData.user_id = extRef;
@@ -134,7 +133,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ received: true, event }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: jsonHeaders }
       );
     }
 
@@ -143,7 +142,7 @@ Deno.serve(async (req) => {
       console.warn("Unhandled event without payment:", event);
       return new Response(
         JSON.stringify({ received: true, event }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: jsonHeaders }
       );
     }
 
@@ -160,7 +159,7 @@ Deno.serve(async (req) => {
       console.warn("No valid externalReference or customer ID in payment payload");
       return new Response(
         JSON.stringify({ received: true, warning: "no identifier" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: jsonHeaders }
       );
     }
 
@@ -193,7 +192,7 @@ Deno.serve(async (req) => {
         // Fallback plan_type from value if not set by cycle
         if (!updateData.plan_type && payment.value) {
           const value = Number(payment.value);
-          updateData.plan_type = value >= 150 ? "annual" : "monthly";
+          updateData.plan_type = value >= PLAN_ANNUAL_THRESHOLD ? "annual" : "monthly";
         }
         break;
       }
@@ -215,7 +214,7 @@ Deno.serve(async (req) => {
         console.log(`Unhandled Asaas event: ${event}`);
         return new Response(
           JSON.stringify({ received: true, event }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: jsonHeaders }
         );
     }
 
@@ -243,7 +242,7 @@ Deno.serve(async (req) => {
           console.error("Failed to update subscription (cancel):", JSON.stringify(error));
           return new Response(
             JSON.stringify({ error: "Failed to update subscription", details: error }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 500, headers: jsonHeaders }
           );
         }
         console.log("Subscription canceled (update only, dates preserved):", JSON.stringify(data));
@@ -258,7 +257,7 @@ Deno.serve(async (req) => {
           console.error("Failed to upsert subscription:", JSON.stringify(error));
           return new Response(
             JSON.stringify({ error: "Failed to upsert subscription", details: error }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 500, headers: jsonHeaders }
           );
         }
         console.log("Subscription upserted successfully:", JSON.stringify(data));
@@ -274,7 +273,7 @@ Deno.serve(async (req) => {
         console.error("Failed to update subscription by customer_id:", JSON.stringify(error));
         return new Response(
           JSON.stringify({ error: "Failed to update subscription", details: error }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 500, headers: jsonHeaders }
         );
       }
       console.log("Subscription updated by customer_id:", JSON.stringify(data));
@@ -282,13 +281,13 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ received: true, status: newStatus }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: jsonHeaders }
     );
   } catch (error) {
     console.error("asaas-webhook error:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: jsonHeaders }
     );
   }
 });

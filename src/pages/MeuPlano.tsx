@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { PLAN_MONTHLY_DISPLAY_PERIOD, PLAN_ANNUAL_DISPLAY_PERIOD } from "@/lib/planConfig";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, ArrowLeft, Clock, Crown, Loader2 } from "lucide-react";
@@ -179,7 +180,7 @@ const MeuPlano = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Valor</span>
                   <span className="text-sm font-semibold text-foreground">
-                    {subscription.plan_type === "annual" ? "R$ 191,00/ano" : "R$ 19,90/mês"}
+                    {subscription.plan_type === "annual" ? PLAN_ANNUAL_DISPLAY_PERIOD : PLAN_MONTHLY_DISPLAY_PERIOD}
                   </span>
                 </div>
 

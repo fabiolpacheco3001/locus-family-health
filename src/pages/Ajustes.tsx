@@ -18,6 +18,7 @@ import MemberAvatar from "@/components/MemberAvatar";
 import PaywallModal from "@/components/PaywallModal";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
+import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
 import { ptBR } from "date-fns/locale";
 
 const menuItems = [
@@ -321,7 +322,7 @@ const Ajustes = () => {
                 {isActive && (
                   <div className="flex justify-center items-baseline gap-1 mt-4">
                     <span className="text-2xl font-bold text-foreground">
-                      {subscription.plan_type === "annual" ? "R$ 191,00" : "R$ 19,90"}
+                      {subscription.plan_type === "annual" ? PLAN_ANNUAL_DISPLAY : PLAN_MONTHLY_DISPLAY}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       /{subscription.plan_type === "annual" ? "ano" : "mês"}

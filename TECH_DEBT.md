@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.2 | **Atualizado em:** junho/2026 (sessão 3)  
+> **Versão:** 2.3 | **Atualizado em:** junho/2026 (sessão 4)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -13,6 +13,7 @@
 | Sessão 1 | C1, C2+C9, C4, C5, C6, C11, A10, A11, M15, M16, B7 (11 itens) | Sprint 1 ✅ CONCLUÍDO |
 | Sessão 2 | C8, C7+A14 — LGPD consentimento + deleção de conta | Sprint 2 🟡 Em progresso |
 | Sessão 3 | C3, A2, M14, A15 — Biometria, Senha, Revogação, Portabilidade | Sprint 2 ✅ CONCLUÍDO |
+| Sessão 4 | A1, A4, C10 — CORS restrito, Rate limiting IA, Preços centralizados | Sprint 3 ✅ CONCLUÍDO |
 
 ---
 
@@ -101,14 +102,15 @@
 
 ---
 
-### C10 · Preços dos planos em 5 locais sem fonte única de verdade
-- **Risco:** R$19,90 / R$191,00 duplicados em código frontend e backend. O threshold `>= 150` no webhook é a lógica de classificação de plano — se o preço mudar, a classificação quebra silenciosamente.
-- **Fix:** Criar tabela `plan_configs` ou env vars `PLAN_MONTHLY_PRICE` / `PLAN_ANNUAL_PRICE`. Centralizar threshold no webhook.
-- **Arquivos:**
-  - `supabase/functions/create-asaas-checkout/index.ts` (linhas 21, 27)
-  - `supabase/functions/asaas-webhook/index.ts` (linha 169)
-  - `src/pages/MeuPlano.tsx`, `src/pages/Landing.tsx`, `src/components/PaywallModal.tsx`
-- **Status:** 🔴 Pendente
+### C10 · Preços dos planos em 5 locais sem fonte única de verdade ✅
+- **Risco resolvido:** R$19,90 / R$191,00 duplicados em código frontend e backend. Threshold `>= 150` no webhook ia quebrar silenciosamente se o preço mudasse.
+- **Resolução:**
+  - **Frontend:** `src/lib/planConfig.ts` criado com todas as constantes (`PLAN_MONTHLY_VALUE`, `PLAN_ANNUAL_VALUE`, `PLAN_MONTHLY_DISPLAY`, `PLAN_ANNUAL_DISPLAY`, `PLAN_MONTHLY_DISPLAY_PERIOD`, `PLAN_ANNUAL_DISPLAY_PERIOD`, `PLAN_ANNUAL_DISCOUNT_PCT`). Importado em `PaywallModal.tsx`, `MeuPlano.tsx`, `Ajustes.tsx` e `Landing.tsx`.
+  - **Backend:** `create-asaas-checkout` lê `PLAN_MONTHLY_PRICE` e `PLAN_ANNUAL_PRICE` de env vars Supabase (fallback hardcoded como segurança). `asaas-webhook` lê `PLAN_ANNUAL_THRESHOLD` (fallback 150).
+  - Para mudar preço: atualizar `planConfig.ts` (frontend) + 3 secrets Supabase (backend).
+- **Arquivos:** `src/lib/planConfig.ts` (novo), `src/components/PaywallModal.tsx`, `src/pages/MeuPlano.tsx`, `src/pages/Ajustes.tsx`, `src/pages/Landing.tsx`, `supabase/functions/create-asaas-checkout/index.ts`, `supabase/functions/asaas-webhook/index.ts`
+- **Secrets necessários:** `PLAN_MONTHLY_PRICE=19.90`, `PLAN_ANNUAL_PRICE=191.00`, `PLAN_ANNUAL_THRESHOLD=150`
+- **Status:** ✅ Resolvido (sessão 4)
 
 ---
 
@@ -121,11 +123,12 @@
 
 ## 🔴 ALTO — Risco operacional ou segurança significativa
 
-### A1 · CORS wildcard (`*`) em todas as Edge Functions
-- **Risco:** Qualquer origem pode fazer chamadas autenticadas às Edge Functions.
-- **Fix:** Substituir `"*"` por `Deno.env.get("APP_ORIGIN") ?? "https://seu-dominio.com"` + adicionar `Vary: Origin`. Remover CORS de `asaas-webhook` (server-to-server).
-- **Arquivos:** Todas as Edge Functions (7 funções com CORS)
-- **Status:** ⬜ Backlog
+### A1 · CORS wildcard (`*`) em todas as Edge Functions ✅
+- **Risco resolvido:** Qualquer origem podia fazer chamadas autenticadas às Edge Functions.
+- **Resolução:** Criado `supabase/functions/_shared/cors.ts` — SSOT do header CORS. `ALLOWED_ORIGIN` lido de `APP_ORIGIN` env var; `Vary: Origin` adicionado automaticamente quando origin não é `*`; `asaas-webhook` teve CORS removido completamente (server-to-server, sem browser). 8 Edge Functions atualizadas para importar `corsHeaders` do módulo compartilhado. Fallback `"*"` mantido para compatibilidade com previews Lovable quando `APP_ORIGIN` não está configurado.
+- **Arquivos:** `supabase/functions/_shared/cors.ts` (novo), 8 Edge Functions atualizadas
+- **Secret necessário:** `APP_ORIGIN=https://seu-dominio.com` no Supabase Dashboard
+- **Status:** ✅ Resolvido (sessão 4)
 
 ---
 
@@ -145,11 +148,12 @@
 
 ---
 
-### A4 · Rate limiting zero em `analyze-prescription` e `analyze-exam`
-- **Risco:** Usuário malicioso pode gerar custos ilimitados de IA. `useAiStatus` fail-open retorna `true` em caso de erro de query.
-- **Fix:** Verificar `ai_usage_logs` antes de cada chamada; limitar a N calls/hora por usuário. Corrigir `useAiStatus` para fail-closed.
-- **Arquivos:** `supabase/functions/analyze-prescription/index.ts`, `supabase/functions/analyze-exam/index.ts`, `src/hooks/useAiStatus.ts`
-- **Status:** ⬜ Backlog
+### A4 · Rate limiting zero em `analyze-prescription` e `analyze-exam` ✅
+- **Risco resolvido:** Usuário malicioso podia gerar custos ilimitados de IA. `useAiStatus` fail-open retornava `true` em caso de erro de query.
+- **Resolução:** Criado `supabase/functions/_shared/rate-limit.ts` com `checkAiRateLimit()` e `logAiUsage()`. Padrão fail-closed: se a query de contagem falhar, bloqueia a chamada (ao invés de deixar passar). Limite configurável via secret `AI_CALLS_PER_HOUR` (default: 10/hora por usuário por feature). `analyze-prescription` e `analyze-exam` verificam o limite antes de chamar a IA e registram o uso após resposta bem-sucedida. `useAiStatus.ts` corrigido: `return true` → `return false` em caso de erro.
+- **Arquivos:** `supabase/functions/_shared/rate-limit.ts` (novo), `supabase/functions/analyze-prescription/index.ts`, `supabase/functions/analyze-exam/index.ts`, `src/hooks/useAiStatus.ts`
+- **Secret necessário:** `AI_CALLS_PER_HOUR=10` (opcional — default já configurado)
+- **Status:** ✅ Resolvido (sessão 4)
 
 ---
 
@@ -504,10 +508,10 @@ Sprint 2 — Compliance LGPD (bloqueador legal para go-live) ✅ CONCLUÍDO
 ├── ✅ M14                                 → Revogação de consentimento (Art. 18-IX) ⚠️ migration pendente
 └── ✅ C3 + A2                             → Biometria falsa removida + Senha atual validada
 
-Sprint 3 — Go-live readiness ← PRÓXIMO
-├── A1                                    → CORS: restringir ao domínio da app
-├── A4                                    → Rate limiting nas funções de IA (fail-closed)
-└── C10                                   → Preços: tabela plan_configs ou env vars
+Sprint 3 — Go-live readiness ✅ CONCLUÍDO
+├── ✅ A1                                 → CORS: `_shared/cors.ts` + `APP_ORIGIN` env var
+├── ✅ A4                                 → Rate limiting IA: `_shared/rate-limit.ts` + fail-closed
+└── ✅ C10                                → Preços: `planConfig.ts` + secrets `PLAN_MONTHLY_PRICE/ANNUAL_PRICE/ANNUAL_THRESHOLD`
 
 Sprint 4 — Qualidade e performance
 ├── A5 (Fase 2 TypeScript)                → Regenerar types.ts via supabase gen, noImplicitAny

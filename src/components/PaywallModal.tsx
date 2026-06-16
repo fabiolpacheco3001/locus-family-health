@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
 import { Rocket, Loader2, LogOut } from "lucide-react";
 import {
   Dialog,
@@ -69,7 +70,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
             ) : (
               <>
                 <span className="text-xs font-medium opacity-80">Mensal</span>
-                <span className="text-base font-bold">R$ 19,90</span>
+                <span className="text-base font-bold">{PLAN_MONTHLY_DISPLAY}</span>
               </>
             )}
           </Button>
@@ -84,7 +85,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
             ) : (
               <>
                 <span className="text-xs font-medium opacity-80">Anual</span>
-                <span className="text-base font-bold">R$ 191,00</span>
+                <span className="text-base font-bold">{PLAN_ANNUAL_DISPLAY}</span>
               </>
             )}
           </Button>

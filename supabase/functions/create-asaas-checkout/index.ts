@@ -1,12 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { z } from "https://esm.sh/zod@3.25.76";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// A1: CORS restrito ao APP_ORIGIN
+import { corsHeaders } from "../_shared/cors.ts";
 
 const BodySchema = z.object({
   planType: z.enum(["monthly", "annual"]),
@@ -15,17 +10,21 @@ const BodySchema = z.object({
 const ASAAS_API_URL = Deno.env.get("ASAAS_API_URL");
 if (!ASAAS_API_URL) throw new Error("ASAAS_API_URL secret not configured");
 
+// C10: preços lidos de env vars (secrets Supabase) — nunca hardcoded
+const PLAN_MONTHLY_PRICE = parseFloat(Deno.env.get("PLAN_MONTHLY_PRICE") ?? "19.90");
+const PLAN_ANNUAL_PRICE  = parseFloat(Deno.env.get("PLAN_ANNUAL_PRICE")  ?? "191.00");
+
 const PLAN_CONFIG = {
   monthly: {
     billingType: "CREDIT_CARD",
     cycle: "MONTHLY",
-    value: 19.9,
+    value: PLAN_MONTHLY_PRICE,
     description: "Locus Vita — Plano Mensal",
   },
   annual: {
     billingType: "CREDIT_CARD",
     cycle: "YEARLY",
-    value: 191.0,
+    value: PLAN_ANNUAL_PRICE,
     description: "Locus Vita — Plano Anual (20% OFF)",
   },
 };

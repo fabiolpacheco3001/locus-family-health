@@ -15,8 +15,10 @@ export function useAiStatus() {
         .maybeSingle();
 
       if (error) {
-        console.error("Error fetching AI status:", error);
-        return true; // fail-open: don't block users on error
+        // A4: fail-closed — se não conseguir verificar o status, bloqueia a IA
+        // Evita custos ilimitados caso a tabela system_settings fique inacessível
+        console.error("Error fetching AI status (fail-closed):", error);
+        return false;
       }
 
       return (data?.value as { is_active?: boolean } | null)?.is_active ?? true;

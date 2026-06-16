@@ -15,12 +15,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
  * Member path: deletes only the member's own data; removes from family group.
  */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// A1: CORS restrito ao APP_ORIGIN
+import { corsHeaders } from "../_shared/cors.ts";
 
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {

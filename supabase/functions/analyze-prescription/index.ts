@@ -1,11 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+// A1: CORS restrito ao APP_ORIGIN (env var no Supabase Dashboard)
+import { corsHeaders } from "../_shared/cors.ts";
+// A4: Rate limiting de chamadas de IA
+import { checkAiRateLimit, logAiUsage } from "../_shared/rate-limit.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -32,6 +30,17 @@ serve(async (req) => {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ── A4: RATE LIMITING — máx AI_CALLS_PER_HOUR chamadas/hora por usuário ──
+    const { allowed, count, limit } = await checkAiRateLimit(supabase, user.id, "analyze-prescription");
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({
+          error: `Limite de análises de IA atingido (${count}/${limit} por hora). Tente novamente mais tarde.`,
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const { fileUrl, patientAge } = await req.json();
@@ -265,6 +274,9 @@ Se não conseguir identificar algum campo com segurança, use null.`;
     }
 
     const data = await response.json();
+
+    // A4: Registrar uso de IA (non-blocking)
+    await logAiUsage(supabase, user.id, "analyze-prescription");
 
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {

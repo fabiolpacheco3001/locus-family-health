@@ -7,6 +7,7 @@ import { createSubscription } from "@/services/asaasService";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY, PLAN_ANNUAL_DISCOUNT_PCT } from "@/lib/planConfig";
 import {
   ShieldCheck,
   Brain,
@@ -467,7 +468,7 @@ const Landing = () => {
                   Mensal
                 </Badge>
                 <p className="text-5xl font-extrabold" style={{ color: DARK }}>
-                  R$ 19,90
+                  {PLAN_MONTHLY_DISPLAY}
                   <span className="text-base font-normal">/mês</span>
                 </p>
                 <p className="mt-3 text-sm">Cancele quando quiser.</p>
@@ -502,11 +503,11 @@ const Landing = () => {
                   Anual
                 </Badge>
                 <p className="text-5xl font-extrabold" style={{ color: DARK }}>
-                  R$ 191,00
+                  {PLAN_ANNUAL_DISPLAY}
                   <span className="text-base font-normal">/ano</span>
                 </p>
                 <p className="mt-2 text-sm font-semibold" style={{ color: PEACH }}>
-                  Apenas R$ 15,90/mês — 20% OFF
+                  Apenas R$ 15,90/mês — {PLAN_ANNUAL_DISCOUNT_PCT}% OFF
                 </p>
                 <div className="mt-auto pt-8 w-full">
                   <Button
