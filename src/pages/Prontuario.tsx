@@ -14,7 +14,7 @@ import type { FamilyMember } from "@/hooks/useFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { generateProntuarioPdf } from "@/lib/generateProntuarioPdf";
+// generateProntuarioPdf loaded on-demand (A13: ~250KB jspdf bundle excluded from initial load)
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,6 +131,7 @@ const Prontuario = () => {
     setShowPrivacyAlert(false);
     setExporting(true);
     try {
+      const { generateProntuarioPdf } = await import("@/lib/generateProntuarioPdf");
       const blob = generateProntuarioPdf({
         member: {
           name: member!.name,

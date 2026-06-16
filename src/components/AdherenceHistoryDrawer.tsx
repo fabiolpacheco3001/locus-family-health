@@ -9,7 +9,7 @@ import { format, subDays, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toSPTime } from "@/lib/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { generateAdherencePdf } from "@/lib/generateAdherencePdf";
+// generateAdherencePdf loaded on-demand (A13: ~250KB jspdf bundle excluded from initial load)
 import { toast } from "sonner";
 
 interface Props {
@@ -143,6 +143,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     }
     setGenerating(true);
     try {
+      const { generateAdherencePdf } = await import("@/lib/generateAdherencePdf");
       const blob = generateAdherencePdf({
         memberName,
         doses: allDoses,

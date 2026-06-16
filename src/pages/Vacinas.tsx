@@ -28,7 +28,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import VaccineImportReviewDrawer, { type ImportedVaccine } from "@/components/VaccineImportReviewDrawer";
-import { parseSusVaccinePdf } from "@/lib/parseSusVaccinePdf";
+// parseSusVaccinePdf loaded on-demand (A13: ~900KB pdfjs-dist excluded from initial load)
 import { useIbgeLocations } from "@/hooks/useIbgeLocations";
 
 type Vaccine = {
@@ -382,7 +382,8 @@ const Vacinas = () => {
         return;
       }
 
-      // 2. Parse PDF locally with pdfjs-dist
+      // 2. Parse PDF locally with pdfjs-dist (loaded on-demand — A13)
+      const { parseSusVaccinePdf } = await import("@/lib/parseSusVaccinePdf");
       const result = await parseSusVaccinePdf(file);
 
       // 3. CPF Validation (Fail-Closed)
