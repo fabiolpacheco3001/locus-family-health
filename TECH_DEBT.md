@@ -1,8 +1,18 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.1 | **Atualizado em:** junho/2026 (sessão 2)  
+> **Versão:** 2.2 | **Atualizado em:** junho/2026 (sessão 3)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
+
+---
+
+## 📋 Resumo das Sessões
+
+| Sessão | Itens resolvidos | Status Sprint |
+|--------|-----------------|---------------|
+| Sessão 1 | C1, C2+C9, C4, C5, C6, C11, A10, A11, M15, M16, B7 (11 itens) | Sprint 1 ✅ CONCLUÍDO |
+| Sessão 2 | C8, C7+A14 — LGPD consentimento + deleção de conta | Sprint 2 🟡 Em progresso |
+| Sessão 3 | C3, A2, M14, A15 — Biometria, Senha, Revogação, Portabilidade | Sprint 2 ✅ CONCLUÍDO |
 
 ---
 
@@ -41,12 +51,11 @@
 
 ---
 
-### C3 · Biometria falsa — toggle em `localStorage` sem WebAuthn
-- **Risco:** UX enganosa; usuários acreditam ter proteção biométrica que não existe.
-- **Fix (opção A):** Remover o toggle completamente até ter implementação real.  
-  **Fix (opção B):** Implementar WebAuthn via `navigator.credentials.create()` / `get()`.
-- **Arquivos:** `src/pages/Seguranca.tsx` (linhas 12–22)
-- **Status:** 🔴 Pendente
+### C3 · Biometria falsa — toggle em `localStorage` sem WebAuthn ✅
+- **Risco resolvido:** Toggle de biometria usava `localStorage` sem WebAuthn real — usuário acreditava ter proteção biométrica que não existia.
+- **Resolução (opção A):** Toggle removido de `Seguranca.tsx`. Substituído por card informativo "Biometria / Face ID — Em breve" com badge visual e texto explicativo sobre WebAuthn. Removidos `useState` de `biometria`, `handleBiometria` e import de `Switch`. WebAuthn real fica para roadmap futuro.
+- **Arquivos:** `src/pages/Seguranca.tsx`
+- **Status:** ✅ Resolvido (sessão 3)
 
 ---
 
@@ -120,11 +129,11 @@
 
 ---
 
-### A2 · Campo "Senha Atual" decorativo — nunca enviado ao servidor
-- **Risco:** Usuário acredita que confirmar a senha atual protege a troca de senha, mas o campo não é validado no backend (Supabase não recebe o valor atual).
-- **Fix:** Remover o campo ou implementar verificação real via `supabase.auth.signInWithPassword` antes de chamar `updateUser({ password })`.
-- **Arquivos:** `src/pages/Seguranca.tsx` (linha 49)
-- **Status:** ⬜ Backlog
+### A2 · Campo "Senha Atual" decorativo — nunca enviado ao servidor ✅
+- **Risco resolvido:** Campo "Senha Atual" em `Seguranca.tsx` era decorativo — valor ignorado, qualquer usuário podia trocar a senha sem confirmar a atual.
+- **Resolução:** `handleUpdatePassword` agora (1) busca o email via `supabase.auth.getUser()`, (2) chama `supabase.auth.signInWithPassword({ email, password: senhaAtual })` e rejeita com `toast.error("Senha atual incorreta.")` se falhar, (3) só então chama `updateUser({ password: novaSenha })`. Botão de submit mostra "Verificando..." durante o processo.
+- **Arquivos:** `src/pages/Seguranca.tsx`
+- **Status:** ✅ Resolvido (sessão 3)
 
 ---
 
@@ -217,9 +226,11 @@
 
 ---
 
-### A15 · Art. 18-V LGPD — Sem portabilidade de dados
-- **Fix:** Criar endpoint de export completo em JSON/CSV (todos os dados clínicos do titular).
-- **Status:** ⬜ Backlog
+### A15 · Art. 18-V LGPD — Sem portabilidade de dados ✅
+- **Risco resolvido:** Sem mecanismo de exportação de dados — titular não podia exercer direito de portabilidade.
+- **Resolução:** Botão "Exportar Meus Dados" adicionado em `Ajustes.tsx`. Ao clicar: busca todos os dados clínicos do grupo familiar (medications, consultations, exams, vaccines, allergies, diseases, health_measurements, blood_pressure_history, menstrual_cycles, pet_routines) + histórico de consentimento, monta JSON estruturado com metadados LGPD (controlador, base legal, data de export) e dispara download do arquivo `locus-vita-dados-YYYY-MM-DD.json`. Estado de loading durante a busca.
+- **Arquivos:** `src/pages/Ajustes.tsx`
+- **Status:** ✅ Resolvido (sessão 3)
 
 ---
 
@@ -331,9 +342,13 @@
 
 ---
 
-### M14 · Art. 18-IX LGPD — Sem revogação de consentimento
-- **Fix:** Adicionar página "Gerenciar meus dados" com opção de revogar consentimento de uso de IA.
-- **Status:** ⬜ Backlog
+### M14 · Art. 18-IX LGPD — Sem revogação de consentimento ✅
+- **Risco resolvido:** Sem mecanismo formal de revogação de consentimento — titular não podia exercer direito do Art. 18-IX.
+- **Resolução:**
+  1. Migration `20260616000010` — altera constraint `consent_log_consent_type_check` para incluir `'revoked'`; adiciona índice composto `idx_consent_log_user_type (user_id, consent_type, granted_at DESC)` para consultas eficientes.
+  2. Botão "Revogar Consentimento" adicionado em `Ajustes.tsx` com badge âmbar e `AlertDialog` de confirmação com aviso claro: revogação registra a solicitação mas não apaga dados (para remoção usar "Excluir Conta"). `handleRevokeConsent` insere registro `consent_type = 'revoked'` em `consent_log` — a tabela é imutável por RLS, mantendo histórico completo.
+- **Arquivos:** `src/pages/Ajustes.tsx`, `supabase/migrations/20260616000010_lgpd_consent_log_revoke.sql`
+- **Status:** ✅ Resolvido (sessão 3) — ⚠️ migration 000010 precisa ser aplicada via SQL Editor
 
 ---
 
@@ -482,15 +497,14 @@ Sprint 1 — Segurança e integridade de dados ✅ CONCLUÍDO
 ├── ✅ C1                                  → .gitignore + histórico git auditado
 └── ✅ C11                                 → get_admin_clients: role check + search_path + REVOKE
 
-Sprint 2 — Compliance LGPD (bloqueador legal para go-live) 🟡 Em progresso
+Sprint 2 — Compliance LGPD (bloqueador legal para go-live) ✅ CONCLUÍDO
 ├── ✅ C8                                  → Edge Function delete-user-account (Art. 18-IV)
 ├── ✅ C7 + A14                            → Consentimento no cadastro + Política de privacidade
-├── A15 + M12                             → Export de dados em JSON/CSV (portabilidade) ← PRÓXIMO
-└── M14                                   → Revogação de consentimento (Art. 18-IX)
+├── ✅ A15                                 → Export de dados JSON (portabilidade Art. 18-V)
+├── ✅ M14                                 → Revogação de consentimento (Art. 18-IX) ⚠️ migration pendente
+└── ✅ C3 + A2                             → Biometria falsa removida + Senha atual validada
 
-Sprint 3 — Go-live readiness
-├── C3                                    → Biometria: remover toggle fake ou implementar WebAuthn
-├── A2                                    → "Senha Atual" — validar no backend ou remover campo
+Sprint 3 — Go-live readiness ← PRÓXIMO
 ├── A1                                    → CORS: restringir ao domínio da app
 ├── A4                                    → Rate limiting nas funções de IA (fail-closed)
 └── C10                                   → Preços: tabela plan_configs ou env vars

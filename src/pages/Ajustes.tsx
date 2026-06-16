@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { parseDateInSP } from "@/lib/dateUtils";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail, Sparkles } from "lucide-react";
+import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail, Sparkles, Download, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -44,6 +44,11 @@ const Ajustes = () => {
   const [showPaywall, setShowPaywall] = useState(false);
   const [supportUrl, setSupportUrl] = useState<string>("");
   const [supportEmail, setSupportEmail] = useState<string>("suporte@locustech.com.br");
+  // M14 — Revogação de consentimento
+  const [showRevokeConsent, setShowRevokeConsent] = useState(false);
+  const [revokingConsent, setRevokingConsent] = useState(false);
+  // A15 — Exportação de dados
+  const [exportingData, setExportingData] = useState(false);
 
   useEffect(() => {
     supabase
@@ -78,6 +83,143 @@ const Ajustes = () => {
   const handleLogout = async () => {
     await signOut();
     navigate("/login", { replace: true });
+  };
+
+  // ── M14 — Revogar consentimento (LGPD Art. 18-IX) ─────────────────────────
+  const handleRevokeConsent = async () => {
+    setRevokingConsent(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      if (!userId) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      // Inserir registro de revogação — a tabela é imutável (sem DELETE via RLS)
+      // O histórico fica completo: quando consentiu + quando revogou
+      const { error } = await supabase.from("consent_log" as any).insert([
+        {
+          user_id: userId,
+          consent_type: "revoked",
+          policy_version: "1.0",
+          user_agent: navigator.userAgent.slice(0, 500),
+        },
+      ]);
+
+      if (error) throw error;
+
+      toast.success(
+        "Consentimento revogado e registrado. Para remover seus dados definitivamente, use 'Excluir Conta'.",
+        { duration: 7000 }
+      );
+      setShowRevokeConsent(false);
+    } catch {
+      toast.error("Erro ao registrar revogação. Tente novamente ou entre em contato com o suporte.");
+    } finally {
+      setRevokingConsent(false);
+    }
+  };
+
+  // ── A15 — Exportar dados do titular (LGPD Art. 18-V) ──────────────────────
+  const handleExportData = async () => {
+    setExportingData(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+      const userEmail = userData?.user?.email;
+      if (!userId) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      // Buscar o grupo familiar do usuário
+      const { data: groupData } = await supabase
+        .from("family_group_members" as any)
+        .select("group_id")
+        .eq("auth_user_id", userId)
+        .maybeSingle();
+
+      const groupId = (groupData as any)?.group_id;
+
+      // Buscar todos os membros do grupo
+      const { data: membersData } = await supabase
+        .from("family_members")
+        .select("id, name, birth_date, gender, member_type, relationship, blood_type")
+        .eq("group_id", groupId)
+        .is("deleted_at", null);
+
+      const memberIds = (membersData ?? []).map((m: any) => m.id);
+
+      // Buscar todos os dados clínicos em paralelo
+      const [
+        medications,
+        consultations,
+        exams,
+        vaccines,
+        allergies,
+        diseases,
+        healthMeasurements,
+        bloodPressure,
+        menstrualCycles,
+        petRoutines,
+        consentLog,
+      ] = await Promise.all([
+        supabase.from("medications").select("*").in("family_member_id", memberIds).is("deleted_at", null),
+        supabase.from("consultations").select("*").in("family_member_id", memberIds),
+        supabase.from("exams").select("*").in("family_member_id", memberIds),
+        supabase.from("vaccines").select("*").in("family_member_id", memberIds),
+        supabase.from("allergies").select("*").in("family_member_id", memberIds),
+        supabase.from("diseases").select("*").in("family_member_id", memberIds),
+        supabase.from("health_measurements").select("*").in("family_member_id", memberIds),
+        supabase.from("blood_pressure_history").select("*").in("family_member_id", memberIds),
+        supabase.from("menstrual_cycles").select("*").in("family_member_id", memberIds),
+        supabase.from("pet_routines").select("*").in("family_member_id", memberIds),
+        supabase.from("consent_log" as any).select("consent_type, policy_version, granted_at").eq("user_id", userId),
+      ]);
+
+      const exportPayload = {
+        exportedAt: new Date().toISOString(),
+        exportVersion: "1.0",
+        dataController: "Locus Tech — fabio@locustech.com.br",
+        lgpdBasis: "Art. 18-V LGPD — Portabilidade de dados",
+        account: {
+          userId,
+          email: userEmail,
+        },
+        familyMembers: membersData ?? [],
+        clinicalData: {
+          medications: medications.data ?? [],
+          consultations: consultations.data ?? [],
+          exams: exams.data ?? [],
+          vaccines: vaccines.data ?? [],
+          allergies: allergies.data ?? [],
+          diseases: diseases.data ?? [],
+          healthMeasurements: healthMeasurements.data ?? [],
+          bloodPressure: bloodPressure.data ?? [],
+          menstrualCycles: menstrualCycles.data ?? [],
+          petRoutines: petRoutines.data ?? [],
+        },
+        consentHistory: (consentLog.data as any[]) ?? [],
+      };
+
+      // Disparar download do JSON
+      const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `locus-vita-dados-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("Dados exportados com sucesso!");
+    } catch {
+      toast.error("Erro ao exportar dados. Tente novamente.");
+    } finally {
+      setExportingData(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -309,6 +451,40 @@ const Ajustes = () => {
               </button>
             )}
 
+            {/* A15 — Exportar dados (LGPD Art. 18-V) */}
+            <button
+              onClick={handleExportData}
+              disabled={exportingData}
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors disabled:opacity-60"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#78C2AD]/15 flex items-center justify-center shrink-0">
+                {exportingData
+                  ? <Loader2 size={20} className="text-[#78C2AD] animate-spin" />
+                  : <Download size={20} className="text-[#78C2AD]" />
+                }
+              </div>
+              <div className="flex-1 text-left">
+                <span className="text-sm font-medium text-foreground block">Exportar Meus Dados</span>
+                <span className="text-xs text-muted-foreground">LGPD Art. 18-V — portabilidade</span>
+              </div>
+              <ChevronRight size={18} className="text-muted-foreground" />
+            </button>
+
+            {/* M14 — Revogar consentimento (LGPD Art. 18-IX) */}
+            <button
+              onClick={() => setShowRevokeConsent(true)}
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-amber-200/60 active:bg-amber-50 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <ShieldOff size={20} className="text-amber-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <span className="text-sm font-medium text-amber-800 block">Revogar Consentimento</span>
+                <span className="text-xs text-amber-600/80">LGPD Art. 18-IX — revogação</span>
+              </div>
+              <ChevronRight size={18} className="text-amber-400" />
+            </button>
+
             {/* Delete Account - danger item */}
             <button
               onClick={() => setShowDeleteAccount(true)}
@@ -358,6 +534,36 @@ const Ajustes = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {/* M14 — Revogar consentimento AlertDialog */}
+      <AlertDialog open={showRevokeConsent} onOpenChange={setShowRevokeConsent}>
+        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revogar Consentimento</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                Ao revogar, registraremos sua solicitação conforme a <strong>LGPD Art. 18-IX</strong>.
+              </span>
+              <span className="block text-amber-700 font-medium">
+                Atenção: a revogação não apaga seus dados. Para remoção definitiva, use "Excluir Conta".
+              </span>
+              <span className="block">
+                Você continuará tendo acesso ao aplicativo normalmente após a revogação.
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevokeConsent}
+              className="bg-amber-500 text-white hover:bg-amber-600"
+              disabled={revokingConsent}
+            >
+              {revokingConsent ? <Loader2 className="animate-spin" size={16} /> : "Revogar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <PaywallModal
         open={showPaywall}
         onOpenChange={setShowPaywall}
