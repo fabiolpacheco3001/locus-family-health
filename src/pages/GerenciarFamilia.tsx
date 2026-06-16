@@ -115,7 +115,7 @@ const GerenciarFamilia = () => {
                       <span className="text-[10px] bg-slate-100/60 text-slate-700 border border-slate-200/80 px-2 py-0.5 rounded-full font-medium leading-none backdrop-blur-sm">Admin</span>
                     )}
                     {memberRole === "user" && (
-                      <span className="text-[10px] bg-slate-100/60 text-muted-foreground border border-slate-200/80 px-2 py-0.5 rounded-full font-medium leading-none backdrop-blur-sm">Convidado</span>
+                      <span className="text-[10px] bg-slate-100/60 text-muted-foreground border border-slate-200/80 px-2 py-0.5 rounded-full font-medium leading-none backdrop-blur-sm">Usuário</span>
                     )}
                   </div>
                 </div>

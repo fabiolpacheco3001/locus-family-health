@@ -44,8 +44,9 @@ async function asaasFetch(path: string, options: RequestInit) {
 
   if (!res.ok) {
     const body = await res.text();
-    console.error(`Asaas API error: ${res.status} ${body}`);
-    throw new Error(`Falha no Asaas (${res.status}): ${body}`);
+    // Log full details server-side only — never forward raw third-party error bodies to clients
+    console.error(`Asaas API error ${res.status} on ${path}: ${body}`);
+    throw new Error("Falha ao processar pagamento. Tente novamente ou entre em contato com o suporte.");
   }
 
   return res.json();
