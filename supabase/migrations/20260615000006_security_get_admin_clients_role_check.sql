@@ -11,15 +11,20 @@
 --   3. Revoga execução de PUBLIC e garante apenas a authenticated
 --      (o check interno bloqueia não-admins antes de retornar qualquer dado)
 
-CREATE OR REPLACE FUNCTION public.get_admin_clients()
+-- DROP necessário porque CREATE OR REPLACE não pode alterar tipos de retorno.
+-- A função original foi criada fora das migrations (via Dashboard), portanto
+-- não há versão anterior no repositório para fazer rollback.
+DROP FUNCTION IF EXISTS public.get_admin_clients();
+
+CREATE FUNCTION public.get_admin_clients()
 RETURNS TABLE (
-  user_id        uuid,
-  email          text,
-  full_name      text,
-  created_at     timestamptz,
-  status         text,
-  plan_type      text,
-  next_billing_date date
+  user_id           uuid,
+  email             text,
+  full_name         text,
+  created_at        timestamptz,
+  status            text,
+  plan_type         text,
+  next_billing_date text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -48,7 +53,7 @@ BEGIN
     u.created_at,
     s.status,
     s.plan_type,
-    s.next_billing_date
+    s.next_billing_date::text
   FROM auth.users u
   LEFT JOIN public.subscriptions s ON u.id = s.user_id
   WHERE u.id NOT IN (
