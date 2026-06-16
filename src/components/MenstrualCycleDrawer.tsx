@@ -124,7 +124,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
     queryKey: ["menstrual_cycles", familyMemberId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("menstrual_cycles" as any)
+        .from("menstrual_cycles")
         .select("*")
         .eq("familiar_id", familyMemberId)
         .order("start_date", { ascending: false });
@@ -217,17 +217,17 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
     let error;
     if (editingId) {
       const res = await supabase
-        .from("menstrual_cycles" as any)
-        .update(payload as any)
+        .from("menstrual_cycles")
+        .update(payload)
         .eq("id", editingId);
       error = res.error;
     } else {
-      const res = await supabase.from("menstrual_cycles" as any).insert({
+      const res = await supabase.from("menstrual_cycles").insert({
         ...payload,
         user_id: user.id,
         familiar_id: familyMemberId,
-        ...(groupId ? { group_id: groupId } : {}),
-      } as any);
+        group_id: groupId ?? undefined,
+      });
       error = res.error;
     }
     setSaving(false);
@@ -247,7 +247,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     const { error } = await supabase
-      .from("menstrual_cycles" as any)
+      .from("menstrual_cycles")
       .delete()
       .eq("id", deleteTarget);
     if (error) {

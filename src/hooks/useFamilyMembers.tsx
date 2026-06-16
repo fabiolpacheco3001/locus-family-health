@@ -19,6 +19,11 @@ export type FamilyMember = {
   species: string | null;
   breed: string | null;
   tracks_menstrual_cycle?: boolean;
+  weight?: number | null;
+  height?: number | null;
+  physical_activity?: string | null;
+  deleted_at?: string | null;
+  group_id?: string | null;
 };
 
 export type NewFamilyMember = {
@@ -61,7 +66,7 @@ export const useFamilyMembers = () => {
     mutationFn: async (member: NewFamilyMember) => {
       const { data, error } = await supabase
         .from("family_members")
-        .insert({ ...member, user_id: user!.id, ...(groupId ? { group_id: groupId } : {}) } as any)
+        .insert({ ...member, user_id: user!.id, group_id: groupId ?? undefined })
         .select()
         .single();
       if (error) throw error;

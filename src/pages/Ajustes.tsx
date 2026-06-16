@@ -53,12 +53,12 @@ const Ajustes = () => {
 
   useEffect(() => {
     supabase
-      .from("system_configs" as any)
+      .from("system_configs")
       .select("key, value")
       .in("key", ["support_url", "support_email"])
       .then(({ data }) => {
         if (data) {
-          for (const row of data as any[]) {
+          for (const row of data) {
             if (row.key === "support_url") setSupportUrl(row.value || "");
             if (row.key === "support_email") setSupportEmail(row.value || "suporte@locustech.com.br");
           }
@@ -99,7 +99,7 @@ const Ajustes = () => {
 
       // Inserir registro de revogação — a tabela é imutável (sem DELETE via RLS)
       // O histórico fica completo: quando consentiu + quando revogou
-      const { error } = await supabase.from("consent_log" as any).insert([
+      const { error } = await supabase.from("consent_log").insert([
         {
           user_id: userId,
           consent_type: "revoked",
@@ -136,12 +136,12 @@ const Ajustes = () => {
 
       // Buscar o grupo familiar do usuário
       const { data: groupData } = await supabase
-        .from("family_group_members" as any)
+        .from("family_group_members")
         .select("group_id")
         .eq("auth_user_id", userId)
         .maybeSingle();
 
-      const groupId = (groupData as any)?.group_id;
+      const groupId = groupData?.group_id;
 
       // Buscar todos os membros do grupo
       const { data: membersData } = await supabase
@@ -176,7 +176,7 @@ const Ajustes = () => {
         supabase.from("blood_pressure_history").select("*").in("family_member_id", memberIds),
         supabase.from("menstrual_cycles").select("*").in("family_member_id", memberIds),
         supabase.from("pet_routines").select("*").in("family_member_id", memberIds),
-        supabase.from("consent_log" as any).select("consent_type, policy_version, granted_at").eq("user_id", userId),
+        supabase.from("consent_log").select("consent_type, policy_version, granted_at").eq("user_id", userId),
       ]);
 
       const exportPayload = {
@@ -201,7 +201,7 @@ const Ajustes = () => {
           menstrualCycles: menstrualCycles.data ?? [],
           petRoutines: petRoutines.data ?? [],
         },
-        consentHistory: (consentLog.data as any[]) ?? [],
+        consentHistory: consentLog.data ?? [],
       };
 
       // Disparar download do JSON

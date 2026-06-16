@@ -121,7 +121,7 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
               weekly: "Semanal", biweekly: "Quinzenal", monthly: "Mensal",
               quarterly: "Trimestral", semiannually: "Semestral", annually: "Anual",
             };
-            const recurrenceLabel = recurrenceLabels[(r as any).recurrence] || null;
+            const recurrenceLabel = r.recurrence ? recurrenceLabels[r.recurrence] || null : null;
 
             return (
               <button

@@ -162,9 +162,9 @@ const FamiliarProfile = () => {
     { icon: ClipboardCheck, label: "Adesão Medicamentosa", subtitle: "Histórico de doses", route: "__adherence__" },
   ];
 
-  const memberWeight = (member as any)?.weight as number | null ?? null;
-  const memberHeight = (member as any)?.height as number | null ?? null;
-  const memberActivity = (member as any)?.physical_activity as string | null ?? null;
+  const memberWeight = member?.weight ?? null;
+  const memberHeight = member?.height ?? null;
+  const memberActivity = member?.physical_activity ?? null;
   const calculatedBMI = memberWeight && memberHeight && memberHeight > 0
     ? (memberWeight / (memberHeight * memberHeight)).toFixed(1)
     : null;

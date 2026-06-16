@@ -6,7 +6,7 @@ const useSmartBack = (): (() => void) => {
 
   return () => {
     // 1. Explicit origin in state
-    const from = (location.state as any)?.from;
+    const from = (location.state as { from?: string })?.from;
     if (from) {
       navigate(from, { replace: true });
       return;

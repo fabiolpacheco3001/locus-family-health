@@ -76,7 +76,7 @@ const GestaoAcessos = () => {
     queryKey: ["group_members", groupId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("family_group_members" as any)
+        .from("family_group_members")
         .select("id, auth_user_id, role, family_member_id, managed_profiles, invited_at, accepted_at")
         .eq("group_id", groupId!);
       if (error) throw error;
@@ -91,7 +91,7 @@ const GestaoAcessos = () => {
     queryKey: ["group_invites", groupId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("group_invites" as any)
+        .from("group_invites")
         .select("id, email, role, family_member_id, created_at, accepted_at")
         .eq("group_id", groupId!)
         .is("accepted_at", null)
@@ -112,13 +112,13 @@ const GestaoAcessos = () => {
     if (!inviteEmail.trim() || !groupId || !user) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("group_invites" as any).insert({
+      const { error } = await supabase.from("group_invites").insert({
         group_id: groupId,
         email: inviteEmail.trim().toLowerCase(),
         role: "user" as const, // always 'user' — DB policy forbids self-assigning 'admin'
         family_member_id: inviteMemberId || null,
         invited_by: user.id,
-      } as any);
+      });
 
       if (error) throw error;
 
@@ -134,7 +134,7 @@ const GestaoAcessos = () => {
   const handleDeleteInvite = async (inviteId: string) => {
     try {
       const { error } = await supabase
-        .from("group_invites" as any)
+        .from("group_invites")
         .delete()
         .eq("id", inviteId);
       if (error) throw error;
@@ -149,8 +149,8 @@ const GestaoAcessos = () => {
     setRoleChanging(true);
     try {
       const { error } = await supabase
-        .from("family_group_members" as any)
-        .update({ role: newRole } as any)
+        .from("family_group_members")
+        .update({ role: newRole })
         .eq("id", memberId);
       if (error) throw error;
       toast.success(newRole === "admin" ? "Membro promovido a Admin!" : "Membro rebaixado a Usuário.");
@@ -166,7 +166,7 @@ const GestaoAcessos = () => {
   const handleRemoveMember = async (memberId: string) => {
     try {
       const { error } = await supabase
-        .from("family_group_members" as any)
+        .from("family_group_members")
         .delete()
         .eq("id", memberId);
       if (error) throw error;
@@ -565,8 +565,8 @@ const GestaoAcessos = () => {
                   try {
                     const profilesToSave = permsSelected.filter(id => id !== permsMember.family_member_id);
                     const { error } = await supabase
-                      .from("family_group_members" as any)
-                      .update({ managed_profiles: profilesToSave } as any)
+                      .from("family_group_members")
+                      .update({ managed_profiles: profilesToSave })
                       .eq("id", permsMember.id);
                     if (error) throw error;
                     toast.success("Permissões atualizadas!");

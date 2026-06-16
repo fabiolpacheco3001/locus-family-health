@@ -51,7 +51,7 @@ const Medicamentos = () => {
         .in("medication_id", activeMedIds);
       if (error) throw error;
       const map: Record<string, "taken" | "skipped"> = {};
-      for (const d of (data ?? []) as any[]) {
+      for (const d of (data ?? [])) {
         const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
         map[key] = d.status;
       }
@@ -180,8 +180,8 @@ const Medicamentos = () => {
     const toDelete = medications.find(m => m.id === medId);
     if (!toDelete) return;
     const cached = { ...toDelete };
-    delete (cached as any).consultations;
-    delete (cached as any).family_members;
+    delete (cached as Record<string, unknown>).consultations;
+    delete (cached as Record<string, unknown>).family_members;
     try {
       await deleteMedication.mutateAsync(medId);
       toast("Medicamento excluído.", {

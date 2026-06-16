@@ -37,7 +37,7 @@ const Config = () => {
         .eq("key", "ai_status")
         .maybeSingle();
       if (error) throw error;
-      return (data?.value as any)?.is_active ?? true;
+      return (data?.value as { is_active?: boolean })?.is_active ?? true;
     },
   });
 
@@ -68,7 +68,7 @@ const Config = () => {
     queryKey: ["system-configs"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("system_configs" as any)
+        .from("system_configs")
         .select("*")
         .order("key");
       if (error) throw error;
@@ -80,8 +80,8 @@ const Config = () => {
   const saveMutation = useMutation({
     mutationFn: async ({ id, value }: { id: string; value: string }) => {
       const { error } = await supabase
-        .from("system_configs" as any)
-        .update({ value, updated_at: new Date().toISOString() } as any)
+        .from("system_configs")
+        .update({ value, updated_at: new Date().toISOString() })
         .eq("id", id);
       if (error) throw error;
     },

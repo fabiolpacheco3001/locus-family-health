@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.6 | **Atualizado em:** junho/2026 (sessão 8)  
+> **Versão:** 2.7 | **Atualizado em:** junho/2026 (sessão 10)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -19,6 +19,7 @@
 | Sessão 7 | Migration 000018: blood_pressure_history + menstrual_cycles INSERT policies com familiar_id ownership (RAIO X 3.0 findings #1/#2) | Segurança ✅ CONCLUÍDO |
 | Sessão 8 | A6 ErrorBoundary global, A13 dynamic PDF imports, A17 patientAge sanitização, B3 tz.ts, B5 lazy routes (27 páginas) — Sprint 4 início | Sprint 4 🟡 Em progresso |
 | Sessão 9 | M5 Promise.all em useSubscription, M6 batch dedup+insert em Stock/Menstrual alerts, M7 React.memo em 4 componentes + useCallback BottomNav | Sprint 4 🟡 Em progresso |
+| Sessão 10 | A5 Fase 2 completa: `noImplicitAny: true` habilitado, 93→0 `as any` eliminados — FamilyMember type augmentado, 22 `.from() as any` via sed, 71 casts explícitos resolvidos por categoria | Sprint 4 ✅ CONCLUÍDO |
 
 ---
 
@@ -162,10 +163,21 @@
 
 ---
 
-### A5 · TypeScript strict mode — Fase 2
-- **Fase 1 concluída:** `strictNullChecks: true` + 9 `as any` removidos + type augmentation jspdf-autotable.
-- **Fase 2:** Regenerar `src/integrations/supabase/types.ts` via `supabase gen types typescript` → eliminar `.from("table" as any)` e `.insert({ } as any)`. Depois habilitar `noImplicitAny: true`.
-- **Status:** 🟡 Fase 1 concluída — Fase 2 pendente
+### A5 · TypeScript strict mode — Fase 2 ✅
+- **Fase 1 concluída (sessão anterior):** `strictNullChecks: true` + 9 `as any` removidos + type augmentation jspdf-autotable.
+- **Fase 2 concluída (sessão 10):** `noImplicitAny: true` habilitado em `tsconfig.json` e `tsconfig.app.json`. Todos os 93 `as any` eliminados (0 restantes):
+  - 22 `.from("X" as any)` → sed bulk removal (todas as tabelas já existiam em `types.ts`)
+  - `FamilyMember` type augmentado: `weight`, `height`, `physical_activity`, `deleted_at`, `group_id`
+  - Casts de propriedades inexistentes: `(editingMedication as any).reason/frequency_type`, `(m as any).reason`, `(r as any).recurrence/status/time_performed` → tipos diretos
+  - `(location.state as any)?.from` → `(location.state as { from?: string })?.from`
+  - `delete (cached as any).prop` → `delete (cached as Record<string, unknown>).prop`
+  - `(grp as any)?.name`, `(newGroup as any).id`, `(newMember as any).id` → remoção de casts (tipos inferidos pelo Supabase)
+  - `...(groupId ? { group_id: groupId } : {}) as any` → `group_id: groupId ?? undefined` (18 ocorrências)
+  - `{ role: newRole } as any`, `{ managed_profiles } as any`, `{ tracks_menstrual_cycle } as any` → remoção de casts
+  - `(data as any[])` → remoção de casts (tipos Supabase já corretos)
+  - `(data?.value as any)?.is_active` → `(data?.value as { is_active?: boolean })?.is_active`
+- **Arquivos:** 25+ arquivos modificados
+- **Status:** ✅ Resolvido (sessão 10)
 
 ---
 
@@ -514,12 +526,12 @@ Sprint 3 — Go-live readiness ✅ CONCLUÍDO
 ├── ✅ A4                                 → Rate limiting IA: `_shared/rate-limit.ts` + fail-closed
 └── ✅ C10                                → Preços: `planConfig.ts` + secrets `PLAN_MONTHLY_PRICE/ANNUAL_PRICE/ANNUAL_THRESHOLD`
 
-Sprint 4 — Qualidade e performance
-├── A5 (Fase 2 TypeScript)                → Regenerar types.ts via supabase gen, noImplicitAny
-├── A6                                    → <ErrorBoundary> global em App.tsx
-├── A7                                    → Testes: hooks críticos (calculateNextDose) + E2E Playwright
-├── A13 + B5                              → Dynamic imports PDF + lazy routes em App.tsx
-└── M5 + M6 + M7                          → Otimizações de queries e re-renders
+Sprint 4 — Qualidade e performance ✅ CONCLUÍDO
+├── ✅ A5 (Fase 2 TypeScript)             → noImplicitAny: true + 93→0 `as any` eliminados
+├── ✅ A6                                 → <ErrorBoundary> global em App.tsx
+├── ✅ A13 + B5                           → Dynamic imports PDF + lazy routes em App.tsx
+├── ✅ M5 + M6 + M7                       → Otimizações de queries e re-renders
+└── ⬜ A7                                 → Testes: hooks críticos (calculateNextDose) + E2E Playwright
 
 Sprint 5 — Observabilidade e manutenibilidade
 ├── M1                                    → Sentry / APM

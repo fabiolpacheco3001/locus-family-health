@@ -259,7 +259,7 @@ const Home = () => {
         .in("medication_id", activeMedIds);
       if (error) throw error;
       const map: Record<string, "taken" | "skipped"> = {};
-      for (const d of (data ?? []) as any[]) {
+      for (const d of (data ?? [])) {
         const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
         map[key] = d.status;
       }

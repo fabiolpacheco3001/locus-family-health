@@ -118,7 +118,7 @@ export const useMedications = (familyMemberId?: string) => {
     mutationFn: async (medication: NewMedication) => {
       const { data, error } = await supabase
         .from("medications")
-        .insert({ ...medication, user_id: user!.id, ...(groupId ? { group_id: groupId } : {}) } as any)
+        .insert({ ...medication, user_id: user!.id, group_id: groupId ?? undefined })
         .select()
         .single();
       if (error) throw error;

@@ -33,7 +33,7 @@ export function useMenstrualAlerts() {
       if (cancelled) return;
 
       const { data: allCycles, error } = await supabase
-        .from("menstrual_cycles" as any)
+        .from("menstrual_cycles")
         .select("*")
         .eq("user_id", user.id)
         .order("start_date", { ascending: false });

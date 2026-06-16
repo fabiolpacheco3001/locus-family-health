@@ -87,7 +87,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
 
     // Build a set of existing dose keys for fast lookup
     const existingKeys = new Set<string>();
-    for (const d of doses as any[]) {
+    for (const d of doses) {
       existingKeys.add(`${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`);
     }
 

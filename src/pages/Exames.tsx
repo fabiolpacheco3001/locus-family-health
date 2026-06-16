@@ -97,7 +97,7 @@ const Exames = () => {
     const examToDelete = exams.find(e => e.id === examId);
     if (!examToDelete) return;
     const cached = { ...examToDelete };
-    delete (cached as any).consultations;
+    delete (cached as Record<string, unknown>).consultations;
     try {
       await deleteExam.mutateAsync(examId);
       toast("Exame excluído.", {

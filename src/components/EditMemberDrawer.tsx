@@ -112,7 +112,7 @@ const EditMemberDrawer = ({ open, onOpenChange, member, memberRole }: Props) => 
         const { supabase } = await import("@/integrations/supabase/client");
         await supabase
           .from("family_members")
-          .update({ tracks_menstrual_cycle: tracksCycle } as any)
+          .update({ tracks_menstrual_cycle: tracksCycle })
           .eq("id", member.id);
       }
       toast.success("Dados atualizados!");

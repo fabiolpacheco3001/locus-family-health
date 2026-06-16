@@ -96,7 +96,7 @@ const PetRotinas = () => {
   });
 
   const filteredRoutines = routines.filter((r) => {
-    const status = (r as any).status || "Agendado";
+    const status = r.status || "Agendado";
     if (abaAtiva === "ativas") return status !== "Realizado";
     return status === "Realizado";
   });
@@ -121,12 +121,12 @@ const PetRotinas = () => {
       const routine = routines.find((r) => r.id === routineId);
       const { error } = await supabase
         .from("pet_routines")
-        .update({ status: "Realizado" } as any)
+        .update({ status: "Realizado" })
         .eq("id", routineId);
       if (error) throw error;
 
       // Auto-recurrence based on recurrence field
-      const recurrence = (routine as any)?.recurrence;
+      const recurrence = routine?.recurrence;
       if (routine && recurrence && recurrence !== "none") {
         const nextDate = calcNextDate(routine.date_performed, recurrence);
         await supabase.from("pet_routines").insert({
@@ -138,7 +138,7 @@ const PetRotinas = () => {
           notes: routine.notes,
           status: "Agendado",
           recurrence: recurrence,
-        } as any);
+        });
       }
     },
     onSuccess: () => {
@@ -266,8 +266,8 @@ const PetRotinas = () => {
                 const dateStr = r.time_performed
                   ? format(fullDate, "dd MMM yyyy 'às' HH:mm", { locale: ptBR })
                   : format(fullDate, "dd MMM yyyy", { locale: ptBR });
-                const recurrenceLabel = RECURRENCE_LABELS[(r as any).recurrence] || null;
-                const status = (r as any).status || "Agendado";
+                const recurrenceLabel = r.recurrence ? RECURRENCE_LABELS[r.recurrence] || null : null;
+                const status = r.status || "Agendado";
                 const badge = STATUS_BADGE[status] || STATUS_BADGE.Agendado;
 
                 return (

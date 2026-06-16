@@ -115,8 +115,8 @@ const Doencas = () => {
         family_member_id: id!,
         name,
         category: selectedCategory,
-        ...(groupId ? { group_id: groupId } : {}),
-      } as any);
+        group_id: groupId ?? undefined,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -175,7 +175,7 @@ const Doencas = () => {
   const handleInstantDelete = async (diseaseId: string) => {
     const toDelete = diseases.find((d) => d.id === diseaseId);
     if (!toDelete) return;
-  const cached = { ...toDelete } as any;
+  const cached = { ...toDelete };
     try {
       await supabase.from("diseases").delete().eq("id", diseaseId);
       queryClient.invalidateQueries({ queryKey: ["diseases", id] });
@@ -190,8 +190,8 @@ const Doencas = () => {
               category: cached.category,
               notes: cached.notes,
               diagnosed_at: cached.diagnosed_at,
-              ...(groupId ? { group_id: groupId } : {}),
-            } as any);
+              group_id: groupId ?? undefined,
+            });
             queryClient.invalidateQueries({ queryKey: ["diseases", id] });
             toast.success("Diagnóstico restaurado.");
           },

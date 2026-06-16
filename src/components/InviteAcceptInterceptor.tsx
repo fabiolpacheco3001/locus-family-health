@@ -39,21 +39,21 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
     try {
       const { data: newGroup, error: gErr } = await supabase
         .from("family_groups")
-        .insert({ created_by: user.id, name: "Minha Família" } as any)
+        .insert({ created_by: user.id, name: "Minha Família" })
         .select("id")
         .single();
       if (gErr) throw gErr;
 
-      const gId = (newGroup as any).id;
+      const gId = newGroup.id;
 
       const { error: mErr } = await supabase
-        .from("family_group_members" as any)
+        .from("family_group_members")
         .insert({
           group_id: gId,
           auth_user_id: user.id,
-          role: "admin",
+          role: "admin" as const,
           accepted_at: new Date().toISOString(),
-        } as any);
+        });
       if (mErr) throw mErr;
 
       const displayName = user.user_metadata?.full_name || user.email?.split("@")[0] || "Titular";
@@ -71,8 +71,8 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
       if (fErr) throw fErr;
 
       await supabase
-        .from("family_group_members" as any)
-        .update({ family_member_id: (newMember as any).id } as any)
+        .from("family_group_members")
+        .update({ family_member_id: newMember.id })
         .eq("auth_user_id", user.id)
         .eq("group_id", gId);
 
@@ -119,7 +119,7 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
 
       while (retryCount < MAX_RETRIES && !cancelled) {
         const { data, error } = await supabase
-          .from("group_invites" as any)
+          .from("group_invites")
           .select("id, group_id, role, family_member_id")
           .eq("email", email)
           .is("accepted_at", null)
@@ -153,7 +153,7 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
           if (!cancelled) {
             setState({
               step: "invite",
-              invite: { ...inv, group_name: (grp as any)?.name ?? "uma família" },
+              invite: { ...inv, group_name: grp?.name ?? "uma família" },
             });
           }
           return;
@@ -179,17 +179,17 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
     try {
       // Check if already a member (prevent duplicate key error)
       const { data: existing } = await supabase
-        .from("family_group_members" as any)
+        .from("family_group_members")
         .select("id")
         .eq("auth_user_id", user.id)
         .eq("group_id", invite.group_id)
         .limit(1);
 
-      if (existing && (existing as any[]).length > 0) {
+      if (existing && existing.length > 0) {
         // Already a member — just mark invite as accepted and proceed
         await supabase
-          .from("group_invites" as any)
-          .update({ accepted_at: new Date().toISOString() } as any)
+          .from("group_invites")
+          .update({ accepted_at: new Date().toISOString() })
           .eq("id", invite.id);
 
         toast.success("Você já faz parte desta família!");
@@ -216,26 +216,26 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
           .select("id")
           .single();
         if (profileErr) throw profileErr;
-        finalMemberId = (newMember as any).id;
+        finalMemberId = newMember.id;
       }
 
       // Security: always join as 'user' — DB policy enforces this.
       // Admin promotion is a separate action performed by an existing group admin.
       const { error: insertErr } = await supabase
-        .from("family_group_members" as any)
+        .from("family_group_members")
         .insert({
           group_id: invite.group_id,
           auth_user_id: user.id,
           role: "user" as const,
           family_member_id: finalMemberId,
           accepted_at: new Date().toISOString(),
-        } as any);
+        });
 
       if (insertErr) throw insertErr;
 
       await supabase
-        .from("group_invites" as any)
-        .update({ accepted_at: new Date().toISOString() } as any)
+        .from("group_invites")
+        .update({ accepted_at: new Date().toISOString() })
         .eq("id", invite.id);
 
       toast.success("Convite aceito! Bem-vindo à família.");

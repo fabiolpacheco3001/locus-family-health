@@ -169,16 +169,16 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         setStartDateTime("");
       }
       // Populate frequency type fields
-      const editFreqType = (editingMedication as any).frequency_type ?? "fixed_interval";
+      const editFreqType = editingMedication.frequency_type ?? "fixed_interval";
       setFrequencyType(editFreqType);
       if (editFreqType === "specific_times") {
         setFrequencyHours("specific_times");
-        setSpecificTimes(Array.isArray((editingMedication as any).specific_times) ? (editingMedication as any).specific_times : []);
+        setSpecificTimes(Array.isArray(editingMedication.specific_times) ? editingMedication.specific_times : []);
         setSpecificDays([]);
       } else if (editFreqType === "specific_days") {
         setFrequencyHours("specific_days");
-        setSpecificTimes(Array.isArray((editingMedication as any).specific_times) ? (editingMedication as any).specific_times : []);
-        setSpecificDays(Array.isArray((editingMedication as any).specific_days) ? (editingMedication as any).specific_days : []);
+        setSpecificTimes(Array.isArray(editingMedication.specific_times) ? editingMedication.specific_times : []);
+        setSpecificDays(Array.isArray(editingMedication.specific_days) ? editingMedication.specific_days : []);
       } else {
         setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
         setSpecificTimes([]);
@@ -192,7 +192,7 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setEstoqueTotal(editingMedication.estoque_total?.toString() ?? "");
       setEstoqueMinimo(editingMedication.estoque_minimo?.toString() ?? "");
       setExistingReceitaUrl(editingMedication.receita_url ?? null);
-      setReason((editingMedication as any).reason ?? "");
+      setReason(editingMedication.reason ?? "");
       setReceitaFile(null);
       setExtractedMeds([]);
       setCurrentMedIndex(0);
@@ -625,8 +625,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
             type: "medication",
             scheduled_for: new Date().toISOString(),
             is_read: false,
-            ...(groupId ? { group_id: groupId } : {}),
-          } as any);
+            group_id: groupId ?? undefined,
+          });
         }
         toast.success("Medicamento adicionado!");
       }

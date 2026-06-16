@@ -96,8 +96,8 @@ const Alergias = () => {
         substance: form.substance.trim(),
         type: form.type,
         severity: form.severity,
-        ...(groupId ? { group_id: groupId } : {}),
-      } as any);
+        group_id: groupId ?? undefined,
+      });
       if (error) throw error;
     },
     onSuccess: () => {

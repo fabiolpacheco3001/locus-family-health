@@ -237,8 +237,8 @@ const Vacinas = () => {
         facility: form.facility.trim() || null,
         city: form.city.trim() || null,
         state: form.state || null,
-        ...(groupId ? { group_id: groupId } : {}),
-      } as any);
+        group_id: groupId ?? undefined,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -313,8 +313,8 @@ const Vacinas = () => {
                 facility: cached.facility,
                 city: cached.city,
                 state: cached.state,
-                ...(groupId ? { group_id: groupId } : {}),
-              } as any);
+                group_id: groupId ?? undefined,
+              });
               if (error) throw error;
               queryClient.invalidateQueries({ queryKey: ["vaccines", id] });
               toast.success("Vacina restaurada.");
@@ -455,10 +455,10 @@ const Vacinas = () => {
         facility: v.facility || null,
         city: v.city || null,
         state: v.state || null,
-        ...(groupId ? { group_id: groupId } : {}),
+        group_id: groupId ?? undefined,
       }));
 
-      const { error } = await supabase.from("vaccines").insert(rows as any);
+      const { error } = await supabase.from("vaccines").insert(rows);
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["vaccines", id] });

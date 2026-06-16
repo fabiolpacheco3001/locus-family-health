@@ -16,7 +16,7 @@ async function logConsent(userId: string) {
     { user_id: userId, consent_type: "privacy_policy",  policy_version: "1.0", user_agent: userAgent },
     { user_id: userId, consent_type: "health_data",     policy_version: "1.0", user_agent: userAgent },
   ];
-  const { error } = await supabase.from("consent_log" as any).insert(records);
+  const { error } = await supabase.from("consent_log").insert(records);
   if (error) {
     // Non-blocking — log but don't prevent the user from continuing
     console.error("consent_log insert error:", error.message);

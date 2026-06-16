@@ -127,7 +127,7 @@ const MeusDados = () => {
             cpf: cpf || null,
             avatar_url: avatarUrl || null,
             blood_type: bloodType || null,
-          } as any)
+          })
           .select("id")
           .single();
 
@@ -135,7 +135,7 @@ const MeusDados = () => {
 
         // Link to family_group_members
         const { error: linkErr } = await supabase
-          .from("family_group_members" as any)
+          .from("family_group_members")
           .update({ family_member_id: newMember.id })
           .eq("auth_user_id", user!.id)
           .eq("group_id", groupId!);

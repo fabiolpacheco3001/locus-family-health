@@ -25,7 +25,7 @@ const GerenciarFamilia = () => {
     queryKey: ["family_group_members_roles", groupId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("family_group_members" as any)
+        .from("family_group_members")
         .select("family_member_id, role, auth_user_id")
         .eq("group_id", groupId!);
       if (error) throw error;
