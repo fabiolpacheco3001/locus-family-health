@@ -142,6 +142,9 @@ const Ajustes = () => {
         .maybeSingle();
 
       const groupId = groupData?.group_id;
+      if (!groupId) {
+        throw new Error("Usuário não está associado a um grupo familiar.");
+      }
 
       // Buscar todos os membros do grupo
       const { data: membersData } = await supabase

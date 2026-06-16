@@ -266,7 +266,7 @@ const Home = () => {
       const map: Record<string, "taken" | "skipped"> = {};
       for (const d of (data ?? [])) {
         const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
-        map[key] = d.status;
+        map[key] = d.status as "taken" | "skipped";
       }
       return map;
     },
@@ -350,7 +350,7 @@ const Home = () => {
         const doseKey = effectiveScheduledFor ? `${med.id}-${effectiveScheduledFor}` : null;
         const doseStatus: "taken" | "skipped" | null = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
 
-        return { med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous };
+        return { med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous, effectiveFreqType, startDateISO };
       })
       .filter(({ effectiveScheduledFor, isContinuous }) => {
         if (isContinuous) return true;
@@ -631,7 +631,7 @@ const Home = () => {
                   </button>
                 ))}
                 {/* Medications */}
-                {(showAllActions ? medsWithNextDose : medsWithNextDose.slice(0, DISPLAY_LIMIT)).map(({ med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous }) => (
+                {(showAllActions ? medsWithNextDose : medsWithNextDose.slice(0, DISPLAY_LIMIT)).map(({ med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous, effectiveFreqType, startDateISO }) => (
                     <div
                       key={med.id}
                       className="flex flex-col p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left w-full"
