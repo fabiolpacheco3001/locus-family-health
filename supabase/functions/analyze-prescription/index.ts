@@ -86,6 +86,10 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // M17: modelo e gateway como env vars — nunca hardcoded
+    const AI_GATEWAY_URL = Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const AI_MODEL        = Deno.env.get("AI_MODEL")       ?? "google/gemini-2.5-flash";
+
     const pediatricBlock = isPediatric
       ? `\n\nCONTEXTO PEDIÁTRICO (PACIENTE COM ${patientAge} ANOS):
 Este paciente é uma CRIANÇA. Você DEVE:
@@ -168,7 +172,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
     }
 
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      AI_GATEWAY_URL,
       {
         method: "POST",
         headers: {
@@ -176,7 +180,7 @@ Se não conseguir identificar algum campo com segurança, use null.`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: AI_MODEL,
           temperature: 0.1,
           messages: [
             { role: "system", content: systemPrompt },

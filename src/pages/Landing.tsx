@@ -173,6 +173,9 @@ const Landing = () => {
             src={locusVitaLogo}
             alt="Locus Vita"
             className="h-16 md:h-20 w-auto rounded-lg shadow-sm"
+            loading="eager"
+            width={120}
+            height={80}
           />
           <div className="flex items-center gap-3">
             <Button
@@ -535,6 +538,9 @@ const Landing = () => {
             src={locusVitaLogoFooter}
             alt="Locus Vita"
             className="h-14 w-auto opacity-80"
+            loading="lazy"
+            width={100}
+            height={56}
           />
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs" style={{ color: "#888" }}>
             <Link to="/termos-de-uso" className="hover:underline">

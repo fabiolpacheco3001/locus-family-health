@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
+import { log } from "../_shared/logger.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -43,6 +44,29 @@ Deno.serve(async (req) => {
       return json({ error: "Apenas Super Admins podem acessar este recurso." }, 403);
     }
 
+    // M8: helper de audit log — non-blocking (falha não impede a resposta)
+    const audit = async (
+      auditAction: string,
+      targetId?: string | null,
+      targetEmail?: string | null,
+      metadata?: Record<string, unknown>,
+    ) => {
+      try {
+        await adminClient.from("admin_audit_log").insert({
+          performed_by: caller.id,
+          action: auditAction,
+          target_id: targetId ?? null,
+          target_email: targetEmail ?? null,
+          metadata: metadata ?? null,
+        });
+      } catch (err) {
+        log("error", "audit_log_insert_failed", {
+          action: auditAction,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    };
+
     // ── LIST EMAILS (batch) ──
     if (action === "list-emails") {
       const { userIds } = body;
@@ -58,6 +82,9 @@ Deno.serve(async (req) => {
           if (user?.email) emails.push({ id: uid, email: user.email });
         } catch { /* skip */ }
       }
+      // M8: registra enumeração de emails (alta sensibilidade)
+      await audit("list-emails", null, null, { count: emails.length });
+      log("info", "admin_list_emails", { performedBy: caller.id, count: emails.length });
       return json({ emails });
     }
 
@@ -81,6 +108,7 @@ Deno.serve(async (req) => {
         });
       }
 
+      log("info", "admin_list", { performedBy: caller.id, count: admins.length });
       return json({ admins });
     }
 
@@ -122,6 +150,9 @@ Deno.serve(async (req) => {
           .insert({ id: target.id, role: "admin" });
       }
 
+      // M8: audit
+      await audit("promote", target.id, target.email, { role: "admin" });
+      log("info", "admin_promote", { performedBy: caller.id, targetId: target.id, email: target.email });
       return json({ success: true, email: target.email });
     }
 
@@ -157,6 +188,9 @@ Deno.serve(async (req) => {
         return json({ error: "Erro ao atribuir cargo. Usuário não foi criado." }, 500);
       }
 
+      // M8: audit
+      await audit("create", newUser.user.id, newUser.user.email, { role });
+      log("info", "admin_create", { performedBy: caller.id, targetId: newUser.user.id, role });
       return json({ success: true, email: newUser.user.email });
     }
 
@@ -181,11 +215,14 @@ Deno.serve(async (req) => {
         .update({ role: "customer" })
         .eq("id", userId);
 
+      // M8: audit
+      await audit("revoke", userId, null, { previousRole: targetRole?.role ?? "unknown" });
+      log("info", "admin_revoke", { performedBy: caller.id, targetId: userId });
       return json({ success: true });
     }
 
     return json({ error: "Ação inválida." }, 400);
   } catch (err) {
-    return json({ error: err.message }, 500);
+    return json({ error: (err as Error).message }, 500);
   }
 });

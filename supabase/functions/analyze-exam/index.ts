@@ -87,6 +87,10 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // M17: modelo e gateway como env vars — nunca hardcoded
+    const AI_GATEWAY_URL = Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const AI_MODEL        = Deno.env.get("AI_MODEL")       ?? "google/gemini-2.5-flash";
+
     const systemPrompt = `Você é um assistente de extração de dados laboratoriais e de imagem.
 
 REGRA CRÍTICA DE PRIVACIDADE: Ignore, censure e descarte completamente qualquer dado pessoal do paciente (Nome, CPF, Endereço, Data de Nascimento) e dados do médico (Nome, CRM). NÃO inclua nenhuma dessas informações na sua resposta.
@@ -141,7 +145,7 @@ Se não conseguir identificar algum campo, use null. Retorne SOMENTE o JSON, sem
     ];
 
     const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      AI_GATEWAY_URL,
       {
         method: "POST",
         headers: {
@@ -149,7 +153,7 @@ Se não conseguir identificar algum campo, use null. Retorne SOMENTE o JSON, sem
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: AI_MODEL,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },

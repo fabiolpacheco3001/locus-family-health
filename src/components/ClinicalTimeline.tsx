@@ -129,7 +129,15 @@ const ClinicalTimeline = ({ events }: Props) => {
           <div className="flex-1 overflow-hidden bg-muted">
             {viewerUrl && (
               isImageUrl(viewerUrl) ? (
-                <img src={viewerUrl} alt="Anexo" className="w-full h-full object-contain" />
+                {/* M19: loading=lazy + dimensões para prevenir CLS */}
+                <img
+                  src={viewerUrl}
+                  alt="Anexo"
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                  width={800}
+                  height={600}
+                />
               ) : (
                 <iframe
                   src={`https://docs.google.com/gview?url=${encodeURIComponent(viewerUrl)}&embedded=true`}

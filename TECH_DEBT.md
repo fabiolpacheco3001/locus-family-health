@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 3.0 | **Atualizado em:** junho/2026 (sessão 13)  
+> **Versão:** 4.0 | **Atualizado em:** 2026-06-16 23:59 (sessão 14)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -23,7 +23,7 @@
 | Sessão 11 | Sprint 5: M4+B1 import_map.json Deno (std@0.224, supabase-js@2.49.4); M9 logs JSON estruturados (shared logger.ts, 9 Edge Functions, 66→0 console.* não estruturados); M2 CI/CD GitHub Actions (lint+typecheck+test); A7 testes unitários calculateNextDose (3 describe, 24 it, fake timers); M1 Sentry integração preparada (@sentry/react, lib/sentry.ts, initSentry em main.tsx, captureException em ErrorBoundary) | Sprint 5 ✅ CONCLUÍDO |
 | Sessão 12 | Sprint 6: Bug ∞ Dipirona (Fase 401) — homeDoseStatuses date filter (.gte -7d), useMedicationAlarms catch-up (loop calculateNextDose para specific_times/specific_days), MedicationDoseActions auto-conclusão (3 frequency_types, 4 novas props); Fix analyze-prescription "Failed to send" — APP_ORIGIN secret corrigido para `https://vita.locustech.com.br` (sem path); Lovable corrigiu 6 erros TS residuais em Home.tsx, Medicamentos.tsx, Ajustes.tsx, EditPetRoutineDrawer.tsx | Sprint 6 ✅ CONCLUÍDO |
 | Sessão 13 | M1 Sentry: DSN configurado (`VITE_SENTRY_DSN`) no Lovable env var + produção testada e validada (primeiro issue capturado em vita.locustech.com.br, Chrome Mobile/Android); buckets `exam-files` e `receitas` confirmados Private no Supabase Storage; M12 encerrado (coberto por A15) | Sprint 7 🟡 Em progresso |
-| Sessão 14 | Sprint 7: A3 ✅ AdminRoute authorizedRef (DevTools-proof); A8 ✅ manage-admins limite 100 IDs; A9 ✅ publish-changelog paginação loop; A12+M11 ✅ pg_cron TTL 4 jobs (medication_doses 2 anos, notifications 30d, ai_usage_logs 90d, email_send_log 90d); B4 ✅ QueryCache+MutationCache captureException global | Sprint 7 🟡 Em progresso |
+| Sessão 14 | Sprint 7: A3 ✅ AdminRoute authorizedRef; A8 ✅ manage-admins limite 100 IDs; A9 ✅ publish-changelog paginação; A12+M11 ✅ pg_cron TTL 4 jobs; B4 ✅ QueryCache captureException; B8 ✅ Project ID via env var; M10 ✅ polling backoff Asaas; M17 ✅ AI model/gateway env vars; M18 ✅ queue_name semântico; A18 ✅ pdfjs-dist ^; B2 ✅ Toaster Radix removido; M19 ✅ loading lazy + dimensões; M8 ✅ admin_audit_log; M13 ✅ recipient_email hash+TTL 24h | Sprint 7 ✅ CONCLUÍDO |
 
 ---
 
@@ -272,9 +272,9 @@
 ---
 
 ### A18 · `pdfjs-dist` pinado sem `^` — nunca recebe patches de segurança
-- **Fix:** Remover pin fixo, atualizar para `^5.x` no `package.json`.
-- **Arquivos:** `package.json` (linha 59)
-- **Status:** ⬜ Backlog
+- **Fix:** `"pdfjs-dist": "4.4.168"` → `"^4.4.168"`. Mantido em `^4.x` (não `^5.x`) pois a API de `parseSusVaccinePdf.ts` foi escrita para v4 e migração para v5 tem breaking changes (ver B9).
+- **Arquivos:** `package.json`
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 
@@ -326,8 +326,10 @@
 ---
 
 ### M8 · `manage-admins` sem audit log de acesso
-- **Fix:** Inserir registro em tabela `admin_audit_log` a cada ação (promote, revoke, list).
-- **Status:** ⬜ Backlog
+- **Fix:** Migration `20260616000021` cria tabela `admin_audit_log` (id, performed_by, action, target_id, target_email, metadata, created_at) com RLS — apenas super_admins podem SELECT; escrita exclusiva via service_role. Helper `audit()` non-blocking adicionado em `manage-admins/index.ts` — registra `promote`, `revoke`, `create`, `list-emails`. Ação `list` não gera registro individual (volume alto, baixo risco).
+- **Arquivos:** `supabase/migrations/20260616000021_admin_audit_log.sql`, `supabase/functions/manage-admins/index.ts`
+- **⚠️ Aplicar migration manualmente via SQL Editor**
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 
@@ -361,8 +363,11 @@
 ---
 
 ### M13 · `email_send_log.recipient_email` em texto plano
-- **Fix:** Pseudonimizar com hash SHA-256 + salt; manter email completo apenas por 24h e depois substituir pelo hash.
-- **Status:** ⬜ Backlog
+- **Fix:** Migration `20260616000022`: coluna `recipient_email_hash TEXT` adicionada; `recipient_email` tornada nullable; pg_cron job `anonymize_email_send_log` roda a cada hora e NULL-a `recipient_email` em registros com >24h. Edge Function `process-email-queue`: helper `hashEmail()` com `crypto.subtle.digest('SHA-256')` + `EMAIL_HASH_SALT` env var; os 3 inserts (dlq, sent, rate_limited) agora gravam `recipient_email_hash` junto.
+- **Arquivos:** `supabase/migrations/20260616000022_email_send_log_pseudonymize.sql`, `supabase/functions/process-email-queue/index.ts`
+- **⚠️ Aplicar migration manualmente via SQL Editor** (requer pg_cron já habilitado)
+- **⚠️ Criar secret `EMAIL_HASH_SALT`** no Supabase Dashboard → Edge Functions → Secrets (string aleatória longa)
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 
@@ -391,23 +396,24 @@
 ---
 
 ### M17 · Modelo de IA e gateway URL hardcoded
-- **Fix:** Criar secrets `AI_MODEL` e `AI_GATEWAY_URL` no Supabase.
-- **Arquivos:** `supabase/functions/analyze-exam/index.ts` (linha 134), `supabase/functions/analyze-prescription/index.ts` (linha 151)
-- **Status:** ⬜ Backlog
+- **Fix:** `AI_GATEWAY_URL` e `AI_MODEL` lidos de `Deno.env.get()` com fallback para os valores atuais. Sem secrets configurados, comportamento idêntico ao anterior. Para trocar modelo ou gateway: criar `AI_GATEWAY_URL` e `AI_MODEL` no Supabase Dashboard → Edge Functions → Secrets.
+- **Arquivos:** `supabase/functions/analyze-prescription/index.ts`, `supabase/functions/analyze-exam/index.ts`
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 
 ### M18 · `.eq('id', 1)` hardcoded em `process-email-queue`
-- **Risco:** Se a tabela `email_send_state` for recriada com ID diferente de 1, a fila para silenciosamente.
-- **Fix:** Buscar linha por coluna semântica (ex: `.eq('queue_name', 'default')`) em vez de ID numérico.
-- **Arquivos:** `supabase/functions/process-email-queue/index.ts` (linha 315)
-- **Status:** ⬜ Backlog
+- **Fix:** Migration `20260616000020` adiciona coluna `queue_name TEXT NOT NULL DEFAULT 'default'` com UNIQUE index. SELECT e UPDATE agora usam `.eq('queue_name', 'default')` — semântico e resiliente a recriação de tabela.
+- **Arquivos:** `supabase/functions/process-email-queue/index.ts`, `supabase/migrations/20260616000020_email_send_state_queue_name.sql`
+- **⚠️ Aplicar migration manualmente via SQL Editor**
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 
 ### M19 · Imagens sem otimização (landing page e listas)
-- **Fix:** `loading="lazy"` nas imagens de seção da landing; versão WebP do logo; dimensões no `<img>` do ClinicalTimeline (previne CLS).
-- **Status:** ⬜ Backlog
+- **Fix:** Logo nav com `loading="eager"` + dimensões explícitas (120×80); logo footer com `loading="lazy"` + dimensões (100×56); imagens de seção já tinham `loading="lazy"` ✅; ClinicalTimeline viewer com `loading="lazy"` + `width={800} height={600}` para prevenir CLS. WebP do logo fica para quando os assets forem atualizados.
+- **Arquivos:** `src/pages/Landing.tsx`, `src/components/ClinicalTimeline.tsx`
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 
@@ -420,9 +426,9 @@
 ---
 
 ### B2 · `@radix-ui/react-toast` + `sonner` duplicados
-- **Fix:** Remover `useToast` (Radix) dos 3 arquivos que ainda o usam e migrar para `sonner`. Remover `@radix-ui/react-toast`.
-- **Arquivos:** `src/components/ui/toaster.tsx`, `src/hooks/use-toast.ts`, `src/App.tsx`
-- **Status:** ⬜ Backlog
+- **Fix:** `<Toaster />` Radix removido do `App.tsx` (import + JSX). Nenhuma página usava `useToast()` diretamente — todas já em Sonner. Arquivos `ui/toaster.tsx` e `hooks/use-toast.ts` mantidos como dead code compatível com Lovable (shadcn UI gerado). Pacote `@radix-ui/react-toast` mantido no `package.json` para não quebrar o build do shadcn.
+- **Arquivos:** `src/App.tsx`
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 

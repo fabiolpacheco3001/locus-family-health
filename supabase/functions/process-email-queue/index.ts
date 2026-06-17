@@ -35,6 +35,20 @@ function getRetryAfterSeconds(error: unknown): number {
   return 60
 }
 
+// M13: SHA-256 hash do email com salt para pseudonimização LGPD.
+// Salt lido de EMAIL_HASH_SALT (secret Supabase). Sem salt configurado,
+// hash não tem proteção contra rainbow tables — configure o secret em produção.
+const EMAIL_HASH_SALT = Deno.env.get('EMAIL_HASH_SALT') ?? '';
+
+async function hashEmail(email: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(email.toLowerCase().trim() + EMAIL_HASH_SALT);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split('.')
   if (parts.length < 2) {
@@ -61,10 +75,13 @@ async function moveToDlq(
   reason: string
 ): Promise<void> {
   const payload = msg.message
+  // M13: grava hash junto com email completo (email será NULLado após 24h via pg_cron)
+  const recipientHash = typeof payload.to === 'string' ? await hashEmail(payload.to) : null;
   await supabase.from('email_send_log').insert({
     message_id: payload.message_id,
     template_name: (payload.label || queue) as string,
     recipient_email: payload.to,
+    recipient_email_hash: recipientHash,
     status: 'dlq',
     error_message: reason,
   })
@@ -115,9 +132,11 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   // 1. Check rate-limit cooldown and read queue config
+  // M18: lookup por queue_name semântico em vez de .eq('id', 1) hardcoded
   const { data: state } = await supabase
     .from('email_send_state')
     .select('retry_after_until, batch_size, send_delay_ms, auth_email_ttl_minutes, transactional_email_ttl_minutes')
+    .eq('queue_name', 'default')
     .single()
 
   if (state?.retry_after_until && new Date(state.retry_after_until) > new Date()) {
@@ -256,11 +275,12 @@ Deno.serve(async (req) => {
           { apiKey, sendUrl: Deno.env.get('LOVABLE_SEND_URL') }
         )
 
-        // Log success
+        // Log success — M13: hash gravado junto; email NULLado pelo pg_cron após 24h
         await supabase.from('email_send_log').insert({
           message_id: payload.message_id,
           template_name: payload.label || queue,
           recipient_email: payload.to,
+          recipient_email_hash: typeof payload.to === 'string' ? await hashEmail(payload.to) : null,
           status: 'sent',
         })
 
@@ -278,10 +298,12 @@ Deno.serve(async (req) => {
         log('error', 'email_send_failed', { queue, msg_id: msg.msg_id, read_ct: msg.read_ct, failed_attempts: failedAttempts, error: errorMsg })
 
         if (isRateLimited(error)) {
+          // M13: hash gravado junto; email NULLado pelo pg_cron após 24h
           await supabase.from('email_send_log').insert({
             message_id: payload.message_id,
             template_name: payload.label || queue,
             recipient_email: payload.to,
+            recipient_email_hash: typeof payload.to === 'string' ? await hashEmail(payload.to) : null,
             status: 'rate_limited',
             error_message: errorMsg.slice(0, 1000),
           })
@@ -295,7 +317,7 @@ Deno.serve(async (req) => {
               ).toISOString(),
               updated_at: new Date().toISOString(),
             })
-            .eq('id', 1)
+            .eq('queue_name', 'default')
 
           // Stop processing — remaining messages stay in queue (VT expires, retried next cycle)
           return new Response(
