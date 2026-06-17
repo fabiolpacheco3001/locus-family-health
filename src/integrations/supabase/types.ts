@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          performed_by: string
+          target_email: string | null
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_by: string
+          target_email?: string | null
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          performed_by?: string
+          target_email?: string | null
+          target_id?: string | null
+        }
+        Relationships: []
+      }
       ai_usage_logs: {
         Row: {
           created_at: string
@@ -327,7 +357,8 @@ export type Database = {
           id: string
           message_id: string | null
           metadata: Json | null
-          recipient_email: string
+          recipient_email: string | null
+          recipient_email_hash: string | null
           status: string
           template_name: string
         }
@@ -337,7 +368,8 @@ export type Database = {
           id?: string
           message_id?: string | null
           metadata?: Json | null
-          recipient_email: string
+          recipient_email?: string | null
+          recipient_email_hash?: string | null
           status: string
           template_name: string
         }
@@ -347,7 +379,8 @@ export type Database = {
           id?: string
           message_id?: string | null
           metadata?: Json | null
-          recipient_email?: string
+          recipient_email?: string | null
+          recipient_email_hash?: string | null
           status?: string
           template_name?: string
         }
@@ -358,6 +391,7 @@ export type Database = {
           auth_email_ttl_minutes: number
           batch_size: number
           id: number
+          queue_name: string
           retry_after_until: string | null
           send_delay_ms: number
           transactional_email_ttl_minutes: number
@@ -367,6 +401,7 @@ export type Database = {
           auth_email_ttl_minutes?: number
           batch_size?: number
           id?: number
+          queue_name?: string
           retry_after_until?: string | null
           send_delay_ms?: number
           transactional_email_ttl_minutes?: number
@@ -376,6 +411,7 @@ export type Database = {
           auth_email_ttl_minutes?: number
           batch_size?: number
           id?: number
+          queue_name?: string
           retry_after_until?: string | null
           send_delay_ms?: number
           transactional_email_ttl_minutes?: number
