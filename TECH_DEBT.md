@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 4.1 | **Atualizado em:** 2026-06-17 (sessão 15)  
+> **Versão:** 4.2 | **Atualizado em:** 2026-06-17 (sessão 15 — auditoria)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -232,8 +232,8 @@
 ### A12 · `medication_doses` sem TTL/particionamento
 - **Risco:** ~5M rows/ano com 1k usuários. Queries de aderência degradam progressivamente.
 - **Fix:** pg_cron job criado — deleta doses com `scheduled_for < now() - interval '2 years'`, todo domingo às 3h UTC. Particionamento avaliado como desnecessário até ~50M rows.
-- **Migration:** `20260616000019_ttl_pg_cron_jobs.sql` — ⚠️ **aplicar manualmente via SQL Editor** (pg_cron precisa estar habilitado em Database → Extensions primeiro)
-- **Status:** ✅ Resolvido (sessão 13) — migration pendente de aplicação manual
+- **Migration:** `20260616000019_ttl_pg_cron_jobs.sql` — aplicada ✅ (pg_cron habilitado; 5 jobs confirmados no Dashboard)
+- **Status:** ✅ Resolvido (sessão 13)
 
 ---
 
@@ -329,8 +329,7 @@
 ### M8 · `manage-admins` sem audit log de acesso
 - **Fix:** Migration `20260616000021` cria tabela `admin_audit_log` (id, performed_by, action, target_id, target_email, metadata, created_at) com RLS — apenas super_admins podem SELECT; escrita exclusiva via service_role. Helper `audit()` non-blocking adicionado em `manage-admins/index.ts` — registra `promote`, `revoke`, `create`, `list-emails`. Ação `list` não gera registro individual (volume alto, baixo risco).
 - **Arquivos:** `supabase/migrations/20260616000021_admin_audit_log.sql`, `supabase/functions/manage-admins/index.ts`
-- **⚠️ Aplicar migration manualmente via SQL Editor**
-- **Status:** ✅ Resolvido (sessão 14)
+- **Status:** ✅ Resolvido (sessão 14) — migration 000021 aplicada ✅
 
 ---
 
@@ -353,7 +352,7 @@
   - `ai_usage_logs` com >90 dias (segundas 2h UTC)
   - `email_send_log` com >90 dias (segundas 2:30h UTC)
 - **Migration:** `20260616000019_ttl_pg_cron_jobs.sql`
-- **Status:** ✅ Resolvido (sessão 13) — migration pendente de aplicação manual junto com A12
+- **Status:** ✅ Resolvido (sessão 13) — migration 000019 aplicada ✅ (junto com A12)
 
 ---
 
@@ -366,9 +365,8 @@
 ### M13 · `email_send_log.recipient_email` em texto plano
 - **Fix:** Migration `20260616000022`: coluna `recipient_email_hash TEXT` adicionada; `recipient_email` tornada nullable; pg_cron job `anonymize_email_send_log` roda a cada hora e NULL-a `recipient_email` em registros com >24h. Edge Function `process-email-queue`: helper `hashEmail()` com `crypto.subtle.digest('SHA-256')` + `EMAIL_HASH_SALT` env var; os 3 inserts (dlq, sent, rate_limited) agora gravam `recipient_email_hash` junto.
 - **Arquivos:** `supabase/migrations/20260616000022_email_send_log_pseudonymize.sql`, `supabase/functions/process-email-queue/index.ts`
-- **⚠️ Aplicar migration manualmente via SQL Editor** (requer pg_cron já habilitado)
-- **⚠️ Criar secret `EMAIL_HASH_SALT`** no Supabase Dashboard → Edge Functions → Secrets (string aleatória longa)
-- **Status:** ✅ Resolvido (sessão 14)
+- **Secret:** `EMAIL_HASH_SALT` deve existir no Supabase Dashboard → Edge Functions → Secrets (string aleatória longa) — verificar se foi criado
+- **Status:** ✅ Resolvido (sessão 14) — migration 000022 aplicada ✅
 
 ---
 
@@ -406,8 +404,7 @@
 ### M18 · `.eq('id', 1)` hardcoded em `process-email-queue`
 - **Fix:** Migration `20260616000020` adiciona coluna `queue_name TEXT NOT NULL DEFAULT 'default'` com UNIQUE index. SELECT e UPDATE agora usam `.eq('queue_name', 'default')` — semântico e resiliente a recriação de tabela.
 - **Arquivos:** `supabase/functions/process-email-queue/index.ts`, `supabase/migrations/20260616000020_email_send_state_queue_name.sql`
-- **⚠️ Aplicar migration manualmente via SQL Editor**
-- **Status:** ✅ Resolvido (sessão 14)
+- **Status:** ✅ Resolvido (sessão 14) — migration 000020 aplicada ✅
 
 ---
 
