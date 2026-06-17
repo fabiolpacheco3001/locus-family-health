@@ -338,9 +338,9 @@
 ---
 
 ### M10 · `setTimeout(1500)` hardcoded no checkout Asaas
-- **Fix:** Substituir por polling com backoff (verificar status do pagamento a cada N ms até timeout).
-- **Arquivos:** `supabase/functions/create-asaas-checkout/index.ts` (linha 72)
-- **Status:** ⬜ Backlog
+- **Fix:** `getSubscriptionInvoiceUrl` refatorada com polling de backoff crescente: 5 tentativas com delays `[500, 1000, 1500, 2000, 2500]ms` (máx 7.5s total). Retorna assim que `invoiceUrl` estiver disponível — no happy path é mais rápido que o delay fixo. Na tentativa final, se `invoiceUrl` ainda ausente, deriva a URL via `payment.id` (fallback mantido). Bem dentro do timeout de 60s das Edge Functions.
+- **Arquivos:** `supabase/functions/create-asaas-checkout/index.ts`
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 

@@ -69,21 +69,49 @@ async function findOrCreateCustomer(email: string, name: string): Promise<string
   return created.id;
 }
 
-/** Get the invoiceUrl from the first payment of a subscription */
+/** Get the invoiceUrl from the first payment of a subscription.
+ *
+ * M10: polling com backoff exponencial em vez de setTimeout fixo de 1500ms.
+ * O Asaas pode levar de <500ms até alguns segundos para gerar o primeiro pagamento
+ * após criar a assinatura. Tentamos até 5 vezes com intervalos crescentes (máx ~7.5s total).
+ * Na tentativa final, se o payment existir mas invoiceUrl ainda não estiver pronto,
+ * derivamos a URL a partir do ID do pagamento (fallback de produção mantido).
+ */
 async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string> {
-  await new Promise((r) => setTimeout(r, 1500));
+  const DELAYS_MS = [500, 1000, 1500, 2000, 2500]; // soma: 7500ms máximo
+  const isLast = (i: number) => i === DELAYS_MS.length - 1;
 
-  const payments = await asaasFetch(`/payments?subscription=${subscriptionId}`, { method: "GET" });
-  if (payments.data && payments.data.length > 0) {
-    const payment = payments.data[0];
-    if (payment.invoiceUrl) return payment.invoiceUrl;
-    // Fallback: deriva o base web da API URL removendo o path da API.
-    // Em produção, payment.invoiceUrl é sempre retornado pelo Asaas e esta linha nunca executa.
-    const webBase = ASAAS_API_URL
-      .replace(/\/api\/v3\/?$/, "")
-      .replace(/\/v3\/?$/, "")
-      .replace("api-sandbox.", "sandbox.");
-    return `${webBase}/i/${payment.id}`;
+  for (let i = 0; i < DELAYS_MS.length; i++) {
+    await new Promise((r) => setTimeout(r, DELAYS_MS[i]));
+
+    const payments = await asaasFetch(`/payments?subscription=${subscriptionId}`, { method: "GET" });
+    const list: Array<{ id: string; invoiceUrl?: string }> = payments.data ?? [];
+
+    if (list.length === 0) {
+      if (isLast(i)) break; // esgotou tentativas — vai para o throw abaixo
+      log("info", "asaas_payments_not_ready", { subscriptionId, attempt: i + 1 });
+      continue;
+    }
+
+    const payment = list[0];
+
+    if (payment.invoiceUrl) {
+      log("info", "asaas_invoice_url_found", { subscriptionId, attempt: i + 1 });
+      return payment.invoiceUrl;
+    }
+
+    if (isLast(i)) {
+      // Fallback: deriva o base web da API URL removendo o path da API.
+      // Em produção, payment.invoiceUrl é sempre retornado pelo Asaas e esta linha raramente executa.
+      const webBase = (ASAAS_API_URL ?? "")
+        .replace(/\/api\/v3\/?$/, "")
+        .replace(/\/v3\/?$/, "")
+        .replace("api-sandbox.", "sandbox.");
+      log("info", "asaas_invoice_url_fallback", { subscriptionId, paymentId: payment.id });
+      return `${webBase}/i/${payment.id}`;
+    }
+
+    log("info", "asaas_invoice_url_not_ready", { subscriptionId, attempt: i + 1 });
   }
 
   throw new Error("Nenhuma cobrança gerada para a assinatura. Tente novamente.");
