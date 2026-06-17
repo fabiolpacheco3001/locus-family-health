@@ -75,14 +75,14 @@ export function calculateNextDose(
         const startSP = toZonedTime(start, APP_TIMEZONE);
         const startDayStr = `${startSP.getFullYear()}-${String(startSP.getMonth() + 1).padStart(2, "0")}-${String(startSP.getDate()).padStart(2, "0")}`;
 
-        // If start_date is TODAY, skip times that have already passed on the wall clock.
+        // If start_date is TODAY (relative to referenceTime), skip times that have already passed.
         // Avoids showing "Atrasado" for a medication just being registered mid-day.
-        const wallNowSP = toZonedTime(new Date(), APP_TIMEZONE);
-        const wallNowDayStr = `${wallNowSP.getFullYear()}-${String(wallNowSP.getMonth() + 1).padStart(2, "0")}-${String(wallNowSP.getDate()).padStart(2, "0")}`;
-        if (startDayStr === wallNowDayStr) {
-          const wallNowTimeStr = `${String(wallNowSP.getHours()).padStart(2, "0")}:${String(wallNowSP.getMinutes()).padStart(2, "0")}`;
+        // Uses refSP (not new Date()) so the function stays fully deterministic in tests.
+        const refDayStr = `${refSP.getFullYear()}-${String(refSP.getMonth() + 1).padStart(2, "0")}-${String(refSP.getDate()).padStart(2, "0")}`;
+        if (startDayStr === refDayStr) {
+          const refTimeStr = `${String(refSP.getHours()).padStart(2, "0")}:${String(refSP.getMinutes()).padStart(2, "0")}`;
           for (const t of sorted) {
-            if (t >= wallNowTimeStr) {
+            if (t >= refTimeStr) {
               const candidate = parseDateInSP(`${startDayStr}T${t}`);
               if (candidate) return withinEnd(candidate);
             }
@@ -139,19 +139,19 @@ export function calculateNextDose(
         const startSP = toZonedTime(start, APP_TIMEZONE);
         const startDayStr = `${startSP.getFullYear()}-${String(startSP.getMonth() + 1).padStart(2, "0")}-${String(startSP.getDate()).padStart(2, "0")}`;
 
-        // If start_date is TODAY and today is an allowed weekday, skip past times.
-        const wallNowSP = toZonedTime(new Date(), APP_TIMEZONE);
-        const wallNowDayStr = `${wallNowSP.getFullYear()}-${String(wallNowSP.getMonth() + 1).padStart(2, "0")}-${String(wallNowSP.getDate()).padStart(2, "0")}`;
-        if (startDayStr === wallNowDayStr && sortedDays.includes(wallNowSP.getDay())) {
-          const wallNowTimeStr = `${String(wallNowSP.getHours()).padStart(2, "0")}:${String(wallNowSP.getMinutes()).padStart(2, "0")}`;
+        // If start_date is TODAY (relative to referenceTime) and today is an allowed weekday, skip past times.
+        // Uses refSP (not new Date()) so the function stays fully deterministic in tests.
+        const refDayStr2 = `${refSP.getFullYear()}-${String(refSP.getMonth() + 1).padStart(2, "0")}-${String(refSP.getDate()).padStart(2, "0")}`;
+        if (startDayStr === refDayStr2 && sortedDays.includes(refSP.getDay())) {
+          const refTimeStr2 = `${String(refSP.getHours()).padStart(2, "0")}:${String(refSP.getMinutes()).padStart(2, "0")}`;
           for (const t of times) {
-            if (t >= wallNowTimeStr) {
+            if (t >= refTimeStr2) {
               const candidate = parseDateInSP(`${startDayStr}T${t}`);
               if (candidate) return withinEnd(candidate);
             }
           }
           // All today's times passed → fall through to find next allowed day
-        } else if (startDayStr !== wallNowDayStr) {
+        } else if (startDayStr !== refDayStr2) {
           // Start date is in the future → first time on that day
           const candidate = parseDateInSP(`${startDayStr}T${times[0]}`);
           return candidate ? withinEnd(candidate) : null;
