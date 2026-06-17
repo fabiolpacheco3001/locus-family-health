@@ -229,8 +229,9 @@
 
 ### A12 · `medication_doses` sem TTL/particionamento
 - **Risco:** ~5M rows/ano com 1k usuários. Queries de aderência degradam progressivamente.
-- **Fix:** Criar pg_cron job que deleta doses com `scheduled_for < now() - interval '2 years'` + avaliar particionamento por `scheduled_for`.
-- **Status:** ⬜ Backlog
+- **Fix:** pg_cron job criado — deleta doses com `scheduled_for < now() - interval '2 years'`, todo domingo às 3h UTC. Particionamento avaliado como desnecessário até ~50M rows.
+- **Migration:** `20260616000019_ttl_pg_cron_jobs.sql` — ⚠️ **aplicar manualmente via SQL Editor** (pg_cron precisa estar habilitado em Database → Extensions primeiro)
+- **Status:** ✅ Resolvido (sessão 13) — migration pendente de aplicação manual
 
 ---
 
@@ -343,11 +344,12 @@
 ---
 
 ### M11 · Sem TTL em `notifications`, `ai_usage_logs`, `email_send_log`
-- **Fix:** pg_cron jobs de limpeza:
-  - `notifications` lidas com >30 dias
-  - `ai_usage_logs` com >90 dias
-  - `email_send_log` com >90 dias
-- **Status:** ⬜ Backlog
+- **Fix:** pg_cron jobs de limpeza — mesma migration que A12:
+  - `notifications` lidas com >30 dias (diário 2h UTC)
+  - `ai_usage_logs` com >90 dias (segundas 2h UTC)
+  - `email_send_log` com >90 dias (segundas 2:30h UTC)
+- **Migration:** `20260616000019_ttl_pg_cron_jobs.sql`
+- **Status:** ✅ Resolvido (sessão 13) — migration pendente de aplicação manual junto com A12
 
 ---
 
