@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 4.4 | **Atualizado em:** 2026-06-17 (sessão 16)  
+> **Versão:** 4.5 | **Atualizado em:** 2026-06-17 (sessão 17)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -26,6 +26,7 @@
 | Sessão 14 | Sprint 7: A3 ✅ AdminRoute authorizedRef; A8 ✅ manage-admins limite 100 IDs; A9 ✅ publish-changelog paginação; A12+M11 ✅ pg_cron TTL 4 jobs; B4 ✅ QueryCache captureException; B8 ✅ Project ID via env var; M10 ✅ polling backoff Asaas; M17 ✅ AI model/gateway env vars; M18 ✅ queue_name semântico; A18 ✅ pdfjs-dist ^; B2 ✅ Toaster Radix removido; M19 ✅ loading lazy + dimensões; M8 ✅ admin_audit_log; M13 ✅ recipient_email hash+TTL 24h | Sprint 7 ✅ CONCLUÍDO |
 | Sessão 15 | CI desbloqueado: package-lock.json regenerado (13 pkgs ausentes); Node.js 20→22 no ci.yml; eslint.config.js corrigido (no-explicit-any, no-empty-object-type, no-require-imports como warn); lint corrigido em parseSusVaccinePdf.ts (useless-escape + prefer-const), Home.tsx (Infinity→InfinityIcon), Medicamentos.tsx (prefer-const), useAuth.tsx (no-empty). CI #18 ✅ VERDE pela primeira vez | Sprint 8 🟡 Em progresso |
 | Sessão 16 | B6 ✅ Vite 5→6: `package.json` `"vite": "^6.0.0"`; fix `calculateNextDose` (refSP em vez de new Date() — teste determinístico). A16 ✅ Runbook LGPD Art. 48: `docs/runbook-lgpd-art48.md` (P0/P1/P2, prazo ANPD 3 dias úteis, templates, evidências). Auditoria TECH_DEBT.md v4.2→4.3 | Sprint 8 🟡 Em progresso |
+| Sessão 17 | M3 ✅ Refatoração Home.tsx (849→138 LOC) + Vacinas.tsx (802→478 LOC): useHomeData, 5 sub-componentes home/, useVaccineImport, VaccineFormDrawer. TECH_DEBT.md v4.5 | Sprint 8 🟡 Em progresso |
 
 ---
 
@@ -297,7 +298,17 @@
 
 ### M3 · `Home.tsx` (826 LOC) e `Vacinas.tsx` (801 LOC) monolíticos
 - **Fix:** Extrair sub-componentes e hooks por responsabilidade.
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 17)
+  - `Home.tsx`: 849 → 138 LOC (−84%)
+    - `src/hooks/useHomeData.ts` — pendingCounts, upcoming, todayPetRoutines, homeDoseStatuses, medsWithNextDose
+    - `src/components/home/HomeHeader.tsx` — saudação, busca, notificações
+    - `src/components/home/OverviewCarousel.tsx` — carrossel Visão Geral com dots
+    - `src/components/home/TodayMedicationsSection.tsx` — accordion Ações Medicamentosas
+    - `src/components/home/UpcomingAppointmentsSection.tsx` — accordion 5 Próximos Compromissos
+    - `src/components/home/FamilySelectDrawer.tsx` — drawer seleção de familiar
+  - `Vacinas.tsx`: 802 → 478 LOC (−40%)
+    - `src/hooks/useVaccineImport.ts` — upload PDF, parsing SUS, validação CPF, deduplicação
+    - `src/components/vacinas/VaccineFormDrawer.tsx` — formulário add/edit vacina
 
 ---
 
