@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 4.3 | **Atualizado em:** 2026-06-17 (sessão 16)  
+> **Versão:** 4.4 | **Atualizado em:** 2026-06-17 (sessão 16)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -25,7 +25,7 @@
 | Sessão 13 | M1 Sentry: DSN configurado (`VITE_SENTRY_DSN`) no Lovable env var + produção testada e validada (primeiro issue capturado em vita.locustech.com.br, Chrome Mobile/Android); buckets `exam-files` e `receitas` confirmados Private no Supabase Storage; M12 encerrado (coberto por A15) | Sprint 7 🟡 Em progresso |
 | Sessão 14 | Sprint 7: A3 ✅ AdminRoute authorizedRef; A8 ✅ manage-admins limite 100 IDs; A9 ✅ publish-changelog paginação; A12+M11 ✅ pg_cron TTL 4 jobs; B4 ✅ QueryCache captureException; B8 ✅ Project ID via env var; M10 ✅ polling backoff Asaas; M17 ✅ AI model/gateway env vars; M18 ✅ queue_name semântico; A18 ✅ pdfjs-dist ^; B2 ✅ Toaster Radix removido; M19 ✅ loading lazy + dimensões; M8 ✅ admin_audit_log; M13 ✅ recipient_email hash+TTL 24h | Sprint 7 ✅ CONCLUÍDO |
 | Sessão 15 | CI desbloqueado: package-lock.json regenerado (13 pkgs ausentes); Node.js 20→22 no ci.yml; eslint.config.js corrigido (no-explicit-any, no-empty-object-type, no-require-imports como warn); lint corrigido em parseSusVaccinePdf.ts (useless-escape + prefer-const), Home.tsx (Infinity→InfinityIcon), Medicamentos.tsx (prefer-const), useAuth.tsx (no-empty). CI #18 ✅ VERDE pela primeira vez | Sprint 8 🟡 Em progresso |
-| Sessão 16 | B6 ✅ Vite 5→6: `package.json` `"vite": "^6.0.0"`. Auditoria TECH_DEBT.md v4.2: avisos ⚠️ de 5 migrations removidos (todas aplicadas), EMAIL_HASH_SALT confirmado | Sprint 8 🟡 Em progresso |
+| Sessão 16 | B6 ✅ Vite 5→6: `package.json` `"vite": "^6.0.0"`; fix `calculateNextDose` (refSP em vez de new Date() — teste determinístico). A16 ✅ Runbook LGPD Art. 48: `docs/runbook-lgpd-art48.md` (P0/P1/P2, prazo ANPD 3 dias úteis, templates, evidências). Auditoria TECH_DEBT.md v4.2→4.3 | Sprint 8 🟡 Em progresso |
 
 ---
 
@@ -261,9 +261,10 @@
 
 ---
 
-### A16 · Art. 48 LGPD — Sem mecanismo de detecção ou notificação de incidentes
-- **Fix:** Integrar Sentry (cobre parcialmente) + criar runbook de resposta a incidentes + definir processo de notificação à ANPD.
-- **Status:** ⬜ Backlog
+### A16 · Art. 48 LGPD — Sem mecanismo de detecção ou notificação de incidentes ✅
+- **Fix:** Sentry já integrado (sessão 13). Runbook de resposta a incidentes criado em `docs/runbook-lgpd-art48.md`: classificação P0/P1/P2, fluxo de contenção, notificação ANPD (3 dias úteis via peticionamento.anpd.gov.br, conforme Resolução CD/ANPD 4/2023), templates de comunicação aos titulares, registro de evidências e revisão pós-incidente.
+- **Arquivos:** `docs/runbook-lgpd-art48.md`
+- **Status:** ✅ Resolvido (sessão 16)
 
 ---
 
