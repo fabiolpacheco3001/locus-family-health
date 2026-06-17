@@ -205,7 +205,7 @@ export function mapVaccineToStandard(rawName: string): { standardName: string; d
   for (const entry of VACCINE_MAP) {
     if (entry.pattern.test(rawTrimmed)) {
       // Remove the matched pattern AND the standard name from details
-      let cleanDetails = rawTrimmed
+      const cleanDetails = rawTrimmed
         .replace(entry.pattern, "")
         .replace(new RegExp(entry.standardName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "")
         .replace(/\bVACINA\b/gi, "")
@@ -222,7 +222,7 @@ export function mapVaccineToStandard(rawName: string): { standardName: string; d
 const GARBAGE_TERMS = ["carteira", "digital", "nacional", "data de nascimento", "cpf/cns", "vacinação digital"];
 
 function sanitizeVaccineName(value: string): string {
-  let cleaned = value
+  const cleaned = value
     .replace(/.*(?:UF\b|Munic[ií]pio|Sexo|MASCULINO|FEMININO|BRASILEIRO|BRASILEIRA|VACINAÇÃO COVID-19|VACINAS\s*SOROS|DILUENTES ADMINISTRADOS|Naturalidade|Nome da M[ãa]e|Data de Nascimento|Nome Completo)\s*/ig, "")
     .replace(/\bRefor[çc]o\b/gi, "")
     .replace(/\bDose\s*[Úú]nica\b/gi, "")
@@ -263,7 +263,7 @@ const FOOTER_PATTERNS = [
   /carteira de vacina[çc][aã]o emitida/i,
   /esta carteira/i,
   /sua autenticidade/i,
-  /^\*\*?\s*cnes\s*[–\-]/i,
+  /^\*\*?\s*cnes\s*[-–]/i,
   /^obs\./i,
 ];
 
@@ -348,8 +348,8 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
             .replace(/\b19\b/g, '')
             .replace(/DIFTERIA\s*E\s*T[EÉ]TANO/gi, '')
             .replace(/HEPATITE\s*B/gi, '')
-            .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
-            .replace(/^[\s\-]+|[\s\-]+$/g, '')
+            .replace(/[\s-]*\d{2}\/\d{2}\/\d{4}[\s-]*/g, ' ')
+            .replace(/^[\s-]+|[\s-]+$/g, '')
             .replace(/\s{2,}/g, ' ')
             .trim();
           vaccines[lastIdx].details = reDetails || undefined;

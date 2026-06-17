@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const parsed = JSON.parse(stored);
         return parsed?.user ?? null;
       }
-    } catch {}
+    } catch { /* ignore stale/invalid localStorage data */ }
     return null;
   });
   const [session, setSession] = useState<Session | null>(null);

@@ -23,6 +23,8 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
       // D1: TypeScript strict mode ativado progressivamente — any permitido por ora
       "@typescript-eslint/no-explicit-any": "warn",
+      // shadcn/ui usa interfaces vazias como type aliases — padrão aceito
+      "@typescript-eslint/no-empty-object-type": "warn",
     },
   },
 );
