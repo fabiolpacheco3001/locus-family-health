@@ -127,8 +127,8 @@ const ClinicalTimeline = ({ events }: Props) => {
             </Button>
           </div>
           <div className="flex-1 overflow-hidden bg-muted">
+            {/* M19: loading=lazy + dimensões para prevenir CLS */}
             {viewerUrl && (
-              // M19: loading=lazy + dimensões para prevenir CLS
               isImageUrl(viewerUrl) ? (
                 <img
                   src={viewerUrl}
