@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import { FamilyGroupProvider } from "@/hooks/useFamilyGroup";
+import { captureException } from "@/lib/sentry";
 // B5: previously static imports converted to lazy() — excluded from initial bundle
 // Layout wrappers kept static (needed synchronously before any route renders)
 import AppLayout from "./components/AppLayout";
@@ -122,7 +123,17 @@ const RouteLoader = () => (
   </div>
 );
 
-const queryClient = new QueryClient();
+// B4: QueryCache e MutationCache com captura global de erros via Sentry.
+// TanStack Query v5 removeu onError de defaultOptions.queries — QueryCache é a API correta.
+// No-op em desenvolvimento (captureException verifica import.meta.env.PROD internamente).
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error) => captureException(error),
+  }),
+  mutationCache: new MutationCache({
+    onError: (error) => captureException(error),
+  }),
+});
 
 const App = () => (
   <ErrorBoundary>

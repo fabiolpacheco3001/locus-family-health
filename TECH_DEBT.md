@@ -23,6 +23,7 @@
 | Sessão 11 | Sprint 5: M4+B1 import_map.json Deno (std@0.224, supabase-js@2.49.4); M9 logs JSON estruturados (shared logger.ts, 9 Edge Functions, 66→0 console.* não estruturados); M2 CI/CD GitHub Actions (lint+typecheck+test); A7 testes unitários calculateNextDose (3 describe, 24 it, fake timers); M1 Sentry integração preparada (@sentry/react, lib/sentry.ts, initSentry em main.tsx, captureException em ErrorBoundary) | Sprint 5 ✅ CONCLUÍDO |
 | Sessão 12 | Sprint 6: Bug ∞ Dipirona (Fase 401) — homeDoseStatuses date filter (.gte -7d), useMedicationAlarms catch-up (loop calculateNextDose para specific_times/specific_days), MedicationDoseActions auto-conclusão (3 frequency_types, 4 novas props); Fix analyze-prescription "Failed to send" — APP_ORIGIN secret corrigido para `https://vita.locustech.com.br` (sem path); Lovable corrigiu 6 erros TS residuais em Home.tsx, Medicamentos.tsx, Ajustes.tsx, EditPetRoutineDrawer.tsx | Sprint 6 ✅ CONCLUÍDO |
 | Sessão 13 | M1 Sentry: DSN configurado (`VITE_SENTRY_DSN`) no Lovable env var + produção testada e validada (primeiro issue capturado em vita.locustech.com.br, Chrome Mobile/Android); buckets `exam-files` e `receitas` confirmados Private no Supabase Storage; M12 encerrado (coberto por A15) | Sprint 7 🟡 Em progresso |
+| Sessão 14 | Sprint 7: A3 ✅ AdminRoute authorizedRef (DevTools-proof); A8 ✅ manage-admins limite 100 IDs; A9 ✅ publish-changelog paginação loop; A12+M11 ✅ pg_cron TTL 4 jobs (medication_doses 2 anos, notifications 30d, ai_usage_logs 90d, email_send_log 90d); B4 ✅ QueryCache+MutationCache captureException global | Sprint 7 🟡 Em progresso |
 
 ---
 
@@ -432,8 +433,9 @@
 ---
 
 ### B4 · `QueryClient` sem `defaultOptions` de erro global
-- **Fix:** Adicionar `defaultOptions: { queries: { onError: (e) => Sentry.captureException(e) } }` no `queryClient` de `App.tsx`.
-- **Status:** ⬜ Backlog
+- **Fix:** `QueryCache` e `MutationCache` com `onError: (error) => captureException(error)` adicionados ao `new QueryClient()` em `App.tsx`. TanStack Query v5 removeu `onError` de `defaultOptions.queries` — `QueryCache`/`MutationCache` são a API correta em v5. No-op em desenvolvimento (`captureException` verifica `import.meta.env.PROD` internamente). Garante que falhas silenciosas de query/mutation apareçam no dashboard Sentry.
+- **Arquivos:** `src/App.tsx`
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 
