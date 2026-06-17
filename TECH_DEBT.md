@@ -365,7 +365,7 @@
 ### M13 · `email_send_log.recipient_email` em texto plano
 - **Fix:** Migration `20260616000022`: coluna `recipient_email_hash TEXT` adicionada; `recipient_email` tornada nullable; pg_cron job `anonymize_email_send_log` roda a cada hora e NULL-a `recipient_email` em registros com >24h. Edge Function `process-email-queue`: helper `hashEmail()` com `crypto.subtle.digest('SHA-256')` + `EMAIL_HASH_SALT` env var; os 3 inserts (dlq, sent, rate_limited) agora gravam `recipient_email_hash` junto.
 - **Arquivos:** `supabase/migrations/20260616000022_email_send_log_pseudonymize.sql`, `supabase/functions/process-email-queue/index.ts`
-- **Secret:** `EMAIL_HASH_SALT` deve existir no Supabase Dashboard → Edge Functions → Secrets (string aleatória longa) — verificar se foi criado
+- **Secret:** `EMAIL_HASH_SALT` ✅ criado no Supabase Dashboard → Edge Functions → Secrets (sessão 14)
 - **Status:** ✅ Resolvido (sessão 14) — migration 000022 aplicada ✅
 
 ---
