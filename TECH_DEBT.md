@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 4.5 | **Atualizado em:** 2026-06-17 (sessão 17)  
+> **Versão:** 5.0 | **Atualizado em:** 2026-06-17 (sessão 18)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -27,6 +27,7 @@
 | Sessão 15 | CI desbloqueado: package-lock.json regenerado (13 pkgs ausentes); Node.js 20→22 no ci.yml; eslint.config.js corrigido (no-explicit-any, no-empty-object-type, no-require-imports como warn); lint corrigido em parseSusVaccinePdf.ts (useless-escape + prefer-const), Home.tsx (Infinity→InfinityIcon), Medicamentos.tsx (prefer-const), useAuth.tsx (no-empty). CI #18 ✅ VERDE pela primeira vez | Sprint 8 🟡 Em progresso |
 | Sessão 16 | B6 ✅ Vite 5→6: `package.json` `"vite": "^6.0.0"`; fix `calculateNextDose` (refSP em vez de new Date() — teste determinístico). A16 ✅ Runbook LGPD Art. 48: `docs/runbook-lgpd-art48.md` (P0/P1/P2, prazo ANPD 3 dias úteis, templates, evidências). Auditoria TECH_DEBT.md v4.2→4.3 | Sprint 8 🟡 Em progresso |
 | Sessão 17 | M3 ✅ Refatoração Home.tsx (849→138 LOC) + Vacinas.tsx (802→478 LOC): useHomeData, 5 sub-componentes home/, useVaccineImport, VaccineFormDrawer. TECH_DEBT.md v4.5 | Sprint 8 🟡 Em progresso |
+| Sessão 18 | B9 ✅ completo: B9-A (react-router-dom v7, vaul v1.1.2, pdfjs-dist v5), B9-B (React 18→19), B9-C (Tailwind v3→v4: @tailwindcss/vite, @import "tailwindcss", 63× outline-hidden, 51× shadow-xs). .npmrc legacy-peer-deps=true para npm ci. TECH_DEBT.md v5.0 | Sprint 8 ✅ CONCLUÍDO |
 
 ---
 
@@ -276,9 +277,10 @@
 ---
 
 ### A18 · `pdfjs-dist` pinado sem `^` — nunca recebe patches de segurança
-- **Fix:** `"pdfjs-dist": "4.4.168"` → `"^4.4.168"`. Mantido em `^4.x` (não `^5.x`) pois a API de `parseSusVaccinePdf.ts` foi escrita para v4 e migração para v5 tem breaking changes (ver B9).
+- **Fix inicial (sessão 14):** `"pdfjs-dist": "4.4.168"` → `"^4.4.168"`. 
+- **Fix completo (sessão 18 / B9-A):** Atualizado para `"^5.7.284"`. Caminho do worker `build/pdf.worker.min.mjs` preservado em v5 — `parseSusVaccinePdf.ts` sem alterações necessárias.
 - **Arquivos:** `package.json`
-- **Status:** ✅ Resolvido (sessão 14)
+- **Status:** ✅ Resolvido (sessão 14 → atualizado sessão 18)
 
 ---
 
@@ -484,17 +486,24 @@
 ---
 
 ### B9 · Dependências 1+ major version atrás
-| Pacote | Atual | Disponível | Complexidade de migração |
-|--------|-------|------------|--------------------------|
-| `pdfjs-dist` | 4.4.168 (pinado) | 5.x | Média (ver A18) |
-| `react-router-dom` | 6.x | 7.x | Média |
-| `recharts` | 2.x | 3.x | Baixa |
-| `react-day-picker` | 8.x | 9.x | Baixa |
-| `date-fns` | 3.x | 4.x | Baixa |
-| `zod` | 3.x | 4.x | Média |
-| `tailwindcss` | 3.x | 4.x | Alta (rewrite completo) |
-| `react` | 18.x | 19.x | Alta |
-- **Status:** ⬜ Backlog
+
+**B9-A** ✅ (sessão 18): `pdfjs-dist` ^4→^5, `react-router-dom` 6→7, `vaul` 0.9→1.1.2  
+**B9-B** ✅ (sessão 18): `react` + `react-dom` 18→19, `@types/react` + `@types/react-dom` 18→19. `.npmrc legacy-peer-deps=true` para CI.  
+**B9-C** ✅ (sessão 18): `tailwindcss` v3→v4, `@tailwindcss/vite` (novo), `autoprefixer` removido. `vite.config.ts` com plugin, `index.css` com `@import "tailwindcss"` + `@config`. 63× `outline-none→outline-hidden`, 51× `shadow-sm→shadow-xs`.
+
+| Pacote | Status |
+|--------|--------|
+| `pdfjs-dist` | ✅ v5.7.284 (B9-A) |
+| `react-router-dom` | ✅ v7.16 (B9-A) |
+| `vaul` | ✅ v1.1.2 (B9-A) |
+| `react` + `react-dom` | ✅ v19.0 (B9-B) |
+| `tailwindcss` | ✅ v4.0 (B9-C) |
+| `recharts` | ⬜ 2.x (3.x disponível — baixa prioridade) |
+| `react-day-picker` | ⬜ 8.x (9.x disponível — baixa prioridade) |
+| `date-fns` | ⬜ 3.x (4.x disponível — baixa prioridade) |
+| `zod` | ⬜ 3.x (4.x — não usado em src/, baixíssima prioridade) |
+
+- **Status:** ✅ Itens de alto risco concluídos. Restam 4 pacotes de baixo risco para sprint futuro.
 
 ---
 
@@ -572,6 +581,24 @@ Sprint 6 — Bug ∞ Dipirona (Fase 401) + OCR Receitas ✅ CONCLUÍDO
 ├── ✅ MedicationDoseActions auto-conclusão → suporta os 3 frequency_types; props startDateISO, frequencyType, specificTimes, specificDays adicionados
 ├── ✅ Fix analyze-prescription CORS      → APP_ORIGIN corrigido: `https://vita.locustech.com.br` (sem /login)
 └── ✅ 6 erros TS residuais              → time_performed, effectiveFreqType, startDateISO (Lovable auto-fix)
+
+Sprint 7 — Segurança avançada + TTL + Observabilidade ✅ CONCLUÍDO
+├── ✅ A3, A8, A9, A12, A16, M8–M10, M13, M17, M18, A18, B2, B4, B8, M19
+└── (detalhes na tabela de sessões 13 e 14)
+
+Sprint 8 — Qualidade de código + Upgrades ✅ CONCLUÍDO
+├── ✅ B6                                → Vite 5→6
+├── ✅ A16                               → Runbook LGPD Art. 48
+├── ✅ M3                                → Refatoração Home.tsx (849→138 LOC) + Vacinas.tsx (802→478 LOC)
+├── ✅ B9-A                              → react-router-dom v7 + vaul v1.1.2 + pdfjs-dist v5
+├── ✅ B9-B                              → React 18→19 + .npmrc legacy-peer-deps=true
+└── ✅ B9-C                              → Tailwind v3→v4: @tailwindcss/vite, @import, 63× outline-hidden, 51× shadow-xs
+
+Sprint 9 — Pendente (sugestão)
+├── ⬜ A7 E2E                            → Playwright: login, cadastro de medicamento, marcação de dose
+├── ⬜ B9 restantes (baixo risco)        → recharts 3.x, react-day-picker 9.x, date-fns 4.x
+├── ⬜ Dashboard de Adesão              → estatísticas de pontualidade a partir de medication_doses
+└── ⬜ Push notifications               → engine multi-dispositivo baseada em specific_times
 ```
 
 ---
