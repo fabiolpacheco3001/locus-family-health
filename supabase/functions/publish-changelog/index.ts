@@ -73,20 +73,33 @@ Deno.serve(async (req) => {
     }
 
     // 2. Get all unique user IDs to notify
-    const { data: users, error: usersError } = await adminClient.auth.admin.listUsers({
-      perPage: 1000,
-    });
+    // A9: paginação completa — listUsers perPage máx é 1000; loop até esgotar páginas
+    const userIds: string[] = [];
+    let page = 1;
+    let listFailed = false;
+    while (true) {
+      const { data: pageData, error: pageError } = await adminClient.auth.admin.listUsers({
+        perPage: 1000,
+        page,
+      });
+      if (pageError) {
+        log("error", "list_users_failed", { page, error: pageError.message });
+        listFailed = true;
+        break;
+      }
+      const batch = pageData?.users ?? [];
+      batch.forEach((u: { id: string }) => userIds.push(u.id));
+      if (batch.length < 1000) break; // última página
+      page++;
+    }
 
-    if (usersError) {
-      log("error", "list_users_failed", { error: usersError });
-      // Changelog was created successfully, just skip notifications
+    if (listFailed && userIds.length === 0) {
+      // Changelog criado com sucesso; pular notificações
       return new Response(JSON.stringify({ changelog, notified: 0 }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    const userIds = (users?.users ?? []).map((u: any) => u.id);
 
     // 3. Batch insert notifications (chunks of 500)
     const BATCH_SIZE = 500;

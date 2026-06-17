@@ -199,17 +199,17 @@
 
 ### A8 · `manage-admins list-emails` aceita array ilimitado de userIds
 - **Risco:** Enumeração massiva de emails de usuários por admins sem audit log.
-- **Fix:** Limitar array a 100 IDs máximo + adicionar registro em audit log.
-- **Arquivos:** `supabase/functions/manage-admins/index.ts` (linhas 50–60)
-- **Status:** ⬜ Backlog
+- **Fix:** Limite de 100 IDs por chamada — retorna 400 se excedido. Audit log permanece como M8 (backlog separado).
+- **Arquivos:** `supabase/functions/manage-admins/index.ts`
+- **Status:** ✅ Resolvido (sessão 13)
 
 ---
 
 ### A9 · `publish-changelog` sem paginação de usuários
 - **Risco:** `listUsers({ perPage: 1000 })` — usuários além do milésimo não recebem notificação de release.
-- **Fix:** Implementar loop de paginação.
-- **Arquivos:** `supabase/functions/publish-changelog/index.ts` (linhas 79–92)
-- **Status:** ⬜ Backlog
+- **Fix:** Loop de paginação implementado — busca páginas de 1000 até `batch.length < 1000` (última página). Falha parcial mantém changelog criado e notifica os usuários já coletados.
+- **Arquivos:** `supabase/functions/publish-changelog/index.ts`
+- **Status:** ✅ Resolvido (sessão 13)
 
 ---
 

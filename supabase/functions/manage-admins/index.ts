@@ -47,6 +47,10 @@ Deno.serve(async (req) => {
     if (action === "list-emails") {
       const { userIds } = body;
       if (!Array.isArray(userIds)) return json({ error: "userIds required" }, 400);
+      // A8: limitar a 100 IDs por chamada para prevenir enumeração massiva de emails
+      if (userIds.length > 100) {
+        return json({ error: "Máximo de 100 IDs por requisição." }, 400);
+      }
       const emails: { id: string; email: string }[] = [];
       for (const uid of userIds) {
         try {
