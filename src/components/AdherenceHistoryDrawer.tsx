@@ -1,16 +1,22 @@
 import { useState, useEffect, useMemo } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Share2, CheckCircle, XCircle, Clock3 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Share2, CheckCircle, XCircle, Clock3, Flame, TrendingUp, AlertTriangle, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subDays, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toSPTime } from "@/lib/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
-// generateAdherencePdf loaded on-demand (A13: ~250KB jspdf bundle excluded from initial load)
 import { toast } from "sonner";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, Tooltip } from "recharts";
+import {
+  useAdherenceDashboard,
+  barColor,
+  type AdherencePeriod,
+  type DoseEntry,
+} from "@/hooks/useAdherenceDashboard";
 
 interface Props {
   open: boolean;
@@ -20,17 +26,33 @@ interface Props {
   emitterName: string;
 }
 
-interface DoseEntry {
-  id?: string;
-  medication_id?: string;
-  medication_name: string;
-  scheduled_for: string;
-  status: string;
-  taken_at?: string | null;
-  isVirtual?: boolean;
-}
+const PERIODS: { key: AdherencePeriod; label: string }[] = [
+  { key: "7d", label: "7 dias" },
+  { key: "30d", label: "30 dias" },
+  { key: "90d", label: "90 dias" },
+  { key: "all", label: "Tudo" },
+];
+
+const CIRC = 2 * Math.PI * 28; // r=28 on a 72×72 viewBox
+
+const insightConfig = {
+  success: { bg: "bg-emerald-50", text: "text-emerald-900", border: "border-emerald-200", Icon: Flame, iconClass: "text-emerald-600" },
+  warning: { bg: "bg-amber-50", text: "text-amber-900", border: "border-amber-200", Icon: AlertTriangle, iconClass: "text-amber-500" },
+  info: { bg: "bg-blue-50", text: "text-blue-900", border: "border-blue-200", Icon: TrendingUp, iconClass: "text-blue-500" },
+  danger: { bg: "bg-red-50", text: "text-red-900", border: "border-red-200", Icon: AlertTriangle, iconClass: "text-red-500" },
+};
+
+const medBarColor = (taxa: number) => barColor(taxa);
+const medTextColor = (taxa: number) => {
+  if (taxa >= 70) return "text-emerald-700";
+  if (taxa >= 40) return "text-amber-700";
+  if (taxa > 0) return "text-red-600";
+  return "text-muted-foreground";
+};
 
 const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName, emitterName }: Props) => {
+  const [period, setPeriod] = useState<AdherencePeriod>("7d");
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [logoBase64, setLogoBase64] = useState<string | undefined>(undefined);
 
@@ -45,7 +67,6 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
       .catch(() => {});
   }, []);
 
-  // Fetch medications and their doses
   const { data: rawData, isLoading } = useQuery({
     queryKey: ["adherence_history", familyMemberId],
     queryFn: async () => {
@@ -70,7 +91,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     staleTime: 30 * 1000,
   });
 
-  // Compute virtual "forgotten" doses + real doses merged
+  // Build allDoses — real + virtual "forgotten"
   const allDoses: DoseEntry[] = useMemo(() => {
     if (!rawData) return [];
     const { meds, doses } = rawData;
@@ -78,27 +99,21 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     const medMap: Record<string, string> = {};
     for (const m of meds) medMap[m.id] = m.name;
 
-    // Real doses with medication name
     const realDoses: DoseEntry[] = doses.map((d: any) => ({
       ...d,
       medication_name: medMap[d.medication_id] || "Desconhecido",
       isVirtual: false,
     }));
 
-    // Build a set of existing dose keys for fast lookup
     const existingKeys = new Set<string>();
     for (const d of doses) {
       existingKeys.add(`${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`);
     }
 
-    // Cutoff: end of 2 days ago (anything before yesterday is "forgotten" territory)
     const cutoff = endOfDay(subDays(new Date(), 2));
-
-    // Generate virtual "forgotten" doses
     const virtualDoses: DoseEntry[] = [];
     for (const med of meds) {
       if (!med.start_date || !med.frequency_hours || med.frequency_hours <= 0) continue;
-
       const dateOnly = med.start_date.slice(0, 10);
       const startStr = med.start_time ? `${dateOnly}T${med.start_time}` : `${dateOnly}T00:00:00`;
       const start = new Date(startStr);
@@ -126,30 +141,30 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
       }
     }
 
-    // Merge and sort descending by scheduled_for
     return [...realDoses, ...virtualDoses].sort(
       (a, b) => new Date(b.scheduled_for).getTime() - new Date(a.scheduled_for).getTime()
     );
   }, [rawData]);
 
-  const takenCount = allDoses.filter((d) => d.status === "taken").length;
-  const totalCount = allDoses.length;
-  const adherenceRate = totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0;
+  const dashboard = useAdherenceDashboard(allDoses, period);
+  const { taxa, tomadas, total, streak, weeklyData, heatmapData, medBreakdown, insight } = dashboard;
+
+  // For PDF export — uses all-time allDoses
+  const allTimeTomadas = allDoses.filter((d) => d.status === "taken").length;
+  const allTimeTotal = allDoses.length;
+  const allTimeRate = allTimeTotal > 0 ? Math.round((allTimeTomadas / allTimeTotal) * 100) : 0;
 
   const handleExportPdf = async () => {
-    if (allDoses.length === 0) {
-      toast.error("Nenhum registro para exportar.");
-      return;
-    }
+    if (allDoses.length === 0) { toast.error("Nenhum registro para exportar."); return; }
     setGenerating(true);
     try {
       const { generateAdherencePdf } = await import("@/lib/generateAdherencePdf");
       const blob = generateAdherencePdf({
         memberName,
         doses: allDoses,
-        adherenceRate,
-        takenCount,
-        totalCount,
+        adherenceRate: allTimeRate,
+        takenCount: allTimeTomadas,
+        totalCount: allTimeTotal,
         logoBase64,
         emitterName,
       });
@@ -167,87 +182,262 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     }
   };
 
+  const filled = (taxa / 100) * CIRC;
+  const ic = insightConfig[insight.type];
+
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[85vh]">
-        <DrawerHeader className="relative text-center">
-          <DrawerTitle>Histórico de Adesão</DrawerTitle>
-          {totalCount > 0 && (
+      <DrawerContent className="max-h-[92vh]">
+        {/* Header */}
+        <DrawerHeader className="relative text-center pb-2">
+          <DrawerTitle>Adesão medicamentosa</DrawerTitle>
+          {allTimeTotal > 0 && (
             <Button
               variant="ghost"
               size="icon"
               onClick={handleExportPdf}
               disabled={generating}
-              className="absolute right-3 top-3 text-secondary hover:text-secondary"
+              className="absolute right-3 top-3 text-[#78C2AD] hover:text-[#78C2AD]"
               title="Exportar PDF"
             >
-              <Share2 size={18} className="text-secondary" />
+              <Share2 size={18} />
             </Button>
           )}
         </DrawerHeader>
 
-        <div className="px-4 pb-6 overflow-y-auto space-y-4">
-          {/* Stats */}
-          {!isLoading && totalCount > 0 && (
-            <div className="bg-card rounded-xl border border-border/50 p-4">
-              <p className="text-sm text-muted-foreground">Taxa de Adesão</p>
-              <p className="text-2xl font-bold text-foreground">{adherenceRate}%</p>
-              <p className="text-xs text-muted-foreground">{takenCount} de {totalCount} doses tomadas</p>
-            </div>
-          )}
+        <div className="px-4 pb-8 overflow-y-auto space-y-3">
 
-          {/* Timeline */}
+          {/* Period tabs */}
+          <div className="flex gap-2">
+            {PERIODS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setPeriod(key)}
+                className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  period === key
+                    ? "bg-foreground text-background"
+                    : "border border-border text-muted-foreground bg-card"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           {isLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
             </div>
           ) : allDoses.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <p className="text-sm text-muted-foreground text-center py-12">
               Nenhuma dose registrada ainda.
             </p>
           ) : (
-            <div className="space-y-2">
-              {allDoses.map((d, idx) => {
-                const dateStr = format(
-                  toSPTime(new Date(d.scheduled_for)),
-                  "dd MMM yyyy 'às' HH:mm",
-                  { locale: ptBR }
-                );
-                const isTaken = d.status === "taken";
-                const isForgotten = d.status === "forgotten";
-                return (
-                  <div
-                    key={d.id || `virtual-${idx}`}
-                    className="bg-card rounded-xl border border-border/50 px-4 py-3 flex items-center gap-3"
-                  >
-                    {isTaken ? (
-                      <CheckCircle size={18} className="text-emerald-500 shrink-0" />
-                    ) : isForgotten ? (
-                      <Clock3 size={18} className="text-slate-400 shrink-0" />
-                    ) : (
-                      <XCircle size={18} className="text-red-400 shrink-0" />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {d.medication_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{dateStr}</p>
+            <>
+              {/* Main stats card */}
+              <div className="bg-card rounded-xl border border-border/50 p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs text-muted-foreground mb-1">Taxa de adesão</p>
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <span className="text-5xl font-medium text-foreground leading-none">{taxa}%</span>
                     </div>
-                    <Badge
-                      className={`text-[10px] border-none ${
-                        isTaken
-                          ? "bg-emerald-100 text-emerald-700"
-                          : isForgotten
-                          ? "bg-slate-100 text-slate-600 border border-slate-300"
-                          : "bg-red-100 text-red-600"
-                      }`}
-                    >
-                      {isTaken ? "Tomado" : isForgotten ? "Esquecido" : "Pulado"}
-                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-1">{tomadas} de {total} doses tomadas</p>
                   </div>
-                );
-              })}
-            </div>
+                  {/* Donut ring */}
+                  <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true">
+                    <circle cx="36" cy="36" r="28" fill="none" stroke="hsl(var(--muted))" strokeWidth="7" />
+                    <circle
+                      cx="36" cy="36" r="28"
+                      fill="none"
+                      stroke="#78C2AD"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                      strokeDasharray={`${filled.toFixed(1)} ${(CIRC - filled).toFixed(1)}`}
+                      strokeDashoffset={CIRC / 4}
+                      transform="rotate(-90 36 36)"
+                    />
+                    <text x="36" y="40" textAnchor="middle" fontSize="13" fontWeight="500" fill="#78C2AD">
+                      {taxa}%
+                    </text>
+                  </svg>
+                </div>
+
+                {/* Streak */}
+                {streak > 0 && (
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
+                    <Flame size={16} className="text-orange-400 shrink-0" />
+                    <span className="text-sm font-medium text-foreground">{streak} {streak === 1 ? "dia" : "dias"} seguidos</span>
+                    <span className="text-xs text-muted-foreground">— sequência atual</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Insight */}
+              <div className={`rounded-xl border p-3 flex items-start gap-2.5 ${ic.bg} ${ic.border}`}>
+                <ic.Icon size={16} className={`${ic.iconClass} shrink-0 mt-0.5`} />
+                <p className={`text-sm leading-snug ${ic.text}`}>{insight.text}</p>
+              </div>
+
+              {/* Weekly trend */}
+              <div className="bg-card rounded-xl border border-border/50 p-4">
+                <p className="text-xs font-medium text-foreground mb-3">Evolução semanal</p>
+                <div style={{ height: 110 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyData} barSize={weeklyData.length > 8 ? 8 : 14} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>
+                      <XAxis
+                        dataKey="label"
+                        tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                        axisLine={false}
+                        tickLine={false}
+                        interval={weeklyData.length > 8 ? 1 : 0}
+                      />
+                      <YAxis
+                        domain={[0, 100]}
+                        tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(v) => `${v}%`}
+                        ticks={[0, 25, 50, 75, 100]}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [`${value}%`, "Adesão"]}
+                        contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
+                        cursor={{ fill: "hsl(var(--muted))", radius: 4 }}
+                      />
+                      <Bar dataKey="taxa" radius={[4, 4, 0, 0]}>
+                        {weeklyData.map((entry, index) => (
+                          <Cell key={index} fill={barColor(entry.taxa)} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Heatmap — last 14 days */}
+              <div className="bg-card rounded-xl border border-border/50 p-4">
+                <div className="flex justify-between items-baseline mb-3">
+                  <p className="text-xs font-medium text-foreground">Últimos 14 dias</p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(heatmapData[0]?.date ?? new Date(), "MMM yyyy", { locale: ptBR })}
+                  </p>
+                </div>
+                <div className="grid grid-cols-7 gap-1.5 mb-2">
+                  {heatmapData.map((day, i) => (
+                    <div
+                      key={i}
+                      className="aspect-square rounded flex items-center justify-center"
+                      style={{ backgroundColor: day.color }}
+                      title={`${format(day.date, "d MMM", { locale: ptBR })}: ${day.taken}/${day.total} tomadas`}
+                    >
+                      <span className="text-[9px] font-medium" style={{ color: "rgba(0,0,0,0.4)" }}>
+                        {day.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-3 mt-1">
+                  {[
+                    { color: "#78C2AD", label: "Completo" },
+                    { color: "#f5c04e", label: "Parcial" },
+                    { color: "#f09595", label: "Esquecido" },
+                    { color: "#e8e5e0", label: "Sem doses" },
+                  ].map(({ color, label }) => (
+                    <span key={label} className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: color }} />
+                      <span className="text-[10px] text-muted-foreground">{label}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Per-medication breakdown */}
+              {medBreakdown.length > 0 && (
+                <div className="bg-card rounded-xl border border-border/50 p-4">
+                  <p className="text-xs font-medium text-foreground mb-3">Por medicamento</p>
+                  <div className="space-y-3">
+                    {medBreakdown.map((med) => (
+                      <div key={med.name}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium text-foreground truncate max-w-[70%]">{med.name}</span>
+                          <span className="text-xs text-muted-foreground">{med.taken}/{med.total}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full transition-all"
+                              style={{ width: `${med.taxa}%`, backgroundColor: medBarColor(med.taxa) }}
+                            />
+                          </div>
+                          <span className={`text-xs font-medium min-w-[28px] text-right ${medTextColor(med.taxa)}`}>
+                            {med.taxa}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Histórico detalhado — colapsável */}
+              <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+                <button
+                  onClick={() => setHistoryOpen((v) => !v)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground"
+                >
+                  <span>Histórico detalhado</span>
+                  {historyOpen
+                    ? <ChevronUp size={16} className="text-muted-foreground" />
+                    : <ChevronDown size={16} className="text-muted-foreground" />
+                  }
+                </button>
+
+                {historyOpen && (
+                  <div className="px-3 pb-3 space-y-2 border-t border-border/50 pt-2">
+                    {allDoses.map((d, idx) => {
+                      const dateStr = format(
+                        toSPTime(new Date(d.scheduled_for)),
+                        "dd MMM yyyy 'às' HH:mm",
+                        { locale: ptBR }
+                      );
+                      const isTaken = d.status === "taken";
+                      const isForgotten = d.status === "forgotten";
+                      return (
+                        <div
+                          key={d.id || `virtual-${idx}`}
+                          className="bg-background rounded-xl border border-border/40 px-3 py-2.5 flex items-center gap-3"
+                        >
+                          {isTaken ? (
+                            <CheckCircle size={16} className="text-emerald-500 shrink-0" />
+                          ) : isForgotten ? (
+                            <Clock3 size={16} className="text-slate-400 shrink-0" />
+                          ) : (
+                            <XCircle size={16} className="text-red-400 shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{d.medication_name}</p>
+                            <p className="text-xs text-muted-foreground">{dateStr}</p>
+                          </div>
+                          <Badge
+                            className={`text-[10px] border-none shrink-0 ${
+                              isTaken
+                                ? "bg-emerald-100 text-emerald-700"
+                                : isForgotten
+                                ? "bg-slate-100 text-slate-600"
+                                : "bg-red-100 text-red-600"
+                            }`}
+                          >
+                            {isTaken ? "Tomado" : isForgotten ? "Esquecido" : "Pulado"}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </>
           )}
         </div>
       </DrawerContent>
