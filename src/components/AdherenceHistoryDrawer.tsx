@@ -189,39 +189,39 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
         {/* Header */}
-        <DrawerHeader className="relative text-center pb-2">
+        <DrawerHeader className="text-center pb-2">
           <DrawerTitle>Adesão medicamentosa</DrawerTitle>
-          {allTimeTotal > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleExportPdf}
-              disabled={generating}
-              className="absolute right-3 top-3 text-[#78C2AD] hover:text-[#78C2AD]"
-              title="Exportar PDF"
-            >
-              <Share2 size={18} />
-            </Button>
-          )}
         </DrawerHeader>
 
         <div className="px-4 pb-8 overflow-y-auto space-y-3">
 
-          {/* Period tabs */}
-          <div className="flex gap-2">
-            {PERIODS.map(({ key, label }) => (
+          {/* Period tabs + export button na mesma linha */}
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5 flex-1">
+              {PERIODS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setPeriod(key)}
+                  className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    period === key
+                      ? "bg-foreground text-background"
+                      : "border border-border text-muted-foreground bg-card"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {allTimeTotal > 0 && (
               <button
-                key={key}
-                onClick={() => setPeriod(key)}
-                className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                  period === key
-                    ? "bg-foreground text-background"
-                    : "border border-border text-muted-foreground bg-card"
-                }`}
+                onClick={handleExportPdf}
+                disabled={generating}
+                title="Exportar PDF"
+                className="shrink-0 p-2 rounded-full text-[#78C2AD] hover:bg-muted/50 transition-colors disabled:opacity-50"
               >
-                {label}
+                <Share2 size={17} />
               </button>
-            ))}
+            )}
           </div>
 
           {isLoading ? (
