@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 2.9 | **Atualizado em:** junho/2026 (sessão 12)  
+> **Versão:** 3.0 | **Atualizado em:** junho/2026 (sessão 13)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -22,6 +22,7 @@
 | Sessão 10 | A5 Fase 2 completa: `noImplicitAny: true` habilitado, 93→0 `as any` eliminados — FamilyMember type augmentado, 22 `.from() as any` via sed, 71 casts explícitos resolvidos por categoria | Sprint 4 ✅ CONCLUÍDO |
 | Sessão 11 | Sprint 5: M4+B1 import_map.json Deno (std@0.224, supabase-js@2.49.4); M9 logs JSON estruturados (shared logger.ts, 9 Edge Functions, 66→0 console.* não estruturados); M2 CI/CD GitHub Actions (lint+typecheck+test); A7 testes unitários calculateNextDose (3 describe, 24 it, fake timers); M1 Sentry integração preparada (@sentry/react, lib/sentry.ts, initSentry em main.tsx, captureException em ErrorBoundary) | Sprint 5 ✅ CONCLUÍDO |
 | Sessão 12 | Sprint 6: Bug ∞ Dipirona (Fase 401) — homeDoseStatuses date filter (.gte -7d), useMedicationAlarms catch-up (loop calculateNextDose para specific_times/specific_days), MedicationDoseActions auto-conclusão (3 frequency_types, 4 novas props); Fix analyze-prescription "Failed to send" — APP_ORIGIN secret corrigido para `https://vita.locustech.com.br` (sem path); Lovable corrigiu 6 erros TS residuais em Home.tsx, Medicamentos.tsx, Ajustes.tsx, EditPetRoutineDrawer.tsx | Sprint 6 ✅ CONCLUÍDO |
+| Sessão 13 | M1 Sentry: DSN configurado (`VITE_SENTRY_DSN`) no Lovable env var + produção testada e validada (primeiro issue capturado em vita.locustech.com.br, Chrome Mobile/Android); buckets `exam-files` e `receitas` confirmados Private no Supabase Storage; M12 encerrado (coberto por A15) | Sprint 7 🟡 Em progresso |
 
 ---
 
@@ -279,7 +280,7 @@
 
 ### M1 · Sem APM/Sentry
 - **Fix:** Instrumentar `@sentry/react` + `@sentry/node` nas Edge Functions. Adicionar ao `<ErrorBoundary>`.
-- **Status:** ✅ Resolvido (sessão 11) — `@sentry/react@^8.54.0` adicionado ao `package.json`; `src/lib/sentry.ts` com `initSentry()` (no-op se `VITE_SENTRY_DSN` não configurado) e `captureException()`; `main.tsx` inicializa Sentry antes do render; `ErrorBoundary.tsx` usa `captureException`. **Ação pendente do Fábio:** criar projeto em sentry.io e adicionar DSN em `.env` → `VITE_SENTRY_DSN=https://...`; depois rodar `npm install`.
+- **Status:** ✅ Resolvido (sessão 11 + 13) — `@sentry/react@^8.54.0` adicionado ao `package.json`; `src/lib/sentry.ts` com `initSentry()` (no-op se `VITE_SENTRY_DSN` não configurado) e `captureException()`; `main.tsx` inicializa Sentry antes do render; `ErrorBoundary.tsx` usa `captureException`. DSN configurado via Lovable env var (`VITE_SENTRY_DSN`) em sessão 13. Validado em produção: primeiro evento capturado confirmado no dashboard Sentry (projeto `locus-vita-1`). Ativo apenas em `import.meta.env.PROD`.
 
 ---
 
@@ -352,7 +353,7 @@
 
 ### M12 · Art. 18-I LGPD — Acesso a dados apenas via PDF parcial
 - **Fix:** Endpoint de export completo em JSON (todos os dados do titular). Ver A15.
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 3, via A15) — export JSON completo implementado em `Ajustes.tsx` cobrindo todos os dados clínicos do grupo familiar.
 
 ---
 
@@ -368,7 +369,7 @@
   1. Migration `20260616000010` — altera constraint `consent_log_consent_type_check` para incluir `'revoked'`; adiciona índice composto `idx_consent_log_user_type (user_id, consent_type, granted_at DESC)` para consultas eficientes.
   2. Botão "Revogar Consentimento" adicionado em `Ajustes.tsx` com badge âmbar e `AlertDialog` de confirmação com aviso claro: revogação registra a solicitação mas não apaga dados (para remoção usar "Excluir Conta"). `handleRevokeConsent` insere registro `consent_type = 'revoked'` em `consent_log` — a tabela é imutável por RLS, mantendo histórico completo.
 - **Arquivos:** `src/pages/Ajustes.tsx`, `supabase/migrations/20260616000010_lgpd_consent_log_revoke.sql`
-- **Status:** ✅ Resolvido (sessão 3) — ⚠️ migration 000010 precisa ser aplicada via SQL Editor
+- **Status:** ✅ Resolvido (sessão 3) — migration 000010 aplicada.
 
 ---
 
@@ -411,7 +412,7 @@
 
 ### B1 · `deno.land/std@0.168.0` desatualizado (atual: 0.224+)
 - **Fix:** Atualizar via `import_map.json`. Ver M4.
-- **Status:** ⬜ Backlog
+- **Status:** ✅ Resolvido (sessão 11, via M4) — `import_map.json` centraliza `std@0.224.0`; todas as 9 funções usam bare specifiers resolvidos pelo mapa.
 
 ---
 
@@ -521,7 +522,7 @@ Sprint 2 — Compliance LGPD (bloqueador legal para go-live) ✅ CONCLUÍDO
 ├── ✅ C8                                  → Edge Function delete-user-account (Art. 18-IV)
 ├── ✅ C7 + A14                            → Consentimento no cadastro + Política de privacidade
 ├── ✅ A15                                 → Export de dados JSON (portabilidade Art. 18-V)
-├── ✅ M14                                 → Revogação de consentimento (Art. 18-IX) ⚠️ migration pendente
+├── ✅ M14                                 → Revogação de consentimento (Art. 18-IX) + migration 000010 aplicada
 └── ✅ C3 + A2                             → Biometria falsa removida + Senha atual validada
 
 Sprint 3 — Go-live readiness ✅ CONCLUÍDO
@@ -541,7 +542,7 @@ Sprint 5 — Observabilidade e manutenibilidade ✅ CONCLUÍDO
 ├── ✅ M9                                 → _shared/logger.ts + 66 console.* → log() JSON estruturado
 ├── ✅ M2                                 → .github/workflows/ci.yml (lint + typecheck + vitest)
 ├── ✅ A7 (parcial)                       → calculateNextDose.test.ts (24 testes, 3 frequency_types)
-└── ✅ M1                                 → @sentry/react + src/lib/sentry.ts (⚠️ DSN pendente do Fábio)
+└── ✅ M1                                 → @sentry/react + src/lib/sentry.ts + DSN configurado + validado em produção
 
 Sprint 6 — Bug ∞ Dipirona (Fase 401) + OCR Receitas ✅ CONCLUÍDO
 ├── ✅ homeDoseStatuses date filter       → .gte("scheduled_for", -7d) em Home.tsx + Medicamentos.tsx
