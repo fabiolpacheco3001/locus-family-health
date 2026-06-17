@@ -209,7 +209,7 @@ export function mapVaccineToStandard(rawName: string): { standardName: string; d
         .replace(entry.pattern, "")
         .replace(new RegExp(entry.standardName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "")
         .replace(/\bVACINA\b/gi, "")
-        .replace(/^[\s\-–,]+|[\s\-–,]+$/g, "")
+        .replace(/^[\s–,-]+|[\s–,-]+$/g, "")
         .replace(/\s+/g, " ")
         .trim();
       return { standardName: entry.standardName, details: cleanDetails || rawTrimmed };
@@ -436,13 +436,13 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
     const cleanBatch = (batch.trim().split(/\s+/)[0]) || undefined;
 
     const mapped = mapVaccineToStandard(currentName);
-    let cleanDetails = mapped.details.toUpperCase()
+    const cleanDetails = mapped.details.toUpperCase()
       .replace(/COVID[- ]?19/gi, '')
       .replace(/\b19\b/g, '')
       .replace(/DIFTERIA\s*E\s*T[EÉ]TANO/gi, '')
       .replace(/HEPATITE\s*B/gi, '')
-      .replace(/[\s\-]*\d{2}\/\d{2}\/\d{4}[\s\-]*/g, ' ')
-      .replace(/^[\s\-]+|[\s\-]+$/g, '')
+      .replace(/[\s-]*\d{2}\/\d{2}\/\d{4}[\s-]*/g, ' ')
+      .replace(/^[\s-]+|[\s-]+$/g, '')
       .replace(/\s{2,}/g, ' ')
       .trim();
 

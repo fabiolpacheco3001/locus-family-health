@@ -86,7 +86,7 @@ const Medicamentos = () => {
       } else if (dateOnly) {
         startDateISO = dateOnly;
       }
-      let nextDoseDate = advancePastTakenDoses({
+      const nextDoseDate = advancePastTakenDoses({
         medicationId: m.id,
         startDateISO,
         frequencyHours: m.frequency_hours,

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon, Infinity, PawPrint, Search, HelpCircle } from "lucide-react";
+import { Bell, Pill, Stethoscope, FileText, Calendar, ChevronRight, Activity, LayoutDashboard, Users, Zap, Sun, Moon, Infinity as InfinityIcon, PawPrint, Search, HelpCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
@@ -653,7 +653,7 @@ const Home = () => {
                           </p>
                           <p className="text-xs text-muted-foreground truncate">
                             <span>{med.dosage ?? ""}</span>
-                            {isContinuous && <Infinity className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
+                            {isContinuous && <InfinityIcon className="inline w-3 h-3 mx-1 text-muted-foreground shrink-0" />}
                             {doseLabel && <span>{isContinuous ? "" : " · "}{doseLabel}</span>}
                           </p>
                         </div>

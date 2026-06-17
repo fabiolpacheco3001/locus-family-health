@@ -25,6 +25,8 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "warn",
       // shadcn/ui usa interfaces vazias como type aliases — padrão aceito
       "@typescript-eslint/no-empty-object-type": "warn",
+      // tailwind.config.ts e outros configs usam require() — permitido em configs
+      "@typescript-eslint/no-require-imports": "warn",
     },
   },
 );
