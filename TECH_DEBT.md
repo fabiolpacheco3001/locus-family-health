@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 5.0 | **Atualizado em:** 2026-06-17 (sessão 18)  
+> **Versão:** 5.1 | **Atualizado em:** 2026-06-17 (sessão 18 — pós-deploy)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -27,7 +27,7 @@
 | Sessão 15 | CI desbloqueado: package-lock.json regenerado (13 pkgs ausentes); Node.js 20→22 no ci.yml; eslint.config.js corrigido (no-explicit-any, no-empty-object-type, no-require-imports como warn); lint corrigido em parseSusVaccinePdf.ts (useless-escape + prefer-const), Home.tsx (Infinity→InfinityIcon), Medicamentos.tsx (prefer-const), useAuth.tsx (no-empty). CI #18 ✅ VERDE pela primeira vez | Sprint 8 🟡 Em progresso |
 | Sessão 16 | B6 ✅ Vite 5→6: `package.json` `"vite": "^6.0.0"`; fix `calculateNextDose` (refSP em vez de new Date() — teste determinístico). A16 ✅ Runbook LGPD Art. 48: `docs/runbook-lgpd-art48.md` (P0/P1/P2, prazo ANPD 3 dias úteis, templates, evidências). Auditoria TECH_DEBT.md v4.2→4.3 | Sprint 8 🟡 Em progresso |
 | Sessão 17 | M3 ✅ Refatoração Home.tsx (849→138 LOC) + Vacinas.tsx (802→478 LOC): useHomeData, 5 sub-componentes home/, useVaccineImport, VaccineFormDrawer. TECH_DEBT.md v4.5 | Sprint 8 🟡 Em progresso |
-| Sessão 18 | B9 ✅ completo: B9-A (react-router-dom v7, vaul v1.1.2, pdfjs-dist v5), B9-B (React 18→19), B9-C (Tailwind v3→v4: @tailwindcss/vite, @import "tailwindcss", 63× outline-hidden, 51× shadow-xs). .npmrc legacy-peer-deps=true para npm ci. TECH_DEBT.md v5.0 | Sprint 8 ✅ CONCLUÍDO |
+| Sessão 18 | B9 ✅ completo: B9-A (react-router-dom v7, vaul v1.1.2, pdfjs-dist v5), B9-B (React 18→19), B9-C (Tailwind v3→v4: @tailwindcss/vite, @import "tailwindcss", 63× outline-hidden, 51× shadow-xs). .npmrc legacy-peer-deps=true para npm ci. Pós-deploy: bun.lockb desatualizado removido do git (Lovable regenerou com @tailwindcss/vite); sonner.tsx forçado para theme=light (next-themes "system" causava toast preto no iOS em dark mode). Build Lovable exit code 0 ✅. TECH_DEBT.md v5.1 | Sprint 8 ✅ CONCLUÍDO |
 
 ---
 
