@@ -76,7 +76,7 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <Card key={s.label} className="border-none shadow-sm bg-white">
+          <Card key={s.label} className="border-none shadow-xs bg-white">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {s.label}
@@ -92,7 +92,7 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <Card className="border-none shadow-sm bg-white">
+      <Card className="border-none shadow-xs bg-white">
         <CardContent className="py-12 text-center text-muted-foreground">
           <p className="text-sm">
             Gráficos de evolução e métricas avançadas serão implementados nas próximas fases.

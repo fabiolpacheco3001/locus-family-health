@@ -95,7 +95,7 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange} repositionInputs={false}>
-        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[70dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[70dvh] flex flex-col rounded-t-2xl bg-background outline-hidden">
           <DrawerHeader>
             <DrawerTitle className="text-primary">Ler Receita com IA</DrawerTitle>
             <DrawerDescription>Envie uma foto da receita médica para preenchimento automático.</DrawerDescription>

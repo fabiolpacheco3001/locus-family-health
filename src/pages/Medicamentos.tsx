@@ -261,7 +261,7 @@ const Medicamentos = () => {
               onClick={() => setAbaAtiva('ativos')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 abaAtiva === 'ativos'
-                  ? 'bg-white text-slate-900 shadow-sm'
+                  ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -271,7 +271,7 @@ const Medicamentos = () => {
               onClick={() => setAbaAtiva('historico')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
                 abaAtiva === 'historico'
-                  ? 'bg-white text-slate-900 shadow-sm'
+                  ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
@@ -341,7 +341,7 @@ const Medicamentos = () => {
                     isOpen={openCardId === m.id}
                     onOpenChange={(isOpen) => setOpenCardId(isOpen ? m.id : null)}
                   >
-                    <div className="flex flex-col p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left w-full">
+                    <div className="flex flex-col p-4 bg-card rounded-xl border border-border/50 shadow-xs text-left w-full">
                       <button
                         onClick={() => handleOpenEdit(m)}
                         className="flex items-start gap-4 active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full rounded-lg"

@@ -44,7 +44,7 @@ const Familia = () => {
                 <button
                   key={m.id}
                   onClick={() => navigate(`/familiar/${m.id}`)}
-                  className="flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 hover:bg-muted/50 transition-colors text-left w-full"
+                  className="flex items-center p-4 bg-card rounded-xl shadow-xs border border-border/50 hover:bg-muted/50 transition-colors text-left w-full"
                 >
                   <MemberAvatar avatarUrl={m.avatar_url} name={m.name} />
                   <div className="flex flex-col ml-4 min-w-0 flex-1">

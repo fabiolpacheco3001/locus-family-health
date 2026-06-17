@@ -155,7 +155,7 @@ const Ajuda = () => {
                   <button
                     key={originalIndex}
                     onClick={() => toggle(originalIndex)}
-                    className="w-full text-left bg-card rounded-xl shadow-sm border border-border/40 overflow-hidden"
+                    className="w-full text-left bg-card rounded-xl shadow-xs border border-border/40 overflow-hidden"
                   >
                     <div className="flex items-center gap-3 p-4">
                       <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">

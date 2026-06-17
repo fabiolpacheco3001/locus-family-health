@@ -273,7 +273,7 @@ const Ajustes = () => {
           </div>
 
           {/* Profile Card */}
-          <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-sm border border-border/40">
+          <div className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-xs border border-border/40">
             <MemberAvatar avatarUrl={myProfile?.avatar_url} name={myProfile?.name ?? "?"} size="lg" memberType={myProfile?.member_type} />
             <div>
               <p className="text-base font-semibold text-foreground">{myProfile?.name ?? "Carregando..."}</p>
@@ -283,7 +283,7 @@ const Ajustes = () => {
 
           {/* Subscription Card - Netflix Style */}
           {subscription ? (
-            <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
+            <div className="rounded-xl overflow-hidden shadow-xs border border-border/40">
               {/* Header gradient */}
               <div className={`px-4 py-3 ${
                 isActive
@@ -378,7 +378,7 @@ const Ajustes = () => {
             </div>
           ) : (
             /* Plano Grátis Card */
-            <div className="rounded-xl overflow-hidden shadow-sm border border-border/40">
+            <div className="rounded-xl overflow-hidden shadow-xs border border-border/40">
               <div className={`px-4 py-3 ${
                 implicitTrialExpired
                   ? "bg-gradient-to-r from-gray-500 to-gray-400"
@@ -431,7 +431,7 @@ const Ajustes = () => {
                     navigate(path);
                   }
                 }}
-                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
                   <Icon size={20} className="text-black" />
@@ -445,7 +445,7 @@ const Ajustes = () => {
             {isAdmin && (
               <button
                 onClick={() => navigate("/gestao-acessos")}
-                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors"
+                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors"
               >
                 <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
                   <UserCog size={20} className="text-black" />
@@ -459,7 +459,7 @@ const Ajustes = () => {
             <button
               onClick={handleExportData}
               disabled={exportingData}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-border/40 active:bg-muted/40 transition-colors disabled:opacity-60"
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors disabled:opacity-60"
             >
               <div className="w-10 h-10 rounded-full bg-[#78C2AD]/15 flex items-center justify-center shrink-0">
                 {exportingData
@@ -477,7 +477,7 @@ const Ajustes = () => {
             {/* M14 — Revogar consentimento (LGPD Art. 18-IX) */}
             <button
               onClick={() => setShowRevokeConsent(true)}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-amber-200/60 active:bg-amber-50 transition-colors"
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-amber-200/60 active:bg-amber-50 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                 <ShieldOff size={20} className="text-amber-600" />
@@ -492,7 +492,7 @@ const Ajustes = () => {
             {/* Delete Account - danger item */}
             <button
               onClick={() => setShowDeleteAccount(true)}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-sm border border-destructive/20 active:bg-destructive/5 transition-colors"
+              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-destructive/20 active:bg-destructive/5 transition-colors"
             >
               <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
                 <Trash2 size={20} className="text-destructive" />

@@ -17,7 +17,7 @@ interface Props {
 const MedicationActionDrawer = ({ open, onOpenChange, onSelectAI, onSelectManual }: Props) => {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[50dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+      <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[50dvh] flex flex-col rounded-t-2xl bg-background outline-hidden">
         <DrawerHeader>
           <DrawerTitle className="text-primary">Novo Medicamento</DrawerTitle>
           <DrawerDescription>Como deseja registrar?</DrawerDescription>

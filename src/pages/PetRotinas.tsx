@@ -227,7 +227,7 @@ const PetRotinas = () => {
             <button
               onClick={() => setAbaAtiva("ativas")}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                abaAtiva === "ativas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                abaAtiva === "ativas" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Ativas
@@ -235,7 +235,7 @@ const PetRotinas = () => {
             <button
               onClick={() => setAbaAtiva("concluidas")}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                abaAtiva === "concluidas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                abaAtiva === "concluidas" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Concluídas

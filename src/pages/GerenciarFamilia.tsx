@@ -99,7 +99,7 @@ const GerenciarFamilia = () => {
               <div
                 key={m.id}
                 onClick={canEdit ? () => { setEditMember(m); setEditMemberRole(roleMap.get(m.id)); } : undefined}
-                className={`flex items-center p-4 bg-card rounded-xl shadow-sm border border-border/50 ${canEdit ? "cursor-pointer active:bg-muted/30" : ""}`}
+                className={`flex items-center p-4 bg-card rounded-xl shadow-xs border border-border/50 ${canEdit ? "cursor-pointer active:bg-muted/30" : ""}`}
               >
                 <MemberAvatar avatarUrl={m.avatar_url} name={m.name} memberType={m.member_type} />
                 <div className="flex flex-col ml-4 min-w-0 flex-1">

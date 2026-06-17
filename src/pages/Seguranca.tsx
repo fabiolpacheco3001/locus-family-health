@@ -98,7 +98,7 @@ const Seguranca = () => {
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-6">
 
         {/* C3 — Biometria: card informativo "em breve" (toggle falso removido) */}
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-border/40 space-y-3">
+        <div className="bg-card rounded-xl p-4 shadow-xs border border-border/40 space-y-3">
           <h2 className="text-sm font-semibold text-foreground">Acesso Rápido</h2>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
@@ -120,7 +120,7 @@ const Seguranca = () => {
         </div>
 
         {/* Alterar Senha */}
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-border/40 space-y-4">
+        <div className="bg-card rounded-xl p-4 shadow-xs border border-border/40 space-y-4">
           <div className="flex items-center gap-2">
             <Lock size={16} className="text-[#78C2AD]" />
             <h2 className="text-sm font-semibold text-foreground">Alterar Senha</h2>

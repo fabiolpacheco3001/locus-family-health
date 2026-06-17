@@ -155,11 +155,11 @@ const MeuPlano = () => {
           </div>
 
           {!subscription ? (
-            <div className="rounded-xl border border-border/40 bg-card p-8 shadow-sm text-center">
+            <div className="rounded-xl border border-border/40 bg-card p-8 shadow-xs text-center">
               <p className="text-sm font-medium text-muted-foreground">Você ainda não possui uma assinatura ativa.</p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border/40 shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-border/40 shadow-xs">
               <div className={`px-4 py-4 ${headerClass}`}>
                 <div className="flex items-center gap-2 text-white">
                   <Crown size={18} />

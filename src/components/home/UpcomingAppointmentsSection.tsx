@@ -72,7 +72,7 @@ export function UpcomingAppointmentsSection({ upcomingLoading, upcoming }: Props
                 <button
                   key={`${item.kind}-${item.id}`}
                   onClick={() => navigate(route, { state: { from: "/home" } })}
-                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                  className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-xs text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
                 >
                   <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-[#A7D3CB]">
                     <Icon className="text-black" size={16} />

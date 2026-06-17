@@ -264,7 +264,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[90dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[90dvh] flex flex-col rounded-t-2xl bg-background outline-hidden">
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-2 text-primary">
               <Droplets className="w-5 h-5" />
@@ -373,7 +373,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
 
       {/* Add/Edit form drawer */}
       <Drawer open={addOpen} onOpenChange={(o) => { setAddOpen(o); if (!o) setEditingId(null); }}>
-        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[90dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[90dvh] flex flex-col rounded-t-2xl bg-background outline-hidden">
           <DrawerHeader>
             <DrawerTitle className="text-primary">
               {editingId ? "Editar Registro" : "Registrar Menstruação"}

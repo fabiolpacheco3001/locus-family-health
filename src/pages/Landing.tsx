@@ -172,7 +172,7 @@ const Landing = () => {
           <img
             src={locusVitaLogo}
             alt="Locus Vita"
-            className="h-16 md:h-20 w-auto rounded-lg shadow-sm"
+            className="h-16 md:h-20 w-auto rounded-lg shadow-xs"
             loading="eager"
             width={120}
             height={80}

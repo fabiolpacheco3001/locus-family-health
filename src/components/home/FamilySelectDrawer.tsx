@@ -67,7 +67,7 @@ export function FamilySelectDrawer({
                 setQuickAction(null);
                 navigate(`/familiar/${member.id}/${quickAction}`, { state: { from: "/home" } });
               }}
-              className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
+              className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-xs text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
             >
               <MemberAvatar
                 avatarUrl={member.avatar_url}

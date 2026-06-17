@@ -19,7 +19,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         caption_label: "hidden",
         caption_dropdowns: "flex gap-1 items-center",
         vhidden: "sr-only",
-        dropdown: "appearance-none bg-background border border-input rounded-md px-2 py-1 text-[16px] focus:outline-none focus:ring-2 focus:ring-ring",
+        dropdown: "appearance-none bg-background border border-input rounded-md px-2 py-1 text-[16px] focus:outline-hidden focus:ring-2 focus:ring-ring",
         dropdown_month: "font-medium",
         dropdown_year: "font-medium",
         nav: "space-x-1 flex items-center",

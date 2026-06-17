@@ -70,7 +70,7 @@ const Changelog = () => {
                   {/* Timeline dot */}
                   <div className="absolute left-[9px] top-1 w-3 h-3 rounded-full bg-primary ring-2 ring-background" />
 
-                  <div className="bg-card rounded-xl border p-4 shadow-sm">
+                  <div className="bg-card rounded-xl border p-4 shadow-xs">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-primary">v{cl.version}</span>

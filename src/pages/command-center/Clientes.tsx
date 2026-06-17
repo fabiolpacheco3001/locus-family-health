@@ -174,7 +174,7 @@ const Clientes = () => {
         />
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/80">

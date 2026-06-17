@@ -272,7 +272,7 @@ const Doencas = () => {
       {!drawerOpen && <FixedFAB onClick={openAdd} />}
 
       <Drawer open={drawerOpen} onOpenChange={(open) => !open && closeDrawer()} repositionInputs={false}>
-        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-hidden">
           <DrawerHeader>
             <DrawerTitle>
               {drawerMode === "edit"
@@ -364,7 +364,7 @@ const Doencas = () => {
             <button
               onClick={() => setAbaAtiva("ativos")}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                abaAtiva === "ativos" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                abaAtiva === "ativos" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Ativos
@@ -372,7 +372,7 @@ const Doencas = () => {
             <button
               onClick={() => setAbaAtiva("superados")}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                abaAtiva === "superados" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                abaAtiva === "superados" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Superados

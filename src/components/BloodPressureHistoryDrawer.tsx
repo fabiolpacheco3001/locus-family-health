@@ -175,7 +175,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[90dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[90dvh] flex flex-col rounded-t-2xl bg-background outline-hidden">
           <DrawerHeader>
             <DrawerTitle className="flex items-center gap-2 text-primary">
               <HeartPulse className="w-5 h-5" />
@@ -287,7 +287,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
 
       {/* Manual input drawer */}
       <Drawer open={addOpen} onOpenChange={setAddOpen}>
-        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-none">
+        <DrawerContent className="fixed bottom-0 left-0 right-0 max-h-[85dvh] flex flex-col rounded-t-2xl bg-background outline-hidden">
           <DrawerHeader>
             <DrawerTitle className="text-primary">Nova Medição Manual</DrawerTitle>
             <DrawerDescription>Registre uma medição avulsa de pressão arterial.</DrawerDescription>

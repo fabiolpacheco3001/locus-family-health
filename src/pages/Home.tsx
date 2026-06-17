@@ -94,7 +94,7 @@ const Home = () => {
               <button
                 key={label}
                 onClick={action}
-                className="flex flex-col items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:bg-slate-50 transition-colors active:scale-95"
+                className="flex flex-col items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl shadow-xs hover:bg-slate-50 transition-colors active:scale-95"
               >
                 <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 bg-[#A7D3CB] text-black">
                   <Icon className="w-6 h-6" />

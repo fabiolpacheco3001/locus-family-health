@@ -103,7 +103,7 @@ const PetRoutines = ({ familyMemberId }: PetRoutinesProps) => {
       </div>
 
       {routines.length === 0 ? (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+        <div className="bg-card rounded-2xl shadow-xs border border-border/50 p-5">
           <p className="text-sm text-muted-foreground text-center">
             Nenhum registro de rotina ainda. Adicione banhos, tosas e vermífugos.
           </p>

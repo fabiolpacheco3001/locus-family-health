@@ -180,7 +180,7 @@ const MinhaSaude = () => {
 
         {/* Chart */}
         {chartData.length > 0 ? (
-          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+          <div className="bg-card rounded-2xl shadow-xs border border-border/50 p-5">
             <h2 className="text-base font-semibold text-foreground mb-4">
               {graficoAtivo === "peso" ? "Evolução do Peso" : "Evolução da Altura"}
             </h2>
@@ -223,7 +223,7 @@ const MinhaSaude = () => {
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="bg-card rounded-2xl shadow-sm border border-border/50 p-5">
+          <div className="bg-card rounded-2xl shadow-xs border border-border/50 p-5">
             <p className="text-sm text-muted-foreground text-center">
               Registre medidas para acompanhar a evolução ao longo do tempo.
             </p>

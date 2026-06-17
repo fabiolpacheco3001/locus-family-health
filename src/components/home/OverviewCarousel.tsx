@@ -75,7 +75,7 @@ export function OverviewCarousel({
           {slides.map(({ icon: Icon, count, label, route }) => (
             <CarouselItem key={label} className="pl-2 basis-full">
               <Card
-                className="bg-white/10 backdrop-blur-md border border-white/20 cursor-pointer active:bg-white/15 sm:hover:bg-white/15 transition-colors rounded-2xl shadow-sm"
+                className="bg-white/10 backdrop-blur-md border border-white/20 cursor-pointer active:bg-white/15 sm:hover:bg-white/15 transition-colors rounded-2xl shadow-xs"
                 onClick={() => navigate(route)}
               >
                 <CardContent className="flex items-center justify-between w-full py-3 px-4">

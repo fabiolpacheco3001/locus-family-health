@@ -114,7 +114,7 @@ const CCChangelog = () => {
           <Skeleton className="h-20 w-full rounded-xl" />
         </div>
       ) : changelogs.length === 0 ? (
-        <Card className="border-none shadow-sm bg-white">
+        <Card className="border-none shadow-xs bg-white">
           <CardContent className="py-12 text-center text-muted-foreground">
             <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-40" />
             <p className="text-sm">Nenhum changelog publicado ainda.</p>
@@ -123,7 +123,7 @@ const CCChangelog = () => {
       ) : (
         <div className="space-y-3">
           {changelogs.map((cl: any) => (
-            <Card key={cl.id} className="border-none shadow-sm bg-white">
+            <Card key={cl.id} className="border-none shadow-xs bg-white">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

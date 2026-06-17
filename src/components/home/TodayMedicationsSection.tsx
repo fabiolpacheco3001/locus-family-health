@@ -57,7 +57,7 @@ export function TodayMedicationsSection({
                 onClick={() =>
                   navigate(`/familiar/${p.family_member_id}/rotinas-pet`, { state: { from: "/home" } })
                 }
-                className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                className="flex items-center gap-3 p-3 bg-card rounded-xl border border-border/50 shadow-xs text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
               >
                 <div className="w-9 h-9 rounded-lg bg-[#A7D3CB] flex items-center justify-center shrink-0">
                   <PawPrint className="text-black" size={16} />
@@ -90,7 +90,7 @@ export function TodayMedicationsSection({
               }) => (
                 <div
                   key={med.id}
-                  className="flex flex-col p-3 bg-card rounded-xl border border-border/50 shadow-sm text-left w-full"
+                  className="flex flex-col p-3 bg-card rounded-xl border border-border/50 shadow-xs text-left w-full"
                 >
                   <button
                     onClick={() => navigate(`/familiar/${med.family_member_id}/medicamentos`)}

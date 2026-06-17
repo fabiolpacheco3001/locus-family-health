@@ -148,7 +148,7 @@ const Consultas = () => {
             <button
               onClick={() => setAbaAtiva('proximas')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                abaAtiva === 'proximas' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                abaAtiva === 'proximas' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               Ativas
@@ -156,7 +156,7 @@ const Consultas = () => {
             <button
               onClick={() => setAbaAtiva('historico')}
               className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                abaAtiva === 'historico' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                abaAtiva === 'historico' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               Concluídas
@@ -219,7 +219,7 @@ const Consultas = () => {
                   >
                     <button
                       onClick={() => handleOpenEdit(c)}
-                      className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
+                      className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-xs text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
                     >
                       <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
                         <Stethoscope className="text-black" size={20} />

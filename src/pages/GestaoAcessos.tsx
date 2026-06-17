@@ -269,7 +269,7 @@ const GestaoAcessos = () => {
                           setPermsMember(gm);
                           setPermsSelected(gm.managed_profiles ?? []);
                         } : undefined}
-                        className={`flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm ${!isCurrentUser ? "cursor-pointer active:bg-muted/30" : ""}`}
+                        className={`flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-xs ${!isCurrentUser ? "cursor-pointer active:bg-muted/30" : ""}`}
                       >
                         <MemberAvatar
                           avatarUrl={linkedMember?.avatar_url ?? null}
@@ -337,7 +337,7 @@ const GestaoAcessos = () => {
                   {pendingInvites.map(inv => (
                     <div
                       key={inv.id}
-                      className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-sm"
+                      className="flex items-center gap-3 p-4 bg-card rounded-xl border border-border/40 shadow-xs"
                     >
                       <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
                         <Mail size={18} className="text-muted-foreground" />

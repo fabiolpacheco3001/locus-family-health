@@ -272,7 +272,7 @@ const Agenda = () => {
                 <div
                   key={`${item.kind}-${item.id}`}
                   onClick={() => navigate(route, { state: { from: '/agenda' } })}
-                  className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-sm text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full cursor-pointer"
+                  className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-xs text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full cursor-pointer"
                 >
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-[#A7D3CB]">
                     <Icon className="text-black" size={20} />
