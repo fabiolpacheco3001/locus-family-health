@@ -151,9 +151,9 @@
 
 ### A3 · `AdminRoute` client-side contornável via React DevTools
 - **Risco baixo (mitigado):** Exposição da UI do command-center, mas dados protegidos por RLS + Edge Functions server-side. Não é vetor de acesso a dados.
-- **Fix:** Substituir `useState` por verificação via `useEffect` + redirect imediato, sem expor `children` antes da confirmação.
+- **Fix:** `authorizedRef` (useRef) adicionado como fonte de verdade imutável via DevTools. A condição de render verifica `authorizedRef.current` além do `status` state — mesmo que alguém manipule `status` de "loading" → "authorized" no DevTools, `authorizedRef.current` permanece `false` até a query confirmar. Toast de "Acesso negado" movido para `useEffect` (side-effect fora do render path).
 - **Arquivos:** `src/components/AdminRoute.tsx`
-- **Status:** ⬜ Backlog (baixa urgência — backend protege dados)
+- **Status:** ✅ Resolvido (sessão 13)
 
 ---
 
