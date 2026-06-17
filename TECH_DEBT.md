@@ -459,9 +459,9 @@
 ---
 
 ### B8 · Project ID hardcoded em `useAuth.tsx`
-- **Fix:** Substituir string literal pela variável `import.meta.env.VITE_SUPABASE_PROJECT_ID`.
-- **Arquivos:** `src/hooks/useAuth.tsx` (linha 22)
-- **Status:** ⬜ Backlog
+- **Fix:** `sb-xazlrdwdkafhzwkezfxz-auth-token` → `` `sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token` ``. `VITE_SUPABASE_PROJECT_ID` já estava no `.env` e no Lovable env vars.
+- **Arquivos:** `src/hooks/useAuth.tsx`
+- **Status:** ✅ Resolvido (sessão 14)
 
 ---
 

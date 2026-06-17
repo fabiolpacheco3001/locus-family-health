@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Optimistic: try to read cached session from localStorage synchronously
   const [user, setUser] = useState<User | null>(() => {
     try {
-      const stored = localStorage.getItem(`sb-xazlrdwdkafhzwkezfxz-auth-token`);
+      // B8: Project ID via env var — nunca hardcoded
+      const stored = localStorage.getItem(`sb-${import.meta.env.VITE_SUPABASE_PROJECT_ID}-auth-token`);
       if (stored) {
         const parsed = JSON.parse(stored);
         return parsed?.user ?? null;
