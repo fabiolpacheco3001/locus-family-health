@@ -196,12 +196,22 @@ export async function authenticatePasskey(): Promise<void> {
   //    without showing the "Usar Chave-senha" picker sheet first.
   //    Transports are intentionally omitted from each entry — including them was
   //    confirmed to cause iOS to route to the wrong UI (QR / cross-device flow).
+  // Build allowCredentials from server response.
+  // The server passes stored transports (filtered to platform-only, no "hybrid").
+  // "internal" transport tells iOS the passkey lives on this device →
+  // Face ID fires directly without the "Usar Chave-senha" picker sheet.
+  // If the server returned no allowCredentials (transports unknown), we omit
+  // the field entirely → discoverable search → picker appears (safe fallback).
   const serverAllowCreds = (
-    (options.allowCredentials ?? []) as Array<{ id: unknown; type?: string }>
+    (options.allowCredentials ?? []) as Array<{
+      id: unknown;
+      type?: string;
+      transports?: string[];
+    }>
   ).map((c) => ({
     id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
     type: "public-key" as PublicKeyCredentialType,
-    // transports intentionally omitted
+    transports: (c.transports ?? []) as AuthenticatorTransport[],
   }));
 
   const publicKey: PublicKeyCredentialRequestOptions = {
@@ -211,8 +221,6 @@ export async function authenticatePasskey(): Promise<void> {
     userVerification: "required",
     timeout: typeof options.timeout === "number" ? options.timeout : 60000,
     rpId: window.location.hostname,
-    // Pass specific credential IDs → iOS goes directly to Face ID (no picker)
-    // Fallback to discoverable (no allowCredentials) if server returned none
     ...(serverAllowCreds.length > 0 ? { allowCredentials: serverAllowCreds } : {}),
   };
 

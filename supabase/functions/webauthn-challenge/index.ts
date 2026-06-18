@@ -150,15 +150,24 @@ serve(async (req) => {
         credentialIds: passkeys.map((p: { credential_id: string }) => p.credential_id),
       });
 
-      // Pass specific credential IDs (without transports) so iOS matches the
-      // passkey directly in iCloud Keychain and triggers Face ID immediately,
-      // skipping the "Usar Chave-senha" picker sheet.
-      // Transports intentionally omitted — "hybrid"/"internal" confused iOS.
+      // Pass specific credential IDs WITH platform-only transports.
+      // "internal" tells iOS the passkey lives on this device → Face ID direct.
+      // "hybrid" is explicitly excluded — it routes to cross-device QR flow.
+      // If a passkey has no stored transports, we omit allowCredentials entirely
+      // (fall back to discoverable) to avoid showing the cross-device picker.
+      const allowCreds = passkeys
+        .map((p: { credential_id: string; transports: string[] | null }) => {
+          const platformTransports = (p.transports ?? []).filter(
+            (t: string) => t !== "hybrid",
+          ) as AuthenticatorTransport[];
+          return { id: p.credential_id, transports: platformTransports };
+        })
+        .filter((c: { transports: AuthenticatorTransport[] }) => c.transports.length > 0);
+
       options = await generateAuthenticationOptions({
         rpID: rpId,
-        allowCredentials: passkeys.map((p: { credential_id: string }) => ({
-          id: p.credential_id,
-        })),
+        // Use targeted credentials if we have transports; discoverable otherwise
+        allowCredentials: allowCreds.length > 0 ? allowCreds : [],
         userVerification: "required",
       }) as unknown as Record<string, unknown>;
     }
