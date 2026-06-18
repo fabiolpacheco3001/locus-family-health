@@ -150,16 +150,16 @@ serve(async (req) => {
         credentialIds: passkeys.map((p: { credential_id: string }) => p.credential_id),
       });
 
-      // IMPORTANT: omit `transports` from allowCredentials.
-      // Passing transports: ["hybrid"] alongside "internal" causes iOS/Safari to
-      // route to the cross-device QR flow instead of using the local iCloud Keychain
-      // passkey, resulting in "Não há senhas salvas para este site".
-      // Omitting transports lets iOS pick the best available method (Face ID if local).
+      // Use empty allowCredentials (discoverable credential flow).
+      // Passing specific credential IDs causes iOS to do an exact match against
+      // iCloud Keychain — if the match fails for any reason (encoding, sync, etc.)
+      // iOS returns "no credentials for this site" without showing "Senhas".
+      // With empty allowCredentials, iOS performs a discoverable search and shows
+      // the "Senhas" option for any passkey registered for this rpId, letting
+      // Face ID trigger after the user selects it.
       options = await generateAuthenticationOptions({
         rpID: rpId,
-        allowCredentials: passkeys.map((p: { credential_id: string }) => ({
-          id: p.credential_id,
-        })),
+        allowCredentials: [],
         userVerification: "required",
       }) as unknown as Record<string, unknown>;
     }
