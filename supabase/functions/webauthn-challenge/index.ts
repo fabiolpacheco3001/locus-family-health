@@ -162,13 +162,28 @@ serve(async (req) => {
       .delete()
       .lt("expires_at", new Date().toISOString());
 
-    await admin.from("webauthn_challenges").insert({
+    const { error: insertErr } = await admin.from("webauthn_challenges").insert({
       user_id: user.id,
       challenge: challengeStr,
       type,
     });
 
-    log("info", "webauthn_challenge_generated", { type, userId: user.id });
+    if (insertErr) {
+      log("error", "webauthn_challenge_insert_failed", {
+        userId: user.id,
+        type,
+        error: insertErr.message,
+        code: insertErr.code,
+        details: insertErr.details,
+        hint: insertErr.hint,
+      });
+      return new Response(
+        JSON.stringify({ error: `Erro ao salvar desafio: ${insertErr.message}` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    log("info", "webauthn_challenge_generated", { type, userId: user.id, challengeStr });
 
     // Use replacer to convert any remaining Uint8Array fields to base64url strings
     return new Response(JSON.stringify(options, base64UrlReplacer), {
