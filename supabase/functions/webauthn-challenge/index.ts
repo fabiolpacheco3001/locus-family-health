@@ -144,15 +144,21 @@ serve(async (req) => {
         );
       }
 
-      // Passamos os credential IDs específicos do banco.
-      // Agora que credential_id é armazenado diretamente do response.id do browser
-      // (base64url correto), o iOS consegue fazer o match no iCloud Keychain e
-      // acionar o Face ID direto — sem exibir o picker "Iniciar Sessão".
+      log("info", "webauthn_auth_credentials", {
+        userId: user.id,
+        count: passkeys.length,
+        credentialIds: passkeys.map((p: { credential_id: string }) => p.credential_id),
+      });
+
+      // IMPORTANT: omit `transports` from allowCredentials.
+      // Passing transports: ["hybrid"] alongside "internal" causes iOS/Safari to
+      // route to the cross-device QR flow instead of using the local iCloud Keychain
+      // passkey, resulting in "Não há senhas salvas para este site".
+      // Omitting transports lets iOS pick the best available method (Face ID if local).
       options = await generateAuthenticationOptions({
         rpID: rpId,
-        allowCredentials: passkeys.map((p: { credential_id: string; transports: string[] | null }) => ({
+        allowCredentials: passkeys.map((p: { credential_id: string }) => ({
           id: p.credential_id,
-          transports: (p.transports ?? []) as AuthenticatorTransport[],
         })),
         userVerification: "required",
       }) as unknown as Record<string, unknown>;
