@@ -87,7 +87,7 @@ serve(async (req) => {
       .eq("user_id", user.id)
       .eq("type", type)
       .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
+      .order("expires_at", { ascending: false })
       .limit(1)
       .single();
 
