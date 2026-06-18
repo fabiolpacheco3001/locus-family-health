@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { useNavigate } from "react-router-dom";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 type Props = {
   activeMedsCount: number;
@@ -19,6 +20,7 @@ export function OverviewCarousel({
   pendingExams,
 }: Props) {
   const navigate = useNavigate();
+  const prefersReducedMotion = useReducedMotion();
   const [carouselApi, setCarouselApi] = React.useState<CarouselApi>();
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [slideCount, setSlideCount] = React.useState(0);
@@ -68,7 +70,7 @@ export function OverviewCarousel({
       <Carousel
         setApi={setCarouselApi}
         opts={{ align: "start", loop: true }}
-        plugins={[Autoplay({ delay: 4000, stopOnInteraction: true })]}
+        plugins={prefersReducedMotion ? [] : [Autoplay({ delay: 4000, stopOnInteraction: true })]}
         className="w-full"
       >
         <CarouselContent className="-ml-2">
