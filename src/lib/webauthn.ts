@@ -189,24 +189,33 @@ export async function authenticatePasskey(): Promise<void> {
   }
 
   // 2. Build a MINIMAL, clean authentication request.
-  //    Do NOT spread ...options — the server response may include extra fields
-  //    (e.g. from @simplewebauthn/server serialization) that confuse iOS WebAuthn.
-  //    We pass the specific allowCredentials from the server so iOS can match the
-  //    passkey directly in iCloud Keychain and trigger Face ID immediately,
-  //    without showing the "Usar Chave-senha" picker sheet first.
-  //    Transports are intentionally omitted from each entry — including them was
-  //    confirmed to cause iOS to route to the wrong UI (QR / cross-device flow).
-  // Discoverable credential flow: omit allowCredentials and rpId so iOS
-  // performs a broader search and shows the "Iniciar Sessão — Usar Chave-senha"
-  // sheet, after which Face ID fires. Passing specific credential IDs (with or
-  // without transports) consistently routes iOS to cross-device QR flow instead
-  // of iCloud Keychain — discoverable is the only reliable path on this stack.
+  //    Do NOT spread ...options — extra fields from @simplewebauthn/server
+  //    serialization can confuse the iOS WebAuthn implementation.
+  //
+  //    allowCredentials: pass specific IDs + platform transports from the server.
+  //    With a clean registration (no stale passkey in iOS Senhas), iOS finds the
+  //    exact credential and triggers Face ID directly — no picker sheet.
+  //    rpId: set explicitly so it matches the registration rpId exactly.
+  const serverAllowCreds = (
+    (options.allowCredentials ?? []) as Array<{
+      id: unknown;
+      type?: string;
+      transports?: string[];
+    }>
+  ).map((c) => ({
+    id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
+    type: "public-key" as PublicKeyCredentialType,
+    transports: (c.transports ?? []) as AuthenticatorTransport[],
+  }));
+
   const publicKey: PublicKeyCredentialRequestOptions = {
     challenge: base64UrlToArrayBuffer(
       toBase64UrlString(options.challenge, "challenge"),
     ),
     userVerification: "required",
     timeout: typeof options.timeout === "number" ? options.timeout : 60000,
+    rpId: window.location.hostname,
+    ...(serverAllowCreds.length > 0 ? { allowCredentials: serverAllowCreds } : {}),
   };
 
   // 3. Prompt biometric
