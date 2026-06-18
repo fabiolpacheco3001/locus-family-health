@@ -24,16 +24,15 @@ import { usePasskeys } from "@/hooks/usePasskeys";
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 min background → re-lock
 
 export function useAppLock() {
-  const { user, session, lastAuthEvent } = useAuth();
+  const { user, session, freshlyLoggedIn } = useAuth();
   const { passkeys, isLoading } = usePasskeys();
 
   const hasPasskeys = passkeys.length > 0;
 
-  // Capture the auth event at the moment AppLayout first mounts.
-  // 'INITIAL_SESSION' = session restored from localStorage (PWA resume) → lock.
-  // 'SIGNED_IN'       = user just typed email/password → do NOT lock on first render.
-  // null              = event not yet fired (shouldn't happen in practice).
-  const mountAuthEvent = useRef(lastAuthEvent).current;
+  // Capture freshlyLoggedIn at mount time (ref = won't re-trigger effects on change).
+  // true  → user just typed email/password in this JS session → do NOT lock on first render
+  // false → PWA resumed with restored session (freshlyLoggedIn was never set) → lock
+  const wasFreshLogin = useRef(freshlyLoggedIn).current;
 
   const [isLocked, setIsLocked] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -42,8 +41,7 @@ export function useAppLock() {
   // ── Initial lock decision (runs once when passkeys query resolves) ──────────
   useEffect(() => {
     if (isLoading) return;
-    const isRestoredSession = mountAuthEvent === "INITIAL_SESSION";
-    if (session && hasPasskeys && isRestoredSession) {
+    if (session && hasPasskeys && !wasFreshLogin) {
       // Session was restored from localStorage and user has passkeys → lock
       setIsLocked(true);
     }
@@ -81,9 +79,9 @@ export function useAppLock() {
 
   const unlock = useCallback(() => setIsLocked(false), []);
 
-  // hadInitialSession: true when the session was restored from storage (not fresh login)
-  // Used by AppLayout to decide whether to show a pre-lock logo spinner.
-  const hadInitialSession = mountAuthEvent === "INITIAL_SESSION";
+  // hadInitialSession: true when it's a PWA resume (not a fresh login).
+  // Used by AppLayout to show a pre-lock logo spinner instead of flashing content.
+  const hadInitialSession = !wasFreshLogin && !!user;
 
   return { isLocked, isReady, hadInitialSession, unlock };
 }

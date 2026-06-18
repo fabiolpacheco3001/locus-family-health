@@ -7,8 +7,12 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  /** Last Supabase auth event: 'INITIAL_SESSION' = restored, 'SIGNED_IN' = fresh login */
-  lastAuthEvent: string | null;
+  /**
+   * True for ~30 s after the user explicitly called signIn/signUp in this JS session.
+   * Lets useAppLock skip the initial lock right after a fresh login.
+   * False on PWA resume (JS restarted, no signIn was called).
+   */
+  freshlyLoggedIn: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -31,14 +35,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return null;
   });
   const [session, setSession] = useState<Session | null>(null);
-  const [lastAuthEvent, setLastAuthEvent] = useState<string | null>(null);
+  const [freshlyLoggedIn, setFreshlyLoggedIn] = useState(false);
   // If we found a cached user, don't block rendering
   const [loading, setLoading] = useState(!user);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setLastAuthEvent(_event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -62,6 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (!error) setFreshlyLoggedIn(true);
     return { error: error as Error | null };
   };
 
@@ -71,6 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
     });
+    if (!error) setFreshlyLoggedIn(true);
     return { error: error as Error | null };
   };
 
@@ -79,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, lastAuthEvent, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, freshlyLoggedIn, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
