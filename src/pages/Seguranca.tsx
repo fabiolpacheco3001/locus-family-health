@@ -51,7 +51,11 @@ const Seguranca = () => {
     setIsToggling(true);
     try {
       if (enabled) {
-        // Liga: faz leitura biométrica imediatamente
+        // Avisa o usuário para selecionar "Senhas" (iCloud Keychain) no picker nativo do iOS.
+        // Esse picker é obrigatório na primeira vez — nas próximas, o Face ID age direto.
+        toast.info('Selecione "Senhas" (ícone de chaves) para o Face ID funcionar automaticamente.', {
+          duration: 6000,
+        });
         await register.mutateAsync(getDeviceName());
       } else {
         // Desliga: remove a passkey do DB (iCloud Keychain retém a chave, mas o app não a usa mais)
@@ -170,7 +174,7 @@ const Seguranca = () => {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                    Desbloqueie o app automaticamente ao abri-lo.
+                    Desbloqueie o app com Face ID ao abri-lo. Na ativação, selecione <strong>Senhas</strong> no iOS.
                   </p>
                 )}
               </div>
