@@ -157,6 +157,20 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
     "webauthn-verify",
     { body: { type: "registration", response: serialized, deviceName } },
   );
+
+  // ── TEMP DIAGNOSTIC ── remove after confirming registration works ──────────
+  {
+    let msg = "";
+    if (verErr) {
+      const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
+      msg = `ERRO: ${body?.error ?? verErr.message}`;
+    } else {
+      msg = `OK: ${JSON.stringify(result)}`;
+    }
+    window.alert(`[BK-04 reg] origin=${window.location.origin}\n${msg}`);
+  }
+  // ── END TEMP DIAGNOSTIC ───────────────────────────────────────────────────
+
   if (verErr) {
     // FunctionsHttpError carries the real server message — extract it
     const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
