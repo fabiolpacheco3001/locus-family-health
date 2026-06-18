@@ -151,8 +151,13 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
     "webauthn-verify",
     { body: { type: "registration", response: serialized, deviceName } },
   );
-  if (verErr || result?.error) {
-    throw new Error(verErr?.message ?? result?.error ?? "Falha ao confirmar cadastro.");
+  if (verErr) {
+    // FunctionsHttpError carries the real server message — extract it
+    const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
+    throw new Error(body?.error ?? verErr.message ?? "Falha ao confirmar cadastro.");
+  }
+  if (result?.error) {
+    throw new Error(result.error);
   }
 }
 
@@ -229,7 +234,11 @@ export async function authenticatePasskey(): Promise<void> {
     "webauthn-verify",
     { body: { type: "authentication", response: serialized } },
   );
-  if (verErr || result?.error) {
-    throw new Error(verErr?.message ?? result?.error ?? "Falha na verificação biométrica.");
+  if (verErr) {
+    const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
+    throw new Error(body?.error ?? verErr.message ?? "Falha na verificação biométrica.");
+  }
+  if (result?.error) {
+    throw new Error(result.error);
   }
 }

@@ -72,6 +72,14 @@ serve(async (req) => {
     const appOrigin = Deno.env.get("APP_ORIGIN") ?? "http://localhost:5173";
     const rpId = new URL(appOrigin).hostname;
 
+    log("info", "webauthn_verify_start", {
+      userId: user.id,
+      type,
+      appOrigin,
+      rpId,
+      credentialId: (response as { id?: string }).id,
+    });
+
     // ── FETCH & CONSUME CHALLENGE (one-time) ──────────────────────────────────
     const { data: challengeRow, error: challengeErr } = await admin
       .from("webauthn_challenges")
@@ -84,27 +92,63 @@ serve(async (req) => {
       .single();
 
     if (challengeErr || !challengeRow) {
+      log("warn", "webauthn_challenge_not_found", {
+        userId: user.id,
+        type,
+        dbError: challengeErr?.message ?? "no_row",
+      });
       return new Response(
         JSON.stringify({ error: "Sessão de verificação expirada. Tente cadastrar novamente." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
+    log("info", "webauthn_challenge_found", {
+      challengeId: challengeRow.id,
+      storedChallenge: challengeRow.challenge,
+    });
+
     // Delete immediately — challenges are single-use
     await admin.from("webauthn_challenges").delete().eq("id", challengeRow.id);
 
     // ── REGISTRATION VERIFICATION ─────────────────────────────────────────────
     if (type === "registration") {
-      const verification = await verifyRegistrationResponse({
-        response: response as Parameters<typeof verifyRegistrationResponse>[0]["response"],
-        expectedChallenge: challengeRow.challenge,
-        expectedOrigin: appOrigin,
-        expectedRPID: rpId,
-        requireUserVerification: true,
+      let verification: Awaited<ReturnType<typeof verifyRegistrationResponse>>;
+      try {
+        verification = await verifyRegistrationResponse({
+          response: response as Parameters<typeof verifyRegistrationResponse>[0]["response"],
+          expectedChallenge: challengeRow.challenge,
+          expectedOrigin: appOrigin,
+          expectedRPID: rpId,
+          requireUserVerification: true,
+        });
+      } catch (verifyErr) {
+        log("error", "webauthn_verify_threw", {
+          userId: user.id,
+          error: String(verifyErr),
+          expectedOrigin: appOrigin,
+          expectedRPID: rpId,
+          storedChallenge: challengeRow.challenge,
+        });
+        return new Response(
+          JSON.stringify({ error: `Falha técnica na verificação: ${String(verifyErr)}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      log("info", "webauthn_verify_result", {
+        userId: user.id,
+        verified: verification.verified,
+        hasInfo: !!verification.registrationInfo,
       });
 
       if (!verification.verified || !verification.registrationInfo) {
-        log("warn", "webauthn_registration_failed", { userId: user.id });
+        log("warn", "webauthn_registration_failed", {
+          userId: user.id,
+          verified: verification.verified,
+          expectedOrigin: appOrigin,
+          rpId,
+        });
         return new Response(
           JSON.stringify({ error: "Verificação biométrica falhou. Tente novamente." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
