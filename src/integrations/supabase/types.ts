@@ -1028,6 +1028,45 @@ export type Database = {
           },
         ]
       }
+      passkeys: {
+        Row: {
+          aaguid: string | null
+          counter: number
+          created_at: string
+          credential_id: string
+          device_name: string
+          id: string
+          last_used_at: string | null
+          public_key: string
+          transports: string[] | null
+          user_id: string
+        }
+        Insert: {
+          aaguid?: string | null
+          counter?: number
+          created_at?: string
+          credential_id: string
+          device_name?: string
+          id?: string
+          last_used_at?: string | null
+          public_key: string
+          transports?: string[] | null
+          user_id: string
+        }
+        Update: {
+          aaguid?: string | null
+          counter?: number
+          created_at?: string
+          credential_id?: string
+          device_name?: string
+          id?: string
+          last_used_at?: string | null
+          public_key?: string
+          transports?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pet_routines: {
         Row: {
           created_at: string
@@ -1272,6 +1311,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webauthn_challenges: {
+        Row: {
+          challenge: string
+          expires_at: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          challenge: string
+          expires_at?: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          challenge?: string
+          expires_at?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
