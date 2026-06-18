@@ -155,16 +155,24 @@ serve(async (req) => {
         );
       }
 
-      const { credentialID, credentialPublicKey, counter, credentialDeviceType } =
+      const { credentialPublicKey, counter, credentialDeviceType } =
         verification.registrationInfo;
 
       const resolvedName =
         deviceName ??
         (credentialDeviceType === "multiDevice" ? "Passkey sincronizada" : "Dispositivo");
 
+      // Use response.id (base64url string sent by the browser) as credential_id.
+      // Do NOT use registrationInfo.credentialID: in @simplewebauthn/server@9 the
+      // returned Uint8Array may serialize as an empty Buffer-like object in Deno,
+      // causing uint8ArrayToBase64Url() to return "" and breaking all lookups.
+      const credentialId = (response as { id: string }).id;
+
+      log("info", "webauthn_inserting_passkey", { userId: user.id, credentialId });
+
       await admin.from("passkeys").insert({
         user_id: user.id,
-        credential_id: uint8ArrayToBase64Url(credentialID as unknown as Uint8Array),
+        credential_id: credentialId,
         public_key: uint8ArrayToBase64Url(credentialPublicKey as unknown as Uint8Array),
         counter,
         device_name: resolvedName,
