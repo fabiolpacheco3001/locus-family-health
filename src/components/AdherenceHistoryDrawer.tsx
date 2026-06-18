@@ -221,7 +221,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
                 </button>
               ))}
             </div>
-            {allTimeTotal > 0 && (
+            {allDoses.length > 0 && (
               <button
                 onClick={handleExportPdf}
                 disabled={generating}
