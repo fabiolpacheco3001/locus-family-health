@@ -197,13 +197,17 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
   };
 
   // ── Draw heatmap calendar ────────────────────────────────────────────────────
-  const drawHeatmap = (x: number, y0: number, w: number, days: HeatmapDay[]) => {
-    const cellSize = (w - 6 * 1.5) / 7;
+  // Returns actual pixel height consumed by the grid (for caller to advance y correctly)
+  const heatmapCellSize = 10; // mm — fixed; do NOT derive from contentW (too large)
+  const heatmapGap = 1.5;
+  const drawHeatmap = (x: number, y0: number, _w: number, days: HeatmapDay[]) => {
+    const cellSize = heatmapCellSize;
+    const gap = heatmapGap;
     days.forEach((day, i) => {
       const col = i % 7;
       const row = Math.floor(i / 7);
-      const cx = x + col * (cellSize + 1.5);
-      const cy = y0 + row * (cellSize + 1.5);
+      const cx = x + col * (cellSize + gap);
+      const cy = y0 + row * (cellSize + gap);
 
       const hex = day.color;
       const r = parseInt(hex.slice(1, 3), 16);
@@ -318,9 +322,13 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
 
   // ── Calendário Heatmap — últimos 14 dias ─────────────────────────────────────
   sectionTitle("Últimos 14 Dias");
-  ensureSpace(40);
+  // Calculate exact height: topPad(7) + rows*(cell+gap)-gap + legendPad(8)
+  const hmRows = Math.ceil((data.heatmapData.length || 14) / 7);
+  const hmGridH = hmRows * (heatmapCellSize + heatmapGap) - heatmapGap;
+  const hmCardH = 7 + hmGridH + 8; // top pad + grid + legend strip
+  ensureSpace(hmCardH + 4);
   doc.setFillColor(...BG_CARD);
-  doc.roundedRect(margin, y, contentW, 36, 2, 2, "F");
+  doc.roundedRect(margin, y, contentW, hmCardH, 2, 2, "F");
 
   // month label
   if (data.heatmapData.length > 0) {
@@ -334,7 +342,7 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
   drawHeatmap(margin + 4, y + 7, contentW - 8, data.heatmapData);
 
   // legend
-  const legendY = y + 30;
+  const legendY = y + 7 + hmGridH + 2;
   const legendItems = [
     { color: "#78C2AD", label: "Completo" },
     { color: "#f5c04e", label: "Parcial" },
@@ -354,7 +362,7 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
     lx += label.length * 2 + 12;
   });
 
-  y += 40;
+  y += hmCardH + 4;
 
   // ── Por Medicamento ──────────────────────────────────────────────────────────
   if (data.medBreakdown.length > 0) {
