@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 5.1 | **Atualizado em:** 2026-06-17 (sessão 18 — pós-deploy)  
+> **Versão:** 5.2 | **Atualizado em:** 2026-06-18 (sessão 19 — BK-04 WebAuthn + BK-06 Signed URLs)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -28,6 +28,7 @@
 | Sessão 16 | B6 ✅ Vite 5→6: `package.json` `"vite": "^6.0.0"`; fix `calculateNextDose` (refSP em vez de new Date() — teste determinístico). A16 ✅ Runbook LGPD Art. 48: `docs/runbook-lgpd-art48.md` (P0/P1/P2, prazo ANPD 3 dias úteis, templates, evidências). Auditoria TECH_DEBT.md v4.2→4.3 | Sprint 8 🟡 Em progresso |
 | Sessão 17 | M3 ✅ Refatoração Home.tsx (849→138 LOC) + Vacinas.tsx (802→478 LOC): useHomeData, 5 sub-componentes home/, useVaccineImport, VaccineFormDrawer. TECH_DEBT.md v4.5 | Sprint 8 🟡 Em progresso |
 | Sessão 18 | B9 ✅ completo: B9-A (react-router-dom v7, vaul v1.1.2, pdfjs-dist v5), B9-B (React 18→19), B9-C (Tailwind v3→v4: @tailwindcss/vite, @import "tailwindcss", 63× outline-hidden, 51× shadow-xs). .npmrc legacy-peer-deps=true para npm ci. Pós-deploy: bun.lockb desatualizado removido do git (Lovable regenerou com @tailwindcss/vite); sonner.tsx forçado para theme=light (next-themes "system" causava toast preto no iOS em dark mode). Build Lovable exit code 0 ✅. TECH_DEBT.md v5.1 | Sprint 8 ✅ CONCLUÍDO |
+| Sessão 19 | BK-04 ✅ WebAuthn passkeys: registro + autenticação FIDO2 full-flow validados em produção (iOS 18.7 PWA). BK-06 ✅ Signed URLs 15 min: `storage.ts` refatorado (TTL 600→900s, `getSignedUrl` genérico, `PRESCRIPTIONS_BUCKET` constante, bucket param nas funções); hook `useSignedUrl.ts` com React Query (staleTime = TTL − 60s, auto-renova antes de expirar). Todos os pontos de acesso a `exam-files` e `receitas` já usavam signed URLs — nenhum `getPublicUrl` em arquivos clínicos. S3-02 ✅ prefers-reduced-motion no OverviewCarousel. S3-05 ✅ OCR retry UI. | Sprint 10+11 ✅ CONCLUÍDO |
 
 ---
 
@@ -599,11 +600,19 @@ Sprint 8 — Qualidade de código + Upgrades ✅ CONCLUÍDO
 ├── ✅ B9-B                              → React 18→19 + .npmrc legacy-peer-deps=true
 └── ✅ B9-C                              → Tailwind v3→v4: @tailwindcss/vite, @import, 63× outline-hidden, 51× shadow-xs
 
-Sprint 9 — Pendente (sugestão)
+Sprint 10 — Segurança + UX ✅ CONCLUÍDO
+├── ✅ S3-02                             → prefers-reduced-motion no OverviewCarousel
+├── ✅ S3-05                             → OCR retry UI no fluxo analyze-prescription
+└── ✅ BK-04                             → WebAuthn passkeys: registro + autenticação FIDO2 (iOS 18.7 PWA confirmado)
+
+Sprint 11 — LGPD reforço + Signed URLs ✅ CONCLUÍDO
+└── ✅ BK-06                             → storage.ts: TTL 900s, getSignedUrl genérico, PRESCRIPTIONS_BUCKET; hook useSignedUrl.ts com auto-renovação React Query
+
+Sprint 12 — Pendente (sugestão)
 ├── ⬜ A7 E2E                            → Playwright: login, cadastro de medicamento, marcação de dose
-├── ⬜ B9 restantes (baixo risco)        → recharts 3.x, react-day-picker 9.x, date-fns 4.x
-├── ⬜ Dashboard de Adesão              → estatísticas de pontualidade a partir de medication_doses
-└── ⬜ Push notifications               → engine multi-dispositivo baseada em specific_times
+├── ⬜ BK-01                             → Push notifications multi-dispositivo (FCM/APNs)
+├── ⬜ BK-02                             → Ciclos posológicos complexos (anticoncepcional 21+7)
+└── ⬜ BK-03                             → OAuth Google / Apple (login social)
 ```
 
 ---
