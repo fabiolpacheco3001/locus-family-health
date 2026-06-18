@@ -97,6 +97,12 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
   //    Uint8Array objects returned by older @simplewebauthn/server versions.
   const publicKey: PublicKeyCredentialCreationOptions = {
     ...options,
+    // Force rp.id to the current hostname so registration and authentication
+    // always use the exact same rpId regardless of APP_ORIGIN formatting.
+    rp: {
+      ...(options.rp as { name?: string }),
+      id: window.location.hostname,
+    },
     challenge: base64UrlToArrayBuffer(
       toBase64UrlString(options.challenge, "challenge"),
     ),
@@ -110,7 +116,7 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
       (options.excludeCredentials ?? []) as Array<{ id: unknown; type: string; transports?: string[] }>
     ).map((c) => ({
       id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "excludeCredentials.id")),
-      type: "public-key" as PublicKeyCredentialType, // must be literal "public-key" — browser rejects casts
+      type: "public-key" as PublicKeyCredentialType,
       transports: c.transports as AuthenticatorTransport[],
     })),
   };
@@ -190,8 +196,12 @@ export async function authenticatePasskey(): Promise<void> {
   }));
 
   // 2. Convert base64url fields to ArrayBuffer
+  //    rpId is forced to the current hostname to guarantee it always matches the
+  //    domain stored in iCloud Keychain — spreading `options` can carry an rpId
+  //    that diverges when APP_ORIGIN has a trailing slash or different casing.
   const publicKey: PublicKeyCredentialRequestOptions = {
     ...options,
+    rpId: window.location.hostname, // always the effective domain (e.g. "vita.locustech.com.br")
     challenge: base64UrlToArrayBuffer(
       toBase64UrlString(options.challenge, "challenge"),
     ),
@@ -199,7 +209,7 @@ export async function authenticatePasskey(): Promise<void> {
       (options.allowCredentials ?? []) as Array<{ id: unknown; type: string; transports?: string[] }>
     ).map((c) => ({
       id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
-      type: "public-key" as PublicKeyCredentialType, // must be literal "public-key" — browser rejects casts
+      type: "public-key" as PublicKeyCredentialType,
       transports: c.transports as AuthenticatorTransport[],
     })),
   };
