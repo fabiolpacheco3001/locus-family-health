@@ -207,7 +207,9 @@ export async function authenticatePasskey(): Promise<void> {
     if (domErr?.name === "NotAllowedError") {
       throw new Error("Verificação biométrica cancelada pelo usuário.");
     }
-    throw new Error("Não foi possível verificar a biometria. Tente novamente.");
+    // Include the actual DOMException name to help diagnose iOS/PWA issues
+    const detail = domErr?.name ? `[${domErr.name}] ${domErr.message ?? ""}` : String(err);
+    throw new Error(`Não foi possível verificar a biometria. ${detail}`);
   }
   if (!credential) throw new Error("Verificação biométrica cancelada.");
 

@@ -7,6 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  /** Last Supabase auth event: 'INITIAL_SESSION' = restored, 'SIGNED_IN' = fresh login */
+  lastAuthEvent: string | null;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -29,12 +31,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return null;
   });
   const [session, setSession] = useState<Session | null>(null);
+  const [lastAuthEvent, setLastAuthEvent] = useState<string | null>(null);
   // If we found a cached user, don't block rendering
   const [loading, setLoading] = useState(!user);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        setLastAuthEvent(_event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -75,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, lastAuthEvent, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

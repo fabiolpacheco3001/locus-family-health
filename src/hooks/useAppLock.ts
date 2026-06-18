@@ -24,14 +24,16 @@ import { usePasskeys } from "@/hooks/usePasskeys";
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 min background → re-lock
 
 export function useAppLock() {
-  const { user, session } = useAuth();
+  const { user, session, lastAuthEvent } = useAuth();
   const { passkeys, isLoading } = usePasskeys();
 
   const hasPasskeys = passkeys.length > 0;
 
-  // True if session was already in localStorage when this hook first mounted.
-  // This distinguishes "PWA resumed" from "just logged in".
-  const hadInitialSession = useRef(user !== null).current;
+  // Capture the auth event at the moment AppLayout first mounts.
+  // 'INITIAL_SESSION' = session restored from localStorage (PWA resume) → lock.
+  // 'SIGNED_IN'       = user just typed email/password → do NOT lock on first render.
+  // null              = event not yet fired (shouldn't happen in practice).
+  const mountAuthEvent = useRef(lastAuthEvent).current;
 
   const [isLocked, setIsLocked] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -40,8 +42,9 @@ export function useAppLock() {
   // ── Initial lock decision (runs once when passkeys query resolves) ──────────
   useEffect(() => {
     if (isLoading) return;
-    if (session && hasPasskeys && hadInitialSession) {
-      // Session was restored from storage and user has passkeys → lock
+    const isRestoredSession = mountAuthEvent === "INITIAL_SESSION";
+    if (session && hasPasskeys && isRestoredSession) {
+      // Session was restored from localStorage and user has passkeys → lock
       setIsLocked(true);
     }
     setIsReady(true);
@@ -77,6 +80,10 @@ export function useAppLock() {
   }, [user]);
 
   const unlock = useCallback(() => setIsLocked(false), []);
+
+  // hadInitialSession: true when the session was restored from storage (not fresh login)
+  // Used by AppLayout to decide whether to show a pre-lock logo spinner.
+  const hadInitialSession = mountAuthEvent === "INITIAL_SESSION";
 
   return { isLocked, isReady, hadInitialSession, unlock };
 }
