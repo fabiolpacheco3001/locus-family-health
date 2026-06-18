@@ -167,13 +167,18 @@ serve(async (req) => {
       // returned Uint8Array may serialize as an empty Buffer-like object in Deno,
       // causing uint8ArrayToBase64Url() to return "" and breaking all lookups.
       const credentialId = (response as { id: string }).id;
+      const publicKeyB64 = uint8ArrayToBase64Url(credentialPublicKey as unknown as Uint8Array);
 
-      log("info", "webauthn_inserting_passkey", { userId: user.id, credentialId });
+      log("info", "webauthn_inserting_passkey", {
+        userId: user.id,
+        credentialId,
+        publicKeyLength: publicKeyB64.length, // se 0 → mesmo bug do credentialID
+      });
 
       await admin.from("passkeys").insert({
         user_id: user.id,
         credential_id: credentialId,
-        public_key: uint8ArrayToBase64Url(credentialPublicKey as unknown as Uint8Array),
+        public_key: publicKeyB64,
         counter,
         device_name: resolvedName,
         transports: (response as { response?: { transports?: string[] } }).response?.transports ?? [],

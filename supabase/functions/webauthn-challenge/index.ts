@@ -144,14 +144,16 @@ serve(async (req) => {
         );
       }
 
-      // allowCredentials vazio = "discoverable credential flow":
-      // o iOS/Android procura TODAS as passkeys do rpId no iCloud Keychain / Keystore
-      // e aciona o Face ID diretamente, sem exibir o picker de credenciais.
-      // Quando passamos IDs específicos, o iOS só acha a passkey se o credential_id
-      // estiver EXATAMENTE no iCloud Keychain — qualquer divergência cai no picker.
+      // Passamos os credential IDs específicos do banco.
+      // Agora que credential_id é armazenado diretamente do response.id do browser
+      // (base64url correto), o iOS consegue fazer o match no iCloud Keychain e
+      // acionar o Face ID direto — sem exibir o picker "Iniciar Sessão".
       options = await generateAuthenticationOptions({
         rpID: rpId,
-        allowCredentials: [],
+        allowCredentials: passkeys.map((p: { credential_id: string; transports: string[] | null }) => ({
+          id: p.credential_id,
+          transports: (p.transports ?? []) as AuthenticatorTransport[],
+        })),
         userVerification: "required",
       }) as unknown as Record<string, unknown>;
     }
