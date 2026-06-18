@@ -181,6 +181,14 @@ export async function authenticatePasskey(): Promise<void> {
     throw new Error(optErr?.message ?? options?.error ?? "Erro ao iniciar verificação.");
   }
 
+  // DIAGNOSTIC — remover após confirmar rpId correto
+  // eslint-disable-next-line no-console
+  console.log("[webauthn-auth] server options:", JSON.stringify({
+    rpId: options.rpId,
+    pageOrigin: window.location.origin,
+    allowCredentials: options.allowCredentials,
+  }));
+
   // 2. Convert base64url fields to ArrayBuffer
   const publicKey: PublicKeyCredentialRequestOptions = {
     ...options,
