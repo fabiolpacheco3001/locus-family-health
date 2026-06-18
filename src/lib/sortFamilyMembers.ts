@@ -14,7 +14,7 @@ const relationshipOrder: Record<string, number> = {
 
 interface SortableMember {
   id: string;
-  relationship: string;
+  relationship?: string | null;
   member_type?: string | null;
   created_at?: string;
 }
