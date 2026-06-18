@@ -49,8 +49,8 @@ export function sortFamilyMembers<T extends SortableMember>(
     if (!isPetA && isPetB) return -1;
 
     // 3. Relationship hierarchy
-    const weightA = relationshipOrder[a.relationship] ?? 99;
-    const weightB = relationshipOrder[b.relationship] ?? 99;
+    const weightA = relationshipOrder[a.relationship ?? ""] ?? 99;
+    const weightB = relationshipOrder[b.relationship ?? ""] ?? 99;
     return weightA - weightB;
   });
 }
