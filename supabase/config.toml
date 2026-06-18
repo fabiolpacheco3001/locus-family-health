@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.delete-user-account]
 verify_jwt = true
+
+[functions.webauthn-challenge]
+verify_jwt = true
+
+[functions.webauthn-verify]
+verify_jwt = true

@@ -1,23 +1,52 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Fingerprint, Eye, EyeOff, Lock, Clock } from "lucide-react";
+import { ArrowLeft, Fingerprint, Eye, EyeOff, Lock, Plus, Trash2, Loader2, SmartphoneNfc } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { usePasskeys } from "@/hooks/usePasskeys";
+import { browserSupportsWebAuthn } from "@/lib/webauthn";
+import { format, parseISO, isValid } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 /**
  * Seguranca.tsx
  *
- * C3 — Biometria: toggle fake (localStorage) removido. Substituído por card
- *      informativo "em breve" para não induzir o usuário a acreditar que tem
- *      proteção biométrica real. WebAuthn real será implementado futuramente.
+ * BK-02 — Biometria: WebAuthn real (FaceID / TouchID / impressão digital).
+ *          Usa native browser Credential Management API + @simplewebauthn/server
+ *          via edge functions (webauthn-challenge + webauthn-verify).
  *
- * A2 — Senha atual: antes era campo decorativo (valor ignorado). Agora verifica
- *      a senha atual via supabase.auth.signInWithPassword antes de atualizar.
+ * A2 — Senha atual: verifica via supabase.auth.signInWithPassword antes de
+ *      atualizar (campo não é decorativo).
  */
 const Seguranca = () => {
   const navigate = useNavigate();
+
+  // ── Biometria ──────────────────────────────────────────────────────────────
+  const { passkeys, isLoading: passkeyLoading, register, remove } = usePasskeys();
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [deviceName, setDeviceName] = useState("");
+  const webAuthnSupported = browserSupportsWebAuthn();
+
+  const handleRegister = async () => {
+    const name = deviceName.trim() || undefined;
+    await register.mutateAsync(name);
+    setShowRegisterForm(false);
+    setDeviceName("");
+  };
+
+  const handleRemove = (id: string, name: string) => {
+    if (!confirm(`Remover a biometria "${name}"? Você poderá cadastrá-la novamente.`)) return;
+    remove.mutate(id);
+  };
+
+  const formatDate = (iso: string | null) => {
+    if (!iso) return null;
+    const d = parseISO(iso);
+    return isValid(d) ? format(d, "dd/MM/yyyy", { locale: ptBR }) : null;
+  };
 
   // ── Alterar senha ──────────────────────────────────────────────────────────
   const [senhaAtual, setSenhaAtual]     = useState("");
@@ -97,26 +126,113 @@ const Seguranca = () => {
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-6">
 
-        {/* C3 — Biometria: card informativo "em breve" (toggle falso removido) */}
+        {/* BK-02 — Biometria: WebAuthn real (FaceID / TouchID / fingerprint) */}
         <div className="bg-card rounded-xl p-4 shadow-xs border border-border/40 space-y-3">
-          <h2 className="text-sm font-semibold text-foreground">Acesso Rápido</h2>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-              <Fingerprint size={20} className="text-muted-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Fingerprint size={16} className="text-[#78C2AD]" />
+              <h2 className="text-sm font-semibold text-foreground">Biometria / Face ID</h2>
             </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">Biometria / Face ID</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#78C2AD]/15 text-[#4a9a8a]">
-                  <Clock size={9} />
-                  Em breve
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                Autenticação biométrica (WebAuthn / FIDO2) será disponibilizada em breve. Por enquanto, o acesso é protegido pela sua senha.
-              </p>
-            </div>
+            {webAuthnSupported && !showRegisterForm && (
+              <button
+                onClick={() => setShowRegisterForm(true)}
+                className="flex items-center gap-1 text-xs font-medium text-[#78C2AD] hover:text-[#4a9a8a] transition-colors"
+              >
+                <Plus size={14} />
+                Cadastrar
+              </button>
+            )}
           </div>
+
+          {/* Dispositivo não suportado */}
+          {!webAuthnSupported && (
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Biometria não é suportada neste navegador ou dispositivo. Use Chrome, Safari ou Edge em iOS 16+ / Android.
+            </p>
+          )}
+
+          {/* Formulário de cadastro inline */}
+          {webAuthnSupported && showRegisterForm && (
+            <div className="space-y-2 pt-1">
+              <Label className="text-xs">Nome do dispositivo (opcional)</Label>
+              <Input
+                className="text-base h-10"
+                placeholder="Ex: iPhone de Fábio"
+                value={deviceName}
+                onChange={(e) => setDeviceName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleRegister(); }}
+              />
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => void handleRegister()}
+                  disabled={register.isPending}
+                  className="flex-1 bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none"
+                >
+                  {register.isPending ? (
+                    <><Loader2 size={14} className="animate-spin mr-1" />Aguardando biometria...</>
+                  ) : "Cadastrar Biometria"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setShowRegisterForm(false); setDeviceName(""); }}
+                  disabled={register.isPending}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Lista de passkeys cadastradas */}
+          {webAuthnSupported && !showRegisterForm && (
+            <>
+              {passkeyLoading && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+                  <Loader2 size={13} className="animate-spin" />
+                  Carregando...
+                </div>
+              )}
+
+              {!passkeyLoading && passkeys.length === 0 && (
+                <div className="flex items-start gap-3 py-1">
+                  <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <SmartphoneNfc size={18} className="text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Nenhuma biometria cadastrada</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      Cadastre sua biometria para acessar o app com FaceID, TouchID ou impressão digital.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!passkeyLoading && passkeys.map((pk) => (
+                <div key={pk.id} className="flex items-center gap-3 py-2 border-t border-border/30 first:border-0">
+                  <div className="w-9 h-9 rounded-full bg-[#78C2AD]/10 flex items-center justify-center shrink-0">
+                    <Fingerprint size={17} className="text-[#78C2AD]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{pk.device_name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Cadastrado em {formatDate(pk.created_at)}
+                      {pk.last_used_at ? ` · Último uso: ${formatDate(pk.last_used_at)}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(pk.id, pk.device_name)}
+                    disabled={remove.isPending}
+                    className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
+                    aria-label="Remover biometria"
+                  >
+                    {remove.isPending ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                  </button>
+                </div>
+              ))}
+            </>
+          )}
         </div>
 
         {/* Alterar Senha */}
