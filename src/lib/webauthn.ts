@@ -202,23 +202,29 @@ export async function authenticatePasskey(): Promise<void> {
   }
 
 
-  // 2. Convert base64url fields to ArrayBuffer
-  //    rpId is forced to the current hostname to guarantee it always matches the
-  //    domain stored in iCloud Keychain — spreading `options` can carry an rpId
-  //    that diverges when APP_ORIGIN has a trailing slash or different casing.
+  // ── TEMP DIAGNOSTIC ── remove after confirming authentication works ─────────
+  window.alert(
+    `[BK-04 auth] origin=${window.location.origin}\n` +
+    `hostname=${window.location.hostname}\n` +
+    `challenge=${String(options.challenge).substring(0, 20)}...\n` +
+    `allowCreds count=${(options.allowCredentials ?? []).length}`
+  );
+  // ── END TEMP DIAGNOSTIC ───────────────────────────────────────────────────
+
+  // 2. Build a MINIMAL, clean authentication request.
+  //    Do NOT spread ...options — the server response may include extra fields
+  //    (e.g. from @simplewebauthn/server serialization) that confuse iOS WebAuthn.
+  //    rpId and allowCredentials are intentionally omitted so the browser uses
+  //    its own defaults (effective domain + discoverable search), which is the
+  //    safest path on iOS for finding passkeys in iCloud Keychain.
   const publicKey: PublicKeyCredentialRequestOptions = {
-    ...options,
-    rpId: window.location.hostname, // always the effective domain (e.g. "vita.locustech.com.br")
     challenge: base64UrlToArrayBuffer(
       toBase64UrlString(options.challenge, "challenge"),
     ),
-    allowCredentials: (
-      (options.allowCredentials ?? []) as Array<{ id: unknown; type: string; transports?: string[] }>
-    ).map((c) => ({
-      id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
-      type: "public-key" as PublicKeyCredentialType,
-      transports: c.transports as AuthenticatorTransport[],
-    })),
+    userVerification: "required",
+    timeout: typeof options.timeout === "number" ? options.timeout : 60000,
+    // rpId omitted → browser defaults to window.location.hostname (vita.locustech.com.br)
+    // allowCredentials omitted → discoverable: iOS shows all passkeys for this origin
   };
 
   // 3. Prompt biometric
@@ -256,11 +262,29 @@ export async function authenticatePasskey(): Promise<void> {
     },
   };
 
+  // ── TEMP DIAGNOSTIC ─────────────────────────────────────────────────────────
+  window.alert(`[BK-04 auth got cred] id=${credential.id.substring(0, 20)}...`);
+  // ── END TEMP DIAGNOSTIC ─────────────────────────────────────────────────────
+
   // 5. Verify on server
   const { data: result, error: verErr } = await supabase.functions.invoke(
     "webauthn-verify",
     { body: { type: "authentication", response: serialized } },
   );
+
+  // ── TEMP DIAGNOSTIC ─────────────────────────────────────────────────────────
+  {
+    let msg = "";
+    if (verErr) {
+      const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
+      msg = `ERRO: ${body?.error ?? verErr.message}`;
+    } else {
+      msg = `OK: ${JSON.stringify(result)}`;
+    }
+    window.alert(`[BK-04 auth verify] ${msg}`);
+  }
+  // ── END TEMP DIAGNOSTIC ─────────────────────────────────────────────────────
+
   if (verErr) {
     const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
     throw new Error(body?.error ?? verErr.message ?? "Falha na verificação biométrica.");
