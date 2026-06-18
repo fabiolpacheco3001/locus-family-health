@@ -1,6 +1,6 @@
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { log } from '../_shared/logger.ts'
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "npm:@supabase/supabase-js@2.49.4"
 
 const MAX_RETRIES = 5
 const DEFAULT_BATCH_SIZE = 10

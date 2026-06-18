@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { z } from "zod";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import { z } from "npm:zod@3.25.76";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";

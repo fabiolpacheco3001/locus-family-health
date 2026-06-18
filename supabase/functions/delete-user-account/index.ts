@@ -1,5 +1,5 @@
 import { log } from "../_shared/logger.ts";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
 /**
  * delete-user-account — Edge Function (Art. 18-IV LGPD)

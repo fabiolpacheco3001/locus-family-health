@@ -10,7 +10,7 @@
  *   import { checkAiRateLimit, logAiUsage } from "../_shared/rate-limit.ts";
  */
 
-import { SupabaseClient } from "@supabase/supabase-js";
+import { SupabaseClient } from "npm:@supabase/supabase-js@2.49.4";
 import { log } from "./logger.ts";
 
 /** Máximo de chamadas de IA por hora por usuário (configurável via env var). */
