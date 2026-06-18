@@ -110,7 +110,7 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
       (options.excludeCredentials ?? []) as Array<{ id: unknown; type: string; transports?: string[] }>
     ).map((c) => ({
       id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "excludeCredentials.id")),
-      type: c.type as PublicKeyCredentialType,
+      type: "public-key" as PublicKeyCredentialType, // must be literal "public-key" — browser rejects casts
       transports: c.transports as AuthenticatorTransport[],
     })),
   };
@@ -191,7 +191,7 @@ export async function authenticatePasskey(): Promise<void> {
       (options.allowCredentials ?? []) as Array<{ id: unknown; type: string; transports?: string[] }>
     ).map((c) => ({
       id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
-      type: c.type as PublicKeyCredentialType,
+      type: "public-key" as PublicKeyCredentialType, // must be literal "public-key" — browser rejects casts
       transports: c.transports as AuthenticatorTransport[],
     })),
   };
