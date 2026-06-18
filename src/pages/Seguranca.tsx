@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Fingerprint, Eye, EyeOff, Lock, Plus, Trash2, Loader2, SmartphoneNfc } from "lucide-react";
+import { ArrowLeft, Fingerprint, Eye, EyeOff, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,20 @@ import { usePasskeys } from "@/hooks/usePasskeys";
 import { browserSupportsWebAuthn } from "@/lib/webauthn";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+/** Detecta o nome do dispositivo a partir do User-Agent sem dependências externas. */
+function getDeviceName(): string {
+  const ua = navigator.userAgent;
+  if (/iPhone/.test(ua)) return "iPhone";
+  if (/iPad/.test(ua)) return "iPad";
+  if (/Android/.test(ua)) {
+    const match = ua.match(/;\s*([^;)]+)\sBuild\//);
+    return match ? match[1].trim() : "Android";
+  }
+  if (/Macintosh/.test(ua)) return "Mac";
+  if (/Windows/.test(ua)) return "Windows";
+  return "Dispositivo";
+}
 
 /**
  * Seguranca.tsx
@@ -26,20 +40,28 @@ const Seguranca = () => {
 
   // ── Biometria ──────────────────────────────────────────────────────────────
   const { passkeys, isLoading: passkeyLoading, register, remove } = usePasskeys();
-  const [showRegisterForm, setShowRegisterForm] = useState(false);
-  const [deviceName, setDeviceName] = useState("");
+  const [isToggling, setIsToggling] = useState(false);
   const webAuthnSupported = browserSupportsWebAuthn();
 
-  const handleRegister = async () => {
-    const name = deviceName.trim() || undefined;
-    await register.mutateAsync(name);
-    setShowRegisterForm(false);
-    setDeviceName("");
-  };
+  const hasPasskey = passkeys.length > 0;
+  const activePasskey = passkeys[0] ?? null;
 
-  const handleRemove = (id: string, name: string) => {
-    if (!confirm(`Remover a biometria "${name}"? Você poderá cadastrá-la novamente.`)) return;
-    remove.mutate(id);
+  const handleToggle = async (enabled: boolean) => {
+    if (isToggling || register.isPending || remove.isPending) return;
+    setIsToggling(true);
+    try {
+      if (enabled) {
+        // Liga: faz leitura biométrica imediatamente
+        await register.mutateAsync(getDeviceName());
+      } else {
+        // Desliga: remove a passkey do DB (iCloud Keychain retém a chave, mas o app não a usa mais)
+        if (!activePasskey) return;
+        if (!confirm("Desativar o acesso com Face ID / biometria?")) return;
+        await remove.mutateAsync(activePasskey.id);
+      }
+    } finally {
+      setIsToggling(false);
+    }
   };
 
   const formatDate = (iso: string | null) => {
@@ -128,111 +150,48 @@ const Seguranca = () => {
 
         {/* BK-02 — Biometria: WebAuthn real (FaceID / TouchID / fingerprint) */}
         <div className="bg-card rounded-xl p-4 shadow-xs border border-border/40 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Fingerprint size={16} className="text-[#78C2AD]" />
-              <h2 className="text-sm font-semibold text-foreground">Biometria / Face ID</h2>
-            </div>
-            {webAuthnSupported && !showRegisterForm && (
-              <button
-                onClick={() => setShowRegisterForm(true)}
-                className="flex items-center gap-1 text-xs font-medium text-[#78C2AD] hover:text-[#4a9a8a] transition-colors"
-              >
-                <Plus size={14} />
-                Cadastrar
-              </button>
-            )}
-          </div>
-
-          {/* Dispositivo não suportado */}
-          {!webAuthnSupported && (
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Biometria não é suportada neste navegador ou dispositivo. Use Chrome, Safari ou Edge em iOS 16+ / Android.
-            </p>
-          )}
-
-          {/* Formulário de cadastro inline */}
-          {webAuthnSupported && showRegisterForm && (
-            <div className="space-y-2 pt-1">
-              <Label className="text-xs">Nome do dispositivo (opcional)</Label>
-              <Input
-                className="text-base h-10"
-                placeholder="Ex: iPhone de Fábio"
-                value={deviceName}
-                onChange={(e) => setDeviceName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") void handleRegister(); }}
-              />
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => void handleRegister()}
-                  disabled={register.isPending}
-                  className="flex-1 bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none"
-                >
-                  {register.isPending ? (
-                    <><Loader2 size={14} className="animate-spin mr-1" />Aguardando biometria...</>
-                  ) : "Cadastrar Biometria"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => { setShowRegisterForm(false); setDeviceName(""); }}
-                  disabled={register.isPending}
-                >
-                  Cancelar
-                </Button>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
+              <Fingerprint size={16} className="text-[#78C2AD] mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-foreground leading-tight">
+                  Acessar com Face ID / Biometria
+                </p>
+                {!webAuthnSupported ? (
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    Não suportado neste navegador. Use Safari (iOS 16+) ou Chrome (Android).
+                  </p>
+                ) : passkeyLoading ? (
+                  <p className="text-xs text-muted-foreground mt-0.5">Carregando...</p>
+                ) : hasPasskey && activePasskey ? (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Ativo · {activePasskey.device_name}
+                    {activePasskey.created_at ? ` · desde ${formatDate(activePasskey.created_at)}` : ""}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    Desbloqueie o app automaticamente ao abri-lo.
+                  </p>
+                )}
               </div>
             </div>
-          )}
 
-          {/* Lista de passkeys cadastradas */}
-          {webAuthnSupported && !showRegisterForm && (
-            <>
-              {passkeyLoading && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-                  <Loader2 size={13} className="animate-spin" />
-                  Carregando...
-                </div>
-              )}
-
-              {!passkeyLoading && passkeys.length === 0 && (
-                <div className="flex items-start gap-3 py-1">
-                  <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <SmartphoneNfc size={18} className="text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Nenhuma biometria cadastrada</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                      Cadastre sua biometria para acessar o app com FaceID, TouchID ou impressão digital.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {!passkeyLoading && passkeys.map((pk) => (
-                <div key={pk.id} className="flex items-center gap-3 py-2 border-t border-border/30 first:border-0">
-                  <div className="w-9 h-9 rounded-full bg-[#78C2AD]/10 flex items-center justify-center shrink-0">
-                    <Fingerprint size={17} className="text-[#78C2AD]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{pk.device_name}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      Cadastrado em {formatDate(pk.created_at)}
-                      {pk.last_used_at ? ` · Último uso: ${formatDate(pk.last_used_at)}` : ""}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleRemove(pk.id, pk.device_name)}
-                    disabled={remove.isPending}
-                    className="p-1.5 text-muted-foreground hover:text-destructive transition-colors"
-                    aria-label="Remover biometria"
-                  >
-                    {remove.isPending ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                  </button>
-                </div>
-              ))}
-            </>
-          )}
+            {/* Toggle — só renderiza quando WebAuthn é suportado */}
+            {webAuthnSupported && (
+              <div className="shrink-0">
+                {(isToggling || register.isPending || remove.isPending) ? (
+                  <Loader2 size={20} className="animate-spin text-[#78C2AD]" />
+                ) : (
+                  <Switch
+                    checked={hasPasskey}
+                    onCheckedChange={handleToggle}
+                    disabled={passkeyLoading}
+                    aria-label="Ativar acesso com Face ID"
+                  />
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Alterar Senha */}
