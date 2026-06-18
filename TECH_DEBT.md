@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 5.2 | **Atualizado em:** 2026-06-18 (sessão 19 — BK-04 WebAuthn + BK-06 Signed URLs)  
+> **Versão:** 5.3 | **Atualizado em:** 2026-06-18 (sessão 20 — BK-04 fix discoverable revert + cache bleed lock screen)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -29,6 +29,7 @@
 | Sessão 17 | M3 ✅ Refatoração Home.tsx (849→138 LOC) + Vacinas.tsx (802→478 LOC): useHomeData, 5 sub-componentes home/, useVaccineImport, VaccineFormDrawer. TECH_DEBT.md v4.5 | Sprint 8 🟡 Em progresso |
 | Sessão 18 | B9 ✅ completo: B9-A (react-router-dom v7, vaul v1.1.2, pdfjs-dist v5), B9-B (React 18→19), B9-C (Tailwind v3→v4: @tailwindcss/vite, @import "tailwindcss", 63× outline-hidden, 51× shadow-xs). .npmrc legacy-peer-deps=true para npm ci. Pós-deploy: bun.lockb desatualizado removido do git (Lovable regenerou com @tailwindcss/vite); sonner.tsx forçado para theme=light (next-themes "system" causava toast preto no iOS em dark mode). Build Lovable exit code 0 ✅. TECH_DEBT.md v5.1 | Sprint 8 ✅ CONCLUÍDO |
 | Sessão 19 | BK-04 ✅ WebAuthn passkeys: registro + autenticação FIDO2 full-flow validados em produção (iOS 18.7 PWA). BK-06 ✅ Signed URLs 15 min: `storage.ts` refatorado (TTL 600→900s, `getSignedUrl` genérico, `PRESCRIPTIONS_BUCKET` constante, bucket param nas funções); hook `useSignedUrl.ts` com React Query (staleTime = TTL − 60s, auto-renova antes de expirar). Todos os pontos de acesso a `exam-files` e `receitas` já usavam signed URLs — nenhum `getPublicUrl` em arquivos clínicos. S3-02 ✅ prefers-reduced-motion no OverviewCarousel. S3-05 ✅ OCR retry UI. | Sprint 10+11 ✅ CONCLUÍDO |
+| Sessão 20 | BK-04 fix ✅ Revert para discoverable credentials: `webauthn-challenge` revertido para `allowCredentials:[]`; `webauthn.ts` revertido para publicKey minimal (sem serverAllowCreds, sem rpId). Tentativa de specific-IDs causava picker QR cross-device no iOS PWA. Fix crítico ✅ `usePasskeys` cache bleed entre usuários: `queryKey` atualizado para `["passkeys", user?.id]`; filtro `.eq("user_id", user.id)` adicionado (defence-in-depth além da RLS); `enabled: !!user?.id`. Impede que usuário sem passkey veja lock screen por causa de cache do usuário anterior no mesmo dispositivo. | Sprint 11 🟡 Em progresso |
 
 ---
 
@@ -75,8 +76,12 @@
   - **Cliente:** `src/lib/webauthn.ts` — Credential Management API nativa (zero deps frontend); `publicKey` construído sem spread do response do servidor; `rpId` e `allowCredentials` omitidos → iOS usa hostname efetivo e busca discoverable; base64url helpers inline.
   - **Hook + UI:** `src/hooks/usePasskeys.ts` + card completo em `Seguranca.tsx` (cadastro, lista, remoção de passkeys).
   - **Fluxo validado:** registro → `{"success":true}` ✅; autenticação → picker iOS "Usar Chave-senha" → Face ID → `{"success":true}` ✅; app desbloqueado ✅.
+  - **Sessão 20 — fixes adicionais:**
+    - Tentativa de specific credential IDs (para eliminar picker) revertida: iOS PWA roteava para picker QR cross-device ao receber IDs específicos mesmo com `transports:["internal"]`. Causa raiz: comportamento iOS diferente de Chrome Desktop.
+    - Discoverable flow (`allowCredentials:[]`) restaurado em `webauthn-challenge/index.ts` e `webauthn.ts`. Picker "Usar Chave-senha" → Face ID permanece como UX final aceita.
+    - **Fix crítico de lock screen:** `usePasskeys.ts` tinha `queryKey:["passkeys"]` sem user ID → React Query servia cache do usuário A para o usuário B no mesmo dispositivo → usuário sem passkey via lock screen. Corrigido: `queryKey:["passkeys", user?.id]` + `.eq("user_id", user.id)` + `enabled:!!user?.id`.
 - **Arquivos:** `src/lib/webauthn.ts`, `src/hooks/usePasskeys.ts`, `src/pages/Seguranca.tsx`, `supabase/functions/webauthn-challenge/`, `supabase/functions/webauthn-verify/`, `supabase/migrations/20260617000001_webauthn_passkeys.sql`
-- **Status:** ✅ Resolvido (BK-04 — sessão 10, 18/06/2026)
+- **Status:** ✅ Resolvido (BK-04 — sessão 19 + fixes sessão 20, 18/06/2026)
 
 ---
 

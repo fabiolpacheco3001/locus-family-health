@@ -12,6 +12,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { registerPasskey } from "@/lib/webauthn";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export interface Passkey {
@@ -25,18 +26,24 @@ export interface Passkey {
 
 export function usePasskeys() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // ── List passkeys for current user ──────────────────────────────────────────
+  // IMPORTANT: queryKey includes user.id to prevent stale cache from a previous
+  // user (on shared devices) from triggering the lock screen for a different user.
   const { data: passkeys = [], isLoading } = useQuery({
-    queryKey: ["passkeys"],
+    queryKey: ["passkeys", user?.id],
     queryFn: async () => {
+      if (!user?.id) return [];
       const { data, error } = await supabase
         .from("passkeys")
         .select("id, credential_id, device_name, created_at, last_used_at, transports")
+        .eq("user_id", user.id)        // explicit filter — defence-in-depth beyond RLS
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Passkey[];
     },
+    enabled: !!user?.id,
     staleTime: 5 * 60 * 1000,
   });
 

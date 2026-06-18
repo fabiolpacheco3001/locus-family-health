@@ -192,30 +192,15 @@ export async function authenticatePasskey(): Promise<void> {
   //    Do NOT spread ...options — extra fields from @simplewebauthn/server
   //    serialization can confuse the iOS WebAuthn implementation.
   //
-  //    allowCredentials: pass specific IDs + platform transports from the server.
-  //    With a clean registration (no stale passkey in iOS Senhas), iOS finds the
-  //    exact credential and triggers Face ID directly — no picker sheet.
-  //    rpId: set explicitly so it matches the registration rpId exactly.
-  const serverAllowCreds = (
-    (options.allowCredentials ?? []) as Array<{
-      id: unknown;
-      type?: string;
-      transports?: string[];
-    }>
-  ).map((c) => ({
-    id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
-    type: "public-key" as PublicKeyCredentialType,
-    transports: (c.transports ?? []) as AuthenticatorTransport[],
-  }));
-
+  //    Discoverable credentials: no allowCredentials, no explicit rpId.
+  //    iOS shows "Iniciar Sessão — Usar Chave-senha" picker → Face ID.
+  //    Specific credential IDs caused iOS to open the cross-device QR picker.
   const publicKey: PublicKeyCredentialRequestOptions = {
     challenge: base64UrlToArrayBuffer(
       toBase64UrlString(options.challenge, "challenge"),
     ),
     userVerification: "required",
     timeout: typeof options.timeout === "number" ? options.timeout : 60000,
-    rpId: window.location.hostname,
-    ...(serverAllowCreds.length > 0 ? { allowCredentials: serverAllowCreds } : {}),
   };
 
   // 3. Prompt biometric
