@@ -142,12 +142,12 @@ export const generateExamsPdf = (data: ExamsPdfInput): Blob => {
       styles: { valign: "middle" as const, fontSize: 7.5 },
       bodyStyles: { textColor: PRIMARY },
       columnStyles: {
-        0: { cellWidth: 50 },
-        1: { cellWidth: 22 },
-        2: { cellWidth: 40 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 24 },
-      },
+        0: { cellWidth: 62 },  // Exame
+        1: { cellWidth: 22 },  // Data
+        2: { cellWidth: 52 },  // Local
+        3: { cellWidth: 22 },  // Resultado em
+        4: { cellWidth: 24 },  // Status
+      },  // total = 182 = contentW
       didParseCell: (hookData) => {
         if (hookData.section === "body" && hookData.column.index === 4) {
           const status = String(hookData.cell.raw);

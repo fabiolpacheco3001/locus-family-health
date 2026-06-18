@@ -197,40 +197,40 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent className="max-h-[92vh]">
-        {/* Header */}
-        <DrawerHeader className="text-center pb-2">
-          <DrawerTitle>Adesão medicamentosa</DrawerTitle>
-        </DrawerHeader>
-
-        <div className="px-4 pb-8 overflow-y-auto space-y-3">
-
-          {/* Period tabs + export button na mesma linha */}
-          <div className="flex items-center gap-2">
-            <div className="flex gap-1.5 flex-1">
-              {PERIODS.map(({ key, label }) => (
-                <button
-                  key={key}
-                  onClick={() => setPeriod(key)}
-                  className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                    period === key
-                      ? "bg-foreground text-background"
-                      : "border border-border text-muted-foreground bg-card"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+        {/* Header — alinhado à esquerda + Share2 na mesma linha */}
+        <DrawerHeader className="text-left pb-2 px-4">
+          <div className="flex items-center justify-between">
+            <DrawerTitle>Adesão medicamentosa</DrawerTitle>
             {allDoses.length > 0 && (
               <button
                 onClick={handleExportPdf}
                 disabled={generating}
-                title="Exportar PDF"
-                className="shrink-0 p-2 rounded-full text-[#78C2AD] hover:bg-muted/50 transition-colors disabled:opacity-50"
+                title={`Exportar PDF — ${PERIODS.find(p => p.key === period)?.label ?? period}`}
+                className="p-2 rounded-full text-[#78C2AD] hover:bg-muted/50 transition-colors disabled:opacity-50"
               >
-                <Share2 size={17} />
+                <Share2 size={18} />
               </button>
             )}
+          </div>
+        </DrawerHeader>
+
+        <div className="px-4 pb-8 overflow-y-auto space-y-3">
+
+          {/* Period tabs */}
+          <div className="flex gap-1.5">
+            {PERIODS.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setPeriod(key)}
+                className={`flex-1 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  period === key
+                    ? "bg-foreground text-background"
+                    : "border border-border text-muted-foreground bg-card"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
           {isLoading ? (

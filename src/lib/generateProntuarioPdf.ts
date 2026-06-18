@@ -21,7 +21,7 @@ interface ProntuarioData {
 }
 
 const PRIMARY_COLOR: [number, number, number] = [28, 51, 51];
-const ACCENT_COLOR: [number, number, number] = [242, 169, 127];
+const ACCENT_COLOR: [number, number, number] = [120, 194, 173];
 const MUTED_COLOR: [number, number, number] = [120, 120, 120];
 
 const calculateAge = (birthDate: string | null): number | null => {
@@ -89,7 +89,7 @@ export const generateProntuarioPdf = (data: ProntuarioData): Blob => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(255, 255, 255);
-    doc.text("Locus Vita - Saúde Familiar Simplificada", textX, 9);
+    doc.text("Locus Vita — Saúde Familiar Simplificada", textX, 9);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text("Registro Eletrônico de Saúde (RES)", textX, 14);

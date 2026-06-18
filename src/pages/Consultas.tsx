@@ -1,5 +1,5 @@
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle, ArrowUpDown, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,9 +40,21 @@ const Consultas = () => {
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const logoBase64Ref = useRef<string | undefined>(undefined);
   const { consultations, isLoading, addConsultation, updateConsultation, deleteConsultation } = useConsultations(id!);
 
   const emitterName = user?.user_metadata?.full_name ?? user?.email ?? "Usuário";
+
+  useEffect(() => {
+    fetch("/logo-locus-vita-pdf.png")
+      .then((r) => r.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onload = () => { logoBase64Ref.current = reader.result as string; };
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => { /* logo optional */ });
+  }, []);
 
   const handleExportPdf = async (scope: "member" | "family") => {
     setGeneratingPdf(true);
@@ -85,7 +97,7 @@ const Consultas = () => {
         }));
       }
 
-      const blob = generateConsultationsPdf({ members: membersData, emitterName });
+      const blob = generateConsultationsPdf({ members: membersData, emitterName, logoBase64: logoBase64Ref.current });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -203,6 +215,21 @@ const Consultas = () => {
             <ArrowLeft size={22} />
           </Button>
           <h1 className="text-lg font-bold text-foreground flex-1">Consultas</h1>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0 text-[#78C2AD]" disabled={generatingPdf}>
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExportPdf("member")}>
+                Este membro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPdf("family")}>
+                Toda a família
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="mb-4 flex items-center gap-2">
@@ -236,21 +263,6 @@ const Consultas = () => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
                 Mais recentes primeiro
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0 text-[#78C2AD]" disabled={generatingPdf}>
-                <Share2 className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleExportPdf("member")}>
-                Este membro
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExportPdf("family")}>
-                Toda a família
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

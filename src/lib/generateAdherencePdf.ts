@@ -260,14 +260,19 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
     doc.setDrawColor(240, 240, 240);
     doc.setLineWidth(0.3);
     doc.line(margin + 5, y + 27.5, margin + contentW * 0.55, y + 27.5);
+    // Colored circle indicator
+    doc.setFillColor(230, 120, 50);
+    doc.circle(margin + 8.5, y + 30.5, 2, "F");
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     doc.setTextColor(230, 120, 50);
-    doc.text(`🔥 ${data.streak} dia${data.streak === 1 ? "" : "s"} seguidos`, margin + 7, y + 32);
+    const streakLabel = `${data.streak} dia${data.streak === 1 ? "" : "s"} seguidos`;
+    doc.text(streakLabel, margin + 12, y + 32);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.5);
     doc.setTextColor(...MUTED);
-    doc.text("sequência atual", margin + 7 + (data.streak.toString().length * 2.5) + 26, y + 32);
+    const streakLabelW = doc.getTextWidth(streakLabel);
+    doc.text("— sequência atual", margin + 13 + streakLabelW, y + 32);
   }
 
   // Right side: donut
@@ -278,7 +283,6 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
   y += cardH + 5;
 
   // ── Insight ──────────────────────────────────────────────────────────────────
-  ensureSpace(16);
   const insightColors: Record<string, [number, number, number]> = {
     success: [236, 253, 245],
     warning: [255, 251, 235],
@@ -293,14 +297,16 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
   };
   const iBg = insightColors[data.insight.type] ?? insightColors.info;
   const iText = insightTextColors[data.insight.type] ?? insightTextColors.info;
-  doc.setFillColor(...iBg);
-  doc.roundedRect(margin, y, contentW, 13, 2, 2, "F");
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.setTextColor(...iText);
   const insightLines = doc.splitTextToSize(data.insight.text, contentW - 10);
+  const insightBoxH = insightLines.length * 5 + 7;
+  ensureSpace(insightBoxH + 4);
+  doc.setFillColor(...iBg);
+  doc.roundedRect(margin, y, contentW, insightBoxH, 2, 2, "F");
+  doc.setTextColor(...iText);
   doc.text(insightLines, margin + 5, y + 5);
-  y += 18;
+  y += insightBoxH + 5;
 
   // ── Evolução Semanal ─────────────────────────────────────────────────────────
   sectionTitle("Evolução Semanal");
@@ -353,27 +359,31 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
   // ── Por Medicamento ──────────────────────────────────────────────────────────
   if (data.medBreakdown.length > 0) {
     sectionTitle("Por Medicamento");
-    const rowH = 10;
-    const medCardH = data.medBreakdown.length * rowH + 6;
-    ensureSpace(medCardH + 4);
-    doc.setFillColor(...BG_CARD);
-    doc.roundedRect(margin, y, contentW, medCardH, 2, 2, "F");
+    const rowH = 12;
+    const barW = contentW - 24;
 
-    let my = y + 5;
     data.medBreakdown.forEach((med) => {
-      // Name + count
+      ensureSpace(rowH + 2);
+
+      // Row background
+      doc.setFillColor(...BG_CARD);
+      doc.roundedRect(margin, y, contentW, rowH, 1.5, 1.5, "F");
+
+      // Name
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
+      doc.setFontSize(8);
       doc.setTextColor(...PRIMARY);
-      doc.text(med.name, margin + 4, my + 3);
+      const medName = doc.splitTextToSize(med.name, barW - 10)[0]; // truncate to 1 line
+      doc.text(medName, margin + 4, y + 4.5);
+
+      // Count (right)
       doc.setFont("helvetica", "normal");
       doc.setFontSize(7.5);
       doc.setTextColor(...MUTED);
-      doc.text(`${med.taken}/${med.total}`, margin + contentW - 6, my + 3, { align: "right" });
+      doc.text(`${med.taken}/${med.total}`, margin + contentW - 4, y + 4.5, { align: "right" });
 
-      // Progress bar
-      const barY = my + 5;
-      const barW = contentW - 20;
+      // Progress bar track
+      const barY = y + 7;
       doc.setFillColor(220, 218, 214);
       doc.roundedRect(margin + 4, barY, barW, 2, 0.8, 0.8, "F");
       if (med.taxa > 0) {
@@ -384,20 +394,21 @@ export const generateAdherencePdf = (data: AdherencePdfInput): Blob => {
         doc.setFillColor(fillR, fillG, fillB);
         doc.roundedRect(margin + 4, barY, barW * (med.taxa / 100), 2, 0.8, 0.8, "F");
       }
+
       // Taxa %
       let tcR: number, tcG: number, tcB: number;
       if (med.taxa >= 70) { tcR = 6; tcG = 120; tcB = 90; }
       else if (med.taxa >= 40) { tcR = 160; tcG = 100; tcB = 0; }
       else if (med.taxa > 0) { tcR = 180; tcG = 40; tcB = 40; }
       else { tcR = 120; tcG = 120; tcB = 120; }
-      doc.setFontSize(7.5);
+      doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(tcR, tcG, tcB);
-      doc.text(`${med.taxa}%`, margin + contentW - 5, barY + 1.5, { align: "right" });
+      doc.text(`${med.taxa}%`, margin + contentW - 4, barY + 1.5, { align: "right" });
 
-      my += rowH;
+      y += rowH + 2;
     });
-    y += medCardH + 7;
+    y += 3;
   }
 
   // ── Histórico Detalhado ───────────────────────────────────────────────────────
