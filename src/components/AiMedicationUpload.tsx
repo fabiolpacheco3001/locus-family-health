@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Loader2, Paperclip, X, Upload, AlertTriangle } from "lucide-react";
+import { Loader2, Paperclip, X, Upload, AlertTriangle, AlertCircle, RefreshCw } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import { logAiUsage } from "@/hooks/useLogAiUsage";
@@ -29,6 +29,7 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
   const { uploadReceita } = useMedications(familyMemberId);
   const [receitaFile, setReceitaFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [lgpdConsent, setLgpdConsent] = useState(false);
   const [patientAge, setPatientAge] = useState<number | null>(null);
   const receitaInputRef = useRef<HTMLInputElement>(null);
@@ -37,6 +38,7 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
     if (!familyMemberId || !open) return;
     setReceitaFile(null);
     setLgpdConsent(false);
+    setAnalysisError(null);
     supabase
       .from("family_members")
       .select("birth_date")
@@ -66,6 +68,7 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
     }
 
     setIsAnalyzing(true);
+    setAnalysisError(null);
     try {
       const tempId = crypto.randomUUID();
       const receitaPath = await uploadReceita(receitaFile, tempId);
@@ -86,7 +89,9 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
       onAnalysisComplete(data, receitaPath); // pass path (not signed URL) so callers store the stable path
     } catch (err: any) {
       console.error("Prescription OCR error:", err);
-      toast.error(err?.message || "Não foi possível ler a receita. Tente novamente.");
+      const msg = err?.message || "Não foi possível ler a receita. Verifique a imagem e tente novamente.";
+      setAnalysisError(msg);
+      toast.error(msg);
     } finally {
       setIsAnalyzing(false);
     }
@@ -109,6 +114,23 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
               </p>
             </div>
 
+            {analysisError && (
+              <div className="flex items-start gap-3 p-3 rounded-xl border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-700">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-0.5">Falha na leitura da receita</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 break-words">{analysisError}</p>
+                </div>
+                <button
+                  onClick={() => setAnalysisError(null)}
+                  aria-label="Fechar aviso de erro"
+                  className="shrink-0 text-red-400 hover:text-red-600 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+
             <input
               ref={receitaInputRef}
               type="file"
@@ -121,6 +143,7 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
                   return;
                 }
                 setReceitaFile(selected);
+                setAnalysisError(null);
               }}
             />
 
@@ -173,6 +196,11 @@ const AiMedicationUpload = ({ open, onOpenChange, familyMemberId, onAnalysisComp
                   <>
                     <Loader2 size={16} className="animate-spin" />
                     Lendo receita...
+                  </>
+                ) : analysisError ? (
+                  <>
+                    <RefreshCw size={16} />
+                    Tentar Novamente
                   </>
                 ) : (
                   "Analisar Receita"
