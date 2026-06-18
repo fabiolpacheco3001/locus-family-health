@@ -187,13 +187,15 @@ export async function authenticatePasskey(): Promise<void> {
     throw new Error(optErr?.message ?? options?.error ?? "Erro ao iniciar verificação.");
   }
 
-  // DIAGNOSTIC — remover após confirmar rpId correto
-  // eslint-disable-next-line no-console
-  console.log("[webauthn-auth] server options:", JSON.stringify({
-    rpId: options.rpId,
-    pageOrigin: window.location.origin,
-    allowCredentials: options.allowCredentials,
-  }));
+  // DIAGNOSTIC TEMPORÁRIO — remover após confirmar rpId
+  // eslint-disable-next-line no-alert
+  window.alert(
+    `[DEBUG WebAuthn]\n` +
+    `rpId servidor: ${options.rpId}\n` +
+    `window.location.hostname: ${window.location.hostname}\n` +
+    `window.location.origin: ${window.location.origin}\n` +
+    `allowCredentials: ${JSON.stringify(options.allowCredentials)}`
+  );
 
   // 2. Convert base64url fields to ArrayBuffer
   //    rpId is forced to the current hostname to guarantee it always matches the
