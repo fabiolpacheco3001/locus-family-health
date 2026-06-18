@@ -158,19 +158,6 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
     { body: { type: "registration", response: serialized, deviceName } },
   );
 
-  // ── TEMP DIAGNOSTIC ── remove after confirming registration works ──────────
-  {
-    let msg = "";
-    if (verErr) {
-      const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
-      msg = `ERRO: ${body?.error ?? verErr.message}`;
-    } else {
-      msg = `OK: ${JSON.stringify(result)}`;
-    }
-    window.alert(`[BK-04 reg] origin=${window.location.origin}\n${msg}`);
-  }
-  // ── END TEMP DIAGNOSTIC ───────────────────────────────────────────────────
-
   if (verErr) {
     // FunctionsHttpError carries the real server message — extract it
     const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
@@ -200,16 +187,6 @@ export async function authenticatePasskey(): Promise<void> {
   if (optErr || options?.error) {
     throw new Error(optErr?.message ?? options?.error ?? "Erro ao iniciar verificação.");
   }
-
-
-  // ── TEMP DIAGNOSTIC ── remove after confirming authentication works ─────────
-  window.alert(
-    `[BK-04 auth] origin=${window.location.origin}\n` +
-    `hostname=${window.location.hostname}\n` +
-    `challenge=${String(options.challenge).substring(0, 20)}...\n` +
-    `allowCreds count=${(options.allowCredentials ?? []).length}`
-  );
-  // ── END TEMP DIAGNOSTIC ───────────────────────────────────────────────────
 
   // 2. Build a MINIMAL, clean authentication request.
   //    Do NOT spread ...options — the server response may include extra fields
@@ -262,28 +239,11 @@ export async function authenticatePasskey(): Promise<void> {
     },
   };
 
-  // ── TEMP DIAGNOSTIC ─────────────────────────────────────────────────────────
-  window.alert(`[BK-04 auth got cred] id=${credential.id.substring(0, 20)}...`);
-  // ── END TEMP DIAGNOSTIC ─────────────────────────────────────────────────────
-
   // 5. Verify on server
   const { data: result, error: verErr } = await supabase.functions.invoke(
     "webauthn-verify",
     { body: { type: "authentication", response: serialized } },
   );
-
-  // ── TEMP DIAGNOSTIC ─────────────────────────────────────────────────────────
-  {
-    let msg = "";
-    if (verErr) {
-      const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);
-      msg = `ERRO: ${body?.error ?? verErr.message}`;
-    } else {
-      msg = `OK: ${JSON.stringify(result)}`;
-    }
-    window.alert(`[BK-04 auth verify] ${msg}`);
-  }
-  // ── END TEMP DIAGNOSTIC ─────────────────────────────────────────────────────
 
   if (verErr) {
     const body = await (verErr as { context?: Response }).context?.json?.().catch(() => null);

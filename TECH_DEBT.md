@@ -66,11 +66,16 @@
 
 ---
 
-### C3 · Biometria falsa — toggle em `localStorage` sem WebAuthn ✅
+### C3 · Biometria falsa → BK-04 WebAuthn real (FaceID / TouchID) ✅
 - **Risco resolvido:** Toggle de biometria usava `localStorage` sem WebAuthn real — usuário acreditava ter proteção biométrica que não existia.
-- **Resolução (opção A):** Toggle removido de `Seguranca.tsx`. Substituído por card informativo "Biometria / Face ID — Em breve" com badge visual e texto explicativo sobre WebAuthn. Removidos `useState` de `biometria`, `handleBiometria` e import de `Switch`. WebAuthn real fica para roadmap futuro.
-- **Arquivos:** `src/pages/Seguranca.tsx`
-- **Status:** ✅ Resolvido (sessão 3)
+- **Resolução final (BK-04 — 18/06/2026):** WebAuthn FIDO2/Passkeys implementado end-to-end e validado em produção no iPhone (iOS 18.7 PWA).
+  - **Migration:** `20260617000001_webauthn_passkeys.sql` — tabelas `passkeys` + `webauthn_challenges` + RLS completa.
+  - **Edge functions:** `webauthn-challenge` (gera options via `@simplewebauthn/server@9.0.3`; `allowCredentials:[]` para discoverable credential flow no iOS) + `webauthn-verify` (verifica assertionResponse, persiste passkey, atualiza `sign_count`).
+  - **Cliente:** `src/lib/webauthn.ts` — Credential Management API nativa (zero deps frontend); `publicKey` construído sem spread do response do servidor; `rpId` e `allowCredentials` omitidos → iOS usa hostname efetivo e busca discoverable; base64url helpers inline.
+  - **Hook + UI:** `src/hooks/usePasskeys.ts` + card completo em `Seguranca.tsx` (cadastro, lista, remoção de passkeys).
+  - **Fluxo validado:** registro → `{"success":true}` ✅; autenticação → picker iOS "Usar Chave-senha" → Face ID → `{"success":true}` ✅; app desbloqueado ✅.
+- **Arquivos:** `src/lib/webauthn.ts`, `src/hooks/usePasskeys.ts`, `src/pages/Seguranca.tsx`, `supabase/functions/webauthn-challenge/`, `supabase/functions/webauthn-verify/`, `supabase/migrations/20260617000001_webauthn_passkeys.sql`
+- **Status:** ✅ Resolvido (BK-04 — sessão 10, 18/06/2026)
 
 ---
 
