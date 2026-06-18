@@ -191,17 +191,29 @@ export async function authenticatePasskey(): Promise<void> {
   // 2. Build a MINIMAL, clean authentication request.
   //    Do NOT spread ...options — the server response may include extra fields
   //    (e.g. from @simplewebauthn/server serialization) that confuse iOS WebAuthn.
-  //    rpId and allowCredentials are intentionally omitted so the browser uses
-  //    its own defaults (effective domain + discoverable search), which is the
-  //    safest path on iOS for finding passkeys in iCloud Keychain.
+  //    We pass the specific allowCredentials from the server so iOS can match the
+  //    passkey directly in iCloud Keychain and trigger Face ID immediately,
+  //    without showing the "Usar Chave-senha" picker sheet first.
+  //    Transports are intentionally omitted from each entry — including them was
+  //    confirmed to cause iOS to route to the wrong UI (QR / cross-device flow).
+  const serverAllowCreds = (
+    (options.allowCredentials ?? []) as Array<{ id: unknown; type?: string }>
+  ).map((c) => ({
+    id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
+    type: "public-key" as PublicKeyCredentialType,
+    // transports intentionally omitted
+  }));
+
   const publicKey: PublicKeyCredentialRequestOptions = {
     challenge: base64UrlToArrayBuffer(
       toBase64UrlString(options.challenge, "challenge"),
     ),
     userVerification: "required",
     timeout: typeof options.timeout === "number" ? options.timeout : 60000,
-    // rpId omitted → browser defaults to window.location.hostname (vita.locustech.com.br)
-    // allowCredentials omitted → discoverable: iOS shows all passkeys for this origin
+    rpId: window.location.hostname,
+    // Pass specific credential IDs → iOS goes directly to Face ID (no picker)
+    // Fallback to discoverable (no allowCredentials) if server returned none
+    ...(serverAllowCreds.length > 0 ? { allowCredentials: serverAllowCreds } : {}),
   };
 
   // 3. Prompt biometric

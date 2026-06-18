@@ -68,7 +68,7 @@ export function AppLockScreen({ onUnlock }: AppLockScreenProps) {
         ) : (
           <Fingerprint className="h-5 w-5" />
         )}
-        {isLoading ? "Verificando..." : "Desbloquear com Face ID"}
+        {isLoading ? "Verificando..." : "Entrar"}
       </Button>
 
       {/* Fallback sign-out */}

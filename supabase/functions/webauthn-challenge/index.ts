@@ -150,16 +150,15 @@ serve(async (req) => {
         credentialIds: passkeys.map((p: { credential_id: string }) => p.credential_id),
       });
 
-      // Use empty allowCredentials (discoverable credential flow).
-      // Passing specific credential IDs causes iOS to do an exact match against
-      // iCloud Keychain — if the match fails for any reason (encoding, sync, etc.)
-      // iOS returns "no credentials for this site" without showing "Senhas".
-      // With empty allowCredentials, iOS performs a discoverable search and shows
-      // the "Senhas" option for any passkey registered for this rpId, letting
-      // Face ID trigger after the user selects it.
+      // Pass specific credential IDs (without transports) so iOS matches the
+      // passkey directly in iCloud Keychain and triggers Face ID immediately,
+      // skipping the "Usar Chave-senha" picker sheet.
+      // Transports intentionally omitted — "hybrid"/"internal" confused iOS.
       options = await generateAuthenticationOptions({
         rpID: rpId,
-        allowCredentials: [],
+        allowCredentials: passkeys.map((p: { credential_id: string }) => ({
+          id: p.credential_id,
+        })),
         userVerification: "required",
       }) as unknown as Record<string, unknown>;
     }
