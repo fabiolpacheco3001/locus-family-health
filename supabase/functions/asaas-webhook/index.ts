@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { log } from "../_shared/logger.ts";
 
 // C6: Validate that externalReference is a valid UUID before using as user_id.

@@ -13,14 +13,14 @@
  * exactly once by webauthn-verify.
  */
 
-import { serve } from "std/http/server";
-import { createClient } from "@supabase/supabase-js";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
 import {
   generateRegistrationOptions,
   generateAuthenticationOptions,
-} from "@simplewebauthn/server";
+} from "npm:@simplewebauthn/server@9.0.3";
 
 // Types inferred from @simplewebauthn/server@9
 type AuthenticatorTransport = "ble" | "cable" | "hybrid" | "internal" | "nfc" | "smart-card" | "usb";

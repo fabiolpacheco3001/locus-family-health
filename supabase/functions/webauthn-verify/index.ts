@@ -8,14 +8,14 @@
  * Consumes the challenge stored by webauthn-challenge (one-time use).
  */
 
-import { serve } from "std/http/server";
-import { createClient } from "@supabase/supabase-js";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
 import {
   verifyRegistrationResponse,
   verifyAuthenticationResponse,
-} from "@simplewebauthn/server";
+} from "npm:@simplewebauthn/server@9.0.3";
 
 // ── helpers: base64url ↔ Uint8Array (no external deps) ──────────────────────
 function uint8ArrayToBase64Url(bytes: Uint8Array): string {
