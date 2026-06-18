@@ -124,6 +124,7 @@ serve(async (req) => {
           transports: (p.transports ?? []) as AuthenticatorTransport[],
         })),
         authenticatorSelection: {
+          authenticatorAttachment: "platform", // força Face ID / iCloud Keychain — impede Edge/Authenticator
           userVerification: "required",
           residentKey: "required",
         },
@@ -143,12 +144,14 @@ serve(async (req) => {
         );
       }
 
+      // allowCredentials vazio = "discoverable credential flow":
+      // o iOS/Android procura TODAS as passkeys do rpId no iCloud Keychain / Keystore
+      // e aciona o Face ID diretamente, sem exibir o picker de credenciais.
+      // Quando passamos IDs específicos, o iOS só acha a passkey se o credential_id
+      // estiver EXATAMENTE no iCloud Keychain — qualquer divergência cai no picker.
       options = await generateAuthenticationOptions({
         rpID: rpId,
-        allowCredentials: passkeys.map((p: { credential_id: string; transports: string[] | null }) => ({
-          id: p.credential_id,
-          transports: (p.transports ?? []) as AuthenticatorTransport[],
-        })),
+        allowCredentials: [],
         userVerification: "required",
       }) as unknown as Record<string, unknown>;
     }
