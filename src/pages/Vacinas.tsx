@@ -9,7 +9,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import PaywallModal from "@/components/PaywallModal";
-import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown, Share2 } from "lucide-react";
 import ExamSwipeableCard from "@/components/ExamSwipeableCard";
 import { AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -106,6 +106,56 @@ const Vacinas = () => {
   const [sortDesc, setSortDesc] = useState(true);
   const [form, setForm] = useState(EMPTY_FORM);
   const [openCardId, setOpenCardId] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const emitterName = user?.user_metadata?.full_name ?? user?.email ?? "Usuário";
+
+  const handleExportPdf = async (scope: "member" | "family") => {
+    setGeneratingPdf(true);
+    try {
+      const { generateVaccinesPdf } = await import("@/lib/generateVaccinesPdf");
+      let membersData;
+
+      if (scope === "member") {
+        membersData = [{
+          memberName: currentMember?.name ?? "Membro",
+          vaccines: vaccines.map((v) => ({
+            name: v.name,
+            applied_date: v.applied_date,
+            dose_type: v.dose_type,
+            batch: v.batch,
+            facility: v.facility,
+            booster_date: v.booster_date,
+          })),
+        }];
+      } else {
+        const allIds = members.map((m) => m.id);
+        const { data: allVaccines } = await supabase
+          .from("vaccines")
+          .select("family_member_id, name, applied_date, dose_type, batch, facility, booster_date")
+          .in("family_member_id", allIds)
+          .order("applied_date", { ascending: false });
+
+        membersData = members.map((m) => ({
+          memberName: m.name,
+          vaccines: (allVaccines ?? []).filter((v) => v.family_member_id === m.id),
+        }));
+      }
+
+      const blob = generateVaccinesPdf({ members: membersData, emitterName });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = scope === "family" ? "vacinas-familia.pdf" : `vacinas-${currentMember?.name?.split(" ")[0]?.toLowerCase() ?? "membro"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF gerado com sucesso!");
+    } catch {
+      toast.error("Erro ao gerar PDF.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   const isCustom = form.name === "Outra (especificar)";
   const { ufs, cities, loadingCities } = useIbgeLocations(form.state);
@@ -407,6 +457,21 @@ const Vacinas = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0 text-[#78C2AD]" disabled={generatingPdf}>
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExportPdf("member")}>
+                Este membro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPdf("family")}>
+                Toda a família
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {isLoading ? (

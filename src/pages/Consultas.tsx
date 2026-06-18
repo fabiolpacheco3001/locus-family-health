@@ -1,7 +1,7 @@
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle, ArrowUpDown, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +17,8 @@ import { ptBR } from "date-fns/locale";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const statusColors: Record<string, string> = {
   Agendada: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -28,6 +30,7 @@ const Consultas = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const { members } = useFamilyMembers();
   const currentMember = members.find((m) => m.id === id);
@@ -36,7 +39,66 @@ const Consultas = () => {
   const [abaAtiva, setAbaAtiva] = useState<'proximas' | 'historico'>('proximas');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const { consultations, isLoading, addConsultation, updateConsultation, deleteConsultation } = useConsultations(id!);
+
+  const emitterName = user?.user_metadata?.full_name ?? user?.email ?? "Usuário";
+
+  const handleExportPdf = async (scope: "member" | "family") => {
+    setGeneratingPdf(true);
+    try {
+      const { generateConsultationsPdf } = await import("@/lib/generateConsultationsPdf");
+      let membersData;
+
+      if (scope === "member") {
+        membersData = [{
+          memberName: currentMember?.name ?? "Membro",
+          consultations: consultations.map((c) => ({
+            specialty: c.specialty,
+            professional_name: c.professional_name,
+            consultation_date: c.consultation_date,
+            type: c.type,
+            symptoms: c.symptoms,
+            status: c.status,
+          })),
+        }];
+      } else {
+        const allIds = members.map((m) => m.id);
+        const { data: allConsultations } = await supabase
+          .from("consultations")
+          .select("*")
+          .in("family_member_id", allIds)
+          .order("consultation_date", { ascending: false });
+
+        membersData = members.map((m) => ({
+          memberName: m.name,
+          consultations: (allConsultations ?? [])
+            .filter((c) => c.family_member_id === m.id)
+            .map((c) => ({
+              specialty: c.specialty,
+              professional_name: c.professional_name,
+              consultation_date: c.consultation_date,
+              type: c.type,
+              symptoms: c.symptoms,
+              status: c.status,
+            })),
+        }));
+      }
+
+      const blob = generateConsultationsPdf({ members: membersData, emitterName });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = scope === "family" ? "consultas-familia.pdf" : `consultas-${currentMember?.name?.split(" ")[0]?.toLowerCase() ?? "membro"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF gerado com sucesso!");
+    } catch {
+      toast.error("Erro ao gerar PDF.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   useEffect(() => {
     if (groupLoading) return;
@@ -174,6 +236,21 @@ const Consultas = () => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
                 Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0 text-[#78C2AD]" disabled={generatingPdf}>
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExportPdf("member")}>
+                Este membro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPdf("family")}>
+                Toda a família
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

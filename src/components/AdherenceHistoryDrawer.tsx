@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Share2, CheckCircle, XCircle, Clock3, Flame, TrendingUp, AlertTriangle, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays, endOfDay } from "date-fns";
+import { format, subDays, endOfDay, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toSPTime } from "@/lib/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -149,10 +149,13 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
   const dashboard = useAdherenceDashboard(allDoses, period);
   const { taxa, tomadas, total, streak, weeklyData, heatmapData, medBreakdown, insight } = dashboard;
 
-  // For PDF export — uses all-time allDoses
-  const allTimeTomadas = allDoses.filter((d) => d.status === "taken").length;
-  const allTimeTotal = allDoses.length;
-  const allTimeRate = allTimeTotal > 0 ? Math.round((allTimeTomadas / allTimeTotal) * 100) : 0;
+  // Period-filtered doses for PDF export
+  const periodFilteredDoses = useMemo(() => {
+    if (period === "all") return allDoses;
+    const days = period === "7d" ? 7 : period === "30d" ? 30 : 90;
+    const cutoff = startOfDay(subDays(new Date(), days - 1));
+    return allDoses.filter((d) => toSPTime(new Date(d.scheduled_for)) >= cutoff);
+  }, [allDoses, period]);
 
   const handleExportPdf = async () => {
     if (allDoses.length === 0) { toast.error("Nenhum registro para exportar."); return; }
@@ -161,12 +164,18 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
       const { generateAdherencePdf } = await import("@/lib/generateAdherencePdf");
       const blob = generateAdherencePdf({
         memberName,
-        doses: allDoses,
-        adherenceRate: allTimeRate,
-        takenCount: allTimeTomadas,
-        totalCount: allTimeTotal,
-        logoBase64,
         emitterName,
+        period,
+        taxa,
+        tomadas,
+        total,
+        streak,
+        insight,
+        weeklyData,
+        heatmapData,
+        medBreakdown,
+        doses: periodFilteredDoses,
+        logoBase64,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

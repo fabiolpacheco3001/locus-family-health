@@ -1,7 +1,7 @@
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, ArrowUpDown, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +16,9 @@ import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { supabase } from "@/integrations/supabase/client";
 
 const statusColors: Record<string, string> = {
   Agendado: "bg-[#AEE2D4] text-slate-800 border-none",
@@ -30,13 +33,65 @@ const Exames = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
+  const { members } = useFamilyMembers();
+  const currentMember = members.find((m) => m.id === id);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [abaAtiva, setAbaAtiva] = useState<'pendentes' | 'resultados'>('pendentes');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const { exams, isLoading, addExam, deleteExam, updateExam } = useExams(id!);
+
+  const emitterName = user?.user_metadata?.full_name ?? user?.email ?? "Usuário";
+
+  const handleExportPdf = async (scope: "member" | "family") => {
+    setGeneratingPdf(true);
+    try {
+      const { generateExamsPdf } = await import("@/lib/generateExamsPdf");
+      let membersData;
+
+      if (scope === "member") {
+        membersData = [{
+          memberName: currentMember?.name ?? "Membro",
+          exams: exams.map((e) => ({
+            name: e.name,
+            exam_date: e.exam_date,
+            location: e.location,
+            result_date: e.result_date,
+            status: e.status,
+          })),
+        }];
+      } else {
+        const allIds = members.map((m) => m.id);
+        const { data: allExams } = await supabase
+          .from("exams")
+          .select("family_member_id, name, exam_date, location, result_date, status")
+          .in("family_member_id", allIds)
+          .order("exam_date", { ascending: false });
+
+        membersData = members.map((m) => ({
+          memberName: m.name,
+          exams: (allExams ?? []).filter((e) => e.family_member_id === m.id),
+        }));
+      }
+
+      const blob = generateExamsPdf({ members: membersData, emitterName });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = scope === "family" ? "exames-familia.pdf" : `exames-${currentMember?.name?.split(" ")[0]?.toLowerCase() ?? "membro"}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF gerado com sucesso!");
+    } catch {
+      toast.error("Erro ao gerar PDF.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
 
   useEffect(() => {
     if (groupLoading) return;
@@ -176,6 +231,21 @@ const Exames = () => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setSortOrder('desc')} className={sortOrder === 'desc' ? 'font-semibold' : ''}>
                 Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0 text-[#78C2AD]" disabled={generatingPdf}>
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExportPdf("member")}>
+                Este membro
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExportPdf("family")}>
+                Toda a família
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
