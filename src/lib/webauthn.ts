@@ -15,6 +15,28 @@ import { supabase } from "@/integrations/supabase/client";
 
 // ── base64url helpers ────────────────────────────────────────────────────────
 
+/**
+ * Normalises a value that SHOULD be a base64url string but might arrive as:
+ *   - string          (ideal — @simplewebauthn/server v8+)
+ *   - {0:n,1:n,...}   (JSON-serialised Uint8Array — older library versions)
+ * Throws a readable error so we see it in the toast rather than a cryptic
+ * "c.replace is not a function".
+ */
+function toBase64UrlString(value: unknown, field: string): string {
+  if (typeof value === "string") return value;
+  // JSON-serialised Uint8Array: {0: 104, 1: 105, ...}
+  if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+    const entries = Object.entries(value as Record<string, number>)
+      .filter(([k]) => !isNaN(Number(k)))
+      .sort(([a], [b]) => Number(a) - Number(b));
+    if (entries.length > 0) {
+      const bytes = new Uint8Array(entries.map(([, v]) => v));
+      return arrayBufferToBase64Url(bytes.buffer);
+    }
+  }
+  throw new Error(`Campo '${field}' retornou formato inesperado (${typeof value}). Tente novamente ou contate o suporte.`);
+}
+
 function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
   const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
@@ -71,17 +93,23 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
   }
 
   // 2. Convert base64url fields to ArrayBuffer (required by browser API)
+  //    toBase64UrlString() handles both proper strings AND JSON-serialised
+  //    Uint8Array objects returned by older @simplewebauthn/server versions.
   const publicKey: PublicKeyCredentialCreationOptions = {
     ...options,
-    challenge: base64UrlToArrayBuffer(options.challenge as string),
+    challenge: base64UrlToArrayBuffer(
+      toBase64UrlString(options.challenge, "challenge"),
+    ),
     user: {
       ...options.user,
-      id: base64UrlToArrayBuffer(options.user.id as string),
+      id: base64UrlToArrayBuffer(
+        toBase64UrlString((options.user as { id: unknown }).id, "user.id"),
+      ),
     },
     excludeCredentials: (
-      (options.excludeCredentials ?? []) as Array<{ id: string; type: string; transports?: string[] }>
+      (options.excludeCredentials ?? []) as Array<{ id: unknown; type: string; transports?: string[] }>
     ).map((c) => ({
-      id: base64UrlToArrayBuffer(c.id),
+      id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "excludeCredentials.id")),
       type: c.type as PublicKeyCredentialType,
       transports: c.transports as AuthenticatorTransport[],
     })),
@@ -151,11 +179,13 @@ export async function authenticatePasskey(): Promise<void> {
   // 2. Convert base64url fields to ArrayBuffer
   const publicKey: PublicKeyCredentialRequestOptions = {
     ...options,
-    challenge: base64UrlToArrayBuffer(options.challenge as string),
+    challenge: base64UrlToArrayBuffer(
+      toBase64UrlString(options.challenge, "challenge"),
+    ),
     allowCredentials: (
-      (options.allowCredentials ?? []) as Array<{ id: string; type: string; transports?: string[] }>
+      (options.allowCredentials ?? []) as Array<{ id: unknown; type: string; transports?: string[] }>
     ).map((c) => ({
-      id: base64UrlToArrayBuffer(c.id),
+      id: base64UrlToArrayBuffer(toBase64UrlString(c.id, "allowCredentials.id")),
       type: c.type as PublicKeyCredentialType,
       transports: c.transports as AuthenticatorTransport[],
     })),

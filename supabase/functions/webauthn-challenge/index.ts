@@ -25,6 +25,37 @@ import {
 // Types inferred from @simplewebauthn/server@9
 type AuthenticatorTransport = "ble" | "cable" | "hybrid" | "internal" | "nfc" | "smart-card" | "usb";
 
+// ── helper: Uint8Array → base64url ───────────────────────────────────────────
+// Needed because some @simplewebauthn/server versions return Uint8Array objects
+// instead of base64url strings for `challenge` and `user.id`. We normalise
+// ALL binary fields to base64url strings before sending to the browser.
+function uint8ArrayToBase64Url(bytes: Uint8Array): string {
+  const binary = Array.from(bytes, (b: number) => String.fromCharCode(b)).join("");
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+/** JSON replacer: converts any Uint8Array value to a base64url string. */
+function base64UrlReplacer(_key: string, value: unknown): unknown {
+  if (value instanceof Uint8Array) return uint8ArrayToBase64Url(value);
+  // Also handle Node-style Buffer (ArrayBuffer-backed objects with a `type` field)
+  if (
+    value !== null &&
+    typeof value === "object" &&
+    (value as { type?: string }).type === "Buffer" &&
+    Array.isArray((value as { data?: unknown }).data)
+  ) {
+    return uint8ArrayToBase64Url(new Uint8Array((value as { data: number[] }).data));
+  }
+  return value;
+}
+
+/** Ensures a value is a base64url string even if it comes as Uint8Array. */
+function toBase64UrlString(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value instanceof Uint8Array) return uint8ArrayToBase64Url(value);
+  return String(value);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -123,6 +154,9 @@ serve(async (req) => {
     }
 
     // ── STORE CHALLENGE (purge expired first) ────────────────────────────────
+    // Normalise challenge to base64url string regardless of library version
+    const challengeStr = toBase64UrlString(options.challenge);
+
     await admin
       .from("webauthn_challenges")
       .delete()
@@ -130,13 +164,14 @@ serve(async (req) => {
 
     await admin.from("webauthn_challenges").insert({
       user_id: user.id,
-      challenge: options.challenge,
+      challenge: challengeStr,
       type,
     });
 
     log("info", "webauthn_challenge_generated", { type, userId: user.id });
 
-    return new Response(JSON.stringify(options), {
+    // Use replacer to convert any remaining Uint8Array fields to base64url strings
+    return new Response(JSON.stringify(options, base64UrlReplacer), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
