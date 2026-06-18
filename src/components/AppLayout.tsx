@@ -13,6 +13,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import PaywallModal from "@/components/PaywallModal";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAppLock } from "@/hooks/useAppLock";
+import { AppLockScreen } from "@/components/AppLockScreen";
 
 /** Lightweight inline loader — keeps shell/nav visible while lazy chunk loads */
 const InlineRouteLoader = () => (
@@ -27,6 +29,7 @@ const InlineRouteLoader = () => (
 const AppLayout = () => {
   const { user, signOut } = useAuth();
   const queryClient = useQueryClient();
+  const { isLocked, isReady, hadInitialSession, unlock } = useAppLock();
   const { canUsePremium, isLoading: subLoading, subscription, implicitTrialExpired } = useSubscription();
   const { medications } = useMedications();
   useMedicationAlarms(medications);
@@ -77,6 +80,20 @@ const AppLayout = () => {
 
   // Show locked paywall if subscription is not premium-eligible
   const showPaywall = !subLoading && user && !canUsePremium;
+
+  // ── App Lock: show logo while passkeys load (avoids content flash) ──────────
+  // Only blocks render if session was restored from localStorage (not fresh login).
+  if (hadInitialSession && !isReady) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-[#f2f0eb] z-[100]">
+        <img src="/logo-carregamento.svg" alt="Locus Vita" className="w-40 h-40 animate-breathing" />
+      </div>
+    );
+  }
+
+  if (isLocked) {
+    return <AppLockScreen onUnlock={unlock} />;
+  }
 
   return (
     <InviteAcceptInterceptor>
