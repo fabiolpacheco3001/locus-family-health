@@ -345,11 +345,28 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
                 </div>
 
                 {/* Streak */}
-                {streak > 0 && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-                    <Flame size={16} className="text-orange-400 shrink-0" />
-                    <span className="text-sm font-medium text-foreground">{streak} {streak === 1 ? "dia" : "dias"} seguidos</span>
-                    <span className="text-xs text-muted-foreground">— sequência atual</span>
+                {(streak > 0 || bestStreak > 0) && (
+                  <div className="mt-3 pt-3 border-t border-border/50 space-y-1.5">
+                    {streak > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Flame size={16} className="text-orange-400 shrink-0" />
+                        <span className="text-sm font-medium text-foreground">
+                          {streak} {streak === 1 ? "dia" : "dias"} seguidos
+                        </span>
+                        <span className="text-xs text-muted-foreground">— sequência atual</span>
+                      </div>
+                    )}
+                    {bestStreak > streak && (
+                      <div className="flex items-center gap-2">
+                        <Trophy size={14} className="text-amber-500 shrink-0" />
+                        <span className="text-xs text-muted-foreground">
+                          Recorde:{" "}
+                          <span className="font-medium text-foreground">
+                            {bestStreak} {bestStreak === 1 ? "dia" : "dias"}
+                          </span>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
