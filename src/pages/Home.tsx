@@ -166,7 +166,8 @@ const Home = () => {
             open={showAiUpload}
             onOpenChange={(open) => {
               setShowAiUpload(open);
-              if (!open) setReceitaMemberId(null);
+              // Não limpar receitaMemberId aqui — o AddMedicationDrawer ainda precisa dele.
+              // A limpeza acontece somente quando o AddMedicationDrawer fecha (abaixo).
             }}
             familyMemberId={receitaMemberId}
             onAnalysisComplete={(data, receitaUrl) => {
