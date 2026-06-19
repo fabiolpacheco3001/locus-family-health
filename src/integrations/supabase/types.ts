@@ -1376,6 +1376,22 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_owner_subscription_safe: {
+        Args: { _owner_id: string }
+        Returns: {
+          asaas_payment_id: string
+          asaas_subscription_id: string
+          created_at: string
+          id: string
+          next_billing_date: string
+          plan_type: string
+          status: string
+          test_mode: boolean
+          trial_end: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       is_group_admin: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
