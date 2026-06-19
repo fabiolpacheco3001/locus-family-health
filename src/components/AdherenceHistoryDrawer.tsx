@@ -127,8 +127,8 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
       const effectiveEnd = endLimit < cutoff ? endLimit : cutoff;
       const medName = medMap[med.id] || "Desconhecido";
 
-      // interval (legado)
-      if (freqType === "interval" || !med.frequency_type) {
+      // interval (legado / fixed_interval)
+      if (freqType === "interval" || freqType === "fixed_interval" || !med.frequency_type) {
         if (!med.frequency_hours || med.frequency_hours <= 0) continue;
         let cursor = new Date(start.getTime());
         let safety = 50000;
