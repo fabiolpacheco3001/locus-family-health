@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, MoreHorizontal, Users, Ban, KeyRound, Eye } from "lucide-react";
+import { Search, MoreHorizontal, Users, Ban, KeyRound, Eye, FlaskConical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ interface ClientRow {
   status: string | null;
   plan_type: string | null;
   next_billing_date: string | null;
+  test_mode: boolean | null;
 }
 
 const planStatusBadge = (client: ClientRow) => {
@@ -133,6 +134,20 @@ const Clientes = () => {
     setBlockTarget(null);
   };
 
+  const handleToggleTestMode = async (client: ClientRow) => {
+    const newValue = !client.test_mode;
+    const { error } = await supabase.rpc("set_user_test_mode", {
+      target_user_id: client.user_id,
+      enabled: newValue,
+    });
+    if (error) {
+      toast.error("Erro ao alternar modo teste.");
+      return;
+    }
+    toast.success(newValue ? "Modo teste ativado (SANDBOX)." : "Modo produção ativado.");
+    queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
+  };
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "—";
     try {
@@ -212,7 +227,14 @@ const Clientes = () => {
                 <TableRow key={client.user_id} className="hover:bg-gray-50/50">
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground text-sm">{client.full_name || "—"}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground text-sm">{client.full_name || "—"}</p>
+                        {client.test_mode && (
+                          <Badge className="bg-amber-500 text-white border-none text-[10px] px-1.5 py-0">
+                            SANDBOX
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{client.email || client.user_id.slice(0, 8) + "..."}</p>
                     </div>
                   </TableCell>
