@@ -1366,6 +1366,7 @@ export type Database = {
           next_billing_date: string
           plan_type: string
           status: string
+          test_mode: boolean
           user_id: string
         }[]
       }
