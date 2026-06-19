@@ -3,13 +3,11 @@ import { z } from "npm:zod@3.25.76";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
+import { resolveAsaasEnv, type AsaasCredentials } from "../_shared/asaas-env.ts";
 
 const BodySchema = z.object({
   planType: z.enum(["monthly", "annual"]),
 });
-
-const ASAAS_API_URL = Deno.env.get("ASAAS_API_URL");
-if (!ASAAS_API_URL) throw new Error("ASAAS_API_URL secret not configured");
 
 // C10: preços lidos de env vars (secrets Supabase) — nunca hardcoded
 const PLAN_MONTHLY_PRICE = parseFloat(Deno.env.get("PLAN_MONTHLY_PRICE") ?? "19.90");
