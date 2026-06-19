@@ -131,7 +131,7 @@ serve(async (req) => {
           storedChallenge: challengeRow.challenge,
         });
         return new Response(
-          JSON.stringify({ error: "Falha na verificação biométrica. Tente novamente." }),
+          JSON.stringify({ error: `Falha técnica na verificação: ${String(verifyErr)}` }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }

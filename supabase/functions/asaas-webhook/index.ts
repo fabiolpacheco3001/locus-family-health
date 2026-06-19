@@ -241,7 +241,7 @@ Deno.serve(async (req) => {
         if (error) {
           log("error", "subscription_cancel_update_failed", { error });
           return new Response(
-            JSON.stringify({ error: "Failed to update subscription", details: error }),
+            JSON.stringify({ error: "Falha ao processar evento. Tente novamente." }),
             { status: 500, headers: jsonHeaders }
           );
         }
@@ -256,7 +256,7 @@ Deno.serve(async (req) => {
         if (error) {
           log("error", "subscription_upsert_failed", { error });
           return new Response(
-            JSON.stringify({ error: "Failed to upsert subscription", details: error }),
+            JSON.stringify({ error: "Falha ao processar evento. Tente novamente." }),
             { status: 500, headers: jsonHeaders }
           );
         }
@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
       if (error) {
         log("error", "subscription_update_by_customer_failed", { error });
         return new Response(
-          JSON.stringify({ error: "Failed to update subscription", details: error }),
+          JSON.stringify({ error: "Falha ao processar evento. Tente novamente." }),
           { status: 500, headers: jsonHeaders }
         );
       }
