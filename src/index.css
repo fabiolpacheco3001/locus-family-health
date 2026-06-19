@@ -91,3 +91,11 @@ textarea,
   font-size: 16px !important;
 }
 
+/* Sonner action button override — classNames.actionButton não sobrescreve inline styles do Sonner */
+[data-sonner-toast] [data-button] {
+  background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+}
+
