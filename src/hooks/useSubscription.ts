@@ -55,14 +55,15 @@ export function useSubscription() {
           .maybeSingle();
 
         if (group?.created_by && group.created_by !== user.id) {
-          const { data: ownerSub } = await supabase
-            .from("subscriptions")
-            .select("*")
-            .eq("user_id", group.created_by)
-            .maybeSingle();
+          // Use SECURITY DEFINER RPC that returns only non-sensitive columns
+          // (no credit_card_token / asaas_customer_id). The family-member RLS
+          // policy on subscriptions was removed to prevent token exposure.
+          const { data: ownerSubRows } = await supabase
+            .rpc("get_owner_subscription_safe", { _owner_id: group.created_by });
+          const ownerSub = Array.isArray(ownerSubRows) ? ownerSubRows[0] : null;
 
           if (ownerSub && ownerSub.status === "active") {
-            return ownerSub as Subscription;
+            return ownerSub as unknown as Subscription;
           }
         }
       }
