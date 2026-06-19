@@ -66,8 +66,9 @@ Deno.serve(async (req) => {
       .single();
 
     if (insertError) {
-      return new Response(JSON.stringify({ error: insertError.message }), {
-        status: 400,
+      log("error", "publish_changelog_db_insert_failed", { error: insertError.message });
+      return new Response(JSON.stringify({ error: "Erro ao publicar changelog. Tente novamente." }), {
+        status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
