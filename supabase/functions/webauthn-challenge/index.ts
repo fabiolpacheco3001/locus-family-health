@@ -185,7 +185,7 @@ serve(async (req) => {
         hint: insertErr.hint,
       });
       return new Response(
-        JSON.stringify({ error: `Erro ao salvar desafio: ${insertErr.message}` }),
+        JSON.stringify({ error: "Erro ao gerar desafio biométrico. Tente novamente." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }

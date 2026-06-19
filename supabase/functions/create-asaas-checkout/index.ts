@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     if (userError || !user) {
       log("error", "auth_failed", { error: userError?.message ?? null });
       return new Response(
-        JSON.stringify({ error: "Auth failed", details: userError?.message ?? null }),
+        JSON.stringify({ error: "Não autenticado. Faça login novamente." }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
