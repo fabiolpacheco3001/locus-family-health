@@ -246,7 +246,7 @@ export function useAdherenceDashboard(
       }
     }
 
-    return { taxa, tomadas, total, streak, weeklyData, heatmapData, medBreakdown, insight };
+    return { taxa, tomadas, total, streak, bestStreak, weeklyData, heatmapData, medBreakdown, insight };
   }, [allDoses, period]);
 }
 
