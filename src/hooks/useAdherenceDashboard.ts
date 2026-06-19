@@ -200,7 +200,7 @@ export function useAdherenceDashboard(
         const wTaken = weekDoses.filter((dose) => dose.status === "taken").length;
         const wTotal = weekDoses.length;
         weeklyData.push({
-          label: format(weekStart, "d MMM", { locale: ptBR }),
+          label: format(weekEnd, "d MMM", { locale: ptBR }),
           taxa: wTotal > 0 ? Math.round((wTaken / wTotal) * 100) : 0,
         });
       }
