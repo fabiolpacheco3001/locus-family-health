@@ -31,7 +31,11 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
     let detail = "";
     try {
       if (responseData && typeof responseData === "object") {
-        detail = responseData.error || responseData.message || "";
+        detail = (responseData as any).error || (responseData as any).message || "";
+      }
+      if (!detail && (responseError as any).context) {
+        const ctx = await (responseError as any).context.json().catch(() => null);
+        detail = ctx?.error || ctx?.message || "";
       }
     } catch (_) { /* ignore */ }
     const reason = detail || responseError.message || "Desconhecido";
