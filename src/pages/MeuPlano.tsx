@@ -22,6 +22,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import { toast } from "sonner";
+import { captureException } from "@/lib/sentry";
 
 const MeuPlano = () => {
   const navigate = useNavigate();
