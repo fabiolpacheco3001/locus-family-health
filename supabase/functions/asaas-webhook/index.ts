@@ -228,7 +228,6 @@ Deno.serve(async (req) => {
           if (asaasData) {
             if (asaasData.nextDueDate) {
               updateData.next_billing_date = asaasData.nextDueDate;
-              updateData.current_period_end = asaasData.nextDueDate;
               log("info", "payment_next_due_date_set", { nextDueDate: asaasData.nextDueDate });
             }
             if (asaasData.cycle === "YEARLY") updateData.plan_type = "annual";
@@ -241,7 +240,6 @@ Deno.serve(async (req) => {
           periodEnd.setUTCDate(periodEnd.getUTCDate() + 30);
           const periodEndStr = periodEnd.toISOString().split("T")[0];
           updateData.next_billing_date = periodEndStr;
-          updateData.current_period_end = periodEndStr;
           log("info", "payment_period_extended", { userId: externalReference, periodEnd: periodEndStr, env: (await resolveWebhookCreds(adminClient, externalReference))?.env });
         }
 
