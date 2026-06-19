@@ -216,6 +216,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     streak = 0,
     bestStreak = 0,
     weeklyData = [],
+    chartLabel = "Evolução",
     heatmapData = [],
     medBreakdown = [],
     insight = { text: "", type: "info" as const },
@@ -379,7 +380,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
 
               {/* Weekly trend */}
               <div className="bg-card rounded-xl border border-border/50 p-4">
-                <p className="text-xs font-medium text-foreground mb-3">Evolução semanal</p>
+                <p className="text-xs font-medium text-foreground mb-3">{chartLabel}</p>
                 <div style={{ height: 110 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={weeklyData} barSize={weeklyData.length > 8 ? 8 : 14} margin={{ top: 4, right: 4, left: -28, bottom: 0 }}>

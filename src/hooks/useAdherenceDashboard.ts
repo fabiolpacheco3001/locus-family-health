@@ -6,6 +6,10 @@ import {
   isSameDay,
   format,
   eachDayOfInterval,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  addDays,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toSPTime } from "@/lib/dateUtils";
@@ -53,6 +57,7 @@ export interface AdherenceDashboardData {
   streak: number;
   bestStreak: number;
   weeklyData: WeeklyEntry[];
+  chartLabel: string;
   heatmapData: HeatmapDay[];
   medBreakdown: MedStat[];
   insight: InsightData;
@@ -164,24 +169,59 @@ export function useAdherenceDashboard(
       };
     });
 
-    // ── Weekly trend ────────────────────────────────────────────────────────
-    const numWeeks = period === "7d" ? 4 : period === "30d" ? 8 : 12;
+    // ── Chart data — granularidade adaptativa por período ────────────────────
     const weeklyData: WeeklyEntry[] = [];
-    for (let w = numWeeks - 1; w >= 0; w--) {
-      const weekEnd = endOfDay(subDays(now, w * 7));
-      const weekStart = startOfDay(subDays(weekEnd, 6));
-      const weekDoses = allDoses.filter((d) => {
-        const dt = toSPTime(new Date(d.scheduled_for));
-        return dt >= weekStart && dt <= weekEnd;
-      });
-      const wTaken = weekDoses.filter((d) => d.status === "taken").length;
-      const wTotal = weekDoses.length;
-      const wTaxa = wTotal > 0 ? Math.round((wTaken / wTotal) * 100) : 0;
-      const label =
-        period === "90d" || period === "all"
-          ? format(weekStart, "d/MM", { locale: ptBR })
-          : format(weekStart, "d MMM", { locale: ptBR });
-      weeklyData.push({ label, taxa: wTaxa });
+
+    if (period === "7d") {
+      // Barras DIÁRIAS — últimos 7 dias
+      for (let d = 6; d >= 0; d--) {
+        const dayStart = startOfDay(subDays(now, d));
+        const dayEnd = endOfDay(dayStart);
+        const dayDoses = allDoses.filter((dose) => {
+          const dt = toSPTime(new Date(dose.scheduled_for));
+          return dt >= dayStart && dt <= dayEnd;
+        });
+        const wTaken = dayDoses.filter((dose) => dose.status === "taken").length;
+        const wTotal = dayDoses.length;
+        weeklyData.push({
+          label: format(dayStart, "d MMM", { locale: ptBR }),
+          taxa: wTotal > 0 ? Math.round((wTaken / wTotal) * 100) : 0,
+        });
+      }
+    } else if (period === "30d") {
+      // Barras SEMANAIS — últimas 4 semanas
+      for (let w = 3; w >= 0; w--) {
+        const weekEnd = endOfDay(subDays(now, w * 7));
+        const weekStart = startOfDay(subDays(weekEnd, 6));
+        const weekDoses = allDoses.filter((dose) => {
+          const dt = toSPTime(new Date(dose.scheduled_for));
+          return dt >= weekStart && dt <= weekEnd;
+        });
+        const wTaken = weekDoses.filter((dose) => dose.status === "taken").length;
+        const wTotal = weekDoses.length;
+        weeklyData.push({
+          label: format(weekStart, "d MMM", { locale: ptBR }),
+          taxa: wTotal > 0 ? Math.round((wTaken / wTotal) * 100) : 0,
+        });
+      }
+    } else {
+      // Barras MENSAIS — 3 meses para "90d", 6 meses para "all"
+      const numMonths = period === "90d" ? 3 : 6;
+      for (let m = numMonths - 1; m >= 0; m--) {
+        const refDate = subMonths(now, m);
+        const monthStart = startOfMonth(refDate);
+        const monthEnd = m === 0 ? endOfDay(now) : endOfMonth(refDate);
+        const monthDoses = allDoses.filter((dose) => {
+          const dt = toSPTime(new Date(dose.scheduled_for));
+          return dt >= monthStart && dt <= monthEnd;
+        });
+        const wTaken = monthDoses.filter((dose) => dose.status === "taken").length;
+        const wTotal = monthDoses.length;
+        weeklyData.push({
+          label: format(refDate, "MMM", { locale: ptBR }),
+          taxa: wTotal > 0 ? Math.round((wTaken / wTotal) * 100) : 0,
+        });
+      }
     }
 
     // ── Per-medication breakdown ────────────────────────────────────────────
@@ -246,7 +286,12 @@ export function useAdherenceDashboard(
       }
     }
 
-    return { taxa, tomadas, total, streak, bestStreak, weeklyData, heatmapData, medBreakdown, insight };
+    const chartLabel =
+      period === "7d" ? "Evolução diária" :
+      period === "30d" ? "Evolução semanal" :
+      "Evolução mensal";
+
+    return { taxa, tomadas, total, streak, bestStreak, weeklyData, chartLabel, heatmapData, medBreakdown, insight };
   }, [allDoses, period]);
 }
 
