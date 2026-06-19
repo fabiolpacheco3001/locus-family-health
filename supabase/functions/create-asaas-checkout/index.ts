@@ -1,6 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { z } from "npm:zod@3.25.76";
-// A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
 import { resolveAsaasEnv, type AsaasCredentials } from "../_shared/asaas-env.ts";
@@ -9,23 +8,12 @@ const BodySchema = z.object({
   planType: z.enum(["monthly", "annual"]),
 });
 
-// C10: preços lidos de env vars (secrets Supabase) — nunca hardcoded
 const PLAN_MONTHLY_PRICE = parseFloat(Deno.env.get("PLAN_MONTHLY_PRICE") ?? "19.90");
 const PLAN_ANNUAL_PRICE  = parseFloat(Deno.env.get("PLAN_ANNUAL_PRICE")  ?? "191.00");
 
 const PLAN_CONFIG = {
-  monthly: {
-    billingType: "CREDIT_CARD",
-    cycle: "MONTHLY",
-    value: PLAN_MONTHLY_PRICE,
-    description: "Locus Vita — Plano Mensal",
-  },
-  annual: {
-    billingType: "CREDIT_CARD",
-    cycle: "YEARLY",
-    value: PLAN_ANNUAL_PRICE,
-    description: "Locus Vita — Plano Anual (20% OFF)",
-  },
+  monthly: { value: PLAN_MONTHLY_PRICE, description: "Locus Vita — Plano Mensal" },
+  annual:  { value: PLAN_ANNUAL_PRICE,  description: "Locus Vita — Plano Anual (20% OFF)" },
 };
 
 async function asaasFetch(creds: AsaasCredentials, path: string, options: RequestInit) {
@@ -40,7 +28,6 @@ async function asaasFetch(creds: AsaasCredentials, path: string, options: Reques
 
   if (!res.ok) {
     const body = await res.text();
-    // Log full details server-side only — never forward raw third-party error bodies to clients
     log("error", "asaas_api_error", { status: res.status, path, body, env: creds.env });
     throw new Error("Falha ao processar pagamento. Tente novamente ou entre em contato com o suporte.");
   }
@@ -48,11 +35,10 @@ async function asaasFetch(creds: AsaasCredentials, path: string, options: Reques
   return res.json();
 }
 
-/** Find existing Asaas customer by email, or create one */
 async function findOrCreateCustomer(creds: AsaasCredentials, email: string, name: string): Promise<string> {
   const search = await asaasFetch(creds, `/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
   if (search.data && search.data.length > 0) {
-    log("info", "asaas_customer_found", { customerId: search.data[0].id });
+    log("info", "asaas_customer_found", { customerId: search.data[0].id, env: creds.env });
     return search.data[0].id;
   }
 
@@ -60,52 +46,9 @@ async function findOrCreateCustomer(creds: AsaasCredentials, email: string, name
     method: "POST",
     body: JSON.stringify({ name, email }),
   });
-  log("info", "asaas_customer_created", { customerId: created.id });
+  log("info", "asaas_customer_created", { customerId: created.id, env: creds.env });
   return created.id;
 }
-
-/** Get the invoiceUrl from the first payment of a subscription.
- *
- * M10: polling com backoff exponencial em vez de setTimeout fixo de 1500ms.
- */
-async function getSubscriptionInvoiceUrl(creds: AsaasCredentials, subscriptionId: string): Promise<string> {
-  const DELAYS_MS = [500, 1000, 1500, 2000, 2500];
-  const isLast = (i: number) => i === DELAYS_MS.length - 1;
-
-  for (let i = 0; i < DELAYS_MS.length; i++) {
-    await new Promise((r) => setTimeout(r, DELAYS_MS[i]));
-
-    const payments = await asaasFetch(creds, `/payments?subscription=${subscriptionId}`, { method: "GET" });
-    const list: Array<{ id: string; invoiceUrl?: string }> = payments.data ?? [];
-
-    if (list.length === 0) {
-      if (isLast(i)) break;
-      log("info", "asaas_payments_not_ready", { subscriptionId, attempt: i + 1 });
-      continue;
-    }
-
-    const payment = list[0];
-
-    if (payment.invoiceUrl) {
-      log("info", "asaas_invoice_url_found", { subscriptionId, attempt: i + 1 });
-      return payment.invoiceUrl;
-    }
-
-    if (isLast(i)) {
-      const webBase = creds.apiUrl
-        .replace(/\/api\/v3\/?$/, "")
-        .replace(/\/v3\/?$/, "")
-        .replace("api-sandbox.", "sandbox.");
-      log("info", "asaas_invoice_url_fallback", { subscriptionId, paymentId: payment.id });
-      return `${webBase}/i/${payment.id}`;
-    }
-
-    log("info", "asaas_invoice_url_not_ready", { subscriptionId, attempt: i + 1 });
-  }
-
-  throw new Error("Nenhuma cobrança gerada para a assinatura. Tente novamente.");
-}
-
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -156,74 +99,68 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Read test_mode from the user's subscription row (default: false = produção)
+    // Read test_mode + existing customer ID
     const { data: subRow } = await adminClient
       .from("subscriptions")
-      .select("test_mode")
+      .select("test_mode, asaas_customer_id")
       .eq("user_id", userId)
       .maybeSingle();
+
     const testMode = subRow?.test_mode === true;
     const creds = resolveAsaasEnv(testMode);
     log("info", "asaas_env_selected", { env: creds.env, userId, testMode });
 
-    // 1. Find or create customer in Asaas
-    const customerId = await findOrCreateCustomer(creds, userEmail, userName);
-
-    // Save the asaas_customer_id and plan_type
-    await adminClient
-      .from("subscriptions")
-      .update({ plan_type: planType, asaas_customer_id: customerId })
-      .eq("user_id", userId);
-
-    // 2. Check for existing active/pending subscription
-    const existingSubs = await asaasFetch(creds,
-      `/subscriptions?customer=${customerId}&status=ACTIVE&status=PENDING`,
-      { method: "GET" }
-    );
-
-    let subscriptionId: string;
-
-    if (existingSubs.data && existingSubs.data.length > 0) {
-      subscriptionId = existingSubs.data[0].id;
-      log("info", "asaas_subscription_reused", { subscriptionId });
+    // 1. Reuse existing customer or create a new one
+    let customerId = subRow?.asaas_customer_id ?? null;
+    if (!customerId) {
+      customerId = await findOrCreateCustomer(creds, userEmail, userName);
+      await adminClient
+        .from("subscriptions")
+        .update({ asaas_customer_id: customerId, plan_type: planType, updated_at: new Date().toISOString() })
+        .eq("user_id", userId);
     } else {
-      // 3. Create subscription with CREDIT_CARD only
-      const nextDueDate = new Date();
-      nextDueDate.setDate(nextDueDate.getDate() + 1);
-      const dueDateStr = nextDueDate.toISOString().split("T")[0];
-
-      const subscription = await asaasFetch(creds, "/subscriptions", {
-        method: "POST",
-        body: JSON.stringify({
-          customer: customerId,
-          billingType: "CREDIT_CARD",
-          value: plan.value,
-          nextDueDate: dueDateStr,
-          cycle: plan.cycle,
-          description: plan.description,
-          externalReference: userId,
-        }),
-      });
-
-      subscriptionId = subscription.id;
-      log("info", "asaas_subscription_created", { subscriptionId });
+      await adminClient
+        .from("subscriptions")
+        .update({ plan_type: planType, updated_at: new Date().toISOString() })
+        .eq("user_id", userId);
     }
 
+    // 2. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
+    const todayStr = new Date().toISOString().split("T")[0];
+    const payment = await asaasFetch(creds, "/lean/payments", {
+      method: "POST",
+      body: JSON.stringify({
+        customer: customerId,
+        billingType: "CREDIT_CARD",
+        value: plan.value,
+        dueDate: todayStr,
+        description: plan.description,
+        externalReference: userId,
+      }),
+    });
+
+    log("info", "asaas_payment_created", { paymentId: payment.id, env: creds.env, userId });
+
+    // Persist payment id for traceability (token comes via webhook after authorization)
     await adminClient
       .from("subscriptions")
       .update({
-        plan_type: planType,
-        asaas_customer_id: customerId,
-        asaas_subscription_id: subscriptionId,
+        asaas_payment_id: payment.id,
         updated_at: new Date().toISOString(),
       })
       .eq("user_id", userId);
 
-    // 4. Get the invoice URL
-    const invoiceUrl = await getSubscriptionInvoiceUrl(creds, subscriptionId);
+    const checkoutUrl = payment.invoiceUrl;
+    if (!checkoutUrl) {
+      log("error", "asaas_payment_no_invoice_url", { paymentId: payment.id });
+      return new Response(
+        JSON.stringify({ error: "Não foi possível gerar o link de pagamento. Tente novamente." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(
-      JSON.stringify({ url: invoiceUrl }),
+      JSON.stringify({ url: checkoutUrl, checkoutUrl }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

@@ -65,14 +65,15 @@ Deno.serve(async (req) => {
     const apiKey = creds.apiKey;
     const asaasApiUrl = creds.apiUrl;
 
-    let targetSubscriptionId = sub.asaas_subscription_id ?? null;
+    const targetSubscriptionId = sub.asaas_subscription_id ?? null;
 
-    // Fallback: list active subscriptions from Asaas by customer
-    if (!targetSubscriptionId && sub.asaas_customer_id) {
-      const listRes = await fetch(
-        `${asaasApiUrl}/subscriptions?customer=${sub.asaas_customer_id}`,
+    // Legacy users still have an Asaas subscription object — delete it to stop recurring charges.
+    // New users (one-shot payment model) have no subscription on Asaas; cancellation is local-only.
+    if (targetSubscriptionId) {
+      const cancelRes = await fetch(
+        `${asaasApiUrl}/subscriptions/${targetSubscriptionId}`,
         {
-          method: "GET",
+          method: "DELETE",
           headers: {
             accept: "application/json",
             access_token: apiKey,
@@ -80,43 +81,16 @@ Deno.serve(async (req) => {
         }
       );
 
-      if (listRes.ok) {
-        const listData = await listRes.json();
-        const activeSubscription = (listData.data ?? []).find(
-          (item: { status?: string; id?: string }) =>
-            ["ACTIVE", "PENDING"].includes(item.status ?? "")
-        );
-        targetSubscriptionId = activeSubscription?.id ?? null;
+      if (!cancelRes.ok) {
+        const errorBody = await cancelRes.text().catch(() => "(unreadable)");
+        log("error", "asaas_delete_subscription_failed", { status: cancelRes.status, body: errorBody });
+        return new Response(JSON.stringify({ error: "Erro ao cancelar assinatura. Tente novamente ou entre em contato com o suporte." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-    }
-
-    if (!targetSubscriptionId) {
-      return new Response(JSON.stringify({ error: "ID da assinatura Asaas não encontrado." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // DELETE the subscription on Asaas
-    const cancelRes = await fetch(
-      `${asaasApiUrl}/subscriptions/${targetSubscriptionId}`,
-      {
-        method: "DELETE",
-        headers: {
-          accept: "application/json",
-          access_token: apiKey,
-        },
-      }
-    );
-
-    if (!cancelRes.ok) {
-      const errorBody = await cancelRes.text().catch(() => "(unreadable)");
-      // Log full details server-side only — never forward raw gateway error bodies to clients
-      log("error", "asaas_delete_subscription_failed", { status: cancelRes.status, body: errorBody });
-      return new Response(JSON.stringify({ error: "Erro ao cancelar assinatura. Tente novamente ou entre em contato com o suporte." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    } else {
+      log("info", "cancel_local_only", { userId, reason: "no_asaas_subscription_id" });
     }
 
     // Update ONLY the status — preserve all date fields

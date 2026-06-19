@@ -217,23 +217,35 @@ Deno.serve(async (req) => {
       case "PAYMENT_CONFIRMED": {
         newStatus = "active";
         updateData.status = newStatus;
+        updateData.asaas_payment_id = payment.id;
+        if (payment.creditCardToken) updateData.credit_card_token = payment.creditCardToken;
+        if (payment.customer) updateData.asaas_customer_id = payment.customer;
 
-        // Fetch the REAL nextDueDate from Asaas — Single Source of Truth
+        // Legacy path: payment came from a subscription object — keep SSOT from Asaas
         if (payment.subscription) {
           const paymentCreds = await resolveWebhookCreds(adminClient, externalReference);
           const asaasData = paymentCreds ? await fetchAsaasSubscription(paymentCreds, payment.subscription) : null;
           if (asaasData) {
-            // Use the Asaas nextDueDate EXACTLY as-is — no local calculations
             if (asaasData.nextDueDate) {
               updateData.next_billing_date = asaasData.nextDueDate;
+              updateData.current_period_end = asaasData.nextDueDate;
               log("info", "payment_next_due_date_set", { nextDueDate: asaasData.nextDueDate });
             }
             if (asaasData.cycle === "YEARLY") updateData.plan_type = "annual";
             else if (asaasData.cycle === "MONTHLY") updateData.plan_type = "monthly";
           }
+        } else {
+          // New model: one-shot payment → period = today + 30 days
+          const now = new Date();
+          const periodEnd = new Date(now);
+          periodEnd.setUTCDate(periodEnd.getUTCDate() + 30);
+          const periodEndStr = periodEnd.toISOString().split("T")[0];
+          updateData.next_billing_date = periodEndStr;
+          updateData.current_period_end = periodEndStr;
+          log("info", "payment_period_extended", { userId: externalReference, periodEnd: periodEndStr, env: (await resolveWebhookCreds(adminClient, externalReference))?.env });
         }
 
-        // Fallback plan_type from value if not set by cycle
+        // Fallback plan_type from value
         if (!updateData.plan_type && payment.value) {
           const value = Number(payment.value);
           updateData.plan_type = value >= PLAN_ANNUAL_THRESHOLD ? "annual" : "monthly";
