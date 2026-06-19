@@ -167,9 +167,10 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    log("error", "create_checkout_unexpected_error", { error: error instanceof Error ? error.message : String(error) });
+    const msg = error instanceof Error ? error.message : String(error);
+    log("error", "create_checkout_unexpected_error", { error: msg });
     return new Response(
-      JSON.stringify({ error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte." }),
+      JSON.stringify({ error: msg }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
