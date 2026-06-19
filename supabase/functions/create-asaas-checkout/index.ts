@@ -91,6 +91,24 @@ Deno.serve(async (req) => {
     const userEmail = user.email!;
     const userName = user.user_metadata?.full_name || userEmail;
 
+    // 1b. Resolve CPF from the user's family_member profile
+    let cpfCnpj = "00000000191";
+    const { data: fgm } = await adminClient
+      .from("family_group_members")
+      .select("family_member_id")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+    if (fgm?.family_member_id) {
+      const { data: fm } = await adminClient
+        .from("family_members")
+        .select("cpf")
+        .eq("id", fgm.family_member_id)
+        .maybeSingle();
+      if (fm?.cpf) {
+        cpfCnpj = fm.cpf.replace(/\D/g, "");
+      }
+    }
+
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return new Response(
