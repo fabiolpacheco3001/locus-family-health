@@ -125,11 +125,6 @@ Deno.serve(async (req) => {
     const { planType } = parsed.data;
     const plan = PLAN_CONFIG[planType];
 
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     // Read test_mode + existing customer ID
     const { data: subRow } = await adminClient
       .from("subscriptions")
