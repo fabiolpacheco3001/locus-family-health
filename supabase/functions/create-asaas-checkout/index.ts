@@ -110,20 +110,15 @@ Deno.serve(async (req) => {
     const creds = resolveAsaasEnv(testMode);
     log("info", "asaas_env_selected", { env: creds.env, userId, testMode });
 
-    // 1. Reuse existing customer or create a new one
-    let customerId = subRow?.asaas_customer_id ?? null;
-    if (!customerId) {
-      customerId = await findOrCreateCustomer(creds, userEmail, userName);
-      await adminClient
-        .from("subscriptions")
-        .update({ asaas_customer_id: customerId, plan_type: planType, updated_at: new Date().toISOString() })
-        .eq("user_id", userId);
-    } else {
-      await adminClient
-        .from("subscriptions")
-        .update({ plan_type: planType, updated_at: new Date().toISOString() })
-        .eq("user_id", userId);
-    }
+    // 1. Always resolve customer in the current env (sandbox vs prod).
+    // The stored asaas_customer_id may belong to a different environment and would
+    // cause 400/404 from Asaas. findOrCreateCustomer does GET-by-email first, so
+    // it does not create duplicates within the same environment.
+    const customerId = await findOrCreateCustomer(creds, userEmail, userName);
+    await adminClient
+      .from("subscriptions")
+      .update({ asaas_customer_id: customerId, plan_type: planType, updated_at: new Date().toISOString() })
+      .eq("user_id", userId);
 
     // 2. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
     const todayStr = new Date().toISOString().split("T")[0];
