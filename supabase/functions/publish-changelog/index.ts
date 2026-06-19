@@ -134,8 +134,8 @@ Deno.serve(async (req) => {
     );
   } catch (err: any) {
     log("error", "publish_changelog_unexpected_error", { error: err instanceof Error ? err.message : String(err) });
-    return new Response(JSON.stringify({ error: err.message || "Erro interno" }), {
-      status: 400,
+    return new Response(JSON.stringify({ error: "Erro interno ao publicar changelog. Tente novamente." }), {
+      status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

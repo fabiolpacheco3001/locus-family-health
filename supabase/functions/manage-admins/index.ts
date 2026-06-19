@@ -223,6 +223,7 @@ Deno.serve(async (req) => {
 
     return json({ error: "Ação inválida." }, 400);
   } catch (err) {
-    return json({ error: (err as Error).message }, 500);
+    log("error", "manage_admins_unexpected", { error: err instanceof Error ? err.message : String(err) });
+    return json({ error: "Erro interno. Tente novamente." }, 500);
   }
 });
