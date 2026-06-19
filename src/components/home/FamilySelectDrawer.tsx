@@ -10,7 +10,7 @@ import MemberAvatar from "@/components/MemberAvatar";
 import { sortFamilyMembers } from "@/lib/sortFamilyMembers";
 import { useNavigate } from "react-router-dom";
 
-type QuickAction = "consultas" | "exames" | "medicamentos";
+type QuickAction = "consultas" | "exames" | "medicamentos" | "receita";
 
 type Member = {
   id: string;
@@ -28,12 +28,15 @@ type Props = {
   role: string | null;
   linkedMemberId: string | null;
   managedProfiles: string[];
+  /** Quando fornecido, chamado em vez de navigate() — usado para ações que abrem drawer em vez de página */
+  onMemberSelect?: (memberId: string, action: QuickAction) => void;
 };
 
 const DRAWER_TITLE: Record<QuickAction, string> = {
   consultas: "Para quem é a consulta?",
   exames: "Para quem é o exame?",
   medicamentos: "Para quem é o medicamento?",
+  receita: "Para quem é a receita?",
 };
 
 export function FamilySelectDrawer({
@@ -44,6 +47,7 @@ export function FamilySelectDrawer({
   role,
   linkedMemberId,
   managedProfiles,
+  onMemberSelect,
 }: Props) {
   const navigate = useNavigate();
 
@@ -64,8 +68,13 @@ export function FamilySelectDrawer({
             <button
               key={member.id}
               onClick={() => {
+                const action = quickAction!;
                 setQuickAction(null);
-                navigate(`/familiar/${member.id}/${quickAction}`, { state: { from: "/home" } });
+                if (onMemberSelect) {
+                  onMemberSelect(member.id, action);
+                } else {
+                  navigate(`/familiar/${member.id}/${action}`, { state: { from: "/home" } });
+                }
               }}
               className="flex items-center gap-3 w-full h-14 px-4 bg-card rounded-xl border border-border/50 shadow-xs text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors"
             >

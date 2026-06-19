@@ -5,7 +5,7 @@
  */
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { Stethoscope, FileText, Pill, Users, Zap } from "lucide-react";
+import { Stethoscope, FileText, Pill, Camera, Zap } from "lucide-react";
 import { Accordion } from "@/components/ui/accordion";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
@@ -17,8 +17,10 @@ import { OverviewCarousel } from "@/components/home/OverviewCarousel";
 import { TodayMedicationsSection } from "@/components/home/TodayMedicationsSection";
 import { UpcomingAppointmentsSection } from "@/components/home/UpcomingAppointmentsSection";
 import { FamilySelectDrawer } from "@/components/home/FamilySelectDrawer";
+import AiMedicationUpload from "@/components/AiMedicationUpload";
+import AddMedicationDrawer from "@/components/AddMedicationDrawer";
 
-type QuickAction = "consultas" | "exames" | "medicamentos";
+type QuickAction = "consultas" | "exames" | "medicamentos" | "receita";
 
 const Home = () => {
   const { user } = useAuth();
@@ -46,6 +48,12 @@ const Home = () => {
   const [quickAction, setQuickAction] = React.useState<QuickAction | null>(null);
   const [showAllActions, setShowAllActions] = React.useState(false);
 
+  // Fluxo OCR de receita
+  const [receitaMemberId, setReceitaMemberId] = React.useState<string | null>(null);
+  const [showAiUpload, setShowAiUpload] = React.useState(false);
+  const [receitaAiData, setReceitaAiData] = React.useState<{ data: any; receitaUrl: string | null } | null>(null);
+  const [showAddMed, setShowAddMed] = React.useState(false);
+
   const getFilteredMembers = () => {
     const allowedIds =
       role === "user" && linkedMemberId ? [linkedMemberId, ...managedProfiles] : null;
@@ -54,10 +62,28 @@ const Home = () => {
 
   const handleQuickAction = (action: QuickAction) => {
     const filtered = getFilteredMembers();
+    if (action === "receita") {
+      if (filtered.length === 1) {
+        setReceitaMemberId(filtered[0].id);
+        setShowAiUpload(true);
+      } else {
+        setQuickAction("receita");
+      }
+      return;
+    }
     if (filtered.length === 1) {
       navigate(`/familiar/${filtered[0].id}/${action}`, { state: { from: "/home" } });
     } else {
       setQuickAction(action);
+    }
+  };
+
+  const handleMemberSelectForReceita = (memberId: string, action: QuickAction) => {
+    if (action === "receita") {
+      setReceitaMemberId(memberId);
+      setShowAiUpload(true);
+    } else {
+      navigate(`/familiar/${memberId}/${action}`, { state: { from: "/home" } });
     }
   };
 
@@ -86,10 +112,10 @@ const Home = () => {
           {/* Acesso Rápido */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: Stethoscope, label: "Consultas", action: () => handleQuickAction("consultas") },
-              { icon: FileText,    label: "Exames",    action: () => handleQuickAction("exames") },
+              { icon: Stethoscope, label: "Consultas",   action: () => handleQuickAction("consultas") },
+              { icon: FileText,    label: "Exames",      action: () => handleQuickAction("exames") },
               { icon: Pill,        label: "Medicamentos", action: () => handleQuickAction("medicamentos") },
-              { icon: Users,       label: "Família",   action: () => navigate("/gerenciar-familia", { state: { from: "/home" } }) },
+              { icon: Camera,      label: "Ler Receita", action: () => handleQuickAction("receita") },
             ].map(({ icon: Icon, label, action }) => (
               <button
                 key={label}
@@ -130,7 +156,39 @@ const Home = () => {
         role={role}
         linkedMemberId={linkedMemberId}
         managedProfiles={managedProfiles}
+        onMemberSelect={handleMemberSelectForReceita}
       />
+
+      {/* Fluxo OCR: upload + revisão */}
+      {receitaMemberId && (
+        <>
+          <AiMedicationUpload
+            open={showAiUpload}
+            onOpenChange={(open) => {
+              setShowAiUpload(open);
+              if (!open) setReceitaMemberId(null);
+            }}
+            familyMemberId={receitaMemberId}
+            onAnalysisComplete={(data, receitaUrl) => {
+              setReceitaAiData({ data, receitaUrl });
+              setShowAiUpload(false);
+              setTimeout(() => setShowAddMed(true), 300);
+            }}
+          />
+          <AddMedicationDrawer
+            open={showAddMed}
+            onOpenChange={(open) => {
+              setShowAddMed(open);
+              if (!open) {
+                setReceitaAiData(null);
+                setReceitaMemberId(null);
+              }
+            }}
+            familyMemberId={receitaMemberId}
+            aiData={receitaAiData}
+          />
+        </>
+      )}
     </div>
   );
 };
