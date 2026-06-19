@@ -157,6 +157,14 @@ Deno.serve(async (req) => {
         dueDate: todayStr,
         description: plan.description,
         externalReference: userId,
+        creditCardHolderInfo: {
+          name: userName,
+          email: userEmail,
+          cpfCnpj,
+          postalCode: "01310100",
+          addressNumber: "1",
+          phone: "11999999999",
+        },
       }),
     });
 
@@ -173,10 +181,10 @@ Deno.serve(async (req) => {
 
     const checkoutUrl = payment.invoiceUrl;
     if (!checkoutUrl) {
-      log("error", "asaas_payment_no_invoice_url", { paymentId: payment.id });
+      log("error", "asaas_payment_no_invoice_url", { paymentId: payment.id, payment });
       return new Response(
-        JSON.stringify({ error: "Não foi possível gerar o link de pagamento. Tente novamente." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: `invoiceUrl null. Campos do pagamento: ${JSON.stringify(payment)}` }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
