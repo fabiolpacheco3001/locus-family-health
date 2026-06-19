@@ -42,6 +42,12 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
     throw new Error(`Erro do servidor financeiro: ${reason}`);
   }
 
+  // Debug: edge function returns 200 with { error: "..." } when invoiceUrl is null
+  if (responseData?.error) {
+    console.error("Checkout error from function:", responseData.error);
+    throw new Error(`Erro do servidor financeiro: ${responseData.error}`);
+  }
+
   if (!responseData?.url) {
     throw new Error("URL de pagamento não retornada.");
   }
