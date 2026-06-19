@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.webauthn-verify]
 verify_jwt = true
+
+[functions.generate-renewal-charge]
+verify_jwt = true
