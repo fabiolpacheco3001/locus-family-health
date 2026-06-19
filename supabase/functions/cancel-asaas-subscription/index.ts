@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 // A1: CORS restrito ao APP_ORIGIN
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
+import { resolveAsaasEnv } from "../_shared/asaas-env.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -36,26 +37,10 @@ Deno.serve(async (req) => {
     // another customer's subscription by passing their Asaas ID.
     // The ID is always sourced exclusively from the DB row of the authenticated user.
 
-    const apiKey = Deno.env.get("ASAAS_API_KEY");
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "Chave da API de pagamento não configurada." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const asaasApiUrl = Deno.env.get("ASAAS_API_URL");
-    if (!asaasApiUrl) {
-      return new Response(JSON.stringify({ error: "URL da API de pagamento não configurada." }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const userId = userData.user.id;
     const { data: sub, error: subErr } = await serviceClient
       .from("subscriptions")
-      .select("user_id, asaas_customer_id, asaas_subscription_id, next_billing_date")
+      .select("user_id, asaas_customer_id, asaas_subscription_id, next_billing_date, test_mode")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -65,6 +50,20 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    let creds;
+    try {
+      creds = resolveAsaasEnv(sub.test_mode === true);
+    } catch (_e) {
+      return new Response(JSON.stringify({ error: "Configuração de pagamento indisponível." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    log("info", "asaas_env_selected", { env: creds.env, userId, testMode: sub.test_mode === true });
+
+    const apiKey = creds.apiKey;
+    const asaasApiUrl = creds.apiUrl;
 
     let targetSubscriptionId = sub.asaas_subscription_id ?? null;
 

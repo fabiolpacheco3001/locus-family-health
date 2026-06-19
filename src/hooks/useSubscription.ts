@@ -12,6 +12,7 @@ export interface Subscription {
   trial_end: string | null;
   next_billing_date: string | null;
   asaas_customer_id: string | null;
+  test_mode?: boolean;
   created_at: string;
   updated_at: string;
 }

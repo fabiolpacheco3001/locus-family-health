@@ -1,5 +1,6 @@
-import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.49.4";
 import { log } from "../_shared/logger.ts";
+import { resolveAsaasEnv } from "../_shared/asaas-env.ts";
 
 // C6: Validate that externalReference is a valid UUID before using as user_id.
 // Prevents arbitrary user_id injection if webhook token is compromised or
@@ -18,27 +19,58 @@ const jsonHeaders = { "Content-Type": "application/json" };
 const PLAN_ANNUAL_THRESHOLD = parseFloat(Deno.env.get("PLAN_ANNUAL_THRESHOLD") ?? "150");
 
 /**
+ * Resolve as credenciais Asaas a usar para um evento de webhook.
+ *
+ * Limitação conhecida: o payload do Asaas não traz uma flag oficial de ambiente.
+ * Estratégia: usar `externalReference` (= user_id) para ler `test_mode` da
+ * subscription. Quando não houver `externalReference` mapeável, cai nas
+ * credenciais legadas e emite `warn` `asaas_webhook_env_unknown`.
+ */
+async function resolveWebhookCreds(
+  adminClient: SupabaseClient,
+  externalReference: string | null
+) {
+  let testMode = false;
+  if (externalReference) {
+    const { data } = await adminClient
+      .from("subscriptions")
+      .select("test_mode")
+      .eq("user_id", externalReference)
+      .maybeSingle();
+    if (data) {
+      testMode = data.test_mode === true;
+    } else {
+      log("warn", "asaas_webhook_env_unknown", { externalReference });
+    }
+  } else {
+    log("warn", "asaas_webhook_env_unknown", { reason: "no_external_reference" });
+  }
+  try {
+    return resolveAsaasEnv(testMode);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Fetch the real subscription data from Asaas API.
  * Returns { nextDueDate, cycle } or null on failure.
  */
-async function fetchAsaasSubscription(subscriptionId: string): Promise<{ nextDueDate: string | null; cycle: string | null } | null> {
-  const asaasKey = Deno.env.get("ASAAS_API_KEY") || "";
+async function fetchAsaasSubscription(
+  creds: { apiKey: string; apiUrl: string; env: string },
+  subscriptionId: string
+): Promise<{ nextDueDate: string | null; cycle: string | null } | null> {
   try {
-    const asaasApiUrl = Deno.env.get("ASAAS_API_URL");
-    if (!asaasApiUrl) {
-      log("error", "asaas_api_url_missing");
-      return null;
-    }
     const resp = await fetch(
-      `${asaasApiUrl}/subscriptions/${subscriptionId}`,
-      { headers: { access_token: asaasKey } }
+      `${creds.apiUrl}/subscriptions/${subscriptionId}`,
+      { headers: { access_token: creds.apiKey } }
     );
     if (!resp.ok) {
-      log("warn", "asaas_subscription_fetch_failed", { subscriptionId, status: resp.status, body: await resp.text() });
+      log("warn", "asaas_subscription_fetch_failed", { subscriptionId, status: resp.status, body: await resp.text(), env: creds.env });
       return null;
     }
     const data = await resp.json();
-    log("info", "asaas_subscription_fetched", { subscriptionId, nextDueDate: data.nextDueDate, cycle: data.cycle });
+    log("info", "asaas_subscription_fetched", { subscriptionId, nextDueDate: data.nextDueDate, cycle: data.cycle, env: creds.env });
     return {
       nextDueDate: data.nextDueDate ?? null,
       cycle: data.cycle ?? null,
@@ -96,8 +128,19 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Resolve credenciais (sandbox vs prod) por externalReference
+      const subExtRefRaw = sub.externalReference as string | null;
+      const subExtRef = isValidUUID(subExtRefRaw) ? subExtRefRaw : null;
+      const subCreds = await resolveWebhookCreds(adminClient, subExtRef);
+      if (!subCreds) {
+        return new Response(
+          JSON.stringify({ received: true, warning: "asaas credentials unavailable" }),
+          { status: 200, headers: jsonHeaders }
+        );
+      }
+
       // Fetch fresh data from Asaas API
-      const asaasData = await fetchAsaasSubscription(sub.id);
+      const asaasData = await fetchAsaasSubscription(subCreds, sub.id);
       if (!asaasData) {
         return new Response(
           JSON.stringify({ received: true, warning: "could not fetch subscription" }),
@@ -177,7 +220,8 @@ Deno.serve(async (req) => {
 
         // Fetch the REAL nextDueDate from Asaas — Single Source of Truth
         if (payment.subscription) {
-          const asaasData = await fetchAsaasSubscription(payment.subscription);
+          const paymentCreds = await resolveWebhookCreds(adminClient, externalReference);
+          const asaasData = paymentCreds ? await fetchAsaasSubscription(paymentCreds, payment.subscription) : null;
           if (asaasData) {
             // Use the Asaas nextDueDate EXACTLY as-is — no local calculations
             if (asaasData.nextDueDate) {

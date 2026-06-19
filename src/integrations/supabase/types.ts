@@ -1126,6 +1126,7 @@ export type Database = {
           next_billing_date: string | null
           plan_type: string
           status: string
+          test_mode: boolean
           trial_end: string | null
           updated_at: string
           user_id: string
@@ -1138,6 +1139,7 @@ export type Database = {
           next_billing_date?: string | null
           plan_type?: string
           status?: string
+          test_mode?: boolean
           trial_end?: string | null
           updated_at?: string
           user_id: string
@@ -1150,6 +1152,7 @@ export type Database = {
           next_billing_date?: string | null
           plan_type?: string
           status?: string
+          test_mode?: boolean
           trial_end?: string | null
           updated_at?: string
           user_id?: string
@@ -1363,6 +1366,7 @@ export type Database = {
           next_billing_date: string
           plan_type: string
           status: string
+          test_mode: boolean
           user_id: string
         }[]
       }
@@ -1391,6 +1395,10 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      set_user_test_mode: {
+        Args: { enabled: boolean; target_user_id: string }
+        Returns: boolean
       }
     }
     Enums: {
