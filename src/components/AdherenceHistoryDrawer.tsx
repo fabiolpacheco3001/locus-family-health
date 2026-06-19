@@ -72,7 +72,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     queryFn: async () => {
       const { data: meds, error: medsErr } = await supabase
         .from("medications")
-        .select("id, name, start_date, start_time, frequency_hours, end_date, uso_continuo")
+        .select("id, name, start_date, start_time, frequency_hours, end_date, uso_continuo, frequency_type, specific_times, specific_days")
         .eq("family_member_id", familyMemberId);
       if (medsErr) throw medsErr;
       if (!meds || meds.length === 0) return { meds: [], doses: [] };
