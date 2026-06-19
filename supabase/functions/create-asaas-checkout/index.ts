@@ -183,8 +183,8 @@ Deno.serve(async (req) => {
     if (!checkoutUrl) {
       log("error", "asaas_payment_no_invoice_url", { paymentId: payment.id, payment });
       return new Response(
-        JSON.stringify({ error: `invoiceUrl null. Campos do pagamento: ${JSON.stringify(payment)}` }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Não foi possível gerar o link de pagamento. Tente novamente." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -196,8 +196,8 @@ Deno.serve(async (req) => {
     const msg = error instanceof Error ? error.message : String(error);
     log("error", "create_checkout_unexpected_error", { error: msg });
     return new Response(
-      JSON.stringify({ error: msg }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte." }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
