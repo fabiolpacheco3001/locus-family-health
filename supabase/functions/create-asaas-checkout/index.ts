@@ -28,15 +28,12 @@ const PLAN_CONFIG = {
   },
 };
 
-async function asaasFetch(path: string, options: RequestInit) {
-  const apiKey = Deno.env.get("ASAAS_API_KEY");
-  if (!apiKey) throw new Error("ASAAS_API_KEY not configured");
-
-  const res = await fetch(`${ASAAS_API_URL}${path}`, {
+async function asaasFetch(creds: AsaasCredentials, path: string, options: RequestInit) {
+  const res = await fetch(`${creds.apiUrl}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      access_token: apiKey,
+      access_token: creds.apiKey,
       ...(options.headers || {}),
     },
   });
@@ -44,7 +41,7 @@ async function asaasFetch(path: string, options: RequestInit) {
   if (!res.ok) {
     const body = await res.text();
     // Log full details server-side only — never forward raw third-party error bodies to clients
-    log("error", "asaas_api_error", { status: res.status, path, body });
+    log("error", "asaas_api_error", { status: res.status, path, body, env: creds.env });
     throw new Error("Falha ao processar pagamento. Tente novamente ou entre em contato com o suporte.");
   }
 
@@ -52,14 +49,14 @@ async function asaasFetch(path: string, options: RequestInit) {
 }
 
 /** Find existing Asaas customer by email, or create one */
-async function findOrCreateCustomer(email: string, name: string): Promise<string> {
-  const search = await asaasFetch(`/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
+async function findOrCreateCustomer(creds: AsaasCredentials, email: string, name: string): Promise<string> {
+  const search = await asaasFetch(creds, `/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
   if (search.data && search.data.length > 0) {
     log("info", "asaas_customer_found", { customerId: search.data[0].id });
     return search.data[0].id;
   }
 
-  const created = await asaasFetch("/customers", {
+  const created = await asaasFetch(creds, "/customers", {
     method: "POST",
     body: JSON.stringify({ name, email }),
   });
@@ -70,23 +67,19 @@ async function findOrCreateCustomer(email: string, name: string): Promise<string
 /** Get the invoiceUrl from the first payment of a subscription.
  *
  * M10: polling com backoff exponencial em vez de setTimeout fixo de 1500ms.
- * O Asaas pode levar de <500ms até alguns segundos para gerar o primeiro pagamento
- * após criar a assinatura. Tentamos até 5 vezes com intervalos crescentes (máx ~7.5s total).
- * Na tentativa final, se o payment existir mas invoiceUrl ainda não estiver pronto,
- * derivamos a URL a partir do ID do pagamento (fallback de produção mantido).
  */
-async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string> {
-  const DELAYS_MS = [500, 1000, 1500, 2000, 2500]; // soma: 7500ms máximo
+async function getSubscriptionInvoiceUrl(creds: AsaasCredentials, subscriptionId: string): Promise<string> {
+  const DELAYS_MS = [500, 1000, 1500, 2000, 2500];
   const isLast = (i: number) => i === DELAYS_MS.length - 1;
 
   for (let i = 0; i < DELAYS_MS.length; i++) {
     await new Promise((r) => setTimeout(r, DELAYS_MS[i]));
 
-    const payments = await asaasFetch(`/payments?subscription=${subscriptionId}`, { method: "GET" });
+    const payments = await asaasFetch(creds, `/payments?subscription=${subscriptionId}`, { method: "GET" });
     const list: Array<{ id: string; invoiceUrl?: string }> = payments.data ?? [];
 
     if (list.length === 0) {
-      if (isLast(i)) break; // esgotou tentativas — vai para o throw abaixo
+      if (isLast(i)) break;
       log("info", "asaas_payments_not_ready", { subscriptionId, attempt: i + 1 });
       continue;
     }
@@ -99,9 +92,7 @@ async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string
     }
 
     if (isLast(i)) {
-      // Fallback: deriva o base web da API URL removendo o path da API.
-      // Em produção, payment.invoiceUrl é sempre retornado pelo Asaas e esta linha raramente executa.
-      const webBase = (ASAAS_API_URL ?? "")
+      const webBase = creds.apiUrl
         .replace(/\/api\/v3\/?$/, "")
         .replace(/\/v3\/?$/, "")
         .replace("api-sandbox.", "sandbox.");
@@ -114,6 +105,7 @@ async function getSubscriptionInvoiceUrl(subscriptionId: string): Promise<string
 
   throw new Error("Nenhuma cobrança gerada para a assinatura. Tente novamente.");
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -164,8 +156,18 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Read test_mode from the user's subscription row (default: false = produção)
+    const { data: subRow } = await adminClient
+      .from("subscriptions")
+      .select("test_mode")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const testMode = subRow?.test_mode === true;
+    const creds = resolveAsaasEnv(testMode);
+    log("info", "asaas_env_selected", { env: creds.env, userId, testMode });
+
     // 1. Find or create customer in Asaas
-    const customerId = await findOrCreateCustomer(userEmail, userName);
+    const customerId = await findOrCreateCustomer(creds, userEmail, userName);
 
     // Save the asaas_customer_id and plan_type
     await adminClient
@@ -174,7 +176,7 @@ Deno.serve(async (req) => {
       .eq("user_id", userId);
 
     // 2. Check for existing active/pending subscription
-    const existingSubs = await asaasFetch(
+    const existingSubs = await asaasFetch(creds,
       `/subscriptions?customer=${customerId}&status=ACTIVE&status=PENDING`,
       { method: "GET" }
     );
@@ -190,7 +192,7 @@ Deno.serve(async (req) => {
       nextDueDate.setDate(nextDueDate.getDate() + 1);
       const dueDateStr = nextDueDate.toISOString().split("T")[0];
 
-      const subscription = await asaasFetch("/subscriptions", {
+      const subscription = await asaasFetch(creds, "/subscriptions", {
         method: "POST",
         body: JSON.stringify({
           customer: customerId,
