@@ -2,10 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Share2, CheckCircle, XCircle, Clock3, Flame, TrendingUp, AlertTriangle, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { Share2, CheckCircle, XCircle, Clock3, Flame, Trophy, TrendingUp, AlertTriangle, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, subDays, endOfDay, startOfDay } from "date-fns";
+import { format, subDays, endOfDay, startOfDay, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toSPTime } from "@/lib/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,7 +72,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     queryFn: async () => {
       const { data: meds, error: medsErr } = await supabase
         .from("medications")
-        .select("id, name, start_date, start_time, frequency_hours, end_date, uso_continuo")
+        .select("id, name, start_date, start_time, frequency_hours, end_date, uso_continuo, frequency_type, specific_times, specific_days")
         .eq("family_member_id", familyMemberId);
       if (medsErr) throw medsErr;
       if (!meds || meds.length === 0) return { meds: [], doses: [] };
@@ -113,7 +113,9 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     const cutoff = endOfDay(subDays(new Date(), 2));
     const virtualDoses: DoseEntry[] = [];
     for (const med of meds) {
-      if (!med.start_date || !med.frequency_hours || med.frequency_hours <= 0) continue;
+      if (!med.start_date) continue;
+
+      const freqType: string = (med as any).frequency_type || "interval";
       const dateOnly = med.start_date.slice(0, 10);
       const startStr = med.start_time ? `${dateOnly}T${med.start_time}` : `${dateOnly}T00:00:00`;
       const start = new Date(startStr);
@@ -123,21 +125,81 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
         ? new Date(med.end_date.length === 10 ? med.end_date + "T23:59:59" : med.end_date)
         : cutoff;
       const effectiveEnd = endLimit < cutoff ? endLimit : cutoff;
+      const medName = medMap[med.id] || "Desconhecido";
 
-      let cursor = new Date(start.getTime());
-      let safety = 50000;
-      while (cursor <= effectiveEnd && safety > 0) {
-        safety--;
-        const key = `${med.id}-${cursor.toISOString()}`;
-        if (!existingKeys.has(key)) {
-          virtualDoses.push({
-            medication_name: medMap[med.id] || "Desconhecido",
-            scheduled_for: cursor.toISOString(),
-            status: "forgotten",
-            isVirtual: true,
-          });
+      // interval (legado)
+      if (freqType === "interval" || !med.frequency_type) {
+        if (!med.frequency_hours || med.frequency_hours <= 0) continue;
+        let cursor = new Date(start.getTime());
+        let safety = 50000;
+        while (cursor <= effectiveEnd && safety > 0) {
+          safety--;
+          const key = `${med.id}-${cursor.toISOString()}`;
+          if (!existingKeys.has(key)) {
+            virtualDoses.push({
+              medication_name: medName,
+              scheduled_for: cursor.toISOString(),
+              status: "forgotten",
+              isVirtual: true,
+            });
+          }
+          cursor = new Date(cursor.getTime() + med.frequency_hours * 60 * 60 * 1000);
         }
-        cursor = new Date(cursor.getTime() + med.frequency_hours * 60 * 60 * 1000);
+        continue;
+      }
+
+      // specific_times: doses nos mesmos horários todos os dias
+      if (freqType === "specific_times") {
+        const times: string[] = Array.isArray((med as any).specific_times) ? (med as any).specific_times : [];
+        if (times.length === 0) continue;
+        let dayCursor = startOfDay(start);
+        while (dayCursor <= effectiveEnd) {
+          const dateStr = format(dayCursor, "yyyy-MM-dd");
+          for (const timeStr of times) {
+            const dt = new Date(`${dateStr}T${timeStr}`);
+            if (isNaN(dt.getTime()) || dt < start || dt > effectiveEnd) continue;
+            const key = `${med.id}-${dt.toISOString()}`;
+            if (!existingKeys.has(key)) {
+              virtualDoses.push({
+                medication_name: medName,
+                scheduled_for: dt.toISOString(),
+                status: "forgotten",
+                isVirtual: true,
+              });
+            }
+          }
+          dayCursor = addDays(dayCursor, 1);
+        }
+        continue;
+      }
+
+      // specific_days: doses em dias da semana específicos + horários
+      if (freqType === "specific_days") {
+        const times: string[] = Array.isArray((med as any).specific_times) ? (med as any).specific_times : [];
+        const days: number[] = Array.isArray((med as any).specific_days) ? (med as any).specific_days : [];
+        if (times.length === 0 || days.length === 0) continue;
+        let dayCursor = startOfDay(start);
+        while (dayCursor <= effectiveEnd) {
+          const dow = dayCursor.getDay();
+          if (days.includes(dow)) {
+            const dateStr = format(dayCursor, "yyyy-MM-dd");
+            for (const timeStr of times) {
+              const dt = new Date(`${dateStr}T${timeStr}`);
+              if (isNaN(dt.getTime()) || dt < start || dt > effectiveEnd) continue;
+              const key = `${med.id}-${dt.toISOString()}`;
+              if (!existingKeys.has(key)) {
+                virtualDoses.push({
+                  medication_name: medName,
+                  scheduled_for: dt.toISOString(),
+                  status: "forgotten",
+                  isVirtual: true,
+                });
+              }
+            }
+          }
+          dayCursor = addDays(dayCursor, 1);
+        }
+        continue;
       }
     }
 
@@ -152,6 +214,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     tomadas = 0,
     total = 0,
     streak = 0,
+    bestStreak = 0,
     weeklyData = [],
     heatmapData = [],
     medBreakdown = [],
@@ -282,11 +345,28 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
                 </div>
 
                 {/* Streak */}
-                {streak > 0 && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-                    <Flame size={16} className="text-orange-400 shrink-0" />
-                    <span className="text-sm font-medium text-foreground">{streak} {streak === 1 ? "dia" : "dias"} seguidos</span>
-                    <span className="text-xs text-muted-foreground">— sequência atual</span>
+                {(streak > 0 || bestStreak > 0) && (
+                  <div className="mt-3 pt-3 border-t border-border/50 space-y-1.5">
+                    {streak > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Flame size={16} className="text-orange-400 shrink-0" />
+                        <span className="text-sm font-medium text-foreground">
+                          {streak} {streak === 1 ? "dia" : "dias"} seguidos
+                        </span>
+                        <span className="text-xs text-muted-foreground">— sequência atual</span>
+                      </div>
+                    )}
+                    {bestStreak > streak && (
+                      <div className="flex items-center gap-2">
+                        <Trophy size={14} className="text-amber-500 shrink-0" />
+                        <span className="text-xs text-muted-foreground">
+                          Recorde:{" "}
+                          <span className="font-medium text-foreground">
+                            {bestStreak} {bestStreak === 1 ? "dia" : "dias"}
+                          </span>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -51,6 +51,7 @@ export interface AdherenceDashboardData {
   tomadas: number;
   total: number;
   streak: number;
+  bestStreak: number;
   weeklyData: WeeklyEntry[];
   heatmapData: HeatmapDay[];
   medBreakdown: MedStat[];
@@ -105,6 +106,36 @@ export function useAdherenceDashboard(
       if (takenToday === 0) break;
       streak++;
       checkDay = subDays(checkDay, 1);
+    }
+
+    // ── Best Streak ─────────────────────────────────────────────────────────
+    let bestStreak = streak;
+    {
+      if (allDoses.length > 0) {
+        const earliest = startOfDay(
+          toSPTime(new Date(
+            allDoses.reduce(
+              (min, d) => (new Date(d.scheduled_for) < new Date(min) ? d.scheduled_for : min),
+              allDoses[0].scheduled_for
+            )
+          ))
+        );
+        const allDaysList = eachDayOfInterval({ start: earliest, end: startOfDay(now) });
+        let run = 0;
+        for (const day of allDaysList) {
+          const dayDoses = allDoses.filter((d) =>
+            isSameDay(toSPTime(new Date(d.scheduled_for)), day)
+          );
+          if (dayDoses.length === 0) continue;
+          const taken = dayDoses.filter((d) => d.status === "taken").length;
+          if (taken > 0) {
+            run++;
+            if (run > bestStreak) bestStreak = run;
+          } else {
+            run = 0;
+          }
+        }
+      }
     }
 
     // ── Heatmap — last 14 days ──────────────────────────────────────────────
@@ -215,7 +246,7 @@ export function useAdherenceDashboard(
       }
     }
 
-    return { taxa, tomadas, total, streak, weeklyData, heatmapData, medBreakdown, insight };
+    return { taxa, tomadas, total, streak, bestStreak, weeklyData, heatmapData, medBreakdown, insight };
   }, [allDoses, period]);
 }
 
