@@ -51,6 +51,7 @@ export interface AdherenceDashboardData {
   tomadas: number;
   total: number;
   streak: number;
+  bestStreak: number;
   weeklyData: WeeklyEntry[];
   heatmapData: HeatmapDay[];
   medBreakdown: MedStat[];
