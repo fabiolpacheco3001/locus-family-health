@@ -110,7 +110,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
       existingKeys.add(`${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`);
     }
 
-    const cutoff = endOfDay(subDays(new Date(), 2));
+    const cutoff = new Date();
     const virtualDoses: DoseEntry[] = [];
     for (const med of meds) {
       if (!med.start_date) continue;
