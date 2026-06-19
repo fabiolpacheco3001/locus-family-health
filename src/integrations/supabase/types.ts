@@ -1126,6 +1126,7 @@ export type Database = {
           next_billing_date: string | null
           plan_type: string
           status: string
+          test_mode: boolean
           trial_end: string | null
           updated_at: string
           user_id: string
@@ -1138,6 +1139,7 @@ export type Database = {
           next_billing_date?: string | null
           plan_type?: string
           status?: string
+          test_mode?: boolean
           trial_end?: string | null
           updated_at?: string
           user_id: string
@@ -1150,6 +1152,7 @@ export type Database = {
           next_billing_date?: string | null
           plan_type?: string
           status?: string
+          test_mode?: boolean
           trial_end?: string | null
           updated_at?: string
           user_id?: string
