@@ -1395,6 +1395,10 @@ export type Database = {
           read_ct: number
         }[]
       }
+      set_user_test_mode: {
+        Args: { enabled: boolean; target_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user"
