@@ -17,22 +17,30 @@ const PLAN_CONFIG = {
 };
 
 async function asaasFetch(creds: AsaasCredentials, path: string, options: RequestInit) {
-  const res = await fetch(`${creds.apiUrl}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      access_token: creds.apiKey,
-      ...(options.headers || {}),
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10_000);
 
-  if (!res.ok) {
-    const body = await res.text();
-    log("error", "asaas_api_error", { status: res.status, path, body, env: creds.env });
-    throw new Error("Falha ao processar pagamento. Tente novamente ou entre em contato com o suporte.");
+  try {
+    const res = await fetch(`${creds.apiUrl}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        access_token: creds.apiKey,
+        ...(options.headers || {}),
+      },
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      log("error", "asaas_api_error", { status: res.status, path, body, env: creds.env });
+      throw new Error(`asaas_error:${res.status}:${body}`);
+    }
+
+    return res.json();
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return res.json();
 }
 
 async function findOrCreateCustomer(creds: AsaasCredentials, email: string, name: string): Promise<string> {
@@ -159,9 +167,10 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    log("error", "create_checkout_unexpected_error", { error: error instanceof Error ? error.message : String(error) });
+    const msg = error instanceof Error ? error.message : String(error);
+    log("error", "create_checkout_unexpected_error", { error: msg });
     return new Response(
-      JSON.stringify({ error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte." }),
+      JSON.stringify({ error: msg }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
