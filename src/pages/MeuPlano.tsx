@@ -22,6 +22,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import { toast } from "sonner";
+import { captureException } from "@/lib/sentry";
 
 const MeuPlano = () => {
   const navigate = useNavigate();
@@ -81,8 +82,9 @@ const MeuPlano = () => {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
       window.location.href = url;
-    } catch {
-      toast.error("Erro ao gerar link de pagamento.");
+    } catch (err) {
+      captureException(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar link de pagamento.");
     } finally {
       setLoadingSubscription(false);
     }
@@ -134,8 +136,9 @@ const MeuPlano = () => {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
       window.location.href = url;
-    } catch {
-      toast.error("Erro ao gerar link de reativação.");
+    } catch (err) {
+      captureException(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar link de reativação.");
     } finally {
       setLoadingSubscription(false);
     }

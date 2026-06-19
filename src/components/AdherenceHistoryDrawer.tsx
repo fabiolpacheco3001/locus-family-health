@@ -147,7 +147,16 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
   }, [rawData]);
 
   const dashboard = useAdherenceDashboard(allDoses, period);
-  const { taxa, tomadas, total, streak, weeklyData, heatmapData, medBreakdown, insight } = dashboard;
+  const {
+    taxa = 0,
+    tomadas = 0,
+    total = 0,
+    streak = 0,
+    weeklyData = [],
+    heatmapData = [],
+    medBreakdown = [],
+    insight = { text: "", type: "info" as const },
+  } = dashboard ?? {};
 
   // Period-filtered doses for PDF export
   const periodFilteredDoses = useMemo(() => {
