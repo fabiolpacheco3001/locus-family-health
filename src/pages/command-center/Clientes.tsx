@@ -258,6 +258,13 @@ const Clientes = () => {
                           <KeyRound className="w-4 h-4 mr-2" />
                           Resetar Senha
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={client.test_mode ? "text-emerald-600 focus:text-emerald-600" : "text-amber-600 focus:text-amber-600"}
+                          onClick={() => handleToggleTestMode(client)}
+                        >
+                          <FlaskConical className="w-4 h-4 mr-2" />
+                          {client.test_mode ? "Desativar Modo Teste" : "Ativar Modo Teste (Sandbox)"}
+                        </DropdownMenuItem>
                         {client.status && (
                           <DropdownMenuItem
                             className={client.status === "suspended" ? "text-emerald-600 focus:text-emerald-600" : "text-red-600 focus:text-red-600"}
