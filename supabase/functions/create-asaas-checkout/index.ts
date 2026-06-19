@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
 
     // 2. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
     const todayStr = new Date().toISOString().split("T")[0];
-    const payment = await asaasFetch(creds, "/lean/payments", {
+    const payment = await asaasFetch(creds, "/payments", {
       method: "POST",
       body: JSON.stringify({
         customer: customerId,
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
     log("error", "create_checkout_unexpected_error", { error: msg });
     return new Response(
       JSON.stringify({ error: msg }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
