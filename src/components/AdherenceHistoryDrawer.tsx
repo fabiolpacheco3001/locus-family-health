@@ -214,6 +214,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     tomadas = 0,
     total = 0,
     streak = 0,
+    bestStreak = 0,
     weeklyData = [],
     heatmapData = [],
     medBreakdown = [],
