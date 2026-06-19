@@ -27,10 +27,18 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
     setLoadingPlan(planType);
+    // Open blank window synchronously (before async) to avoid popup blocker.
+    // On iOS PWA standalone, window.open may return null — falls back to location.href.
+    const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const url = await createSubscription(planType);
-      window.open(url, '_blank');
+      if (checkoutWindow) {
+        checkoutWindow.location.href = url;
+      } else {
+        window.location.href = url;
+      }
     } catch (err) {
+      if (checkoutWindow) checkoutWindow.close();
       toast.error(err instanceof Error ? err.message : "Erro ao gerar link de pagamento. Tente novamente.");
     } finally {
       setLoadingPlan(null);

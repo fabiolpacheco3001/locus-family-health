@@ -93,7 +93,7 @@ const Cadastro = () => {
       try {
         await new Promise(resolve => setTimeout(resolve, 1000));
         const url = await createSubscription(planFromUrl);
-        window.open(url, '_blank');
+        window.location.href = url;
         return;
       } catch (err: any) {
         setCheckoutLoading(false);

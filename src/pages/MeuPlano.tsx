@@ -78,11 +78,14 @@ const MeuPlano = () => {
 
   const handleRegularize = async () => {
     setLoadingSubscription(true);
+    const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
-      window.open(url, '_blank');
+      if (checkoutWindow) checkoutWindow.location.href = url;
+      else window.location.href = url;
     } catch (err) {
+      if (checkoutWindow) checkoutWindow.close();
       captureException(err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar link de pagamento.");
     } finally {
@@ -132,11 +135,14 @@ const MeuPlano = () => {
 
   const handleReactivate = async () => {
     setLoadingSubscription(true);
+    const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
-      window.open(url, '_blank');
+      if (checkoutWindow) checkoutWindow.location.href = url;
+      else window.location.href = url;
     } catch (err) {
+      if (checkoutWindow) checkoutWindow.close();
       captureException(err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar link de reativação.");
     } finally {

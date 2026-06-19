@@ -68,12 +68,15 @@ const Ajustes = () => {
 
   const handleRegularize = async () => {
     setLoadingSubscription(true);
+    const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
-      window.open(url, '_blank');
-    } catch {
-      toast.error("Erro ao gerar link de pagamento.");
+      if (checkoutWindow) checkoutWindow.location.href = url;
+      else window.location.href = url;
+    } catch (err) {
+      if (checkoutWindow) checkoutWindow.close();
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar link de pagamento.");
     } finally {
       setLoadingSubscription(false);
     }
