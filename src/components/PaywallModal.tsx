@@ -30,8 +30,8 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
     try {
       const url = await createSubscription(planType);
       window.open(url, '_blank');
-    } catch {
-      toast.error("Erro ao gerar link de pagamento. Tente novamente.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao gerar link de pagamento. Tente novamente.");
     } finally {
       setLoadingPlan(null);
     }
