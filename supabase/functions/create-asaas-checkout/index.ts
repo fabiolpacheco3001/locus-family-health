@@ -91,6 +91,29 @@ Deno.serve(async (req) => {
     const userEmail = user.email!;
     const userName = user.user_metadata?.full_name || userEmail;
 
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // 1b. Resolve CPF from the user's family_member profile
+    let cpfCnpj = "00000000191";
+    const { data: fgm } = await adminClient
+      .from("family_group_members")
+      .select("family_member_id")
+      .eq("auth_user_id", userId)
+      .maybeSingle();
+    if (fgm?.family_member_id) {
+      const { data: fm } = await adminClient
+        .from("family_members")
+        .select("cpf")
+        .eq("id", fgm.family_member_id)
+        .maybeSingle();
+      if (fm?.cpf) {
+        cpfCnpj = fm.cpf.replace(/\D/g, "");
+      }
+    }
+
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return new Response(
@@ -101,11 +124,6 @@ Deno.serve(async (req) => {
 
     const { planType } = parsed.data;
     const plan = PLAN_CONFIG[planType];
-
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
 
     // Read test_mode + existing customer ID
     const { data: subRow } = await adminClient
@@ -139,6 +157,14 @@ Deno.serve(async (req) => {
         dueDate: todayStr,
         description: plan.description,
         externalReference: userId,
+        creditCardHolderInfo: {
+          name: userName,
+          email: userEmail,
+          cpfCnpj,
+          postalCode: "01310100",
+          addressNumber: "1",
+          phone: "11999999999",
+        },
       }),
     });
 
@@ -155,10 +181,10 @@ Deno.serve(async (req) => {
 
     const checkoutUrl = payment.invoiceUrl;
     if (!checkoutUrl) {
-      log("error", "asaas_payment_no_invoice_url", { paymentId: payment.id });
+      log("error", "asaas_payment_no_invoice_url", { paymentId: payment.id, payment });
       return new Response(
-        JSON.stringify({ error: "Não foi possível gerar o link de pagamento. Tente novamente." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: `invoiceUrl null. Campos do pagamento: ${JSON.stringify(payment)}` }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
