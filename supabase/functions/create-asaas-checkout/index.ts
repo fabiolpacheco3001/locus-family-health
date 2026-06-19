@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
       .eq("user_id", userId);
 
     // 4. Get the invoice URL
-    const invoiceUrl = await getSubscriptionInvoiceUrl(subscriptionId);
+    const invoiceUrl = await getSubscriptionInvoiceUrl(creds, subscriptionId);
 
     return new Response(
       JSON.stringify({ url: invoiceUrl }),
