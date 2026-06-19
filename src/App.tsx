@@ -175,7 +175,7 @@ const App = () => (
               <Route path="/changelog" element={<Changelog />} />
               <Route path="/ajuda" element={<Ajuda />} />
               <Route path="/notificacoes" element={<Notificacoes />} />
-              <Route path="/seguranca" element={<Seguranca />} />
+              <Route path="/seguranca-conta" element={<Seguranca />} />
               <Route path="/meu-plano" element={<MeuPlano />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
             </Route>
