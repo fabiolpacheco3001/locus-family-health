@@ -91,6 +91,11 @@ Deno.serve(async (req) => {
     const userEmail = user.email!;
     const userName = user.user_metadata?.full_name || userEmail;
 
+    const adminClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     // 1b. Resolve CPF from the user's family_member profile
     let cpfCnpj = "00000000191";
     const { data: fgm } = await adminClient
