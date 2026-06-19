@@ -128,8 +128,19 @@ Deno.serve(async (req) => {
         );
       }
 
+      // Resolve credenciais (sandbox vs prod) por externalReference
+      const subExtRefRaw = sub.externalReference as string | null;
+      const subExtRef = isValidUUID(subExtRefRaw) ? subExtRefRaw : null;
+      const subCreds = await resolveWebhookCreds(adminClient, subExtRef);
+      if (!subCreds) {
+        return new Response(
+          JSON.stringify({ received: true, warning: "asaas credentials unavailable" }),
+          { status: 200, headers: jsonHeaders }
+        );
+      }
+
       // Fetch fresh data from Asaas API
-      const asaasData = await fetchAsaasSubscription(sub.id);
+      const asaasData = await fetchAsaasSubscription(subCreds, sub.id);
       if (!asaasData) {
         return new Response(
           JSON.stringify({ received: true, warning: "could not fetch subscription" }),
@@ -209,7 +220,8 @@ Deno.serve(async (req) => {
 
         // Fetch the REAL nextDueDate from Asaas — Single Source of Truth
         if (payment.subscription) {
-          const asaasData = await fetchAsaasSubscription(payment.subscription);
+          const paymentCreds = await resolveWebhookCreds(adminClient, externalReference);
+          const asaasData = paymentCreds ? await fetchAsaasSubscription(paymentCreds, payment.subscription) : null;
           if (asaasData) {
             // Use the Asaas nextDueDate EXACTLY as-is — no local calculations
             if (asaasData.nextDueDate) {
