@@ -218,7 +218,8 @@ Deno.serve(async (req) => {
         newStatus = "active";
         updateData.status = newStatus;
         updateData.asaas_payment_id = payment.id;
-        if (payment.creditCardToken) updateData.credit_card_token = payment.creditCardToken;
+        const creditCardToken = payment.creditCardToken ?? payment.creditCard?.creditCardToken;
+        if (creditCardToken) updateData.credit_card_token = creditCardToken;
         if (payment.customer) updateData.asaas_customer_id = payment.customer;
 
         // Legacy path: payment came from a subscription object — keep SSOT from Asaas

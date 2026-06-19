@@ -29,7 +29,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
     setLoadingPlan(planType);
     try {
       const url = await createSubscription(planType);
-      window.location.href = url;
+      window.open(url, '_blank');
     } catch {
       toast.error("Erro ao gerar link de pagamento. Tente novamente.");
     } finally {

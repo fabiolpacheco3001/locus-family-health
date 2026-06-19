@@ -71,7 +71,7 @@ const Ajustes = () => {
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
-      window.location.href = url;
+      window.open(url, '_blank');
     } catch {
       toast.error("Erro ao gerar link de pagamento.");
     } finally {

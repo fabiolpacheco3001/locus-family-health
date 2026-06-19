@@ -81,7 +81,7 @@ const MeuPlano = () => {
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
-      window.location.href = url;
+      window.open(url, '_blank');
     } catch (err) {
       captureException(err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar link de pagamento.");
@@ -135,7 +135,7 @@ const MeuPlano = () => {
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
       const url = await createSubscription(planType as "monthly" | "annual");
-      window.location.href = url;
+      window.open(url, '_blank');
     } catch (err) {
       captureException(err);
       toast.error(err instanceof Error ? err.message : "Erro ao gerar link de reativação.");

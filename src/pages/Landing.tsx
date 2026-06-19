@@ -121,7 +121,7 @@ const Landing = () => {
       }
       setLoadingPlan(planType);
       const url = await createSubscription(planType);
-      window.location.href = url;
+      window.open(url, '_blank');
     } catch (err: any) {
       console.error("Checkout error:", err);
       toast.error(err?.message || "Erro ao iniciar pagamento. Tente novamente.");
