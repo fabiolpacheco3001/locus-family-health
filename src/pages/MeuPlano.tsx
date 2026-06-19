@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { PLAN_MONTHLY_DISPLAY_PERIOD, PLAN_ANNUAL_DISPLAY_PERIOD } from "@/lib/planConfig";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, ArrowLeft, Clock, Crown, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, Clock, Crown, FlaskConical, Loader2 } from "lucide-react";
 import { format, isValid, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
@@ -156,6 +156,13 @@ const MeuPlano = () => {
               <h1 className="text-2xl font-bold text-foreground">Meu Plano</h1>
             </div>
           </div>
+
+          {subscription?.test_mode && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <FlaskConical size={14} className="shrink-0" />
+              <span>Conta em modo de teste (sandbox) — pagamentos não são reais.</span>
+            </div>
+          )}
 
           {!subscription ? (
             <div className="rounded-xl border border-border/40 bg-card p-8 shadow-xs text-center">
