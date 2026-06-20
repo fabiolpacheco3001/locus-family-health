@@ -103,7 +103,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
       // no máximo 1 linha, então .maybeSingle() sozinho é suficiente e correto.
       const { data: sub, error: subError } = await supabase
         .from("subscriptions")
-        .select("*")
+        .select("id, user_id, asaas_customer_id, plan_type, status, trial_end, next_billing_date, created_at, updated_at, asaas_subscription_id, test_mode, asaas_payment_id")
         .eq("user_id", refreshed.session.user.id)
         .maybeSingle();
 
