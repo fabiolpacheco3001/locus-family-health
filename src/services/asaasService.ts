@@ -17,6 +17,7 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
       body: { planType },
       headers: {
         Authorization: `Bearer ${token}`,
+        "x-request-id": crypto.randomUUID(),
       },
     });
     responseData = result.data;
