@@ -14,6 +14,7 @@ import { createSubscription } from "@/services/asaasService";
 import { withTimeout, PAYMENT_TIMEOUT_MS } from "@/lib/withTimeout";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 interface PaywallModalProps {
@@ -32,6 +33,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   const [checkCount, setCheckCount] = useState(0);
   const queryClient = useQueryClient();
   const { canUsePremium } = useSubscription();
+  const { user } = useAuth();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const MAX_POLLS = 24; // 2 minutos (24 × 5s)
 
@@ -75,15 +77,16 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
         }
         return next;
       });
-      // Invalida o cache para forçar refetch
-      await queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      // type: "all" força refetch mesmo quando query está inativa (enabled=false)
+      await queryClient.invalidateQueries({ queryKey: ["subscription"], type: "all" });
     }, 5000);
   };
 
   const handleVerifyManually = async () => {
-    // refetchQueries aguarda o fetch completar (diferente de invalidateQueries)
-    await queryClient.refetchQueries({ queryKey: ["subscription"] });
-    const sub = queryClient.getQueryData<{ status?: string }>(["subscription"]);
+    // type: "all" força refetch mesmo quando query está inativa
+    await queryClient.refetchQueries({ queryKey: ["subscription"], type: "all" });
+    // Usar chave completa ["subscription", user?.id] — mesma chave usada pelo hook
+    const sub = queryClient.getQueryData<{ status?: string }>(["subscription", user?.id]);
     const isActive = sub?.status === "active" || sub?.status === "trialing";
     if (isActive) {
       onOpenChange(false);
