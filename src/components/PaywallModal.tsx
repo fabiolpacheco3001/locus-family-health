@@ -98,8 +98,10 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
       // Consulta direta ao banco (mais confiável que React Query neste contexto)
       const { data: sub, error: subError } = await supabase
         .from("subscriptions")
-        .select("status, next_billing_date")
+        .select("*")
         .eq("user_id", refreshed.session.user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (subError) {
@@ -115,8 +117,9 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
           isFuture(new Date(sub.next_billing_date)));
 
       if (isActive) {
-        // Atualiza o cache do React Query e fecha o modal
-        await queryClient.invalidateQueries({ queryKey: ["subscription"], type: "all" });
+        // Atualiza o cache diretamente — bypassa queryFn e dispara writeLocalCache
+        // via useEffect do useSubscription, persistindo no localStorage para cold starts.
+        queryClient.setQueryData(["subscription", refreshed.session.user.id], sub);
         onOpenChange(false);
         toast.success("Assinatura confirmada! Bem-vindo ao Locus Vita Premium.");
       } else {

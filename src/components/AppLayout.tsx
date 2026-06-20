@@ -124,7 +124,11 @@ const AppLayout = () => {
           open={showPaywall ?? false}
           onOpenChange={(v) => { if (!v) setShowPaywall(false); }}
           locked={showPaywall ?? false}
-          onLogout={signOut}
+          onLogout={async () => {
+            await signOut();
+            // Força reload completo para limpar estado React e navegar para login
+            window.location.replace("/");
+          }}
           implicitTrialExpired={implicitTrialExpired}
         />
       </MobileShell>
