@@ -80,7 +80,7 @@ export function ProntuarioExportButton({
       const blob = generateProntuarioPdf({
         member,
         allergies,
-        diseases,
+        diseases: diseases.map((d) => ({ name: d.name, category: d.category ?? "" })),
         timeline,
         emitterName:
           emitterProfile || user?.user_metadata?.name || user?.email || "Usuário",
