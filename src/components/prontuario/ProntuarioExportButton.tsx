@@ -16,7 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
-import type { TimelineEvent } from "@/hooks/useClinicalTimeline";
+import type { ClinicalEvent } from "@/hooks/useClinicalTimeline";
 
 interface ProntuarioExportButtonProps {
   member: {
@@ -28,7 +28,7 @@ interface ProntuarioExportButtonProps {
   };
   allergies: { substance: string; severity: string }[];
   diseases: { name: string; category: string | null }[];
-  timeline: TimelineEvent[];
+  timeline: ClinicalEvent[];
   timelineLoading: boolean;
 }
 
