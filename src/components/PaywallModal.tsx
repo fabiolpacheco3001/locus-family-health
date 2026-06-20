@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
 import { TRIAL_DAYS } from "@/lib/constants";
 import { Rocket, Loader2, LogOut, CheckCircle2, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { isFuture } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +33,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
   const [awaitingPayment, setAwaitingPayment] = useState(false);
   const [checkCount, setCheckCount] = useState(0);
+  const [verifying, setVerifying] = useState(false);
   const queryClient = useQueryClient();
   const { canUsePremium } = useSubscription();
   const { user } = useAuth();
@@ -83,16 +86,44 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   };
 
   const handleVerifyManually = async () => {
-    // type: "all" força refetch mesmo quando query está inativa
-    await queryClient.refetchQueries({ queryKey: ["subscription"], type: "all" });
-    // Usar chave completa ["subscription", user?.id] — mesma chave usada pelo hook
-    const sub = queryClient.getQueryData<{ status?: string }>(["subscription", user?.id]);
-    const isActive = sub?.status === "active" || sub?.status === "trialing";
-    if (isActive) {
-      onOpenChange(false);
-      toast.success("Assinatura confirmada!");
-    } else {
-      toast.info("Assinatura ainda não confirmada. Aguarde alguns instantes e tente novamente.");
+    setVerifying(true);
+    try {
+      // Refresh session para garantir JWT válido antes de consultar o banco
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshed?.session) {
+        toast.error("Sessão inválida. Faça login novamente.");
+        return;
+      }
+
+      // Consulta direta ao banco (mais confiável que React Query neste contexto)
+      const { data: sub, error: subError } = await supabase
+        .from("subscriptions")
+        .select("status, next_billing_date")
+        .eq("user_id", refreshed.session.user.id)
+        .maybeSingle();
+
+      if (subError) {
+        toast.error("Erro ao verificar assinatura. Tente novamente.");
+        return;
+      }
+
+      const isActive =
+        sub?.status === "active" ||
+        sub?.status === "trialing" ||
+        (sub?.status === "canceled" &&
+          !!sub?.next_billing_date &&
+          isFuture(new Date(sub.next_billing_date)));
+
+      if (isActive) {
+        // Atualiza o cache do React Query e fecha o modal
+        await queryClient.invalidateQueries({ queryKey: ["subscription"], type: "all" });
+        onOpenChange(false);
+        toast.success("Assinatura confirmada! Bem-vindo ao Locus Vita Premium.");
+      } else {
+        toast.info("Assinatura ainda não confirmada. Aguarde alguns instantes e tente novamente.");
+      }
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -144,8 +175,13 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
               variant="outline"
               className="w-full h-11 rounded-xl text-sm font-medium"
               onClick={handleVerifyManually}
+              disabled={verifying}
             >
-              <RefreshCw size={16} className="mr-2" />
+              {verifying ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : (
+                <RefreshCw size={16} className="mr-2" />
+              )}
               Já paguei — Verificar agora
             </Button>
             <Button
@@ -211,8 +247,13 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
                   variant="outline"
                   className="w-full h-11 rounded-xl text-sm font-medium"
                   onClick={handleVerifyManually}
+                  disabled={verifying}
                 >
-                  <RefreshCw size={16} className="mr-2" />
+                  {verifying ? (
+                    <Loader2 size={16} className="mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw size={16} className="mr-2" />
+                  )}
                   Verificar minha assinatura
                 </Button>
                 {onLogout && (
