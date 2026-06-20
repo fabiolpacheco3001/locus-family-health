@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppLock } from "@/hooks/useAppLock";
 import { AppLockScreen } from "@/components/AppLockScreen";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 
 /** Lightweight inline loader — keeps shell/nav visible while lazy chunk loads */
 const InlineRouteLoader = () => (
