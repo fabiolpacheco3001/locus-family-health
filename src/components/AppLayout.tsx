@@ -113,7 +113,7 @@ const AppLayout = () => {
   return (
     <InviteAcceptInterceptor>
       <MobileShell>
-        <div ref={scrollRef} className="flex-1 overflow-y-auto pb-24 no-scrollbar">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto pb-[calc(4rem+env(safe-area-inset-bottom,0px))] no-scrollbar">
           <Suspense fallback={<InlineRouteLoader />}>
             <Outlet />
           </Suspense>
