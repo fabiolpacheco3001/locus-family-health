@@ -18,6 +18,7 @@ import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
 import { useQuery } from "@tanstack/react-query";

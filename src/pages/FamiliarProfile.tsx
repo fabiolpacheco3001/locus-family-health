@@ -37,20 +37,11 @@ import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDr
 import AdherenceHistoryDrawer from "@/components/AdherenceHistoryDrawer";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
+import { calculateAge } from "@/lib/dateUtils";
 import { toast } from "sonner";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 
-const calculateAge = (birthDate: string | null): number | null => {
-  if (!birthDate) return null;
-  const birth = new Date(birthDate);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const monthDiff = today.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age--;
-  }
-  return age;
-};
 
 type CardItem = {
   icon: React.ElementType;
@@ -81,16 +72,7 @@ const FamiliarProfile = () => {
   const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (groupLoading) return;
-    if (!isAdmin && id) {
-      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
-      if (!allowedIds.includes(id)) {
-        toast.error("Acesso negado");
-        navigate("/home", { replace: true });
-      }
-    }
-  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+  useFamilyAccessGuard(id);
   const [editOpen, setEditOpen] = useState(false);
   const [medidasOpen, setMedidasOpen] = useState(false);
   const [bpOpen, setBpOpen] = useState(false);

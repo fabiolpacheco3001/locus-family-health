@@ -12,6 +12,9 @@ import ClinicalTimeline from "@/components/ClinicalTimeline";
 import { useClinicalTimeline } from "@/hooks/useClinicalTimeline";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
+import { useFamilyMember } from "@/hooks/useFamilyMember";
+import { calculateAge } from "@/lib/dateUtils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 // generateProntuarioPdf loaded on-demand (A13: ~250KB jspdf bundle excluded from initial load)
@@ -26,15 +29,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const calculateAge = (birthDate: string | null): number | null => {
-  if (!birthDate) return null;
-  const birth = new Date(birthDate);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
-};
 
 const Prontuario = () => {
   const { id } = useParams();
@@ -76,31 +70,9 @@ const Prontuario = () => {
     enabled: !!user && !!linkedMemberId,
   });
 
-  useEffect(() => {
-    if (groupLoading) return;
-    if (!isAdmin && id) {
-      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
-      if (!allowedIds.includes(id)) {
-        toast.error("Acesso negado");
-        navigate("/home", { replace: true });
-      }
-    }
-  }, [groupLoading, isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+  useFamilyAccessGuard(id);
 
-  const { data: member, isLoading } = useQuery({
-    queryKey: ["family_member", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("family_members")
-        .select("id, name, birth_date, blood_type, weight, height, avatar_url, member_type, relationship, physical_activity")
-        .eq("id", id!)
-        .maybeSingle();
-      if (error) throw error;
-      return data as FamilyMember & { weight: number | null; height: number | null; physical_activity: string | null };
-    },
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: member, isLoading } = useFamilyMember(id);
 
   const { data: allergies } = useQuery({
     queryKey: ["allergies", id],
