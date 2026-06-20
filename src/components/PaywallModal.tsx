@@ -17,6 +17,8 @@ import { withTimeout, PAYMENT_TIMEOUT_MS } from "@/lib/withTimeout";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/hooks/useAuth";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { toast } from "sonner";
 
 interface PaywallModalProps {
@@ -37,7 +39,12 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   const queryClient = useQueryClient();
   const { canUsePremium } = useSubscription();
   const { user } = useAuth();
+  const { members } = useFamilyMembers();
+  const { linkedMemberId } = useFamilyGroup();
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // PROD-01 guard: check if user has CPF filled in their profile
+  const hasCpf = !!members?.find((m) => m.id === linkedMemberId)?.cpf;
   const MAX_POLLS = 24; // 2 minutos (24 × 5s)
 
   // Auto-fecha o modal quando subscription fica ativa (qualquer estado)
@@ -96,11 +103,9 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
       }
 
       // Consulta direta ao banco (mais confiável que React Query neste contexto).
-      // IMPORTANTE: não usar .limit(1) com .maybeSingle() — a combinação do header
-      // Range: 0-0 com Accept: application/vnd.pgrst.object+json conflita no PostgREST
-      // e retorna PGRST116 quando RLS retorna 0 linhas (ex: JWT transitoriamente expirado),
-      // em vez de retornar null graciosamente. A UNIQUE constraint em user_id garante
-      // no máximo 1 linha, então .maybeSingle() sozinho é suficiente e correto.
+      // IMPORTANTE: usar colunas explícitas — authenticated tem apenas column-level
+      // grants em subscriptions (credit_card_token foi revogado por segurança).
+      // select("*") retorna erro 42501 "permission denied for table subscriptions".
       const { data: sub, error: subError } = await supabase
         .from("subscriptions")
         .select("id, user_id, asaas_customer_id, plan_type, status, trial_end, next_billing_date, created_at, updated_at, asaas_subscription_id, test_mode, asaas_payment_id")
@@ -121,9 +126,6 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
 
       if (isActive) {
         // CRITICAL: parar polling e cancelar fetches em voo ANTES de setQueryData.
-        // Sem isso, o setInterval do startPolling pode disparar invalidateQueries
-        // milissegundos depois, iniciando um refetch que sobrescreve o cache ativo
-        // antes de stopPolling() ser chamado pelo auto-close effect — race condition.
         stopPolling();
         await queryClient.cancelQueries({ queryKey: ["subscription"], type: "all" });
         queryClient.setQueryData(["subscription", refreshed.session.user.id], sub);
@@ -138,6 +140,13 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   };
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
+    // PROD-01 guard: warn if CPF not filled — Asaas may reject in production
+    if (!hasCpf) {
+      toast.warning(
+        "Preencha seu CPF em Ajustes → Meus Dados para garantir aprovação do pagamento.",
+        { duration: 6000 }
+      );
+    }
     setLoadingPlan(planType);
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
