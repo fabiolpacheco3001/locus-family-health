@@ -299,7 +299,7 @@ const Exames = () => {
         ) : (
           <div className="flex flex-col space-y-3">
             <AnimatePresence mode="popLayout">
-              {examesFiltrados.map((e) => {
+              {visibleExames.map((e) => {
                 const today = startOfDay(new Date());
                 const isOverdue = e.status === "Agendado" && e.exam_date
                   ? isBefore(new Date(e.exam_date), today)
