@@ -92,13 +92,14 @@ const Prontuario = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("family_members")
-        .select("*")
+        .select("id, name, birth_date, blood_type, weight, height, avatar_url, member_type, relationship, physical_activity")
         .eq("id", id!)
         .maybeSingle();
       if (error) throw error;
       return data as FamilyMember & { weight: number | null; height: number | null; physical_activity: string | null };
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: allergies } = useQuery({
@@ -106,12 +107,13 @@ const Prontuario = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("allergies")
-        .select("*")
+        .select("id, substance, severity")
         .eq("family_member_id", id!);
       if (error) throw error;
       return data;
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: diseases } = useQuery({
@@ -119,12 +121,13 @@ const Prontuario = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("diseases")
-        .select("*")
+        .select("id, name, category")
         .eq("family_member_id", id!);
       if (error) throw error;
       return data;
     },
     enabled: !!id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleExport = async () => {
