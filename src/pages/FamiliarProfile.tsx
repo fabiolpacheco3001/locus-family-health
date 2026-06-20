@@ -1,47 +1,23 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useSmartBack from "@/hooks/useSmartBack";
 import {
-  ArrowLeft,
-  Stethoscope,
-  Pill,
-  FileText,
-  AlertCircle,
-  HeartPulse,
-  ShieldAlert,
-  UserCircle,
-  Ban,
-  Droplets,
-  PawPrint,
-  Syringe,
-  Activity,
-  Droplet,
-  Weight,
-  Ruler,
-  Calculator,
-  Dumbbell,
-  LineChart,
-  ShowerHead,
-  ClipboardCheck,
+  ArrowLeft, Stethoscope, Pill, FileText, AlertCircle, HeartPulse, ShieldAlert,
+  UserCircle, Ban, Droplets, PawPrint, Syringe, Activity, ShowerHead, ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import MemberAvatar from "@/components/MemberAvatar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import EditMemberDrawer from "@/components/EditMemberDrawer";
 import AtualizarMedidasDrawer from "@/components/AtualizarMedidasDrawer";
-
 import BloodPressureHistoryDrawer from "@/components/BloodPressureHistoryDrawer";
-import MenstrualCycleDrawer, { getCycleDay } from "@/components/MenstrualCycleDrawer";
+import MenstrualCycleDrawer from "@/components/MenstrualCycleDrawer";
 import AdherenceHistoryDrawer from "@/components/AdherenceHistoryDrawer";
 import { useAuth } from "@/hooks/useAuth";
-import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
-import { calculateAge } from "@/lib/dateUtils";
-import { toast } from "sonner";
 import type { FamilyMember } from "@/hooks/useFamilyMembers";
-
+import { FamiliarProfileHeader } from "@/components/familiar-profile/FamiliarProfileHeader";
+import { FamiliarProfileHealthSection } from "@/components/familiar-profile/FamiliarProfileHealthSection";
 
 type CardItem = {
   icon: React.ElementType;
@@ -56,20 +32,11 @@ const gestaoItems: CardItem[] = [
   { icon: FileText, label: "Exames", subtitle: "Resultados e pedidos", route: "exames" },
 ];
 
-type ProfileCard = {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  route?: string;
-  action?: string;
-};
-
 const FamiliarProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const goBack = useSmartBack();
   const { user } = useAuth();
-  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   useFamilyAccessGuard(id);
@@ -79,7 +46,6 @@ const FamiliarProfile = () => {
   const [cycleOpen, setCycleOpen] = useState(false);
   const [adherenceOpen, setAdherenceOpen] = useState(false);
 
-  // Try cache first, fallback to individual query
   const { data: member, isLoading, error } = useQuery({
     queryKey: ["family_member", id],
     queryFn: async () => {
@@ -94,7 +60,6 @@ const FamiliarProfile = () => {
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
     initialData: () => {
-      // Reuse cached family_members list to avoid redundant fetch
       if (!user) return undefined;
       const cached = queryClient.getQueryData<FamilyMember[]>(["family_members", user.id]);
       const found = cached?.find((m) => m.id === id);
@@ -115,7 +80,7 @@ const FamiliarProfile = () => {
           <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
             <AlertCircle className="text-destructive" size={28} />
           </div>
-          <p className="text-foreground font-semibold mb-1"><p className="text-foreground font-semibold mb-1">Usuário não encontrado</p></p>
+          <p className="text-foreground font-semibold mb-1">Usuário não encontrado</p>
           <p className="text-muted-foreground text-sm mb-6">Este perfil pode ter sido removido ou você não tem acesso.</p>
           <Button onClick={() => navigate("/home")}>Voltar para Home</Button>
         </div>
@@ -124,17 +89,8 @@ const FamiliarProfile = () => {
   }
 
   const isPet = (member?.member_type || "human") === "pet";
-  const age = member ? calculateAge(member.birth_date) : null;
-  const infoParts: string[] = [];
-  if (age !== null) infoParts.push(isPet ? `${age} anos` : `${age} anos`);
-  if (!isPet && member?.blood_type) infoParts.push(`Sangue ${member.blood_type}`);
-  if (isPet && member?.species) infoParts.push(member.species);
-  if (isPet && member?.breed) infoParts.push(member.breed);
-  const infoLine = infoParts.join(" • ");
-
   const tracksCycle = !isPet && !!member?.tracks_menstrual_cycle;
 
-  // Build info items conditionally
   const infoItems: CardItem[] = [
     { icon: Ban, label: "Alergias", subtitle: "Acesse e cadastre", route: "alergias" },
     ...(!isPet ? [{ icon: HeartPulse, label: "Pressão Arterial", subtitle: "Histórico de PA", route: "__bp__" }] : []),
@@ -144,37 +100,16 @@ const FamiliarProfile = () => {
     { icon: ClipboardCheck, label: "Adesão Medicamentosa", subtitle: "Histórico de doses", route: "__adherence__" },
   ];
 
-  const memberWeight = member?.weight ?? null;
-  const memberHeight = member?.height ?? null;
-  const memberActivity = member?.physical_activity ?? null;
-  const calculatedBMI = memberWeight && memberHeight && memberHeight > 0
-    ? (memberWeight / (memberHeight * memberHeight)).toFixed(1)
-    : null;
-
-  const profileCards: ProfileCard[] = [
-    ...(!isPet ? [{ icon: Droplet, label: "Tipo Sanguíneo", value: member?.blood_type || "—", action: "medidas" }] : []),
-    { icon: Weight, label: "Peso", value: memberWeight ? `${memberWeight} kg` : "— kg", action: "medidas" },
-    { icon: Ruler, label: "Altura", value: memberHeight ? `${memberHeight} m` : "— m", action: "medidas" },
-    ...(!isPet ? [{ icon: Calculator, label: "IMC", value: calculatedBMI || "—", action: "medidas" }] : []),
-    ...(!isPet ? [{ icon: Dumbbell, label: "Atividade Física", value: memberActivity || "—", action: "medidas" }] : []),
-    { icon: LineChart, label: "Evolução Corporal", value: "Histórico", route: "saude" },
-  ];
-
   const renderCardGrid = (items: CardItem[]) => (
     <div className="grid grid-cols-3 gap-3">
       {items.map(({ icon: Icon, label, subtitle, route }) => (
         <button
           key={label}
           onClick={() => {
-            if (route === "__bp__") {
-              setBpOpen(true);
-            } else if (route === "__cycle__") {
-              setCycleOpen(true);
-            } else if (route === "__adherence__") {
-              setAdherenceOpen(true);
-            } else {
-              navigate(`/familiar/${id}/${route}`);
-            }
+            if (route === "__bp__") setBpOpen(true);
+            else if (route === "__cycle__") setCycleOpen(true);
+            else if (route === "__adherence__") setAdherenceOpen(true);
+            else navigate(`/familiar/${id}/${route}`);
           }}
           className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
         >
@@ -198,7 +133,6 @@ const FamiliarProfile = () => {
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        {/* Sticky Header */}
         <div className="sticky top-0 z-40 w-full bg-[#F4F1EB]/80 backdrop-blur-md px-4 pt-6 pb-2 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={goBack}>
             <ArrowLeft size={22} />
@@ -206,97 +140,61 @@ const FamiliarProfile = () => {
           <h1 className="text-lg font-bold text-foreground flex-1">Minha Saúde</h1>
         </div>
         <div className="p-4 pb-8 space-y-6 min-h-[calc(100%+1px)]">
+          <FamiliarProfileHeader
+            member={member}
+            isLoading={isLoading}
+            onEdit={() => setEditOpen(true)}
+          />
 
-      {/* Identity Card - Progressive: skeleton only here */}
-      {isLoading && !member ? (
-        <div className="w-full rounded-xl bg-primary/10 p-5 flex items-center gap-4">
-          <Skeleton className="w-14 h-14 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-4 w-20" />
-          </div>
-        </div>
-      ) : member ? (
-        <button
-          onClick={() => setEditOpen(true)}
-          className="w-full rounded-xl bg-primary/10 border-none p-5 flex items-center gap-4 cursor-pointer active:bg-accent/50 sm:hover:bg-accent/50 transition-colors text-left"
-        >
-          <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" memberType={member.member_type} />
-          <div className="min-w-0 flex-1">
-            <p className="text-lg font-bold text-[#1C3333] truncate">{member.name}</p>
-            <p className="text-sm text-muted-foreground">{member.relationship}</p>
-            {infoLine && <p className="text-xs text-muted-foreground mt-0.5">{infoLine}</p>}
-          </div>
-        </button>
-      ) : null}
-
-      {/* Prontuário (RES) Button */}
-      <button
-        onClick={() => navigate(`/familiar/${id}/prontuario`)}
-        className="w-full rounded-xl bg-[#1C3333] p-4 flex items-center gap-3 active:opacity-90 sm:hover:opacity-90 transition-opacity"
-      >
-        <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-          <FileText className="text-white" size={20} />
-        </div>
-        <div className="flex-1 text-left">
-          <p className="text-sm font-semibold text-white">Prontuário (RES)</p>
-          <p className="text-[10px] text-white/60">Resumo de emergência e dados clínicos</p>
-        </div>
-        <ArrowLeft className="text-white/40 rotate-180" size={16} />
-      </button>
-
-      {/* Group 1: Gestão de Saúde */}
-      <SectionTitle icon={HeartPulse} title="Gestão de Saúde" />
-      {renderCardGrid(gestaoItems)}
-
-      {/* Group 2: Informações de Saúde */}
-      <SectionTitle icon={ShieldAlert} title="Informações de Saúde" />
-      {renderCardGrid(infoItems)}
-
-      {/* Group 3: Perfil de Saúde */}
-      <SectionTitle icon={UserCircle} title="Perfil de Saúde" />
-      <div className="grid grid-cols-3 gap-3">
-        {profileCards.map(({ icon: Icon, label, value, route, action }) => (
           <button
-            key={label}
-            onClick={() => {
-              if (route) navigate(`/familiar/${id}/${route}`);
-              else if (action === "medidas") setMedidasOpen(true);
-            }}
-            className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center cursor-pointer"
+            onClick={() => navigate(`/familiar/${id}/prontuario`)}
+            className="w-full rounded-xl bg-[#1C3333] p-4 flex items-center gap-3 active:opacity-90 sm:hover:opacity-90 transition-opacity"
           >
-            <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
-              <Icon className="text-black" size={22} />
+            <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+              <FileText className="text-white" size={20} />
             </div>
-            <p className="text-xs font-semibold text-foreground">{label}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{value}</p>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-semibold text-white">Prontuário (RES)</p>
+              <p className="text-[10px] text-white/60">Resumo de emergência e dados clínicos</p>
+            </div>
+            <ArrowLeft className="text-white/40 rotate-180" size={16} />
           </button>
-        ))}
-      </div>
 
-      {/* Group 4: Cuidados com o Pet - only for pets, after Perfil de Saúde */}
-      {isPet && member && (
-        <>
-          <SectionTitle icon={PawPrint} title="Cuidados com o Pet" />
-          <div className="grid grid-cols-3 gap-3">
-            <button
-              onClick={() => navigate(`/familiar/${id}/rotinas-pet`)}
-              className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
-            >
-              <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
-                <ShowerHead className="text-black" size={22} />
+          <SectionTitle icon={HeartPulse} title="Gestão de Saúde" />
+          {renderCardGrid(gestaoItems)}
+
+          <SectionTitle icon={ShieldAlert} title="Informações de Saúde" />
+          {renderCardGrid(infoItems)}
+
+          <SectionTitle icon={UserCircle} title="Perfil de Saúde" />
+          {member && (
+            <FamiliarProfileHealthSection
+              member={member}
+              onNavigate={(route) => navigate(`/familiar/${id}/${route}`)}
+              onOpenMedidas={() => setMedidasOpen(true)}
+            />
+          )}
+
+          {isPet && member && (
+            <>
+              <SectionTitle icon={PawPrint} title="Cuidados com o Pet" />
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  onClick={() => navigate(`/familiar/${id}/rotinas-pet`)}
+                  className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
+                    <ShowerHead className="text-black" size={22} />
+                  </div>
+                  <p className="text-xs font-semibold text-foreground">Rotina e Higiene</p>
+                  <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Banho, tosa e mais</p>
+                </button>
               </div>
-              <p className="text-xs font-semibold text-foreground">Rotina e Higiene</p>
-              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Banho, tosa e mais</p>
-            </button>
-          </div>
-        </>
-      )}
-
+            </>
+          )}
         </div>
       </div>
 
-      {/* Edit Drawer */}
       {member && (
         <>
           <EditMemberDrawer open={editOpen} onOpenChange={setEditOpen} member={member} />
@@ -307,9 +205,9 @@ const FamiliarProfile = () => {
             memberType={member.member_type}
             currentData={{
               blood_type: member.blood_type,
-              weight: memberWeight,
-              height: memberHeight,
-              physical_activity: memberActivity,
+              weight: member.weight ?? null,
+              height: member.height ?? null,
+              physical_activity: member.physical_activity ?? null,
             }}
           />
           <BloodPressureHistoryDrawer
