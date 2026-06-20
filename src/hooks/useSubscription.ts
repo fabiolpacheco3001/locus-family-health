@@ -97,6 +97,9 @@ export function useSubscription() {
       return isPremium ? false : 15_000;
     },
     refetchIntervalInBackground: false,
+    // 5-min stale time when subscription is active: prevents refetchOnWindowFocus
+    // from triggering during Supabase JWT refresh windows (would cause PaywallModal flash)
+    staleTime: 5 * 60 * 1000,
   });
 
   const isSuspended = subscription?.status === "suspended";
