@@ -1,5 +1,6 @@
 import { log, createLogger } from "../_shared/logger.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import { captureEdgeException } from "../_shared/sentry-edge.ts";
 
 /**
  * delete-user-account — Edge Function (Art. 18-IV LGPD)
