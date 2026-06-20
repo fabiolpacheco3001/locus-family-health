@@ -254,6 +254,7 @@ serve(async (req) => {
     }
   } catch (err) {
     log("error", "webauthn_verify_error", { error: String(err) });
+    captureEdgeException(err, { functionName: "webauthn-verify", requestId });
     return new Response(
       JSON.stringify({ error: "Erro ao verificar biometria. Tente novamente." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
