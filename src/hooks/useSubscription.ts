@@ -56,7 +56,7 @@ export function useSubscription() {
   // Read localStorage cache once (synchronous, before query runs)
   const localCache = readLocalCache();
 
-  const { data: subscription, isLoading, refetch } = useQuery({
+  const { data: subscription, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -204,6 +204,7 @@ export function useSubscription() {
   return {
     subscription,
     isLoading,
+    isFetching,
     refetch,
     isTrialing: isTrialing || isImplicitTrial,
     isActive,
