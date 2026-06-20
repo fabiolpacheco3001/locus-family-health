@@ -86,7 +86,7 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
   // 1. Fetch registration options from edge function
   const { data: options, error: optErr } = await supabase.functions.invoke(
     "webauthn-challenge",
-    { body: { type: "registration" } },
+    { body: { type: "registration" }, headers: { "x-request-id": crypto.randomUUID() } },
   );
   if (optErr || options?.error) {
     throw new Error(optErr?.message ?? options?.error ?? "Erro ao iniciar cadastro.");
@@ -155,7 +155,7 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
   // 5. Send to server for verification and storage
   const { data: result, error: verErr } = await supabase.functions.invoke(
     "webauthn-verify",
-    { body: { type: "registration", response: serialized, deviceName } },
+    { body: { type: "registration", response: serialized, deviceName }, headers: { "x-request-id": crypto.randomUUID() } },
   );
 
   if (verErr) {
@@ -182,7 +182,7 @@ export async function authenticatePasskey(): Promise<void> {
   // 1. Fetch authentication options from edge function
   const { data: options, error: optErr } = await supabase.functions.invoke(
     "webauthn-challenge",
-    { body: { type: "authentication" } },
+    { body: { type: "authentication" }, headers: { "x-request-id": crypto.randomUUID() } },
   );
   if (optErr || options?.error) {
     throw new Error(optErr?.message ?? options?.error ?? "Erro ao iniciar verificação.");
@@ -241,7 +241,7 @@ export async function authenticatePasskey(): Promise<void> {
   // 5. Verify on server
   const { data: result, error: verErr } = await supabase.functions.invoke(
     "webauthn-verify",
-    { body: { type: "authentication", response: serialized } },
+    { body: { type: "authentication", response: serialized }, headers: { "x-request-id": crypto.randomUUID() } },
   );
 
   if (verErr) {
