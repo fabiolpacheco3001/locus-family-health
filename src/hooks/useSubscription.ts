@@ -18,7 +18,7 @@ export interface Subscription {
 }
 
 export function useSubscription() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: subscription, isLoading, refetch } = useQuery({
@@ -88,7 +88,10 @@ export function useSubscription() {
       // 3. Fall back to own subscription (trialing, past_due, etc.)
       return (ownSub as Subscription | null) ?? null;
     },
-    enabled: !!user?.id,
+    // Wait for session to be confirmed before querying — ensures JWT is fresh.
+    // Without this, the query fires with a cached (possibly expired) JWT from
+    // localStorage, RLS returns null, canUsePremium flips false, PaywallModal flashes.
+    enabled: !!user?.id && !!session,
     // Poll every 15 s while the user has no premium access (e.g., waiting for webhook)
     // Stops polling once canUsePremium is true (refetchInterval returns false)
     refetchInterval: (query) => {
