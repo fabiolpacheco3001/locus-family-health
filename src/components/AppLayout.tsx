@@ -122,7 +122,7 @@ const AppLayout = () => {
         {/* Always render the modal to avoid Radix body-style cleanup issues on unmount */}
         <PaywallModal
           open={showPaywall ?? false}
-          onOpenChange={() => {}}
+          onOpenChange={(v) => { if (!v) setShowPaywall(false); }}
           locked={showPaywall ?? false}
           onLogout={signOut}
           implicitTrialExpired={implicitTrialExpired}
