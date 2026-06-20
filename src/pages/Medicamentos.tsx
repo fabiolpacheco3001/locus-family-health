@@ -86,6 +86,8 @@ const Medicamentos = () => {
       } else if (dateOnly) {
         startDateISO = dateOnly;
       }
+      const safeTimes = Array.isArray(m.specific_times) ? (m.specific_times as string[]) : [];
+      const safeDays = Array.isArray(m.specific_days) ? (m.specific_days as number[]) : [];
       const nextDoseDate = advancePastTakenDoses({
         medicationId: m.id,
         startDateISO,
@@ -93,8 +95,8 @@ const Medicamentos = () => {
         endDate: m.end_date,
         referenceTime: startOfYesterday(),
         frequencyType: m.frequency_type,
-        specificTimes: m.specific_times as string[] | null,
-        specificDays: m.specific_days as number[] | null,
+        specificTimes: safeTimes,
+        specificDays: safeDays,
         doseStatuses: medDoseStatuses,
       });
       let scheduledFor: string | null = null;

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Medication } from "./useMedications";
+import { captureException } from "@/lib/sentry";
 
 /**
  * Hook that checks every 60s if any active medication dose is due,
@@ -57,8 +58,14 @@ export function useMedicationAlarms(medications: Medication[]) {
   const decrementStock = useCallback(async (medId: string, amount: number = 1) => {
     try {
       await supabase.rpc("decrement_stock", { med_id: medId, amount });
-    } catch {
-      // Silent fail
+    } catch (err) {
+      // Observabilidade: não retry, apenas log estruturado + Sentry
+      console.error("[useMedicationAlarms] decrement_stock failed", {
+        medId,
+        amount,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      captureException(err, { context: "decrement_stock", medId, amount });
     }
   }, []);
 

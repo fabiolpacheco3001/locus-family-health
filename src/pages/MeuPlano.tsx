@@ -38,6 +38,7 @@ const MeuPlano = () => {
     trialExpired,
     isImplicitTrial,
     implicitTrialExpired,
+    isLoading,
   } = useSubscription();
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -170,7 +171,13 @@ const MeuPlano = () => {
             </div>
           )}
 
-          {!subscription ? (
+          {isLoading ? (
+            <div className="rounded-xl border border-border/40 bg-card p-8 shadow-xs space-y-3">
+              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+            </div>
+          ) : !subscription ? (
             <div className="rounded-xl border border-border/40 bg-card p-8 shadow-xs text-center">
               <p className="text-sm font-medium text-muted-foreground">Você ainda não possui uma assinatura ativa.</p>
             </div>

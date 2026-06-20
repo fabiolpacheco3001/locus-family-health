@@ -45,11 +45,16 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl) throw new Error("[webauthn-verify] Missing env: SUPABASE_URL");
+    if (!anonKey) throw new Error("[webauthn-verify] Missing env: SUPABASE_ANON_KEY");
+    if (!serviceRoleKey) throw new Error("[webauthn-verify] Missing env: SUPABASE_SERVICE_ROLE_KEY");
+
+    const supabase = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -58,10 +63,7 @@ serve(async (req) => {
       });
     }
 
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    const admin = createClient(supabaseUrl, serviceRoleKey);
 
     const { type, response, deviceName } = await req.json() as {
       type: "registration" | "authentication";

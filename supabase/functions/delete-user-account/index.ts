@@ -92,7 +92,8 @@ async function deleteAvatarFiles(
 
   if (!members || members.length === 0) return;
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) throw new Error("[delete-user-account] Missing env: SUPABASE_URL");
   const paths: string[] = [];
 
   for (const m of members as { avatar_url: string | null }[]) {
@@ -175,10 +176,11 @@ Deno.serve(async (req) => {
     }
     const token = authHeader.replace("Bearer ", "");
 
-    const serviceClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl) throw new Error("[delete-user-account] Missing env: SUPABASE_URL");
+    if (!serviceRoleKey) throw new Error("[delete-user-account] Missing env: SUPABASE_SERVICE_ROLE_KEY");
+    const serviceClient = createClient(supabaseUrl, serviceRoleKey);
 
     const { data: userData, error: authError } =
       await serviceClient.auth.getUser(token);
