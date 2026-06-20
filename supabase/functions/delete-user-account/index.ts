@@ -1,5 +1,6 @@
 import { log, createLogger } from "../_shared/logger.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import { captureEdgeException } from "../_shared/sentry-edge.ts";
 
 /**
  * delete-user-account — Edge Function (Art. 18-IV LGPD)
@@ -333,6 +334,7 @@ Deno.serve(async (req) => {
     return json({ success: true });
   } catch (err) {
     log("error", "delete_user_unexpected_error", { error: err instanceof Error ? err.message : String(err) });
+    captureEdgeException(err, { functionName: "delete-user-account", requestId });
     return json({ error: "Erro interno. Tente novamente ou entre em contato com o suporte." }, 500);
   }
 });

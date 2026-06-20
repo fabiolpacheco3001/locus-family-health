@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.49.4";
 import { log, createLogger } from "../_shared/logger.ts";
 import { resolveAsaasEnv } from "../_shared/asaas-env.ts";
+import { captureEdgeException } from "../_shared/sentry-edge.ts";
 
 // C6: Validate that externalReference is a valid UUID before using as user_id.
 // Prevents arbitrary user_id injection if webhook token is compromised or
@@ -343,6 +344,7 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     log("error", "asaas_webhook_unexpected_error", { error: error instanceof Error ? error.message : String(error) });
+    captureEdgeException(error, { functionName: "asaas-webhook", requestId });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: jsonHeaders }

@@ -12,6 +12,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log, createLogger } from "../_shared/logger.ts";
+import { captureEdgeException } from "../_shared/sentry-edge.ts";
 import {
   verifyRegistrationResponse,
   verifyAuthenticationResponse,
@@ -253,6 +254,7 @@ serve(async (req) => {
     }
   } catch (err) {
     log("error", "webauthn_verify_error", { error: String(err) });
+    captureEdgeException(err, { functionName: "webauthn-verify", requestId });
     return new Response(
       JSON.stringify({ error: "Erro ao verificar biometria. Tente novamente." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },

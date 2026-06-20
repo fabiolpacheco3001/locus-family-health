@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log, createLogger } from "../_shared/logger.ts";
 import { resolveAsaasEnv } from "../_shared/asaas-env.ts";
+import { captureEdgeException } from "../_shared/sentry-edge.ts";
 
 const PLAN_MONTHLY_PRICE = parseFloat(Deno.env.get("PLAN_MONTHLY_PRICE") ?? "19.90");
 const PLAN_ANNUAL_PRICE  = parseFloat(Deno.env.get("PLAN_ANNUAL_PRICE")  ?? "191.00");
@@ -130,6 +131,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     log("error", "generate_renewal_charge_error", { error: err instanceof Error ? err.message : String(err) });
+    captureEdgeException(err, { functionName: "generate-renewal-charge", requestId });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
