@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
+import { TRIAL_DAYS } from "@/lib/constants";
 import { Rocket, Loader2, LogOut } from "lucide-react";
 import {
   Dialog,
@@ -67,7 +68,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground text-center leading-relaxed">
             {implicitTrialExpired
-              ? "Seus 30 dias de teste gratuito terminaram. Assine para continuar cuidando da saúde da sua família."
+              ? `Seus ${TRIAL_DAYS} dias de teste gratuito terminaram. Assine para continuar cuidando da saúde da sua família.`
               : "Seu período de avaliação terminou ou há pendências no seu plano. Assine o Locus Vita para continuar usando nossas tecnologias premium."}
           </DialogDescription>
         </DialogHeader>
