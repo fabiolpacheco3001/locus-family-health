@@ -53,6 +53,18 @@ function clearLocalCache() {
   }
 }
 
+/**
+ * Hook central de assinatura do Locus Vita.
+ *
+ * Responsabilidades:
+ * - Busca a subscription do usuário no Supabase (própria ou do dono do grupo familiar)
+ * - Mantém cache em localStorage para cold-start sem flash de Paywall
+ * - Renova JWT automaticamente quando expira em < 5 min (iOS PWA safe)
+ * - Expõe `canUsePremium` com hierarquia: suspended → grace period → active → trial → implicit trial
+ *
+ * @see src/components/PaywallModal.tsx — consome `canUsePremium`
+ * @see src/components/AppLayout.tsx — usa `canUsePremium` para mostrar/esconder Paywall
+ */
 export function useSubscription() {
   const { user, session } = useAuth();
   const queryClient = useQueryClient();
