@@ -133,6 +133,7 @@ export function useSubscription() {
   return {
     subscription,
     isLoading,
+    refetch,
     isTrialing: isTrialing || isImplicitTrial,
     isActive,
     isPastDue,
