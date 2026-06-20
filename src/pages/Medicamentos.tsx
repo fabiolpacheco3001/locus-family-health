@@ -1,27 +1,22 @@
 import { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope, CalendarPlus, CalendarCheck, CalendarClock, CheckCircle, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Pill, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type Medication } from "@/hooks/useMedications";
 import AddMedicationDrawer from "@/components/AddMedicationDrawer";
 import MedicationActionDrawer from "@/components/MedicationActionDrawer";
 import AiMedicationUpload from "@/components/AiMedicationUpload";
 import FixedFAB from "@/components/ui/FixedFAB";
-import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
-import { format } from "date-fns";
-import { AlertCircle } from "lucide-react";
-import { ptBR } from "date-fns/locale";
-import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
 import { useMedicationPageData } from "@/hooks/useMedicationPageData";
+import { MedicationListItem } from "@/components/medications/MedicationListItem";
+
 
 const Medicamentos = () => {
   const { id } = useParams();
