@@ -9,7 +9,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import PaywallModal from "@/components/PaywallModal";
-import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown, Share2 } from "lucide-react";
+import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown, Share2, Loader2 } from "lucide-react";
 import ExamSwipeableCard from "@/components/ExamSwipeableCard";
 import { AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
