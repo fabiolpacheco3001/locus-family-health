@@ -92,7 +92,8 @@ async function deleteAvatarFiles(
 
   if (!members || members.length === 0) return;
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) throw new Error("[delete-user-account] Missing env: SUPABASE_URL");
   const paths: string[] = [];
 
   for (const m of members as { avatar_url: string | null }[]) {
