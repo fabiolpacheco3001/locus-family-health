@@ -248,11 +248,6 @@ const Ajustes = () => {
         return;
       }
 
-      // Call the delete-user-account Edge Function which handles:
-      // 1. Storage files (exam-files, receitas, vaccine_documents, avatars)
-      // 2. Asaas subscription cancellation (best-effort)
-      // 3. All DB records (clinical data via CASCADE, subscriptions, notifications, etc.)
-      // 4. auth.users deletion (last step)
       const response = await supabase.functions.invoke("delete-user-account", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -263,15 +258,51 @@ const Ajustes = () => {
         return;
       }
 
-      // Token is now invalid — just navigate, no signOut needed
       toast.success("Conta e todos os dados excluídos com sucesso.");
       navigate("/login", { replace: true });
     } catch {
       toast.error("Erro ao excluir conta. Tente novamente.");
     } finally {
       setDeleting(false);
+      setShowDeleteAccount(false);
+      setReauthPassword("");
     }
   };
+
+  // RX-01 — Reautenticação antes de excluir conta (OWASP A07)
+  const handleReauthAndDelete = async () => {
+    if (reauthLoading || deleting) return;
+    setReauthLoading(true);
+    try {
+      if (hasPasskey) {
+        await authenticatePasskey();
+      } else {
+        if (!user?.email) {
+          toast.error("Não foi possível identificar seu e-mail. Faça login novamente.");
+          return;
+        }
+        if (!reauthPassword) {
+          toast.error("Digite sua senha atual para confirmar.");
+          return;
+        }
+        const { error } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: reauthPassword,
+        });
+        if (error) {
+          toast.error("Senha incorreta. Tente novamente.");
+          return;
+        }
+      }
+      // Reautenticação bem-sucedida → executa a exclusão
+      await handleDeleteAccount();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha na confirmação. Tente novamente.");
+    } finally {
+      setReauthLoading(false);
+    }
+  };
+
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
