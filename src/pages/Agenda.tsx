@@ -387,6 +387,18 @@ const Agenda = () => {
                 </div>
               );
             })}
+            {hasMore && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShowAll}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <Loader2 className="animate-spin" size={16} /> : "Ver histórico completo"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
         </div>
