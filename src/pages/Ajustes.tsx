@@ -8,10 +8,14 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useSubscription } from "@/hooks/useSubscription";
+import { usePasskeys } from "@/hooks/usePasskeys";
+import { authenticatePasskey } from "@/lib/webauthn";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -41,6 +45,10 @@ const Ajustes = () => {
   const { subscription, isTrialing, isActive, isPastDue, isCanceled, canceledButGracePeriod, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [reauthLoading, setReauthLoading] = useState(false);
+  const { passkeys } = usePasskeys();
+  const hasPasskey = passkeys.length > 0;
   const [loadingSubscription, setLoadingSubscription] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [supportUrl, setSupportUrl] = useState<string>("");
@@ -240,11 +248,6 @@ const Ajustes = () => {
         return;
       }
 
-      // Call the delete-user-account Edge Function which handles:
-      // 1. Storage files (exam-files, receitas, vaccine_documents, avatars)
-      // 2. Asaas subscription cancellation (best-effort)
-      // 3. All DB records (clinical data via CASCADE, subscriptions, notifications, etc.)
-      // 4. auth.users deletion (last step)
       const response = await supabase.functions.invoke("delete-user-account", {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -255,15 +258,51 @@ const Ajustes = () => {
         return;
       }
 
-      // Token is now invalid — just navigate, no signOut needed
       toast.success("Conta e todos os dados excluídos com sucesso.");
       navigate("/login", { replace: true });
     } catch {
       toast.error("Erro ao excluir conta. Tente novamente.");
     } finally {
       setDeleting(false);
+      setShowDeleteAccount(false);
+      setReauthPassword("");
     }
   };
+
+  // RX-01 — Reautenticação antes de excluir conta (OWASP A07)
+  const handleReauthAndDelete = async () => {
+    if (reauthLoading || deleting) return;
+    setReauthLoading(true);
+    try {
+      if (hasPasskey) {
+        await authenticatePasskey();
+      } else {
+        if (!user?.email) {
+          toast.error("Não foi possível identificar seu e-mail. Faça login novamente.");
+          return;
+        }
+        if (!reauthPassword) {
+          toast.error("Digite sua senha atual para confirmar.");
+          return;
+        }
+        const { error } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: reauthPassword,
+        });
+        if (error) {
+          toast.error("Senha incorreta. Tente novamente.");
+          return;
+        }
+      }
+      // Reautenticação bem-sucedida → executa a exclusão
+      await handleDeleteAccount();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha na confirmação. Tente novamente.");
+    } finally {
+      setReauthLoading(false);
+    }
+  };
+
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
@@ -518,29 +557,71 @@ const Ajustes = () => {
         </Button>
       </div>
 
-      {/* Delete Account AlertDialog */}
-      <AlertDialog open={showDeleteAccount} onOpenChange={setShowDeleteAccount}>
-        <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
+      {/* Delete Account AlertDialog — RX-01: inclui reautenticação */}
+      <AlertDialog
+        open={showDeleteAccount}
+        onOpenChange={(open) => {
+          setShowDeleteAccount(open);
+          if (!open) setReauthPassword("");
+        }}
+      >
+        <AlertDialogContent className="max-w-[340px] rounded-[24px] w-[90vw]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Alerta de Exclusão de Conta</AlertDialogTitle>
-            <AlertDialogDescription>
-              {isAdmin
-                ? "Tem certeza que deseja excluir sua conta Locus Vita? Todos os seus dados e os dados de sua família serão apagados permanentemente."
-                : "Tem certeza que deseja excluir sua conta? Você perderá permanentemente o acesso a este grupo familiar e seus dados de login serão removidos."}
+            <AlertDialogTitle>Confirmar exclusão de conta</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <span className="block">
+                {isAdmin
+                  ? "Esta ação é irreversível. Todos os seus dados e os dados de sua família serão apagados permanentemente."
+                  : "Esta ação é irreversível. Você perderá o acesso a este grupo familiar e seus dados de login serão removidos."}
+              </span>
+              <span className="block font-medium text-foreground">
+                Para continuar, confirme sua identidade.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {!hasPasskey && (
+            <div className="space-y-2 py-1">
+              <Label htmlFor="reauth-password" className="text-sm">
+                Sua senha atual
+              </Label>
+              <Input
+                id="reauth-password"
+                type="password"
+                autoComplete="current-password"
+                placeholder="Digite sua senha"
+                className="text-base"
+                value={reauthPassword}
+                onChange={(e) => setReauthPassword(e.target.value)}
+                disabled={reauthLoading || deleting}
+              />
+            </div>
+          )}
+
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={reauthLoading || deleting}>
+              Cancelar
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteAccount}
+              onClick={(e) => {
+                e.preventDefault();
+                handleReauthAndDelete();
+              }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={deleting}
+              disabled={reauthLoading || deleting || (!hasPasskey && !reauthPassword)}
             >
-              {deleting ? <Loader2 className="animate-spin" size={16} /> : "Sim, Excluir"}
+              {reauthLoading || deleting ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : hasPasskey ? (
+                "Confirmar com Face ID / Touch ID"
+              ) : (
+                "Confirmar exclusão"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
       {/* M14 — Revogar consentimento AlertDialog */}
       <AlertDialog open={showRevokeConsent} onOpenChange={setShowRevokeConsent}>
         <AlertDialogContent className="max-w-[320px] rounded-[24px] w-[90vw]">
