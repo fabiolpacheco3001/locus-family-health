@@ -1,4 +1,4 @@
-bun run testname: CI
+name: CI
 
 on:
   push:
