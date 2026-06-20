@@ -375,6 +375,18 @@ const Exames = () => {
                 );
               })}
             </AnimatePresence>
+            {hasMore && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <Loader2 className="animate-spin" size={16} /> : "Carregar mais"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
