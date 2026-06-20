@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { isFuture } from "date-fns";
@@ -19,11 +19,17 @@ export interface Subscription {
 
 export function useSubscription() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: subscription, isLoading, refetch } = useQuery({
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+
+      // Sticky active: se já temos subscription ativa em cache, preservamos
+      // durante falhas transitórias (ex: janela de refresh do JWT do Supabase)
+      const cachedSub = queryClient.getQueryData(["subscription", user.id]) as { status?: string } | null;
+      const hadActiveCached = cachedSub?.status === "active" || cachedSub?.status === "trialing";
 
       // M5: Run Q1 (own subscription) and Q2 (family membership) in parallel —
       // they're independent; saves one round-trip for non-active subscribers.
@@ -39,7 +45,18 @@ export function useSubscription() {
           .eq("auth_user_id", user.id)
           .maybeSingle(),
       ]);
-      if (error) throw error;
+      if (error) {
+        // Se falhou mas tínhamos subscription ativa, retorna o cache
+        // (previne PaywallModal durante janela de refresh do JWT)
+        if (hadActiveCached && cachedSub) return cachedSub as unknown as Subscription;
+        throw error;
+      }
+
+      // Se query retornou null mas tínhamos subscription ativa (falha transitória RLS),
+      // preservar o dado em cache em vez de retornar null
+      if (!ownSub && hadActiveCached && cachedSub) {
+        return cachedSub as unknown as Subscription;
+      }
 
       // 1. Active own subscription — fast path
       if (ownSub && ownSub.status === "active") {
@@ -80,6 +97,9 @@ export function useSubscription() {
       return isPremium ? false : 15_000;
     },
     refetchIntervalInBackground: false,
+    // 5-min stale time when subscription is active: prevents refetchOnWindowFocus
+    // from triggering during Supabase JWT refresh windows (would cause PaywallModal flash)
+    staleTime: 5 * 60 * 1000,
   });
 
   const isSuspended = subscription?.status === "suspended";
