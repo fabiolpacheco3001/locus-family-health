@@ -103,8 +103,8 @@ Deno.serve(async (req) => {
     if (!event) {
       log("warn", "webhook_missing_event", { body });
       return new Response(
-        JSON.stringify({ received: true }),
-        { status: 200, headers: jsonHeaders }
+        JSON.stringify({ error: "Missing event type" }),
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -133,9 +133,10 @@ Deno.serve(async (req) => {
       const subExtRef = isValidUUID(subExtRefRaw) ? subExtRefRaw : null;
       const subCreds = await resolveWebhookCreds(adminClient, subExtRef);
       if (!subCreds) {
+        log("error", "asaas_credentials_unavailable", { event });
         return new Response(
-          JSON.stringify({ received: true, warning: "asaas credentials unavailable" }),
-          { status: 200, headers: jsonHeaders }
+          JSON.stringify({ error: "Payment gateway unavailable" }),
+          { status: 503, headers: jsonHeaders }
         );
       }
 
@@ -143,8 +144,8 @@ Deno.serve(async (req) => {
       const asaasData = await fetchAsaasSubscription(subCreds, sub.id);
       if (!asaasData) {
         return new Response(
-          JSON.stringify({ received: true, warning: "could not fetch subscription" }),
-          { status: 200, headers: jsonHeaders }
+          JSON.stringify({ error: "Failed to process webhook" }),
+          { status: 422, headers: jsonHeaders }
         );
       }
 
