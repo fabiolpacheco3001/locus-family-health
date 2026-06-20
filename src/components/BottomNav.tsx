@@ -57,7 +57,7 @@ const BottomNav = () => {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 w-full bg-card border-t border-border flex justify-around items-center h-16 z-50">
+      <nav className="fixed bottom-0 left-0 w-full bg-card border-t border-border flex justify-around items-center h-16 z-50 pb-[env(safe-area-inset-bottom,0px)]">
         {navItems.map(({ icon: Icon, label, path }) => {
           const isActive = path === "__drawer_saude__"
             ? isSaudeActive
