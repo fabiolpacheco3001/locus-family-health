@@ -45,7 +45,18 @@ export function useSubscription() {
           .eq("auth_user_id", user.id)
           .maybeSingle(),
       ]);
-      if (error) throw error;
+      if (error) {
+        // Se falhou mas tínhamos subscription ativa, retorna o cache
+        // (previne PaywallModal durante janela de refresh do JWT)
+        if (hadActiveCached && cachedSub) return cachedSub as unknown as Subscription;
+        throw error;
+      }
+
+      // Se query retornou null mas tínhamos subscription ativa (falha transitória RLS),
+      // preservar o dado em cache em vez de retornar null
+      if (!ownSub && hadActiveCached && cachedSub) {
+        return cachedSub as unknown as Subscription;
+      }
 
       // 1. Active own subscription — fast path
       if (ownSub && ownSub.status === "active") {
