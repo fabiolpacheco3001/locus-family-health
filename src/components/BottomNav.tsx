@@ -57,27 +57,30 @@ const BottomNav = () => {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 w-full bg-card border-t border-border flex justify-around items-center h-16 z-50 pb-[env(safe-area-inset-bottom,0px)]">
-        {navItems.map(({ icon: Icon, label, path }) => {
-          const isActive = path === "__drawer_saude__"
-            ? isSaudeActive
-            : location.pathname === path;
-          return (
-            <button
-              key={path}
-              onClick={() => handleClick(path)}
-              onTouchStart={() => handlePrefetch(path)}
-              onMouseEnter={() => handlePrefetch(path)}
-              className={cn(
-                "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
-                isActive ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-[11px] font-medium">{label}</span>
-            </button>
-          );
-        })}
+      <nav className="fixed bottom-0 left-0 w-full bg-card border-t border-border flex flex-col justify-start items-stretch z-50">
+        <div className="flex justify-around items-center h-16">
+          {navItems.map(({ icon: Icon, label, path }) => {
+            const isActive = path === "__drawer_saude__"
+              ? isSaudeActive
+              : location.pathname === path;
+            return (
+              <button
+                key={path}
+                onClick={() => handleClick(path)}
+                onTouchStart={() => handlePrefetch(path)}
+                onMouseEnter={() => handlePrefetch(path)}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+                <span className="text-[11px] font-medium">{label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ height: "env(safe-area-inset-bottom, 0px)" }} />
       </nav>
 
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>

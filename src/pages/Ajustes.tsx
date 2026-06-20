@@ -42,7 +42,7 @@ const Ajustes = () => {
   const navigate = useNavigate();
   const { members } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
-  const { subscription, isTrialing, isActive, isPastDue, isCanceled, canceledButGracePeriod, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
+  const { subscription, isLoading, isTrialing, isActive, isPastDue, isCanceled, canceledButGracePeriod, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reauthPassword, setReauthPassword] = useState("");
@@ -324,7 +324,13 @@ const Ajustes = () => {
           </div>
 
           {/* Subscription Card - Netflix Style */}
-          {subscription ? (
+          {isLoading ? (
+            <div className="rounded-xl border border-border/40 p-4 space-y-3 animate-pulse">
+              <div className="h-10 bg-muted rounded-lg" />
+              <div className="h-4 bg-muted rounded w-3/4" />
+              <div className="h-10 bg-muted rounded-xl" />
+            </div>
+          ) : subscription ? (
             <div className="rounded-xl overflow-hidden shadow-xs border border-border/40">
               {/* Header gradient */}
               <div className={`px-4 py-3 ${

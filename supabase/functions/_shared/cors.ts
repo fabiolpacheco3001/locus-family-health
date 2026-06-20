@@ -1,33 +1,24 @@
 /**
- * _shared/cors.ts — Locus Vita (v2025-06-16)
+ * _shared/cors.ts — Locus Vita
  *
- * A1 fix: CORS headers restritos ao domínio configurado em APP_ORIGIN.
- *
- * Configuração:
- *   - Supabase Dashboard → Settings → Edge Functions → Secrets
- *   - Adicionar: APP_ORIGIN = https://seu-dominio.com.br
- *
- * Comportamento:
- *   - APP_ORIGIN definido → restringe ao domínio exato + adiciona Vary: Origin
- *   - APP_ORIGIN não definido → fallback para "*" (desenvolvimento / preview Lovable)
- *
- * Uso:
- *   import { corsHeaders } from "../_shared/cors.ts";
- *   // Substitui a definição local de corsHeaders — nenhuma outra mudança necessária.
+ * CORS robusto: normaliza APP_ORIGIN (trim de espaços/slash) antes de comparar.
+ * Se APP_ORIGIN não estiver setado, usa wildcard "*".
  */
 
-const APP_ORIGIN = Deno.env.get("APP_ORIGIN");
+const rawOrigin = Deno.env.get("APP_ORIGIN");
+const APP_ORIGIN = rawOrigin?.trim().replace(/\/+$/, ""); // remove trailing slash e espaços
+
 if (!APP_ORIGIN) {
-  console.warn(
-    "[cors] APP_ORIGIN not set — using wildcard '*'. Set APP_ORIGIN in production."
-  );
+  console.warn("[cors] APP_ORIGIN not set — using wildcard '*'. Set APP_ORIGIN in production.");
 }
+
 const ALLOWED_ORIGIN = APP_ORIGIN ?? "*";
 
 export const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "authorization, x-client-info, apikey, content-type, x-request-id",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+  "Access-Control-Max-Age": "86400",
   ...(ALLOWED_ORIGIN !== "*" ? { "Vary": "Origin" } : {}),
 };
