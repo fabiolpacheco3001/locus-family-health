@@ -45,6 +45,10 @@ const Ajustes = () => {
   const { subscription, isTrialing, isActive, isPastDue, isCanceled, canceledButGracePeriod, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [reauthPassword, setReauthPassword] = useState("");
+  const [reauthLoading, setReauthLoading] = useState(false);
+  const { passkeys } = usePasskeys();
+  const hasPasskey = passkeys.length > 0;
   const [loadingSubscription, setLoadingSubscription] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [supportUrl, setSupportUrl] = useState<string>("");
