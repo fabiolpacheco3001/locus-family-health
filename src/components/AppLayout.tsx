@@ -36,6 +36,7 @@ const AppLayout = () => {
   useMedicationAlarms(medications);
   useStockAlerts(medications);
   useMenstrualAlerts();
+  useSessionTimeout(!!user);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
 
