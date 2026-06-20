@@ -51,6 +51,11 @@ function useReveal() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // RX-30: fallback p/ navegadores sem IntersectionObserver — mostra direto.
+    if (typeof window === "undefined" || !("IntersectionObserver" in window)) {
+      setVisible(true);
+      return;
+    }
     const obs = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
       { threshold: 0.15 }

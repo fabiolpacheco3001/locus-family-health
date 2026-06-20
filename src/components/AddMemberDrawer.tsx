@@ -136,9 +136,15 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
             </button>
           </div>
 
+          <p className="text-xs text-muted-foreground">
+            Campos marcados com <span className="text-destructive">*</span> são obrigatórios.
+          </p>
+
           <div className="space-y-1.5">
-            <Label>{isPet ? "Nome do Pet *" : "Nome Completo *"}</Label>
-            <Input placeholder={isPet ? "Ex: Rex, Luna..." : "Ex: Maria da Silva"} value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
+            <Label htmlFor="am-name">
+              {isPet ? "Nome do Pet" : "Nome Completo"} <span className="text-destructive">*</span>
+            </Label>
+            <Input id="am-name" placeholder={isPet ? "Ex: Rex, Luna..." : "Ex: Maria da Silva"} value={name} onChange={(e) => setName(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
           </div>
 
           {isPet ? (
@@ -146,9 +152,11 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
               {/* Pet fields: Espécie + Raça */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Espécie *</Label>
+                  <Label htmlFor="am-species">
+                    Espécie <span className="text-destructive">*</span>
+                  </Label>
                   <Select value={species} onValueChange={setSpecies}>
-                    <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger id="am-species" className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {speciesOptions.map((s) => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
@@ -157,13 +165,13 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Raça</Label>
-                  <Input placeholder="Ex: Labrador" value={breed} onChange={(e) => setBreed(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
+                  <Label htmlFor="am-breed">Raça</Label>
+                  <Input id="am-breed" placeholder="Ex: Labrador" value={breed} onChange={(e) => setBreed(e.target.value)} className="w-full max-w-full box-border min-w-0 text-[16px]" />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label>Nascimento</Label>
+                <Label htmlFor="am-birth-pet">Nascimento</Label>
                 <DatePickerField
                   value={birthDate}
                   onChange={setBirthDate}
@@ -176,9 +184,11 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
               {/* Human fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Parentesco *</Label>
+                  <Label htmlFor="am-relationship">
+                    Parentesco <span className="text-destructive">*</span>
+                  </Label>
                   <Select value={relationship} onValueChange={setRelationship}>
-                    <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectTrigger id="am-relationship" className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
                       {relationships.map((r) => (
                         <SelectItem key={r} value={r}>{r}</SelectItem>
@@ -187,7 +197,7 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Nascimento</Label>
+                  <Label htmlFor="am-birth">Nascimento</Label>
                   <DatePickerField
                     value={birthDate}
                     onChange={setBirthDate}
@@ -198,9 +208,9 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>Gênero</Label>
+                  <Label htmlFor="am-gender">Gênero</Label>
                   <Select value={gender} onValueChange={setGender}>
-                    <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                    <SelectTrigger id="am-gender" className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
                     <SelectContent>
                       {genders.map((g) => (
                         <SelectItem key={g} value={g}>{g}</SelectItem>
@@ -209,9 +219,9 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Tipo Sanguíneo</Label>
+                  <Label htmlFor="am-blood">Tipo Sanguíneo</Label>
                   <Select value={bloodType} onValueChange={setBloodType}>
-                    <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
+                    <SelectTrigger id="am-blood" className="w-full max-w-full box-border min-w-0 text-[16px]"><SelectValue placeholder="Opcional" /></SelectTrigger>
                     <SelectContent>
                       {bloodTypes.map((bt) => (
                         <SelectItem key={bt} value={bt}>{bt}</SelectItem>
@@ -224,8 +234,9 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
               {/* Grid: CPF + Telefone */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label>CPF</Label>
+                  <Label htmlFor="am-cpf">CPF</Label>
                   <Input
+                    id="am-cpf"
                     type="text"
                     placeholder="000.000.000-00"
                     value={cpf}
@@ -234,8 +245,9 @@ const AddMemberDrawer = ({ open, onOpenChange }: Props) => {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Telefone</Label>
+                  <Label htmlFor="am-phone">Telefone</Label>
                   <Input
+                    id="am-phone"
                     type="tel"
                     placeholder="(11) 99999-9999"
                     value={phone}

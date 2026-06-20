@@ -169,7 +169,7 @@ const MeusDados = () => {
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10 animate-fade-in">
       {/* Header */}
       <div className="flex-none flex items-center gap-3 px-4 pt-6 mb-4">
-        <button onClick={() => navigate("/ajustes")} className="p-1">
+        <button type="button" aria-label="Voltar" onClick={() => navigate("/ajustes")} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
         <h1 className="text-lg font-bold text-foreground flex-1 text-center pr-8">
@@ -181,7 +181,12 @@ const MeusDados = () => {
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-3">
         {/* Avatar */}
         <div className="pt-4" />
-        <button className="flex justify-center mb-4 w-full" onClick={() => setAvatarOpen(true)}>
+        <button
+          type="button"
+          aria-label="Alterar foto de perfil"
+          className="flex justify-center mb-4 w-full"
+          onClick={() => setAvatarOpen(true)}
+        >
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-secondary/20 border-2 border-secondary flex items-center justify-center overflow-hidden">
               {avatarUrl && (avatarUrl.startsWith("data:image") || avatarUrl.startsWith("http")) ? (
@@ -197,6 +202,8 @@ const MeusDados = () => {
             </div>
             {avatarUrl && (
               <button
+                type="button"
+                aria-label="Remover foto de perfil"
                 onClick={(e) => { e.stopPropagation(); setAvatarUrl(""); }}
                 className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-slate-800/60 backdrop-blur-sm hover:bg-slate-800/80 border border-white/20 flex items-center justify-center transition-colors"
               >
@@ -221,9 +228,16 @@ const MeusDados = () => {
           )}
         </div>
 
+        <p className="text-xs text-muted-foreground mb-1">
+          Campos marcados com <span className="text-destructive">*</span> são obrigatórios.
+        </p>
+
         <div className="space-y-1">
-          <Label>Nome Completo *</Label>
+          <Label htmlFor="md-name">
+            Nome Completo <span className="text-destructive">*</span>
+          </Label>
           <Input
+            id="md-name"
             placeholder="Ex: João da Silva"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -232,8 +246,9 @@ const MeusDados = () => {
         </div>
 
         <div className="space-y-1">
-          <Label>E-mail</Label>
+          <Label htmlFor="md-email">E-mail</Label>
           <Input
+            id="md-email"
             value={user?.email || ""}
             readOnly
             disabled
@@ -245,9 +260,9 @@ const MeusDados = () => {
         {/* Grid: Parentesco + Nascimento */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label>Parentesco</Label>
+            <Label htmlFor="md-relationship">Parentesco</Label>
             <Select value={relationship} onValueChange={setRelationship}>
-              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
+              <SelectTrigger id="md-relationship" className="w-full max-w-full box-border min-w-0 text-[16px]">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
@@ -261,7 +276,7 @@ const MeusDados = () => {
           </div>
 
           <div className="space-y-1">
-            <Label>Nascimento</Label>
+            <Label htmlFor="md-birth">Nascimento</Label>
             <DatePickerField
               value={birthDate}
               onChange={setBirthDate}
@@ -273,9 +288,9 @@ const MeusDados = () => {
         {/* Grid: Gênero + Tipo Sanguíneo */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label>Gênero</Label>
+            <Label htmlFor="md-gender">Gênero</Label>
             <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
+              <SelectTrigger id="md-gender" className="w-full max-w-full box-border min-w-0 text-[16px]">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
@@ -288,9 +303,9 @@ const MeusDados = () => {
           </div>
 
           <div className="space-y-1">
-            <Label>Tipo Sanguíneo</Label>
+            <Label htmlFor="md-blood">Tipo Sanguíneo</Label>
             <Select value={bloodType} onValueChange={setBloodType}>
-              <SelectTrigger className="w-full max-w-full box-border min-w-0 text-[16px]">
+              <SelectTrigger id="md-blood" className="w-full max-w-full box-border min-w-0 text-[16px]">
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
               <SelectContent>
@@ -305,8 +320,9 @@ const MeusDados = () => {
         {/* Grid: CPF + Telefone */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <Label>CPF</Label>
+            <Label htmlFor="md-cpf">CPF</Label>
             <Input
+              id="md-cpf"
               type="text"
               placeholder="000.000.000-00"
               value={cpf}
@@ -316,8 +332,9 @@ const MeusDados = () => {
           </div>
 
           <div className="space-y-1">
-            <Label>Telefone</Label>
+            <Label htmlFor="md-phone">Telefone</Label>
             <Input
+              id="md-phone"
               type="tel"
               placeholder="(11) 99999-9999"
               value={phone}

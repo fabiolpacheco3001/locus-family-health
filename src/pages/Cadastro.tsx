@@ -128,20 +128,31 @@ const Cadastro = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Campos marcados com <span className="text-destructive">*</span> são obrigatórios.
+          </p>
+
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">Nome</label>
-            <Input placeholder="Ex: João da Silva" value={name} onChange={(e) => setName(e.target.value)} required />
+            <label htmlFor="signup-name" className="text-sm font-medium text-foreground">
+              Nome <span className="text-destructive">*</span>
+            </label>
+            <Input id="signup-name" placeholder="Ex: João da Silva" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">E-mail</label>
-            <Input type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <label htmlFor="signup-email" className="text-sm font-medium text-foreground">
+              E-mail <span className="text-destructive">*</span>
+            </label>
+            <Input id="signup-email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">Senha</label>
+            <label htmlFor="signup-password" className="text-sm font-medium text-foreground">
+              Senha <span className="text-destructive">*</span>
+            </label>
             <div className="relative">
               <Input
+                id="signup-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Mínimo 8 caracteres"
                 value={password}
@@ -152,6 +163,7 @@ const Cadastro = () => {
               />
               <button
                 type="button"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
@@ -161,9 +173,12 @@ const Cadastro = () => {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-foreground">Confirmar Senha</label>
+            <label htmlFor="signup-confirm" className="text-sm font-medium text-foreground">
+              Confirmar Senha <span className="text-destructive">*</span>
+            </label>
             <div className="relative">
               <Input
+                id="signup-confirm"
                 type={showConfirm ? "text" : "password"}
                 placeholder="Repita a senha"
                 value={confirmPassword}
@@ -177,6 +192,7 @@ const Cadastro = () => {
               />
               <button
                 type="button"
+                aria-label={showConfirm ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
                 onClick={() => setShowConfirm(!showConfirm)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >

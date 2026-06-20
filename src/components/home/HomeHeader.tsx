@@ -46,6 +46,8 @@ export function HomeHeader({ userName, myProfile, unreadCount }: Props) {
 
         <div className="flex items-center gap-1">
           <button
+            type="button"
+            aria-label="Buscar"
             onClick={() =>
               toast.info(
                 "Em breve: Busque funcionalidades ou agende compromissos via Chat Conversacional com IA!"
@@ -56,12 +58,16 @@ export function HomeHeader({ userName, myProfile, unreadCount }: Props) {
             <Search size={22} className="text-white" />
           </button>
           <button
+            type="button"
+            aria-label="Ajuda"
             onClick={() => navigate("/ajuda")}
             className="p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
           >
             <HelpCircle size={22} className="text-white" />
           </button>
           <button
+            type="button"
+            aria-label={unreadCount > 0 ? `Notificações (${unreadCount} não lidas)` : "Notificações"}
             onClick={() => navigate("/notificacoes", { state: { from: "/home" } })}
             className="relative p-2 rounded-full hover:bg-white/10 active:bg-white/10 transition-colors"
           >
