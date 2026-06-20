@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { createSubscription } from "@/services/asaasService";
+import { withTimeout, PAYMENT_TIMEOUT_MS } from "@/lib/withTimeout";
 import { toast } from "sonner";
 
 interface PaywallModalProps {
@@ -31,7 +32,11 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
     // On iOS PWA standalone, window.open may return null — falls back to location.href.
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
-      const url = await createSubscription(planType);
+      const url = await withTimeout(
+        createSubscription(planType),
+        PAYMENT_TIMEOUT_MS,
+        "Tempo limite de pagamento atingido. Tente novamente."
+      );
       if (checkoutWindow) {
         checkoutWindow.location.href = url;
       } else {

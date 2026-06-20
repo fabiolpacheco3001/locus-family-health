@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
+import { withTimeout, PAYMENT_TIMEOUT_MS } from "@/lib/withTimeout";
 import { toast } from "sonner";
 import { captureException } from "@/lib/sentry";
 
@@ -82,7 +83,11 @@ const MeuPlano = () => {
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
-      const url = await createSubscription(planType as "monthly" | "annual");
+      const url = await withTimeout(
+        createSubscription(planType as "monthly" | "annual"),
+        PAYMENT_TIMEOUT_MS,
+        "Tempo limite de pagamento atingido. Tente novamente."
+      );
       if (checkoutWindow) checkoutWindow.location.href = url;
       else window.location.href = url;
     } catch (err) {
@@ -139,7 +144,11 @@ const MeuPlano = () => {
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
-      const url = await createSubscription(planType as "monthly" | "annual");
+      const url = await withTimeout(
+        createSubscription(planType as "monthly" | "annual"),
+        PAYMENT_TIMEOUT_MS,
+        "Tempo limite de pagamento atingido. Tente novamente."
+      );
       if (checkoutWindow) checkoutWindow.location.href = url;
       else window.location.href = url;
     } catch (err) {
