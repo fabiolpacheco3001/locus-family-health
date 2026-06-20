@@ -1,4 +1,4 @@
-name: CI
+bun run testname: CI
 
 on:
   push:
@@ -31,4 +31,4 @@ jobs:
         run: bunx tsc --noEmit
 
       - name: Test
-        run: bun test
+        run: bun run test
