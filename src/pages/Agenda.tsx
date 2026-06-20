@@ -285,7 +285,7 @@ const Agenda = () => {
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {filteredItems.map((item) => {
+            {displayedItems.map((item) => {
               const isExam = item.kind === "exam";
               const isPetRoutine = item.kind === "pet_routine";
               const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
