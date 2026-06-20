@@ -308,7 +308,7 @@ const Ajustes = () => {
     <div className="fixed top-0 left-0 right-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto no-scrollbar">
-        <div className="px-4 pb-32 space-y-4 min-h-[calc(100%+1px)]">
+        <div className="px-4 pb-6 space-y-4 min-h-[calc(100%+1px)]">
           {/* Sticky Header with Glassmorphism */}
           <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md pt-6 pb-4 -mx-4 px-5">
             <h1 className="font-bold text-foreground px-1 text-lg">Ajustes</h1>
@@ -549,18 +549,16 @@ const Ajustes = () => {
               <ChevronRight size={18} className="text-destructive/50" />
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Fixed Footer with Glassmorphism */}
-      <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] left-0 right-0 z-20 p-4 bg-[#F4F1EB]/70 backdrop-blur-xl border-t border-slate-200/50 shadow-[0_-4px_20px_-15px_rgba(0,0,0,0.1)]">
-        <Button
-          onClick={handleLogout}
-          className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
-        >
-          <LogOut size={18} />
-          Sair da conta
-        </Button>
+          {/* Sair da conta — parte do conteúdo scrollável, sem footer fixo */}
+          <Button
+            onClick={handleLogout}
+            className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-red-600 border-none font-semibold flex items-center justify-center gap-2 h-11 rounded-xl"
+          >
+            <LogOut size={18} />
+            Sair da conta
+          </Button>
+        </div>
       </div>
 
       {/* Delete Account AlertDialog — RX-01: inclui reautenticação */}
