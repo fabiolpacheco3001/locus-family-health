@@ -11,7 +11,7 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
-import { log } from "../_shared/logger.ts";
+import { log, createLogger } from "../_shared/logger.ts";
 import {
   verifyRegistrationResponse,
   verifyAuthenticationResponse,
@@ -31,6 +31,9 @@ function base64UrlToUint8Array(str: string): Uint8Array {
 }
 
 serve(async (req) => {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
+  const log = createLogger({ requestId });
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

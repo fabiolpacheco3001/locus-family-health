@@ -1,4 +1,4 @@
-import { log } from "../_shared/logger.ts";
+import { log, createLogger } from "../_shared/logger.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
 /**
@@ -160,6 +160,9 @@ async function cancelAsaasSubscription(
 }
 
 Deno.serve(async (req) => {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
+  const log = createLogger({ requestId });
+
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }

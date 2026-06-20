@@ -30,6 +30,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
+import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
 
 const MinhaSaude = () => {
   const { id } = useParams<{ id: string }>();
@@ -44,20 +45,13 @@ const MinhaSaude = () => {
   const [formData, setFormData] = useState({ date: "", peso: "", altura: "" });
   const [graficoAtivo, setGraficoAtivo] = useState<"peso" | "altura">("peso");
 
+  useFamilyAccessGuard(id);
+
   useEffect(() => {
-    if (groupLoading) return;
-    if (!isAdmin && id) {
-      const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])].filter(Boolean);
-      if (!allowedIds.includes(id)) {
-        toast.error("Acesso negado");
-        navigate("/home", { replace: true });
-        return;
-      }
-    }
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
     const scrollContainer = document.querySelector('.overflow-y-auto');
     if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-  }, [isAdmin, id, linkedMemberId, managedProfiles, navigate]);
+  }, [id]);
 
   const member = members.find((m) => m.id === id);
 
