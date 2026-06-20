@@ -31,7 +31,7 @@ const AppLayout = () => {
   const { user, session, signOut } = useAuth();
   const queryClient = useQueryClient();
   const { isLocked, isReady, hadInitialSession, unlock } = useAppLock();
-  const { canUsePremium, isLoading: subLoading, subscription, implicitTrialExpired } = useSubscription();
+  const { canUsePremium, isLoading: subLoading, isFetching: subFetching, subscription, implicitTrialExpired } = useSubscription();
   const { medications } = useMedications();
   useMedicationAlarms(medications);
   useStockAlerts(medications);
@@ -85,11 +85,16 @@ const AppLayout = () => {
   const [showPaywall, setShowPaywall] = useState(false);
   useEffect(() => {
     if (!subLoading && !!session) {
-      // Subscription query completed with valid session — use this as the truth
-      setShowPaywall(!canUsePremium);
+      if (canUsePremium) {
+        // Fecha o paywall IMEDIATAMENTE quando subscription confirmada ativa
+        setShowPaywall(false);
+      } else if (!subFetching) {
+        // Abre o paywall SOMENTE após fetch concluído confirmando ausência de subscription
+        // Nunca abre durante um background refetch (evita falso negativo transitório)
+        setShowPaywall(true);
+      }
     }
-    // If session is null: keep current state (do NOT hide/show modal during JWT refresh)
-  }, [canUsePremium, subLoading, session]);
+  }, [canUsePremium, subLoading, subFetching, session]);
 
   // ── App Lock: show logo while passkeys load (avoids content flash) ──────────
   // Only blocks render if session was restored from localStorage (not fresh login).
