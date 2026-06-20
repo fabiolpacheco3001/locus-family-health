@@ -239,19 +239,26 @@ Deno.serve(async (req) => {
             else if (asaasData.cycle === "MONTHLY") updateData.plan_type = "monthly";
           }
         } else {
-          // New model: one-shot payment → period = today + 30 days
+          // New model: one-shot payment → period based on plan type
+          // Determine plan type from payment value first, then set the correct period
+          const paymentValue = Number(payment.value ?? 0);
+          const detectedPlanType = paymentValue >= PLAN_ANNUAL_THRESHOLD ? "annual" : "monthly";
+          updateData.plan_type = detectedPlanType;
+
           const now = new Date();
           const periodEnd = new Date(now);
-          periodEnd.setUTCDate(periodEnd.getUTCDate() + 30);
+          if (detectedPlanType === "annual") {
+            periodEnd.setUTCFullYear(periodEnd.getUTCFullYear() + 1);
+          } else {
+            periodEnd.setUTCDate(periodEnd.getUTCDate() + 30);
+          }
           const periodEndStr = periodEnd.toISOString().split("T")[0];
           updateData.next_billing_date = periodEndStr;
-          log("info", "payment_period_extended", { userId: externalReference, periodEnd: periodEndStr, env: (await resolveWebhookCreds(adminClient, externalReference))?.env });
-        }
-
-        // Fallback plan_type from value
-        if (!updateData.plan_type && payment.value) {
-          const value = Number(payment.value);
-          updateData.plan_type = value >= PLAN_ANNUAL_THRESHOLD ? "annual" : "monthly";
+          log("info", "payment_period_extended", {
+            userId: externalReference,
+            periodEnd: periodEndStr,
+            planType: detectedPlanType,
+          });
         }
         break;
       }
