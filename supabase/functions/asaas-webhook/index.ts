@@ -222,8 +222,22 @@ Deno.serve(async (req) => {
         newStatus = "active";
         updateData.status = newStatus;
         updateData.asaas_payment_id = payment.id;
+        // PROD-03: rastrear recebimento e ausência de token para diagnóstico
         const creditCardToken = payment.creditCardToken ?? payment.creditCard?.creditCardToken;
-        if (creditCardToken) updateData.credit_card_token = creditCardToken;
+        if (creditCardToken) {
+          updateData.credit_card_token = creditCardToken;
+          log("info", "payment_credit_card_token_stored", {
+            paymentId: payment.id,
+            userId: externalReference ?? null,
+            tokenPresent: true,
+          });
+        } else {
+          log("warn", "payment_credit_card_token_absent", {
+            paymentId: payment.id,
+            userId: externalReference ?? null,
+            hint: "auto-renewal will not work without a token",
+          });
+        }
         if (payment.customer) updateData.asaas_customer_id = payment.customer;
 
         // Legacy path: payment came from a subscription object — keep SSOT from Asaas
