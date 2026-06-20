@@ -4,6 +4,7 @@
  * Replaces all "T12:00:00" workarounds.
  */
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
+import { differenceInYears, isValid, parseISO } from "date-fns";
 
 export const APP_TIMEZONE = "America/Sao_Paulo";
 
@@ -60,4 +61,17 @@ export function toSPTime(date: Date): Date {
 export function fromSPToUTC(dateStr: string, timeStr?: string | null): Date {
   const combined = timeStr ? `${dateStr}T${timeStr}` : `${dateStr}T00:00:00`;
   return fromZonedTime(combined, APP_TIMEZONE);
+}
+
+/**
+ * Calcula idade em anos a partir de uma data ISO (string ou Date).
+ * Retorna null se a data for inválida.
+ */
+export function calculateAge(
+  birthDate: string | Date | null | undefined
+): number | null {
+  if (!birthDate) return null;
+  const date = typeof birthDate === "string" ? parseISO(birthDate) : birthDate;
+  if (!isValid(date)) return null;
+  return differenceInYears(new Date(), date);
 }

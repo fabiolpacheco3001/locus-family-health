@@ -24,3 +24,16 @@ export function log(
   else if (level === "warn") console.warn(entry)
   else console.log(entry)
 }
+
+/**
+ * Returns a `log` function with `baseFields` (e.g. requestId) auto-merged
+ * into every entry. Use inside `serve(...)` to bind a requestId once.
+ *
+ * Example:
+ *   const log = createLogger({ requestId });
+ *   log("info", "started"); // includes requestId automatically
+ */
+export function createLogger(baseFields: Record<string, unknown>) {
+  return (level: LogLevel, event: string, data?: Record<string, unknown>) =>
+    log(level, event, { ...baseFields, ...data });
+}
