@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
-import { log } from "../_shared/logger.ts";
+import { log, createLogger } from "../_shared/logger.ts";
 import { resolveAsaasEnv } from "../_shared/asaas-env.ts";
 
 const PLAN_MONTHLY_PRICE = parseFloat(Deno.env.get("PLAN_MONTHLY_PRICE") ?? "19.90");
@@ -13,6 +13,9 @@ const PLAN_ANNUAL_PRICE  = parseFloat(Deno.env.get("PLAN_ANNUAL_PRICE")  ?? "191
  * pelo webhook PAYMENT_RECEIVED/PAYMENT_CONFIRMED.
  */
 Deno.serve(async (req) => {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
+  const log = createLogger({ requestId });
+
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
