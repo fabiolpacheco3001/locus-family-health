@@ -344,6 +344,7 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     log("error", "asaas_webhook_unexpected_error", { error: error instanceof Error ? error.message : String(error) });
+    captureEdgeException(error, { functionName: "asaas-webhook", requestId });
     return new Response(
       JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: jsonHeaders }
