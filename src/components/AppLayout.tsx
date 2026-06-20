@@ -28,7 +28,7 @@ const InlineRouteLoader = () => (
 );
 
 const AppLayout = () => {
-  const { user, signOut } = useAuth();
+  const { user, session, signOut } = useAuth();
   const queryClient = useQueryClient();
   const { isLocked, isReady, hadInitialSession, unlock } = useAppLock();
   const { canUsePremium, isLoading: subLoading, subscription, implicitTrialExpired } = useSubscription();
@@ -53,7 +53,7 @@ const AppLayout = () => {
       return data ?? [];
     });
     prefetchIfEmpty(["family_members", user.id], async () => {
-      const { data } = await supabase.from("family_members").select("*").eq("user_id", user.id).is("deleted_at", null).order("created_at");
+      const { data } = await supabase.from("family_members").select("*").is("deleted_at", null).order("created_at");
       return data ?? [];
     });
     // Notifications prefetch removed — useNotifications handles its own group-aware fetch
@@ -80,8 +80,8 @@ const AppLayout = () => {
     };
   }, []);
 
-  // Show locked paywall if subscription is not premium-eligible
-  const showPaywall = !subLoading && user && !canUsePremium;
+  // Only show paywall after session is confirmed (prevents flash during JWT refresh)
+  const showPaywall = !subLoading && !!session && !canUsePremium;
 
   // ── App Lock: show logo while passkeys load (avoids content flash) ──────────
   // Only blocks render if session was restored from localStorage (not fresh login).
