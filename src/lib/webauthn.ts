@@ -179,6 +179,13 @@ export async function authenticatePasskey(): Promise<void> {
     throw new Error("Biometria não é suportada neste navegador ou dispositivo.");
   }
 
+  // Garante sessão válida antes de chamar a Edge Function
+  // (necessário após navegação de timeout ou retorno ao app)
+  const { error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) {
+    throw new Error("Sessão expirada. Faça login com e-mail e senha para continuar.");
+  }
+
   // 1. Fetch authentication options from edge function
   const { data: options, error: optErr } = await supabase.functions.invoke(
     "webauthn-challenge",
