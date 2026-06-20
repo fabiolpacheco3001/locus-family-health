@@ -1,166 +1,28 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate, useParams } from "react-router-dom";
 import useSmartBack from "@/hooks/useSmartBack";
-import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock, Share2 } from "lucide-react";
+import { ArrowLeft, Lock, Droplet, Weight, Ruler, Calculator, AlertTriangle, HeartPulse, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import MemberAvatar from "@/components/MemberAvatar";
 import ClinicalTimeline from "@/components/ClinicalTimeline";
 import { useClinicalTimeline } from "@/hooks/useClinicalTimeline";
-import type { FamilyMember } from "@/hooks/useFamilyMembers";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
-import { useFamilyMember } from "@/hooks/useFamilyMember";
+import { useProntuarioData } from "@/hooks/useProntuarioData";
 import { calculateAge } from "@/lib/dateUtils";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-// generateProntuarioPdf loaded on-demand (A13: ~250KB jspdf bundle excluded from initial load)
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
+import { ProntuarioExportButton } from "@/components/prontuario/ProntuarioExportButton";
 
 const Prontuario = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
+  const { isLoading: groupLoading } = useFamilyGroup();
   const { data: timeline = [], isLoading: timelineLoading } = useClinicalTimeline(id);
-  const [showPrivacyAlert, setShowPrivacyAlert] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [logoBase64, setLogoBase64] = useState<string | undefined>(undefined);
-
-  // Load logo as base64 for PDF
-  useEffect(() => {
-    fetch("/logo-locus-vita-pdf.png")
-      .then((r) => r.blob())
-      .then((blob) => {
-        const reader = new FileReader();
-        reader.onloadend = () => setLogoBase64(reader.result as string);
-        reader.readAsDataURL(blob);
-      })
-      .catch(() => {});
-  }, []);
-
-  // Fetch emitter's display name from family_members (own profile)
-  const { data: emitterProfile } = useQuery({
-    queryKey: ["emitter_profile", user?.id],
-    queryFn: async () => {
-      if (linkedMemberId) {
-        const { data } = await supabase
-          .from("family_members")
-          .select("name")
-          .eq("id", linkedMemberId)
-          .maybeSingle();
-        return data?.name || null;
-      }
-      return null;
-    },
-    enabled: !!user && !!linkedMemberId,
-  });
 
   useFamilyAccessGuard(id);
 
-  const { data: member, isLoading } = useFamilyMember(id);
-
-  const { data: allergies } = useQuery({
-    queryKey: ["allergies", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("allergies")
-        .select("id, substance, severity")
-        .eq("family_member_id", id!);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const { data: diseases } = useQuery({
-    queryKey: ["diseases", id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("diseases")
-        .select("id, name, category")
-        .eq("family_member_id", id!);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const handleExport = async () => {
-    setShowPrivacyAlert(false);
-    setExporting(true);
-    try {
-      const { generateProntuarioPdf } = await import("@/lib/generateProntuarioPdf");
-      const blob = generateProntuarioPdf({
-        member: {
-          name: member!.name,
-          birth_date: member!.birth_date,
-          blood_type: member!.blood_type,
-          weight: member!.weight,
-          height: member!.height,
-        },
-        allergies: (allergies || []).map((a) => ({ substance: a.substance, severity: a.severity })),
-        diseases: (diseases || []).map((d) => ({ name: d.name, category: d.category })),
-        timeline,
-        emitterName: emitterProfile || user?.user_metadata?.name || user?.email || "Usuário",
-        logoBase64,
-      });
-
-      const now = new Date();
-      const dd = String(now.getDate()).padStart(2, "0");
-      const mm = String(now.getMonth() + 1).padStart(2, "0");
-      const yyyy = now.getFullYear();
-      const hh = String(now.getHours()).padStart(2, "0");
-      const min = String(now.getMinutes()).padStart(2, "0");
-      const ss = String(now.getSeconds()).padStart(2, "0");
-      const fileName = `RES_${member!.name.replace(/\s+/g, "_")}_${dd}${mm}${yyyy}_${hh}${min}${ss}.pdf`;
-
-      if (navigator.share) {
-        const file = new File([blob], fileName, { type: "application/pdf" });
-        try {
-          await navigator.share({
-            files: [file],
-            title: "Prontuário Médico",
-            text: "Segue o resumo de saúde exportado do Locus Vita.",
-          });
-          return;
-        } catch (shareErr: any) {
-          if (shareErr?.name === "AbortError") return;
-          // fallback to download
-        }
-      }
-
-      // Fallback download
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("PDF gerado com sucesso!");
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao gerar o PDF.");
-    } finally {
-      setExporting(false);
-    }
-  };
+  const { member, allergies, diseases, isLoading } = useProntuarioData(id);
 
   if (isLoading || groupLoading) {
     return (
@@ -175,7 +37,7 @@ const Prontuario = () => {
   if (!member) {
     return (
       <div className="px-4 pt-6 text-center py-16">
-        <p className="text-foreground font-semibold"><p className="text-foreground font-semibold">Usuário não encontrado</p></p>
+        <p className="text-foreground font-semibold">Usuário não encontrado</p>
         <Button className="mt-4" onClick={() => navigate("/home")}>Voltar</Button>
       </div>
     );
@@ -206,39 +68,23 @@ const Prontuario = () => {
           <ArrowLeft size={22} />
         </Button>
         <h1 className="text-lg font-bold text-foreground flex-1">Prontuário (RES)</h1>
-        <Button
-          variant="ghost"
-          size="icon"
-          disabled={exporting || timelineLoading}
-          onClick={() => setShowPrivacyAlert(true)}
-        >
-          <Share2 size={20} className="text-primary" />
-        </Button>
+        <ProntuarioExportButton
+          member={{
+            name: member.name,
+            birth_date: member.birth_date,
+            blood_type: member.blood_type,
+            weight: member.weight,
+            height: member.height,
+          }}
+          allergies={(allergies || []).map((a) => ({ substance: a.substance, severity: a.severity }))}
+          diseases={(diseases || []).map((d) => ({ name: d.name, category: d.category }))}
+          timeline={timeline}
+          timelineLoading={timelineLoading}
+        />
       </div>
-
-      {/* LGPD Privacy Alert */}
-      <AlertDialog open={showPrivacyAlert} onOpenChange={setShowPrivacyAlert}>
-        <AlertDialogContent className="rounded-xl mx-4">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Lock size={18} className="text-destructive" />
-              Atenção: Dados Sensíveis
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              O documento a seguir contém informações médicas confidenciais. Você é o único responsável pelo compartilhamento seguro destes dados. Deseja prosseguir?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleExport}>Gerar Documento</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="p-4 pb-8 space-y-5">
-
-          {/* Security Banner */}
           <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-primary/5 border border-primary/10">
             <Lock className="text-primary shrink-0" size={16} />
             <p className="text-xs text-muted-foreground leading-snug">
@@ -246,7 +92,6 @@ const Prontuario = () => {
             </p>
           </div>
 
-          {/* Patient Identity */}
           <div className="rounded-xl bg-card border border-border/50 p-5">
             <div className="flex items-center gap-4 mb-5">
               <MemberAvatar avatarUrl={member.avatar_url} name={member.name} size="lg" memberType={member.member_type} />
@@ -259,7 +104,6 @@ const Prontuario = () => {
               </div>
             </div>
 
-            {/* Biometric Grid */}
             <div className="grid grid-cols-4 gap-2">
               {bioBlocks.map(({ icon: Icon, label, value }) => (
                 <div key={label} className="flex flex-col items-center text-center p-2.5 rounded-lg bg-muted/40">
@@ -271,7 +115,6 @@ const Prontuario = () => {
             </div>
           </div>
 
-          {/* Critical Alerts: Allergies */}
           <div className="rounded-xl bg-card border border-border/50 p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="text-destructive" size={18} />
@@ -294,7 +137,6 @@ const Prontuario = () => {
             )}
           </div>
 
-          {/* Critical Alerts: Chronic Diseases */}
           <div className="rounded-xl bg-card border border-border/50 p-5">
             <div className="flex items-center gap-2 mb-3">
               <HeartPulse className="text-primary" size={18} />
@@ -317,7 +159,6 @@ const Prontuario = () => {
             )}
           </div>
 
-          {/* Clinical Timeline */}
           <div>
             <div className="flex items-center gap-2 mb-4 mt-2">
               <Clock className="w-5 h-5 text-primary" />
@@ -332,7 +173,6 @@ const Prontuario = () => {
               <ClinicalTimeline events={timeline} />
             )}
           </div>
-
         </div>
       </div>
     </div>
