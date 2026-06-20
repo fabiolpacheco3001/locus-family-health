@@ -19,6 +19,7 @@ export interface Subscription {
 
 export function useSubscription() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: subscription, isLoading, refetch } = useQuery({
     queryKey: ["subscription", user?.id],
