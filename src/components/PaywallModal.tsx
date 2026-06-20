@@ -117,8 +117,12 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
           isFuture(new Date(sub.next_billing_date)));
 
       if (isActive) {
-        // Atualiza o cache diretamente — bypassa queryFn e dispara writeLocalCache
-        // via useEffect do useSubscription, persistindo no localStorage para cold starts.
+        // CRITICAL: parar polling e cancelar fetches em voo ANTES de setQueryData.
+        // Sem isso, o setInterval do startPolling pode disparar invalidateQueries
+        // milissegundos depois, iniciando um refetch que sobrescreve o cache ativo
+        // antes de stopPolling() ser chamado pelo auto-close effect — race condition.
+        stopPolling();
+        await queryClient.cancelQueries({ queryKey: ["subscription"], type: "all" });
         queryClient.setQueryData(["subscription", refreshed.session.user.id], sub);
         onOpenChange(false);
         toast.success("Assinatura confirmada! Bem-vindo ao Locus Vita Premium.");

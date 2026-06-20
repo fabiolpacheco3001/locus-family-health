@@ -61,9 +61,25 @@ export function useSubscription() {
     queryFn: async () => {
       if (!user?.id) return null;
 
-      // Garante JWT fresco antes de consultar — crítico para cold starts no iOS PWA
-      // onde o token pode estar expirado e o RLS bloquearia a query retornando null.
-      await supabase.auth.getSession();
+      // Garante JWT fresco — usa refreshSession apenas se o token expira em < 5 min.
+      // getSession() não garante renovação real em iOS PWA cold starts; refreshSession()
+      // force-renova via rede. Evitamos chamar no caso normal para não sobrecarregar o
+      // polling de 15s de usuários não-premium.
+      const { data: sessionData } = await supabase.auth.getSession();
+      const expiresAt = sessionData?.session?.expires_at ?? 0;
+      const secondsUntilExpiry = expiresAt - Math.floor(Date.now() / 1000);
+      if (secondsUntilExpiry < 300) {
+        // Token expira em < 5 min (ou já expirou) — força renovação real via rede
+        const { error: refreshErr } = await supabase.auth.refreshSession();
+        if (refreshErr) {
+          // Falha de rede/auth — preserva cache ativo para não derrubar usuário premium
+          const fallback = queryClient.getQueryData(["subscription", user.id]) as { status?: string } | null;
+          if (fallback?.status === "active" || fallback?.status === "trialing") {
+            return fallback as unknown as Subscription;
+          }
+          return null;
+        }
+      }
 
       // Sticky active: se já temos subscription ativa em cache, preservamos
       // durante falhas transitórias (ex: janela de refresh do JWT do Supabase)
@@ -130,11 +146,14 @@ export function useSubscription() {
     // Without this, the query fires with a cached (possibly expired) JWT from
     // localStorage, RLS returns null, canUsePremium flips false, PaywallModal flashes.
     enabled: !!user?.id && !!session,
-    // Use localStorage cache as initial data so the UI never flashes "no subscription"
-    // on fresh app load while the query is in flight.
+    // Use localStorage cache as initial data so a UI nunca pisca "sem assinatura"
+    // no cold start enquanto a query ainda não resolveu.
     initialData: localCache,
-    // Mark initialData as immediately stale so a background fetch always runs to confirm
-    initialDataUpdatedAt: localCache ? 0 : undefined,
+    // NÃO usar initialDataUpdatedAt: 0. Isso causava race condition crítica:
+    // forçava background refetch imediato, que disparava antes do JWT estar fresco
+    // (iOS PWA cold start), RLS retornava null, clearLocalCache() era chamado e o
+    // PaywallModal abria para usuários com assinatura ativa. A confirmação ocorre
+    // no próximo refetch natural (window focus ou staleTime de 5min).
     // 5-min stale time: prevents refetchOnWindowFocus from triggering too often
     staleTime: 5 * 60 * 1000,
     // Poll every 15 s while the user has no premium access (e.g., waiting for webhook after payment)
