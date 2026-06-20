@@ -305,7 +305,7 @@ const Consultas = () => {
         ) : (
           <div className="flex flex-col space-y-3">
             <AnimatePresence mode="popLayout">
-              {consultasFiltradas.map((c) => {
+              {visibleConsultas.map((c) => {
                 const isAgendada = c.status === 'Agendada';
                 return (
                   <SwipeableActionCard
