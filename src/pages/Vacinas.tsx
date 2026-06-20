@@ -509,11 +509,7 @@ const Vacinas = () => {
         ) : (
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {[...vaccines].sort((a, b) => {
-                const dateA = a.applied_date || a.created_at;
-                const dateB = b.applied_date || b.created_at;
-                return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
-              }).map((v) => (
+              {visibleVaccines.map((v) => (
                 <ExamSwipeableCard
                   key={v.id}
                   onDelete={() => handleSwipeDelete(v.id)}
@@ -551,6 +547,18 @@ const Vacinas = () => {
                 </ExamSwipeableCard>
               ))}
             </AnimatePresence>
+            {hasMore && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <Loader2 className="animate-spin" size={16} /> : "Carregar mais"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
