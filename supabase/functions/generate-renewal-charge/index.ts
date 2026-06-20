@@ -76,6 +76,8 @@ Deno.serve(async (req) => {
     }
 
     const results: Array<Record<string, unknown>> = [];
+    let successCount = 0;
+    let failedCount = 0;
 
     for (const sub of subscriptions ?? []) {
       let creds;
@@ -84,6 +86,12 @@ Deno.serve(async (req) => {
       } catch (_e) {
         log("error", "renewal_env_unavailable", { userId: sub.user_id });
         results.push({ userId: sub.user_id, status: "skipped", reason: "env_unavailable" });
+        failedCount++;
+        await adminClient.from("renewal_failures").insert({
+          user_id: sub.user_id,
+          subscription_id: sub.asaas_customer_id ?? null,
+          reason: "env_unavailable",
+        });
         continue;
       }
 
@@ -115,19 +123,53 @@ Deno.serve(async (req) => {
         if (!res.ok) {
           log("error", "renewal_charge_failed", { userId: sub.user_id, env: creds.env, status: res.status, body: payment });
           results.push({ userId: sub.user_id, status: "failed" });
+          failedCount++;
+          await adminClient.from("renewal_failures").insert({
+            user_id: sub.user_id,
+            subscription_id: sub.asaas_customer_id ?? null,
+            reason: `http_${res.status}: ${payment?.errors?.[0]?.description ?? "unknown"}`,
+          });
         } else {
           log("info", "renewal_charge_created", { userId: sub.user_id, env: creds.env, paymentId: payment.id });
           results.push({ userId: sub.user_id, status: "created", paymentId: payment.id });
+          successCount++;
         }
       } catch (err) {
         log("error", "renewal_charge_exception", { userId: sub.user_id, error: err instanceof Error ? err.message : String(err) });
         results.push({ userId: sub.user_id, status: "exception" });
+        failedCount++;
+        await adminClient.from("renewal_failures").insert({
+          user_id: sub.user_id,
+          subscription_id: sub.asaas_customer_id ?? null,
+          reason: `exception: ${err instanceof Error ? err.message : String(err)}`,
+        });
       }
     }
 
+    // RX-32 · log do cron
+    const total = results.length;
+    await adminClient.from("cron_job_log").insert({
+      job_name: "generate-renewal-charge",
+      status: failedCount > 0 ? "error" : "ok",
+      detail: failedCount > 0
+        ? `${failedCount} falha(s) de ${total} usuários processados`
+        : `${successCount} usuário(s) renovados com sucesso`,
+      rows_affected: successCount,
+    });
+
+    // RX-33 · HTTP 207 Multi-Status quando há falhas parciais
+    const httpStatus = failedCount > 0 ? 207 : 200;
     return new Response(
-      JSON.stringify({ processed: results.length, results }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        processed: total,
+        success: successCount,
+        failed: failedCount,
+        results,
+        message: failedCount > 0
+          ? `${failedCount} cobrança(s) agendada(s) para retry automático`
+          : "Todas as cobranças processadas com sucesso",
+      }),
+      { status: httpStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     log("error", "generate_renewal_charge_error", { error: err instanceof Error ? err.message : String(err) });
