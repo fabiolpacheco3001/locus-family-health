@@ -107,7 +107,7 @@ export function useSubscription() {
       const [{ data: ownSub, error }, { data: membership }] = await Promise.all([
         supabase
           .from("subscriptions")
-          .select("*")
+          .select("id, user_id, asaas_customer_id, plan_type, status, trial_end, next_billing_date, created_at, updated_at, asaas_subscription_id, test_mode, asaas_payment_id")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
