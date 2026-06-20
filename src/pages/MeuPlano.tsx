@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useFamilyMembers } from "@/hooks/useFamilyMembers";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import { withTimeout, PAYMENT_TIMEOUT_MS } from "@/lib/withTimeout";
@@ -41,6 +43,11 @@ const MeuPlano = () => {
     implicitTrialExpired,
     isLoading,
   } = useSubscription();
+
+  const { members } = useFamilyMembers();
+  const { linkedMemberId } = useFamilyGroup();
+  // PROD-01 guard: check if user has CPF filled for Asaas anti-fraud
+  const hasCpf = !!members?.find((m) => m.id === linkedMemberId)?.cpf;
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -79,6 +86,12 @@ const MeuPlano = () => {
       : "bg-gradient-to-r from-slate-700 to-slate-600";
 
   const handleRegularize = async () => {
+    if (!hasCpf) {
+      toast.warning(
+        "Preencha seu CPF em Ajustes → Meus Dados para garantir aprovação do pagamento.",
+        { duration: 6000 }
+      );
+    }
     setLoadingSubscription(true);
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
@@ -143,6 +156,12 @@ const MeuPlano = () => {
   };
 
   const handleReactivate = async () => {
+    if (!hasCpf) {
+      toast.warning(
+        "Preencha seu CPF em Ajustes → Meus Dados para garantir aprovação do pagamento.",
+        { duration: 6000 }
+      );
+    }
     setLoadingSubscription(true);
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
