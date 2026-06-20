@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { captureException } from "@/lib/sentry";
 
 export async function createSubscription(planType: "monthly" | "annual"): Promise<string> {
   const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
@@ -23,12 +24,12 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
     responseData = result.data;
     responseError = result.error;
   } catch (invokeErr: any) {
-    console.error("Error invoking checkout function:", invokeErr);
+    captureException(invokeErr, { context: "asaasService.createSubscription.invoke", planType });
     throw new Error("Não foi possível conectar ao servidor de pagamento. Tente novamente.");
   }
 
   if (responseError) {
-    console.error("Error creating checkout:", responseError);
+    captureException(responseError, { context: "asaasService.createSubscription.response", planType });
     let detail = "";
     try {
       if (responseData && typeof responseData === "object") {
