@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
 import { TRIAL_DAYS } from "@/lib/constants";
-import { Rocket, Loader2, LogOut } from "lucide-react";
+import { Rocket, Loader2, LogOut, CheckCircle2, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { createSubscription } from "@/services/asaasService";
 import { withTimeout, PAYMENT_TIMEOUT_MS } from "@/lib/withTimeout";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
 
 interface PaywallModalProps {
@@ -26,11 +28,69 @@ interface PaywallModalProps {
 
 const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpired }: PaywallModalProps) => {
   const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
+  const [awaitingPayment, setAwaitingPayment] = useState(false);
+  const [checkCount, setCheckCount] = useState(0);
+  const queryClient = useQueryClient();
+  const { canUsePremium } = useSubscription();
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const MAX_POLLS = 24; // 2 minutos (24 × 5s)
+
+  // Quando subscription fica ativa enquanto aguardando pagamento, fecha o modal
+  useEffect(() => {
+    if (awaitingPayment && canUsePremium) {
+      stopPolling();
+      toast.success("Assinatura confirmada! Bem-vindo ao Locus Vita Premium.");
+      onOpenChange(false);
+    }
+  }, [awaitingPayment, canUsePremium]);
+
+  // Limpa o polling quando o modal fecha
+  useEffect(() => {
+    if (!open) {
+      stopPolling();
+      setAwaitingPayment(false);
+      setCheckCount(0);
+    }
+  }, [open]);
+
+  const stopPolling = () => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  };
+
+  const startPolling = () => {
+    setAwaitingPayment(true);
+    setCheckCount(0);
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      setCheckCount(prev => {
+        const next = prev + 1;
+        if (next >= MAX_POLLS) {
+          stopPolling();
+          setAwaitingPayment(false);
+          toast.info("Não detectamos a confirmação do pagamento. Se você pagou, tente verificar manualmente.");
+        }
+        return next;
+      });
+      // Invalida o cache para forçar refetch
+      await queryClient.invalidateQueries({ queryKey: ["subscription"] });
+    }, 5000);
+  };
+
+  const handleVerifyManually = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["subscription"] });
+    if (canUsePremium) {
+      onOpenChange(false);
+      toast.success("Assinatura confirmada!");
+    } else {
+      toast.info("Assinatura ainda não confirmada. Aguarde alguns instantes e tente novamente.");
+    }
+  };
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
     setLoadingPlan(planType);
-    // Open blank window synchronously (before async) to avoid popup blocker.
-    // On iOS PWA standalone, window.open may return null — falls back to location.href.
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const url = await withTimeout(
@@ -43,6 +103,8 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
       } else {
         window.location.href = url;
       }
+      // Inicia polling para detectar confirmação do pagamento
+      startPolling();
     } catch (err) {
       if (checkoutWindow) checkoutWindow.close();
       toast.error(err instanceof Error ? err.message : "Erro ao gerar link de pagamento. Tente novamente.");
@@ -59,61 +121,94 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
         onEscapeKeyDown={locked ? (e) => e.preventDefault() : undefined}
         hideCloseButton={locked}
       >
-        <DialogHeader className="items-center text-center space-y-3">
-          <div className="w-16 h-16 rounded-full bg-accent/15 flex items-center justify-center mx-auto">
-            <Rocket size={32} className="text-accent" />
+        {awaitingPayment ? (
+          /* Estado: aguardando confirmação do Asaas */
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <div className="w-16 h-16 rounded-full bg-accent/15 flex items-center justify-center">
+              <Loader2 size={32} className="text-accent animate-spin" />
+            </div>
+            <div className="space-y-1.5">
+              <p className="font-bold text-foreground">Aguardando confirmação...</p>
+              <p className="text-sm text-muted-foreground">
+                Finalize o pagamento na janela que abriu. Detectaremos automaticamente quando for confirmado.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              className="w-full h-11 rounded-xl text-sm font-medium"
+              onClick={handleVerifyManually}
+            >
+              <RefreshCw size={16} className="mr-2" />
+              Já paguei — Verificar agora
+            </Button>
+            <Button
+              variant="ghost"
+              className="text-xs text-muted-foreground"
+              onClick={() => { stopPolling(); setAwaitingPayment(false); }}
+            >
+              Voltar à seleção de planos
+            </Button>
           </div>
-          <DialogTitle className="text-xl font-bold text-foreground">
-            Eleve a saúde da sua família
-          </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground text-center leading-relaxed">
-            {implicitTrialExpired
-              ? `Seus ${TRIAL_DAYS} dias de teste gratuito terminaram. Assine para continuar cuidando da saúde da sua família.`
-              : "Seu período de avaliação terminou ou há pendências no seu plano. Assine o Locus Vita para continuar usando nossas tecnologias premium."}
-          </DialogDescription>
-        </DialogHeader>
+        ) : (
+          /* Estado: seleção de plano */
+          <>
+            <DialogHeader className="items-center text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-accent/15 flex items-center justify-center mx-auto">
+                <Rocket size={32} className="text-accent" />
+              </div>
+              <DialogTitle className="text-xl font-bold text-foreground">
+                Eleve a saúde da sua família
+              </DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground text-center leading-relaxed">
+                {implicitTrialExpired
+                  ? `Seus ${TRIAL_DAYS} dias de teste gratuito terminaram. Assine para continuar cuidando da saúde da sua família.`
+                  : "Seu período de avaliação terminou ou há pendências no seu plano. Assine o Locus Vita para continuar usando nossas tecnologias premium."}
+              </DialogDescription>
+            </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <Button
-            onClick={() => handleSubscribe("monthly")}
-            disabled={!!loadingPlan}
-            className="h-14 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
-          >
-            {loadingPlan === "monthly" ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              <>
-                <span className="text-xs font-medium opacity-80">Mensal</span>
-                <span className="text-base font-bold">{PLAN_MONTHLY_DISPLAY}</span>
-              </>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <Button
+                onClick={() => handleSubscribe("monthly")}
+                disabled={!!loadingPlan}
+                className="h-14 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg"
+              >
+                {loadingPlan === "monthly" ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>
+                    <span className="text-xs font-medium opacity-80">Mensal</span>
+                    <span className="text-base font-bold">{PLAN_MONTHLY_DISPLAY}</span>
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={() => handleSubscribe("annual")}
+                disabled={!!loadingPlan}
+                className="h-14 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-lg"
+              >
+                {loadingPlan === "annual" ? (
+                  <Loader2 className="animate-spin" size={20} />
+                ) : (
+                  <>
+                    <span className="text-xs font-medium opacity-80">Anual</span>
+                    <span className="text-base font-bold">{PLAN_ANNUAL_DISPLAY}</span>
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {locked && onLogout && (
+              <Button
+                variant="ghost"
+                className="mt-3 w-full text-muted-foreground"
+                onClick={onLogout}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair da conta
+              </Button>
             )}
-          </Button>
-
-          <Button
-            onClick={() => handleSubscribe("annual")}
-            disabled={!!loadingPlan}
-            className="h-14 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-lg"
-          >
-            {loadingPlan === "annual" ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              <>
-                <span className="text-xs font-medium opacity-80">Anual</span>
-                <span className="text-base font-bold">{PLAN_ANNUAL_DISPLAY}</span>
-              </>
-            )}
-          </Button>
-        </div>
-
-        {locked && onLogout && (
-          <Button
-            variant="ghost"
-            className="mt-3 w-full text-muted-foreground"
-            onClick={onLogout}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sair da conta
-          </Button>
+          </>
         )}
       </DialogContent>
     </Dialog>
