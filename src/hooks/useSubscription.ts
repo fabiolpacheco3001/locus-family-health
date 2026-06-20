@@ -26,6 +26,11 @@ export function useSubscription() {
     queryFn: async () => {
       if (!user?.id) return null;
 
+      // Sticky active: se já temos subscription ativa em cache, preservamos
+      // durante falhas transitórias (ex: janela de refresh do JWT do Supabase)
+      const cachedSub = queryClient.getQueryData(["subscription", user.id]) as { status?: string } | null;
+      const hadActiveCached = cachedSub?.status === "active" || cachedSub?.status === "trialing";
+
       // M5: Run Q1 (own subscription) and Q2 (family membership) in parallel —
       // they're independent; saves one round-trip for non-active subscribers.
       const [{ data: ownSub, error }, { data: membership }] = await Promise.all([
