@@ -20,7 +20,7 @@ export interface Subscription {
 export function useSubscription() {
   const { user } = useAuth();
 
-  const { data: subscription, isLoading } = useQuery({
+  const { data: subscription, isLoading, refetch } = useQuery({
     queryKey: ["subscription", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -72,6 +72,14 @@ export function useSubscription() {
       return (ownSub as Subscription | null) ?? null;
     },
     enabled: !!user?.id,
+    // Poll every 15 s while the user has no premium access (e.g., waiting for webhook)
+    // Stops polling once canUsePremium is true (refetchInterval returns false)
+    refetchInterval: (query) => {
+      const sub = query.state.data as { status?: string } | null | undefined;
+      const isPremium = sub?.status === "active" || sub?.status === "trialing";
+      return isPremium ? false : 15_000;
+    },
+    refetchIntervalInBackground: false,
   });
 
   const isSuspended = subscription?.status === "suspended";
@@ -125,6 +133,7 @@ export function useSubscription() {
   return {
     subscription,
     isLoading,
+    refetch,
     isTrialing: isTrialing || isImplicitTrial,
     isActive,
     isPastDue,

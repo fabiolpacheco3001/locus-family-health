@@ -198,15 +198,27 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
               </Button>
             </div>
 
-            {locked && onLogout && (
-              <Button
-                variant="ghost"
-                className="mt-3 w-full text-muted-foreground"
-                onClick={onLogout}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair da conta
-              </Button>
+            {locked && (
+              <div className="mt-3 flex flex-col gap-2">
+                <Button
+                  variant="outline"
+                  className="w-full h-11 rounded-xl text-sm font-medium"
+                  onClick={handleVerifyManually}
+                >
+                  <RefreshCw size={16} className="mr-2" />
+                  Verificar minha assinatura
+                </Button>
+                {onLogout && (
+                  <Button
+                    variant="ghost"
+                    className="w-full text-muted-foreground"
+                    onClick={onLogout}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sair da conta
+                  </Button>
+                )}
+              </div>
             )}
           </>
         )}
