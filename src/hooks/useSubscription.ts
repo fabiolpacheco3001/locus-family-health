@@ -40,13 +40,17 @@ function readLocalCache(): Subscription | undefined {
 function writeLocalCache(sub: Subscription) {
   try {
     localStorage.setItem(LOCAL_SUB_KEY, JSON.stringify({ ...sub, _cachedAt: Date.now() }));
-  } catch {}
+  } catch {
+    // localStorage unavailable (e.g., private browsing) — safe to ignore
+  }
 }
 
 function clearLocalCache() {
   try {
     localStorage.removeItem(LOCAL_SUB_KEY);
-  } catch {}
+  } catch {
+    // localStorage unavailable — safe to ignore
+  }
 }
 
 export function useSubscription() {
