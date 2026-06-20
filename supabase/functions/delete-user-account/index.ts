@@ -334,6 +334,7 @@ Deno.serve(async (req) => {
     return json({ success: true });
   } catch (err) {
     log("error", "delete_user_unexpected_error", { error: err instanceof Error ? err.message : String(err) });
+    captureEdgeException(err, { functionName: "delete-user-account", requestId });
     return json({ error: "Erro interno. Tente novamente ou entre em contato com o suporte." }, 500);
   }
 });
