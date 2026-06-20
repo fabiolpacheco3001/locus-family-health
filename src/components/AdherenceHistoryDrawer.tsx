@@ -400,7 +400,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
                         ticks={[0, 25, 50, 75, 100]}
                       />
                       <Tooltip
-                        formatter={(value: number) => [`${value}%`, "Adesão"]}
+                        formatter={(value) => [`${Number(value)}%`, "Adesão"]}
                         contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid hsl(var(--border))" }}
                         cursor={{ fill: "hsl(var(--muted))", radius: 4 }}
                       />
