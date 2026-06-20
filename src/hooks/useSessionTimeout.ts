@@ -1,9 +1,8 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Tempo de inatividade antes de revogar a sessão Supabase (60 minutos)
+// Tempo de inatividade antes de bloquear a sessão (60 minutos)
 const SESSION_TIMEOUT_MS = 60 * 60 * 1000;
 
 // Eventos que contam como "atividade do usuário"
@@ -11,11 +10,10 @@ const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scr
 
 /**
  * Após SESSION_TIMEOUT_MS de inatividade real (sem nenhuma interação),
- * revoga o token Supabase e redireciona para login.
- *
- * Diferente do app lock (que apenas bloqueia a UI):
- * - App lock: 5 min → tela bloqueada, token ativo, biometria desbloqueia
- * - Session timeout: 60 min → token REVOGADO, precisa fazer login novamente
+ * redireciona para login. A sessão Supabase NÃO é revogada — o refresh
+ * token permanece válido para que o Face ID / biometria continue
+ * funcionando ao retornar ao app. O app lock (5 min) cuida do bloqueio
+ * de UI antes desse timeout.
  */
 export function useSessionTimeout(enabled = true) {
   const navigate = useNavigate();
@@ -23,10 +21,9 @@ export function useSessionTimeout(enabled = true) {
 
   const resetTimer = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(async () => {
-      await supabase.auth.signOut();
-      toast.info("Sessão encerrada por inatividade. Faça login novamente.", {
-        duration: 5000,
+    timerRef.current = setTimeout(() => {
+      toast.info("Sessão bloqueada por inatividade.", {
+        duration: 4000,
       });
       navigate("/");
     }, SESSION_TIMEOUT_MS);
