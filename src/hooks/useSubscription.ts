@@ -48,7 +48,9 @@ function writeLocalCache(sub: Subscription) {
 function clearLocalCache() {
   try {
     localStorage.removeItem(LOCAL_SUB_KEY);
-  } catch {}
+  } catch {
+    // localStorage unavailable — safe to ignore
+  }
 }
 
 export function useSubscription() {
