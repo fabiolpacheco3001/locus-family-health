@@ -1,17 +1,17 @@
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { ArrowLeft, Pill, Clock, ChevronRight, Stethoscope, CalendarPlus, CalendarCheck, CalendarClock, CheckCircle, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMedications, Medication } from "@/hooks/useMedications";
+import { type Medication } from "@/hooks/useMedications";
 import AddMedicationDrawer from "@/components/AddMedicationDrawer";
 import MedicationActionDrawer from "@/components/MedicationActionDrawer";
 import AiMedicationUpload from "@/components/AiMedicationUpload";
 import FixedFAB from "@/components/ui/FixedFAB";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
 import useSmartBack from "@/hooks/useSmartBack";
-import { format, isPast, startOfYesterday } from "date-fns";
+import { format } from "date-fns";
 import { AlertCircle } from "lucide-react";
 import { ptBR } from "date-fns/locale";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
@@ -21,15 +21,12 @@ import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MedicationDoseActions } from "@/components/agenda/MedicationDoseActions";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { advancePastTakenDoses } from "@/lib/advancePastTakenDoses";
+import { useMedicationPageData } from "@/hooks/useMedicationPageData";
 
 const Medicamentos = () => {
   const { id } = useParams();
   const goBack = useSmartBack();
-  const navigate = useNavigate();
-  const { isAdmin, linkedMemberId, managedProfiles, isLoading: groupLoading } = useFamilyGroup();
+  const { isAdmin, managedProfiles } = useFamilyGroup();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [actionDrawerOpen, setActionDrawerOpen] = useState(false);
   const [aiUploadOpen, setAiUploadOpen] = useState(false);
@@ -38,79 +35,27 @@ const Medicamentos = () => {
   const [abaAtiva, setAbaAtiva] = useState<'ativos' | 'historico'>('ativos');
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const { medications, isLoading, addMedication, updateMedication, deleteMedication } = useMedications(id!);
-
-  // Fetch dose statuses for active medications
-  const activeMedIds = useMemo(() => medications.filter(m => m.status === 'Ativo').map(m => m.id), [medications]);
-  const { data: medDoseStatuses = {} } = useQuery({
-    queryKey: ["medication_doses_list", activeMedIds],
-    queryFn: async () => {
-      if (activeMedIds.length === 0) return {};
-      // Limit to last 7 days to avoid Supabase 1000-row truncation on high-volume patients.
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const { data, error } = await supabase
-        .from("medication_doses")
-        .select("medication_id, scheduled_for, status")
-        .in("medication_id", activeMedIds)
-        .gte("scheduled_for", sevenDaysAgo.toISOString());
-      if (error) throw error;
-      const map: Record<string, "taken" | "skipped"> = {};
-      for (const d of (data ?? [])) {
-        const key = `${d.medication_id}-${new Date(d.scheduled_for).toISOString()}`;
-        map[key] = d.status as "taken" | "skipped";
-      }
-      return map;
-    },
-    enabled: activeMedIds.length > 0,
-    staleTime: 30 * 1000,
-  });
 
   useFamilyAccessGuard(id);
 
-  // Pre-compute effectiveScheduledFor for active meds for correct sorting
-  const activeMedsWithEffective = useMemo(() => {
-    return medications.filter(m => m.status === 'Ativo').map((m) => {
-      const dateOnly = m.start_date?.slice(0, 10);
-      let startDateISO: string | null = null;
-      if (dateOnly && m.start_time) {
-        startDateISO = `${dateOnly}T${m.start_time}`;
-      } else if (dateOnly) {
-        startDateISO = dateOnly;
-      }
-      const safeTimes = Array.isArray(m.specific_times) ? (m.specific_times as string[]) : [];
-      const safeDays = Array.isArray(m.specific_days) ? (m.specific_days as number[]) : [];
-      const nextDoseDate = advancePastTakenDoses({
-        medicationId: m.id,
-        startDateISO,
-        frequencyHours: m.frequency_hours,
-        endDate: m.end_date,
-        referenceTime: startOfYesterday(),
-        frequencyType: m.frequency_type,
-        specificTimes: safeTimes,
-        specificDays: safeDays,
-        doseStatuses: medDoseStatuses,
-      });
-      let scheduledFor: string | null = null;
-      if (nextDoseDate) {
-        scheduledFor = nextDoseDate.toISOString();
-      }
-      const isOverdue = nextDoseDate ? isPast(nextDoseDate) : false;
-      const doseKey = scheduledFor ? `${m.id}-${scheduledFor}` : null;
-      const doseStatus: "taken" | "skipped" | null = doseKey ? (medDoseStatuses[doseKey] ?? null) : null;
-      return { med: m, nextDoseDate, scheduledFor, isOverdue, doseStatus, effectiveScheduledFor: scheduledFor };
-    });
-  }, [medications, medDoseStatuses]);
+  const {
+    medications,
+    inactiveMedications,
+    activeMedsWithEffective,
+    isLoading,
+    addMedication,
+    updateMedication,
+    deleteMedication,
+  } = useMedicationPageData(id!);
 
   const medicamentosFiltrados = useMemo(() => {
     if (abaAtiva === 'historico') {
-      return [...medications.filter(m => m.status === 'Concluído')].sort((a, b) => {
+      return [...inactiveMedications].sort((a, b) => {
         const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
         const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
         return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
       });
     }
-    // For active tab, sort by effectiveScheduledFor
     const sorted = [...activeMedsWithEffective].sort((a, b) => {
       if (!a.effectiveScheduledFor && !b.effectiveScheduledFor) return 0;
       if (!a.effectiveScheduledFor) return 1;
@@ -119,7 +64,8 @@ const Medicamentos = () => {
       return sortOrder === 'asc' ? diff : -diff;
     });
     return sorted.map(s => s.med);
-  }, [medications, abaAtiva, sortOrder, activeMedsWithEffective]);
+  }, [inactiveMedications, abaAtiva, sortOrder, activeMedsWithEffective]);
+
 
   const handleOpenEdit = (m: Medication) => {
     setEditingMedication(m);
