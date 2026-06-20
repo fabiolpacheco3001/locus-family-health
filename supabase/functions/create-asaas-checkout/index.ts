@@ -96,22 +96,41 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 1b. Resolve CPF from the user's family_member profile
-    let cpfCnpj = "00000000191";
+    // 1b. Resolve billing info from the user's family_member profile.
+    // PROD-01: CPF real (antifraude Asaas — obrigatório em produção)
+    // PROD-02: phone, postal_code, address_number (antifraude Asaas)
+    let cpfCnpj       = "00000000191"; // fallback — inválido em prod, dispara warn
+    let billingPhone   = "11999999999"; // fallback numérico mínimo
+    let postalCode     = "01310100";    // fallback — CEP da Av. Paulista
+    let addressNumber  = "1";           // fallback mínimo
+
     const { data: fgm } = await adminClient
       .from("family_group_members")
       .select("family_member_id")
       .eq("auth_user_id", userId)
       .maybeSingle();
+
     if (fgm?.family_member_id) {
       const { data: fm } = await adminClient
         .from("family_members")
-        .select("cpf")
+        .select("cpf, phone, postal_code, address_number")
         .eq("id", fgm.family_member_id)
         .maybeSingle();
-      if (fm?.cpf) {
-        cpfCnpj = fm.cpf.replace(/\D/g, "");
+
+      if (fm) {
+        if (fm.cpf)            cpfCnpj      = fm.cpf.replace(/\D/g, "");
+        if (fm.phone)          billingPhone  = fm.phone.replace(/\D/g, "");
+        if (fm.postal_code)    postalCode    = fm.postal_code.replace(/\D/g, "");
+        if (fm.address_number) addressNumber = fm.address_number;
       }
+    }
+
+    // Warn when falling back to placeholder values — indicates incomplete profile
+    if (cpfCnpj === "00000000191") {
+      log("warn", "checkout_cpf_fallback", { userId, hint: "user has no CPF in family_members" });
+    }
+    if (postalCode === "01310100") {
+      log("warn", "checkout_address_fallback", { userId, hint: "user has no postal_code in family_members" });
     }
 
     const parsed = BodySchema.safeParse(await req.json());
@@ -174,9 +193,9 @@ Deno.serve(async (req) => {
           name: userName,
           email: userEmail,
           cpfCnpj,
-          postalCode: "01310100",
-          addressNumber: "1",
-          phone: "11999999999",
+          postalCode,
+          addressNumber,
+          phone: billingPhone,
         },
       }),
     });
