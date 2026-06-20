@@ -15,15 +15,18 @@ Deno.serve(async (req) => {
     });
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!supabaseUrl) throw new Error("[manage-admins] Missing env: SUPABASE_URL");
+    if (!serviceRoleKey) throw new Error("[manage-admins] Missing env: SUPABASE_SERVICE_ROLE_KEY");
+    if (!anonKey) throw new Error("[manage-admins] Missing env: SUPABASE_ANON_KEY");
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // Verify caller
     const authHeader = req.headers.get("authorization");
     if (!authHeader) return json({ error: "Unauthorized" }, 401);
 
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const callerClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
