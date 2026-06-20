@@ -165,11 +165,19 @@ Deno.serve(async (req) => {
       method: "POST",
       body: JSON.stringify({
         customer: customerId,
-        billingType: "UNDEFINED",
+        billingType: "CREDIT_CARD",
         value: plan.value,
         dueDate: todayStr,
         description: plan.description,
         externalReference: userId,
+        creditCardHolderInfo: {
+          name: userName,
+          email: userEmail,
+          cpfCnpj,
+          postalCode: "01310100",
+          addressNumber: "1",
+          phone: "11999999999",
+        },
       }),
     });
 
@@ -200,8 +208,13 @@ Deno.serve(async (req) => {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     log("error", "create_checkout_unexpected_error", { error: msg });
+    // Retornar a mensagem real do Asaas no campo debug para diagnóstico
+    const isAsaasError = msg.startsWith("asaas_error:");
     return new Response(
-      JSON.stringify({ error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte." }),
+      JSON.stringify({
+        error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte.",
+        debug: isAsaasError ? msg : undefined,
+      }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
