@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
 import { TRIAL_DAYS } from "@/lib/constants";
 import { Rocket, Loader2, LogOut, CheckCircle2, RefreshCw } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { isFuture } from "date-fns";
 import {
   Dialog,
   DialogContent,
