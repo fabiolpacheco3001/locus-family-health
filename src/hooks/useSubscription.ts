@@ -1,7 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "./useAuth";
 import { isFuture } from "date-fns";
+import { useEffect } from "react";
+
+const LOCAL_SUB_KEY = "lv_sub_cache";
 
 export interface Subscription {
   id: string;
@@ -17,9 +20,41 @@ export interface Subscription {
   updated_at: string;
 }
 
+/** Read a valid active subscription from localStorage (max 24h cache, must have future billing date). */
+function readLocalCache(): Subscription | undefined {
+  try {
+    const raw = localStorage.getItem(LOCAL_SUB_KEY);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw) as Subscription & { _cachedAt: number };
+    if (parsed.status !== "active" && parsed.status !== "trialing") return undefined;
+    // Cache expires after 24 hours
+    if (Date.now() - (parsed._cachedAt ?? 0) > 24 * 60 * 60 * 1000) return undefined;
+    // Subscription itself must still be valid
+    if (parsed.next_billing_date && !isFuture(new Date(parsed.next_billing_date))) return undefined;
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
+
+function writeLocalCache(sub: Subscription) {
+  try {
+    localStorage.setItem(LOCAL_SUB_KEY, JSON.stringify({ ...sub, _cachedAt: Date.now() }));
+  } catch {}
+}
+
+function clearLocalCache() {
+  try {
+    localStorage.removeItem(LOCAL_SUB_KEY);
+  } catch {}
+}
+
 export function useSubscription() {
   const { user, session } = useAuth();
   const queryClient = useQueryClient();
+
+  // Read localStorage cache once (synchronous, before query runs)
+  const localCache = readLocalCache();
 
   const { data: subscription, isLoading, refetch } = useQuery({
     queryKey: ["subscription", user?.id],
@@ -45,6 +80,7 @@ export function useSubscription() {
           .eq("auth_user_id", user.id)
           .maybeSingle(),
       ]);
+
       if (error) {
         // Se falhou mas tínhamos subscription ativa, retorna o cache
         // (previne PaywallModal durante janela de refresh do JWT)
@@ -73,8 +109,6 @@ export function useSubscription() {
 
         if (group?.created_by && group.created_by !== user.id) {
           // Use SECURITY DEFINER RPC that returns only non-sensitive columns
-          // (no credit_card_token / asaas_customer_id). The family-member RLS
-          // policy on subscriptions was removed to prevent token exposure.
           const { data: ownerSubRows } = await supabase
             .rpc("get_owner_subscription_safe", { _owner_id: group.created_by });
           const ownerSub = Array.isArray(ownerSubRows) ? ownerSubRows[0] : null;
@@ -92,7 +126,14 @@ export function useSubscription() {
     // Without this, the query fires with a cached (possibly expired) JWT from
     // localStorage, RLS returns null, canUsePremium flips false, PaywallModal flashes.
     enabled: !!user?.id && !!session,
-    // Poll every 15 s while the user has no premium access (e.g., waiting for webhook)
+    // Use localStorage cache as initial data so the UI never flashes "no subscription"
+    // on fresh app load while the query is in flight.
+    initialData: localCache,
+    // Mark initialData as immediately stale so a background fetch always runs to confirm
+    initialDataUpdatedAt: localCache ? 0 : undefined,
+    // 5-min stale time: prevents refetchOnWindowFocus from triggering too often
+    staleTime: 5 * 60 * 1000,
+    // Poll every 15 s while the user has no premium access (e.g., waiting for webhook after payment)
     // Stops polling once canUsePremium is true (refetchInterval returns false)
     refetchInterval: (query) => {
       const sub = query.state.data as { status?: string } | null | undefined;
@@ -100,10 +141,17 @@ export function useSubscription() {
       return isPremium ? false : 15_000;
     },
     refetchIntervalInBackground: false,
-    // 5-min stale time when subscription is active: prevents refetchOnWindowFocus
-    // from triggering during Supabase JWT refresh windows (would cause PaywallModal flash)
-    staleTime: 5 * 60 * 1000,
   });
+
+  // Persist active subscription to localStorage for faster cold-start and resilience
+  useEffect(() => {
+    if (subscription?.status === "active" || subscription?.status === "trialing") {
+      writeLocalCache(subscription);
+    } else if (subscription === null) {
+      // Explicitly null means server confirmed no subscription — clear cache
+      clearLocalCache();
+    }
+  }, [subscription]);
 
   const isSuspended = subscription?.status === "suspended";
   const isCanceled = subscription?.status === "canceled";
