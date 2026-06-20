@@ -149,11 +149,10 @@ export function useSubscription() {
     // Use localStorage cache as initial data so a UI nunca pisca "sem assinatura"
     // no cold start enquanto a query ainda não resolveu.
     initialData: localCache,
-    // NÃO usar initialDataUpdatedAt: 0. Isso causava race condition crítica:
-    // forçava background refetch imediato, que disparava antes do JWT estar fresco
-    // (iOS PWA cold start), RLS retornava null, clearLocalCache() era chamado e o
-    // PaywallModal abria para usuários com assinatura ativa. A confirmação ocorre
-    // no próximo refetch natural (window focus ou staleTime de 5min).
+    // Marca o cache do localStorage como "fresco agora" para evitar background refetch
+    // imediato (TanStack Query v5 default é updatedAt=0, que dispara refetch imediato
+    // ao habilitar a query — causava race condition com JWT no iOS PWA cold start).
+    initialDataUpdatedAt: localCache ? Date.now() : undefined,
     // 5-min stale time: prevents refetchOnWindowFocus from triggering too often
     staleTime: 5 * 60 * 1000,
     // Poll every 15 s while the user has no premium access (e.g., waiting for webhook after payment)

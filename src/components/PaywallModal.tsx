@@ -95,13 +95,16 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
         return;
       }
 
-      // Consulta direta ao banco (mais confiável que React Query neste contexto)
+      // Consulta direta ao banco (mais confiável que React Query neste contexto).
+      // IMPORTANTE: não usar .limit(1) com .maybeSingle() — a combinação do header
+      // Range: 0-0 com Accept: application/vnd.pgrst.object+json conflita no PostgREST
+      // e retorna PGRST116 quando RLS retorna 0 linhas (ex: JWT transitoriamente expirado),
+      // em vez de retornar null graciosamente. A UNIQUE constraint em user_id garante
+      // no máximo 1 linha, então .maybeSingle() sozinho é suficiente e correto.
       const { data: sub, error: subError } = await supabase
         .from("subscriptions")
         .select("*")
         .eq("user_id", refreshed.session.user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
         .maybeSingle();
 
       if (subError) {
