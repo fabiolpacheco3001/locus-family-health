@@ -132,6 +132,22 @@ const Consultas = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
+  // RX-03 — Paginação client-side para evitar jank em históricos longos
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [abaAtiva, sortOrder]);
+  const visibleConsultas = consultasFiltradas.slice(0, visibleCount);
+  const hasMore = consultasFiltradas.length > visibleCount;
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    // microtask para permitir spinner aparecer antes do render pesado
+    setTimeout(() => {
+      setVisibleCount((v) => v + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 0);
+  };
+
   const handleOpenEdit = (c: Consultation) => {
     setEditingConsultation(c);
     setDrawerOpen(true);
