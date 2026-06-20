@@ -35,14 +35,15 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const MAX_POLLS = 24; // 2 minutos (24 × 5s)
 
-  // Quando subscription fica ativa enquanto aguardando pagamento, fecha o modal
+  // Auto-fecha o modal quando subscription fica ativa (qualquer estado)
   useEffect(() => {
-    if (awaitingPayment && canUsePremium) {
+    if (open && canUsePremium) {
       stopPolling();
-      toast.success("Assinatura confirmada! Bem-vindo ao Locus Vita Premium.");
+      setAwaitingPayment(false);
       onOpenChange(false);
+      toast.success("Assinatura confirmada! Bem-vindo ao Locus Vita Premium.");
     }
-  }, [awaitingPayment, canUsePremium]);
+  }, [open, canUsePremium]);
 
   // Limpa o polling quando o modal fecha
   useEffect(() => {
@@ -80,8 +81,11 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   };
 
   const handleVerifyManually = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["subscription"] });
-    if (canUsePremium) {
+    // refetchQueries aguarda o fetch completar (diferente de invalidateQueries)
+    await queryClient.refetchQueries({ queryKey: ["subscription"] });
+    const sub = queryClient.getQueryData<{ status?: string }>(["subscription"]);
+    const isActive = sub?.status === "active" || sub?.status === "trialing";
+    if (isActive) {
       onOpenChange(false);
       toast.success("Assinatura confirmada!");
     } else {
