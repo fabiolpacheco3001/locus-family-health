@@ -128,43 +128,48 @@ Deno.serve(async (req) => {
     // Read test_mode + existing customer ID
     const { data: subRow } = await adminClient
       .from("subscriptions")
-      .select("test_mode, asaas_customer_id")
+      .select("test_mode, asaas_customer_id, id")
       .eq("user_id", userId)
       .maybeSingle();
 
-    const testMode = subRow?.test_mode === true;
+    // CRITICAL: default testMode = true (sandbox) when no subscription row exists.
+    // Without this, testMode = false and the production Asaas API is called with
+    // a sandbox key, causing payment errors.
+    const testMode = subRow?.test_mode !== false;
     const creds = resolveAsaasEnv(testMode);
     log("info", "asaas_env_selected", { env: creds.env, userId, testMode });
 
     // 1. Always resolve customer in the current env (sandbox vs prod).
-    // The stored asaas_customer_id may belong to a different environment and would
-    // cause 400/404 from Asaas. findOrCreateCustomer does GET-by-email first, so
-    // it does not create duplicates within the same environment.
     const customerId = await findOrCreateCustomer(creds, userEmail, userName);
-    await adminClient
-      .from("subscriptions")
-      .update({ asaas_customer_id: customerId, plan_type: planType, updated_at: new Date().toISOString() })
-      .eq("user_id", userId);
 
-    // 2. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
+    // 2. Persist customer ID — INSERT if first purchase, UPDATE otherwise.
+    if (!subRow) {
+      await adminClient.from("subscriptions").insert({
+        user_id: userId,
+        asaas_customer_id: customerId,
+        plan_type: planType,
+        test_mode: testMode,
+        status: "pending_payment",
+        next_billing_date: null,
+      });
+    } else {
+      await adminClient
+        .from("subscriptions")
+        .update({ asaas_customer_id: customerId, plan_type: planType, updated_at: new Date().toISOString() })
+        .eq("user_id", userId);
+    }
+
+    // 3. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
     const todayStr = new Date().toISOString().split("T")[0];
     const payment = await asaasFetch(creds, "/payments", {
       method: "POST",
       body: JSON.stringify({
         customer: customerId,
-        billingType: "CREDIT_CARD",
+        billingType: "UNDEFINED",
         value: plan.value,
         dueDate: todayStr,
         description: plan.description,
         externalReference: userId,
-        creditCardHolderInfo: {
-          name: userName,
-          email: userEmail,
-          cpfCnpj,
-          postalCode: "01310100",
-          addressNumber: "1",
-          phone: "11999999999",
-        },
       }),
     });
 

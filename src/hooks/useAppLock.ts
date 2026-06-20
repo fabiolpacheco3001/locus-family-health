@@ -73,7 +73,9 @@ export function useAppLock() {
   useEffect(() => {
     if (!user) {
       setIsLocked(false);
-      setIsReady(false);
+      // Note: isReady não é resetado aqui — representa status do check de passkeys,
+      // não o estado de autenticação. Resetar causaria flash da tela de loading
+      // a cada refresh de JWT.
     }
   }, [user]);
 

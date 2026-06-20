@@ -1,4 +1,4 @@
-import { useRef, useEffect, Suspense } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -80,8 +80,16 @@ const AppLayout = () => {
     };
   }, []);
 
-  // Only show paywall after session is confirmed (prevents flash during JWT refresh)
-  const showPaywall = !subLoading && !!session && !canUsePremium;
+  // Stable paywall gate: only update when subscription is confirmed (session + query complete).
+  // Prevents cycling caused by session briefly going null during JWT refresh.
+  const [showPaywall, setShowPaywall] = useState(false);
+  useEffect(() => {
+    if (!subLoading && !!session) {
+      // Subscription query completed with valid session — use this as the truth
+      setShowPaywall(!canUsePremium);
+    }
+    // If session is null: keep current state (do NOT hide/show modal during JWT refresh)
+  }, [canUsePremium, subLoading, session]);
 
   // ── App Lock: show logo while passkeys load (avoids content flash) ──────────
   // Only blocks render if session was restored from localStorage (not fresh login).
