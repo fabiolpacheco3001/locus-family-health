@@ -325,6 +325,26 @@ const Vacinas = () => {
 
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
+  // RX-03 — Paginação client-side
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [sortDesc]);
+  const sortedVaccines = [...vaccines].sort((a, b) => {
+    const dateA = a.applied_date || a.created_at;
+    const dateB = b.applied_date || b.created_at;
+    return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+  });
+  const visibleVaccines = sortedVaccines.slice(0, visibleCount);
+  const hasMore = sortedVaccines.length > visibleCount;
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((v) => v + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 0);
+  };
+
   // Import flow (hook)
   const {
     fileRef,
