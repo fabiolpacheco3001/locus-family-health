@@ -57,9 +57,9 @@ export const useFamilyMembers = () => {
       return data as FamilyMember[];
     },
     enabled: !!user,
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     refetchOnMount: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 
   const addMember = useMutation({
