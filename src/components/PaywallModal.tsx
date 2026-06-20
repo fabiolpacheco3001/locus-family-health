@@ -81,8 +81,11 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   };
 
   const handleVerifyManually = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["subscription"] });
-    if (canUsePremium) {
+    // refetchQueries aguarda o fetch completar (diferente de invalidateQueries)
+    await queryClient.refetchQueries({ queryKey: ["subscription"] });
+    const sub = queryClient.getQueryData<{ status?: string }>(["subscription"]);
+    const isActive = sub?.status === "active" || sub?.status === "trialing";
+    if (isActive) {
       onOpenChange(false);
       toast.success("Assinatura confirmada!");
     } else {
