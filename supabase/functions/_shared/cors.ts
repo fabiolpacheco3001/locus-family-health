@@ -16,7 +16,13 @@
  *   // Substitui a definição local de corsHeaders — nenhuma outra mudança necessária.
  */
 
-const ALLOWED_ORIGIN = Deno.env.get("APP_ORIGIN") ?? "*";
+const APP_ORIGIN = Deno.env.get("APP_ORIGIN");
+if (!APP_ORIGIN) {
+  console.warn(
+    "[cors] APP_ORIGIN not set — using wildcard '*'. Set APP_ORIGIN in production."
+  );
+}
+const ALLOWED_ORIGIN = APP_ORIGIN ?? "*";
 
 export const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": ALLOWED_ORIGIN,

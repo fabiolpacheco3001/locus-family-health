@@ -1,4 +1,4 @@
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
+import { sendLovableEmail } from 'npm:@lovable.dev/email-js@0.1.5'
 import { log } from '../_shared/logger.ts'
 import { createClient } from "npm:@supabase/supabase-js@2.49.4"
 
