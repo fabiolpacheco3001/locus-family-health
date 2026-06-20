@@ -1,7 +1,7 @@
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle, ArrowUpDown, Share2 } from "lucide-react";
+import { ArrowLeft, Stethoscope, Calendar, ChevronRight, CheckCircle, ArrowUpDown, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -131,6 +131,22 @@ const Consultas = () => {
     const dateB = b.consultation_date ? new Date(b.consultation_date).getTime() : 0;
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
+
+  // RX-03 — Paginação client-side para evitar jank em históricos longos
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [abaAtiva, sortOrder]);
+  const visibleConsultas = consultasFiltradas.slice(0, visibleCount);
+  const hasMore = consultasFiltradas.length > visibleCount;
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    // microtask para permitir spinner aparecer antes do render pesado
+    setTimeout(() => {
+      setVisibleCount((v) => v + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 0);
+  };
 
   const handleOpenEdit = (c: Consultation) => {
     setEditingConsultation(c);
@@ -289,7 +305,7 @@ const Consultas = () => {
         ) : (
           <div className="flex flex-col space-y-3">
             <AnimatePresence mode="popLayout">
-              {consultasFiltradas.map((c) => {
+              {visibleConsultas.map((c) => {
                 const isAgendada = c.status === 'Agendada';
                 return (
                   <SwipeableActionCard
@@ -369,6 +385,18 @@ const Consultas = () => {
                 );
               })}
             </AnimatePresence>
+            {hasMore && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <Loader2 className="animate-spin" size={16} /> : "Carregar mais"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

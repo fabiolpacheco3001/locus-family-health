@@ -2,7 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useSmartBack from "@/hooks/useSmartBack";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -182,6 +182,36 @@ const Agenda = () => {
     });
   }, [items, currentFilter, sortOrder]);
 
+  // RX-03 — Limita itens futuros (50) e passados (30) por padrão para evitar jank.
+  // "Ver histórico completo" remove os caps.
+  const FUTURE_CAP = 50;
+  const PAST_CAP = 30;
+  const [showAll, setShowAll] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const displayedItems = React.useMemo(() => {
+    if (showAll) return filteredItems;
+    const future: typeof filteredItems = [];
+    const past: typeof filteredItems = [];
+    for (const it of filteredItems) {
+      const d = it.date ? new Date(it.date) : null;
+      if (d && d.getTime() >= today.getTime()) future.push(it);
+      else past.push(it);
+    }
+    const cappedFuture = future.slice(0, FUTURE_CAP);
+    const cappedPast = past.slice(0, PAST_CAP);
+    // preserva a ordenação original aplicada acima
+    const cappedSet = new Set([...cappedFuture, ...cappedPast]);
+    return filteredItems.filter((i) => cappedSet.has(i));
+  }, [filteredItems, showAll, today]);
+  const hasMore = !showAll && displayedItems.length < filteredItems.length;
+  const handleShowAll = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setShowAll(true);
+      setLoadingMore(false);
+    }, 0);
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
       <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -255,7 +285,7 @@ const Agenda = () => {
           </div>
         ) : (
           <div className="flex flex-col space-y-3">
-            {filteredItems.map((item) => {
+            {displayedItems.map((item) => {
               const isExam = item.kind === "exam";
               const isPetRoutine = item.kind === "pet_routine";
               const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
@@ -357,6 +387,18 @@ const Agenda = () => {
                 </div>
               );
             })}
+            {hasMore && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShowAll}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <Loader2 className="animate-spin" size={16} /> : "Ver histórico completo"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
         </div>

@@ -9,7 +9,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAiStatus } from "@/hooks/useAiStatus";
 import PaywallModal from "@/components/PaywallModal";
-import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown, Share2 } from "lucide-react";
+import { ArrowLeft, Syringe, ChevronRight, FileUp, PenLine, ArrowUpDown, Share2, Loader2 } from "lucide-react";
 import ExamSwipeableCard from "@/components/ExamSwipeableCard";
 import { AnimatePresence } from "framer-motion";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -325,6 +325,26 @@ const Vacinas = () => {
 
   const isPending = addMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
+  // RX-03 — Paginação client-side
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [sortDesc]);
+  const sortedVaccines = [...vaccines].sort((a, b) => {
+    const dateA = a.applied_date || a.created_at;
+    const dateB = b.applied_date || b.created_at;
+    return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
+  });
+  const visibleVaccines = sortedVaccines.slice(0, visibleCount);
+  const hasMore = sortedVaccines.length > visibleCount;
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((v) => v + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 0);
+  };
+
   // Import flow (hook)
   const {
     fileRef,
@@ -489,11 +509,7 @@ const Vacinas = () => {
         ) : (
           <div className="space-y-3">
             <AnimatePresence mode="popLayout">
-              {[...vaccines].sort((a, b) => {
-                const dateA = a.applied_date || a.created_at;
-                const dateB = b.applied_date || b.created_at;
-                return sortDesc ? dateB.localeCompare(dateA) : dateA.localeCompare(dateB);
-              }).map((v) => (
+              {visibleVaccines.map((v) => (
                 <ExamSwipeableCard
                   key={v.id}
                   onDelete={() => handleSwipeDelete(v.id)}
@@ -531,6 +547,18 @@ const Vacinas = () => {
                 </ExamSwipeableCard>
               ))}
             </AnimatePresence>
+            {hasMore && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <Loader2 className="animate-spin" size={16} /> : "Carregar mais"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

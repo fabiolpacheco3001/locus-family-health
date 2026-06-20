@@ -1,7 +1,7 @@
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, ArrowUpDown, Share2 } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, ArrowUpDown, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -145,6 +145,21 @@ const Exames = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
 
+  // RX-03 — Paginação client-side
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [loadingMore, setLoadingMore] = useState(false);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [abaAtiva, sortOrder]);
+  const visibleExames = examesFiltrados.slice(0, visibleCount);
+  const hasMore = examesFiltrados.length > visibleCount;
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setVisibleCount((v) => v + PAGE_SIZE);
+      setLoadingMore(false);
+    }, 0);
+  };
+
   const handleOpenEdit = (e: Exam) => {
     setEditingExam(e);
     setDrawerOpen(true);
@@ -284,7 +299,7 @@ const Exames = () => {
         ) : (
           <div className="flex flex-col space-y-3">
             <AnimatePresence mode="popLayout">
-              {examesFiltrados.map((e) => {
+              {visibleExames.map((e) => {
                 const today = startOfDay(new Date());
                 const isOverdue = e.status === "Agendado" && e.exam_date
                   ? isBefore(new Date(e.exam_date), today)
@@ -360,6 +375,18 @@ const Exames = () => {
                 );
               })}
             </AnimatePresence>
+            {hasMore && (
+              <div className="pt-2 flex justify-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? <Loader2 className="animate-spin" size={16} /> : "Carregar mais"}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
