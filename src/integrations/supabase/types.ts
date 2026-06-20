@@ -299,6 +299,33 @@ export type Database = {
           },
         ]
       }
+      cron_job_log: {
+        Row: {
+          detail: string | null
+          id: number
+          job_name: string
+          ran_at: string
+          rows_affected: number | null
+          status: string
+        }
+        Insert: {
+          detail?: string | null
+          id?: number
+          job_name: string
+          ran_at?: string
+          rows_affected?: number | null
+          status: string
+        }
+        Update: {
+          detail?: string | null
+          id?: number
+          job_name?: string
+          ran_at?: string
+          rows_affected?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       diseases: {
         Row: {
           category: string
@@ -1116,6 +1143,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      renewal_failures: {
+        Row: {
+          failed_at: string
+          id: number
+          next_retry_at: string
+          reason: string | null
+          resolved_at: string | null
+          retry_count: number
+          status: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          failed_at?: string
+          id?: number
+          next_retry_at?: string
+          reason?: string | null
+          resolved_at?: string | null
+          retry_count?: number
+          status?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          failed_at?: string
+          id?: number
+          next_retry_at?: string
+          reason?: string | null
+          resolved_at?: string | null
+          retry_count?: number
+          status?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       subscriptions: {
         Row: {
