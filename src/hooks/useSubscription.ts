@@ -61,6 +61,10 @@ export function useSubscription() {
     queryFn: async () => {
       if (!user?.id) return null;
 
+      // Garante JWT fresco antes de consultar — crítico para cold starts no iOS PWA
+      // onde o token pode estar expirado e o RLS bloquearia a query retornando null.
+      await supabase.auth.getSession();
+
       // Sticky active: se já temos subscription ativa em cache, preservamos
       // durante falhas transitórias (ex: janela de refresh do JWT do Supabase)
       const cachedSub = queryClient.getQueryData(["subscription", user.id]) as { status?: string } | null;
