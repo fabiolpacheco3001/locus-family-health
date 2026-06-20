@@ -1,7 +1,7 @@
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, ArrowUpDown, Share2 } from "lucide-react";
+import { ArrowLeft, FileText, Calendar, ChevronRight, Stethoscope, ArrowUpDown, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
