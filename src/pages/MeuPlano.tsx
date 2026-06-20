@@ -38,6 +38,7 @@ const MeuPlano = () => {
     trialExpired,
     isImplicitTrial,
     implicitTrialExpired,
+    isLoading,
   } = useSubscription();
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
