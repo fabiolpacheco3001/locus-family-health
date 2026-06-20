@@ -31,9 +31,17 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
   if (responseError) {
     captureException(responseError, { context: "asaasService.createSubscription.response", planType });
     let detail = "";
+    let debugInfo = "";
     try {
       if (responseData && typeof responseData === "object") {
         detail = (responseData as any).error || (responseData as any).message || "";
+        // Campo debug contém o erro bruto do Asaas (ex: "asaas_error:400:{...}")
+        const rawDebug = (responseData as any).debug as string | undefined;
+        if (rawDebug?.startsWith("asaas_error:")) {
+          // Extrair só o body JSON após "asaas_error:STATUS:"
+          const thirdColon = rawDebug.indexOf(":", rawDebug.indexOf(":") + 1);
+          debugInfo = rawDebug.slice(thirdColon + 1);
+        }
       }
       if (!detail && (responseError as any).context) {
         const ctx = await (responseError as any).context.json().catch(() => null);
@@ -41,7 +49,7 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
       }
     } catch (_) { /* ignore */ }
     const reason = detail || responseError.message || "Desconhecido";
-    throw new Error(`Erro do servidor financeiro: ${reason}`);
+    throw new Error(`Erro do servidor financeiro: ${reason}${debugInfo ? ` | Asaas: ${debugInfo}` : ""}`);
   }
 
   if (responseData?.error) {
