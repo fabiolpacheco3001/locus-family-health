@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.49.4";
-import { log } from "../_shared/logger.ts";
+import { log, createLogger } from "../_shared/logger.ts";
 import { resolveAsaasEnv } from "../_shared/asaas-env.ts";
 
 // C6: Validate that externalReference is a valid UUID before using as user_id.
@@ -82,6 +82,8 @@ async function fetchAsaasSubscription(
 }
 
 Deno.serve(async (req) => {
+  const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
+  const log = createLogger({ requestId });
   // Webhook server-to-server — sem preflight CORS necessário
   try {
     // Validate Asaas webhook token
