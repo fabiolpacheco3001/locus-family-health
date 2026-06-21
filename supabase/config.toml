@@ -1,7 +1,8 @@
 project_id = "xazlrdwdkafhzwkezfxz"
 
 [functions]
-import_map = "./functions/import_map.json"
+# import_map removido: Supabase CLI v2 não suporta string aqui.
+# O CLI v2 detecta automaticamente supabase/functions/import_map.json.
 
 [functions.process-email-queue]
 verify_jwt = true
