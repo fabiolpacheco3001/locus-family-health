@@ -9,51 +9,27 @@ import { captureException } from "@/lib/sentry";
 
 /**
  * Hook that checks every 60s if any active medication dose is due,
- * then fires both an OS Notification and an in-app toast.
- * Receives medications externally to avoid duplicate useQuery calls.
+ * then fires an in-app toast as foreground feedback.
+ *
+ * Background push (app closed) is now handled server-side:
+ *   pg_cron → send-medication-reminders Edge Function → send-push-notification → Service Worker
+ *
+ * This hook is responsible for:
+ *  1. In-app toast when the app IS open (foreground feedback)
+ *  2. Stock decrement when a dose time is reached
+ *  3. Catch-up on missed stock decrements at app open
  */
-
-// sessionStorage-backed flag — persists across HMR reloads and soft navigations
-// within the same browser session, preventing the toast from appearing repeatedly.
-const PERM_TOAST_KEY = "locus_notif_toast_shown";
-function wasPermissionToastShown(): boolean {
-  try { return sessionStorage.getItem(PERM_TOAST_KEY) === "1"; } catch { return false; }
-}
-function markPermissionToastShown(): void {
-  try { sessionStorage.setItem(PERM_TOAST_KEY, "1"); } catch { /* ignore */ }
-}
 
 export function useMedicationAlarms(medications: Medication[]) {
   const queryClient = useQueryClient();
   const firedRef = useRef<Set<string>>(new Set());
   const decrementedRef = useRef<Set<string>>(new Set());
   const catchUpDoneRef = useRef(false);
-  const permissionRef = useRef<NotificationPermission | null>(null);
   const medsRef = useRef(medications);
   medsRef.current = medications;
 
-  useEffect(() => {
-    if (typeof Notification === "undefined") return;
-    if (Notification.permission === "granted") {
-      permissionRef.current = "granted";
-      return;
-    }
-    if (Notification.permission === "denied") {
-      permissionRef.current = "denied";
-      if (!wasPermissionToastShown()) {
-        markPermissionToastShown();
-        toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
-      }
-      return;
-    }
-    Notification.requestPermission().then((perm) => {
-      permissionRef.current = perm;
-      if (perm === "denied" && !wasPermissionToastShown()) {
-        markPermissionToastShown();
-        toast.warning("Ative as notificações no seu navegador para receber os alertas de medicamentos.", { duration: 6000 });
-      }
-    });
-  }, []);
+  // Permission request is now handled by usePushSubscription (via Notificações/Ajustes).
+  // useMedicationAlarms only handles in-app toasts for when the app is in the foreground.
 
   const decrementStock = useCallback(async (medId: string, amount: number = 1) => {
     try {
@@ -79,22 +55,8 @@ export function useMedicationAlarms(medications: Medication[]) {
     if (firedRef.current.has(key)) return;
     firedRef.current.add(key);
 
-    const title = isLate ? "⚠️ Dose Atrasada!" : "Hora do Remédio! 💊";
-
-    if (permissionRef.current === "granted") {
-      try {
-        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.ready.then((reg) => {
-            reg.showNotification(title, { body, icon: "/logo-locus-vita.svg", tag: key });
-          });
-        } else {
-          new Notification(title, { body, icon: "/logo-locus-vita.svg", tag: key });
-        }
-      } catch {
-        // Fallback silently
-      }
-    }
-
+    // In-app toast (foreground only). Background push is handled server-side
+    // by send-medication-reminders → send-push-notification → Service Worker.
     if (isLate) {
       toast.warning(`⚠️ Dose Atrasada!`, { description: body, duration: 20000 });
     } else {

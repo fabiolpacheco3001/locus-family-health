@@ -615,9 +615,27 @@ Sprint 11 — LGPD reforço + Signed URLs ✅ CONCLUÍDO
 
 Sprint 12 — Pendente (sugestão)
 ├── ⬜ A7 E2E                            → Playwright: login, cadastro de medicamento, marcação de dose
-├── ⬜ BK-01                             → Push notifications multi-dispositivo (FCM/APNs)
 ├── ⬜ BK-02                             → Ciclos posológicos complexos (anticoncepcional 21+7)
 └── ⬜ BK-03                             → OAuth Google / Apple (login social)
+
+Sprint 35 — Web Push VAPID (sessão 2026-06-21) 🔄 EM PROGRESSO
+├── ✅ BK-01 (código)                    → Infraestrutura Web Push VAPID implementada no repo local
+│   ├── public/sw.js                     → Service Worker: push event, notificationclick, install/activate
+│   ├── src/lib/pushConfig.ts            → Chave pública VAPID
+│   ├── src/hooks/usePushSubscription.ts → Hook opt-in, registro SW, sync para push_subscriptions
+│   ├── src/main.tsx                     → Registro do SW em PROD
+│   ├── src/pages/Notificacoes.tsx       → Card de opt-in Ativar/Desativar push
+│   ├── src/hooks/useMedicationAlarms.ts → Removido Notification API redundante
+│   ├── supabase/functions/send-push-notification/   → Edge Fn genérica VAPID (npm:web-push)
+│   ├── supabase/functions/send-medication-reminders/ → pg_cron 5min → push por dose
+│   ├── supabase/functions/send-appointment-reminders/ → pg_cron 8h BRT → push D-0/D-1
+│   ├── supabase/migrations/20260621120000_push_notifications.sql → tabela push_subscriptions + RLS + TTL
+│   ├── supabase/functions/import_map.json → npm:web-push@3.6.7
+│   └── supabase/config.toml             → verify_jwt=false nas 3 novas Edge Functions
+├── ⬜ PENDENTE: Supabase Dashboard → Secrets → adicionar VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, CRON_SECRET
+├── ⬜ PENDENTE: Aplicar migration 20260621120000 (via Lovable MCP ou Dashboard)
+├── ⬜ PENDENTE: Deploy das 3 Edge Functions via Lovable MCP
+└── ⬜ PENDENTE: Ativar pg_cron jobs (SQL comentado dentro da migration)
 ```
 
 ---

@@ -1,0 +1,237 @@
+/**
+ * send-medication-reminders — Lembrete push de medicamentos.
+ *
+ * Chamado por pg_cron a cada 5 minutos via net.http_post.
+ * Verifica medicamentos cujo próximo horário cai dentro da janela atual
+ * e envia push para todos os dispositivos do responsável.
+ *
+ * Lógica por frequency_type:
+ *  - specific_times: verifica se algum horário do array cai no slot atual
+ *  - specific_days:  verifica o dia da semana + horários
+ *  - fixed_interval: calcula próxima dose a partir de start_date
+ *
+ * Secret obrigatório: CRON_SECRET (mesmo valor configurado no pg_cron job).
+ */
+
+import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import { corsHeaders } from "../_shared/cors.ts";
+import { log } from "../_shared/logger.ts";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const CRON_SECRET = Deno.env.get("CRON_SECRET");
+
+// Window for matching: how many minutes before/after the scheduled time to fire
+// (handles clock drift between pg_cron and actual device time)
+const MATCH_WINDOW_MINUTES = 3;
+
+// Timezone: all times stored in America/Sao_Paulo
+const TZ = "America/Sao_Paulo";
+
+function nowInSP(): { date: Date; hour: number; minute: number; dayOfWeek: number } {
+  const now = new Date();
+  const sp = new Date(now.toLocaleString("en-US", { timeZone: TZ }));
+  return {
+    date: sp,
+    hour: sp.getHours(),
+    minute: sp.getMinutes(),
+    dayOfWeek: sp.getDay(), // 0=Sunday … 6=Saturday
+  };
+}
+
+/** Returns true if the given HH:MM time slot falls within the current match window */
+function isInWindow(targetH: number, targetM: number, nowH: number, nowM: number): boolean {
+  const nowTotal = nowH * 60 + nowM;
+  const targetTotal = targetH * 60 + targetM;
+  const diff = Math.abs(nowTotal - targetTotal);
+  return diff <= MATCH_WINDOW_MINUTES;
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Authenticate: only pg_cron with CRON_SECRET or internal calls
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  const { hour, minute, dayOfWeek } = nowInSP();
+
+  log("info", "med_reminders_started", { hour, minute, dayOfWeek });
+
+  const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+  try {
+    // Fetch all active medications that have push subscribers
+    // Inner join ensures we only process users who have at least one active push subscription
+    const { data: medications, error } = await adminClient
+      .from("medications")
+      .select(`
+        id,
+        name,
+        dosage,
+        frequency_type,
+        frequency_hours,
+        start_date,
+        start_time,
+        end_date,
+        specific_times,
+        specific_days,
+        family_members!inner (
+          id,
+          name,
+          user_id,
+          deleted_at
+        )
+      `)
+      .eq("status", "Ativo")
+      .is("family_members.deleted_at", null);
+
+    if (error) {
+      log("error", "med_reminders_fetch_failed", { error: error.message });
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!medications || medications.length === 0) {
+      return new Response(JSON.stringify({ processed: 0 }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const toNotify: { userId: string; medName: string; dosage: string | null; memberName: string; medId: string }[] = [];
+
+    for (const med of medications) {
+      const member = Array.isArray(med.family_members) ? med.family_members[0] : med.family_members;
+      if (!member?.user_id) continue;
+
+      const freqType = (med.frequency_type as string) || "fixed_interval";
+      const specificTimes = (med.specific_times as string[] | null) ?? [];
+      const specificDays = (med.specific_days as number[] | null) ?? [];
+
+      let shouldNotify = false;
+
+      if (freqType === "specific_times" || specificTimes.length > 0) {
+        // Check if current time matches any of the specific_times
+        for (const t of specificTimes) {
+          const [h, m] = t.split(":").map(Number);
+          if (isInWindow(h, m, hour, minute)) {
+            shouldNotify = true;
+            break;
+          }
+        }
+      } else if (freqType === "specific_days" || specificDays.length > 0) {
+        // Check day of week first, then times
+        if (specificDays.includes(dayOfWeek)) {
+          for (const t of specificTimes) {
+            const [h, m] = t.split(":").map(Number);
+            if (isInWindow(h, m, hour, minute)) {
+              shouldNotify = true;
+              break;
+            }
+          }
+        }
+      } else if (freqType === "fixed_interval") {
+        // For fixed_interval: calculate based on start_date + frequency_hours
+        if (!med.start_date || !med.frequency_hours || med.frequency_hours <= 0) continue;
+
+        const dateStr = med.start_date.slice(0, 10);
+        const startISO = med.start_time ? `${dateStr}T${med.start_time}` : `${dateStr}T00:00:00`;
+        const startTime = new Date(new Date(startISO).toLocaleString("en-US", { timeZone: TZ }));
+
+        const nowMs = new Date(new Date().toLocaleString("en-US", { timeZone: TZ })).getTime();
+        const elapsedMs = nowMs - startTime.getTime();
+        if (elapsedMs < 0) continue;
+
+        const intervalMs = med.frequency_hours * 60 * 60 * 1000;
+        const sinceLastDoseMs = elapsedMs % intervalMs;
+
+        // Is the current time within MATCH_WINDOW_MINUTES of a dose?
+        const windowMs = MATCH_WINDOW_MINUTES * 60 * 1000;
+        if (sinceLastDoseMs <= windowMs || (intervalMs - sinceLastDoseMs) <= windowMs) {
+          shouldNotify = true;
+        }
+      }
+
+      // Check end_date
+      if (shouldNotify && med.end_date) {
+        const endDate = new Date(new Date(`${med.end_date}T23:59:59`).toLocaleString("en-US", { timeZone: TZ }));
+        if (new Date() > endDate) shouldNotify = false;
+      }
+
+      if (shouldNotify) {
+        toNotify.push({
+          userId: member.user_id,
+          medName: med.name,
+          dosage: med.dosage,
+          memberName: member.name,
+          medId: med.id,
+        });
+      }
+    }
+
+    log("info", "med_reminders_matched", { count: toNotify.length, hour, minute });
+
+    if (toNotify.length === 0) {
+      return new Response(JSON.stringify({ processed: 0 }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Fire push notifications in parallel (via send-push-notification function)
+    const APP_URL = Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
+    const results = await Promise.allSettled(
+      toNotify.map(async ({ userId, medName, dosage, memberName, medId }) => {
+        const body = dosage
+          ? `${memberName}: tomar ${medName} (${dosage}) agora`
+          : `${memberName}: hora de tomar ${medName}`;
+
+        // Call send-push-notification (same project, internal call)
+        const res = await fetch(
+          `${SUPABASE_URL}/functions/v1/send-push-notification`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${CRON_SECRET}`,
+            },
+            body: JSON.stringify({
+              user_id: userId,
+              title: "💊 Hora do Remédio!",
+              body,
+              url: "/home",
+              type: "medication_dose",
+              tag: `med-${medId}-${hour}${String(minute).padStart(2, "0")}`,
+              data: { family_member_name: memberName, medication_id: medId },
+            }),
+          }
+        );
+        return res.ok;
+      })
+    );
+
+    const sent = results.filter((r) => r.status === "fulfilled" && r.value).length;
+    log("info", "med_reminders_completed", { sent, total: toNotify.length });
+
+    return new Response(JSON.stringify({ processed: toNotify.length, sent }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    log("error", "med_reminders_unexpected_error", { error: String(err) });
+    return new Response(JSON.stringify({ error: "Erro interno" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});

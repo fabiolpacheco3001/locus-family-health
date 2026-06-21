@@ -88,6 +88,26 @@ Configuradas em **Lovable Cloud → Settings → Secrets** (propagadas automatic
 
 ---
 
+### 1.9 Web Push — VAPID (BK-01) ⚠️ CONFIGURAR EM PRODUÇÃO
+
+| Secret | Descrição | Valor / Como obter |
+|--------|-----------|-------------------|
+| `VAPID_PUBLIC_KEY` | Chave pública VAPID (P-256). **Já gerada** — usar valor exato abaixo | `BPc1Jl-B2jTYy5YJ9AARFRn26z4u8NHtnvglFkipZC_Ho1sbKDmhcJUPnJ58TeiIrifdGyWmAfEvOjYpZ60iFW4` |
+| `VAPID_PRIVATE_KEY` | Chave privada VAPID (P-256, base64url raw). **⚠️ Nunca versionar** | `MDpDKH2jN9NkKU8OOVON9mlEpHDymdcdaEs9D7lqNJA` |
+| `VAPID_SUBJECT` | Identificador do remetente (mailto) exigido pelo Web Push Protocol | `mailto:suporte@locustech.com.br` |
+| `CRON_SECRET` | Token de autenticação para pg_cron chamar Edge Functions sem JWT. Gerar com `openssl rand -hex 32` | _gerar valor aleatório_ |
+
+> **⚠️ Par de chaves VAPID é imutável após deploy.** Trocar as chaves invalida **todas** as subscriptions existentes — usuários precisarão optar novamente. Guardar backup das chaves em cofre seguro (1Password, etc.).
+
+> **CRON_SECRET:** Após configurar o secret no Supabase Dashboard, executar no SQL Editor:
+> ```sql
+> ALTER DATABASE postgres SET app.settings.cron_secret = '<valor>';
+> SELECT pg_reload_conf();
+> ```
+> Em seguida ativar os pg_cron jobs (SQL comentado em `supabase/migrations/20260621120000_push_notifications.sql`).
+
+---
+
 ## 2. Edge Functions
 
 Todas as funções estão em `supabase/functions/` e deployadas via Lovable Cloud. JWT verificado por padrão (`verify_jwt = true`) salvo exceção explícita.
@@ -180,7 +200,30 @@ Todas as funções estão em `supabase/functions/` e deployadas via Lovable Clou
 
 ---
 
-### 2.5 Administração
+### 2.5 Push Notifications — Web Push VAPID (BK-01)
+
+#### `send-push-notification`
+- **Propósito:** Sender genérico VAPID. Recebe `user_id + payload`, busca todos os dispositivos ativos em `push_subscriptions` e envia via `npm:web-push`. Auto-desativa endpoints expirados (HTTP 410/404).
+- **Chamado por:** `send-medication-reminders`, `send-appointment-reminders`, e futuramente qualquer feature que precise enviar push
+- **Body:** `{ user_id, title, body, url?, type?, tag?, icon?, data? }`
+- **Secrets necessários:** `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET`
+- **⚠️ Segurança:** `verify_jwt = false`. Aceita JWT de usuário autenticado **ou** `Bearer <CRON_SECRET>`. Chamadas externas sem um dos dois retornam 401.
+
+#### `send-medication-reminders`
+- **Propósito:** Verifica medicamentos ativos com horários `specific_times` / `specific_days` / `fixed_interval` que coincidem com a janela de ±3 minutos do momento atual (horário de Brasília) e aciona `send-push-notification` para cada responsável.
+- **Trigger:** `pg_cron` a cada 5 minutos via `net.http_post`
+- **Secrets necessários:** `CRON_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- **⚠️ Segurança:** `verify_jwt = false`. Valida `Bearer <CRON_SECRET>` manualmente.
+
+#### `send-appointment-reminders`
+- **Propósito:** Dispara push para consultas, exames e vacinas do dia atual (D-0) e do dia seguinte (D-1). Roda uma vez ao dia às 8h BRT (11h UTC).
+- **Trigger:** `pg_cron` `0 11 * * *` via `net.http_post`
+- **Secrets necessários:** `CRON_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- **⚠️ Segurança:** `verify_jwt = false`. Valida `Bearer <CRON_SECRET>` manualmente.
+
+---
+
+### 2.6 Administração
 
 #### `manage-admins`
 - **Propósito:** Promove ou rebaixa usuários para `super_admin` / `admin` na tabela `user_roles`. Restrito a `super_admin`.
@@ -219,6 +262,10 @@ Para configurar um ambiente do zero (fork, staging, etc.):
        - EMAIL_HASH_SALT (string aleatória ≥ 32 chars)
        - PLAN_MONTHLY_PRICE / PLAN_ANNUAL_PRICE / PLAN_ANNUAL_THRESHOLD
        - AI_CALLS_PER_HOUR
+       - VAPID_PUBLIC_KEY (ver seção 1.9)
+       - VAPID_PRIVATE_KEY (ver seção 1.9 — ⚠️ nunca versionar)
+       - VAPID_SUBJECT = mailto:suporte@locustech.com.br
+       - CRON_SECRET (gerar com: openssl rand -hex 32)
 [ ] 4. Verificar domínio locustech.com.br no Resend (DNS SPF/DKIM)
 [ ] 5. Configurar webhook no Asaas apontando para a URL da Edge Function
 [ ] 6. Deploy de todas as Edge Functions via Lovable MCP

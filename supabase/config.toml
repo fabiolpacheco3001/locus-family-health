@@ -24,3 +24,13 @@ verify_jwt = true
 
 [functions.send-invite-email]
 verify_jwt = true
+
+# BK-01: Web Push — chamadas internas via CRON_SECRET (sem JWT de usuário)
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.send-medication-reminders]
+verify_jwt = false
+
+[functions.send-appointment-reminders]
+verify_jwt = false

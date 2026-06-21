@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BellOff, CheckCheck, Trash2, MoreVertical } from "lucide-react";
+import { ArrowLeft, BellOff, BellRing, CheckCheck, Trash2, MoreVertical, BellOff as BellOffIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications } from "@/hooks/useNotifications";
+import { usePushSubscription } from "@/hooks/usePushSubscription";
 import { AnimatePresence } from "framer-motion";
 import NotificationCard from "@/components/NotificationCard";
 import SwipeableActionCard from "@/components/SwipeableActionCard";
@@ -31,6 +32,7 @@ import { useQueryClient } from "@tanstack/react-query";
 const Notificacoes = () => {
   const navigate = useNavigate();
   const { notifications, isLoading, unreadCount, markAsRead, markAllAsRead, clearAllNotifications } = useNotifications();
+  const { permission, isSubscribed, isLoading: pushLoading, requestPermissionAndSubscribe, unsubscribe } = usePushSubscription();
   const queryClient = useQueryClient();
   const [openCardId, setOpenCardId] = useState<string | null>(null);
 
@@ -127,6 +129,52 @@ const Notificacoes = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         )}
+      </div>
+
+      {/* ── Push Notification opt-in card ──────────────────────────── */}
+      <div className="flex-none px-4 pb-3">
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-border">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 rounded-xl bg-[#78C2AD]/15 p-2">
+              {isSubscribed ? (
+                <BellRing size={20} className="text-[#78C2AD]" />
+              ) : (
+                <BellOffIcon size={20} className="text-muted-foreground" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-foreground">
+                Notificações Push
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                {permission === "denied"
+                  ? "Permissão bloqueada. Ative nas configurações do seu celular."
+                  : isSubscribed
+                  ? "Ativas — você receberá alertas de remédios, consultas e exames mesmo com o app fechado."
+                  : "Ative para receber lembretes de remédios e consultas mesmo com o app fechado."}
+              </p>
+            </div>
+            {permission !== "denied" && (
+              <Button
+                size="sm"
+                variant={isSubscribed ? "outline" : "default"}
+                className={`flex-none text-xs h-8 ${isSubscribed ? "" : "bg-[#78C2AD] hover:bg-[#78C2AD]/90 text-white border-0"}`}
+                disabled={pushLoading}
+                onClick={isSubscribed ? () => unsubscribe() : () => requestPermissionAndSubscribe()}
+              >
+                {pushLoading ? (
+                  <span className="flex items-center gap-1.5">
+                    <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                    Aguarde
+                  </span>
+                ) : isSubscribed ? "Desativar" : "Ativar"}
+              </Button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Scrollable content */}
