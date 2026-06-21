@@ -2,6 +2,46 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
 
+// ─── Resend API helper ────────────────────────────────────────────────────────
+// Chama a Resend API diretamente via fetch (sem SDK) para manter zero deps extras.
+// Requer secret RESEND_API_KEY configurado no Supabase Edge Functions.
+//
+// Domínio remetente: locustech.com.br
+//   Para enviar de noreply@locustech.com.br, adicione o domínio no Resend dashboard:
+//   https://resend.com/domains → Add Domain → locustech.com.br
+//   (adicionar os registros DNS SPF/DKIM apontados pelo Resend).
+//   Enquanto o domínio não estiver verificado, o Resend usa o e-mail de teste
+//   onboarding@resend.dev como remetente (só funciona para o próprio dono da conta).
+async function sendViaResend(params: {
+  to: string;
+  from: string;
+  subject: string;
+  html: string;
+  text: string;
+  apiKey: string;
+}): Promise<{ id?: string; error?: string }> {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${params.apiKey}`,
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { error: (body as { message?: string }).message ?? `HTTP ${res.status}` };
+  }
+  return { id: (body as { id?: string }).id };
+}
+
 /**
  * send-invite-email
  *
@@ -120,8 +160,18 @@ Deno.serve(async (req) => {
       if (fm?.name) inviterName = fm.name.split(" ")[0];
     }
 
+    // Resend API key — obrigatório: configurar em Supabase → Edge Functions → Secrets
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey) {
+      log("error", "send_invite_email_missing_api_key", { invite_id });
+      return new Response(JSON.stringify({ error: "Configuração de e-mail ausente" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Build email
-    const appUrl = Deno.env.get("APP_URL") ?? "https://app.locusvita.com.br";
+    const appUrl = Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
     const appStoreUrl = Deno.env.get("APPLE_STORE_URL") ?? "#"; // publicar nas lojas — roadmap
     const playStoreUrl = Deno.env.get("GOOGLE_PLAY_URL") ?? "#"; // publicar nas lojas — roadmap
 
@@ -144,39 +194,28 @@ Deno.serve(async (req) => {
       appUrl,
     });
 
-    const messageId = `invite-${invite_id}-${Date.now()}`;
-
-    // Enqueue via PGMQ transactional_emails
-    // Nota: o RPC público chama-se enqueue_email (não queue_message)
-    const emailPayload = {
-      message_id: messageId,
+    // Envio direto via Resend (sem PGMQ — evita dependência do sistema de email da Lovable)
+    // Remetente: noreply@locustech.com.br (requer domínio verificado no Resend dashboard)
+    const { id: resendId, error: resendErr } = await sendViaResend({
       to: safeEmail,
-      from: "noreply@locustech.com.br",
-      sender_domain: "locustech.com.br",
+      from: "Locus Vita <noreply@locustech.com.br>",
       subject,
       html,
       text,
-      purpose: "transactional",
-      label: "family_invite",
-      idempotency_key: messageId,
-      queued_at: new Date().toISOString(),
-    };
-    const { error: queueErr } = await serviceClient.rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: emailPayload,
+      apiKey: resendApiKey,
     });
 
-    if (queueErr) {
-      log("error", "send_invite_email_queue_failed", { invite_id, error: String(queueErr) });
-      return new Response(JSON.stringify({ error: "Falha ao enfileirar e-mail" }), {
+    if (resendErr) {
+      log("error", "send_invite_email_resend_failed", { invite_id, to: safeEmail, error: resendErr });
+      return new Response(JSON.stringify({ error: "Falha ao enviar e-mail" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    log("info", "send_invite_email_queued", { invite_id, to: safeEmail, message_id: messageId });
+    log("info", "send_invite_email_sent", { invite_id, to: safeEmail, resend_id: resendId });
 
-    return new Response(JSON.stringify({ ok: true, message_id: messageId }), {
+    return new Response(JSON.stringify({ ok: true, resend_id: resendId }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
