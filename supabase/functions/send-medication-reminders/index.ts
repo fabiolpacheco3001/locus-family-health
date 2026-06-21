@@ -155,10 +155,12 @@ Deno.serve(async (req) => {
           }
         } else {
           // Interval-based: calculate next dose from start_date + N × frequency_hours
-          const startISO = med.start_time
-            ? `${dateStr}T${(med.start_time as string).slice(0, 8)}`
-            : `${dateStr}T00:00:00`;
-          const startTime = new Date(new Date(startISO).toLocaleString("en-US", { timeZone: TZ }));
+          // IMPORTANT: start_time is stored in BRT (e.g. "19:30:00").
+          // nowMs uses toLocaleString(TZ) which gives BRT clock value re-parsed as "UTC"
+          // on a UTC server. To stay in the same space, build startTime from the raw
+          // BRT date+time string WITHOUT any extra timezone conversion.
+          const timePart = med.start_time ? (med.start_time as string).slice(0, 5) : "00:00";
+          const startTime = new Date(`${dateStr}T${timePart}:00`);
 
           const nowMs = new Date(new Date().toLocaleString("en-US", { timeZone: TZ })).getTime();
           const elapsedMs = nowMs - startTime.getTime();
