@@ -82,18 +82,46 @@ const AppLayout = () => {
 
   // Stable paywall gate: only update when subscription is confirmed (session + query complete).
   // Prevents cycling caused by session briefly going null during JWT refresh.
+  const paywallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref always tracks the freshest canUsePremium — used inside setTimeout to avoid stale closures.
+  const canUsePremiumRef = useRef(canUsePremium);
+  canUsePremiumRef.current = canUsePremium;
+
   const [showPaywall, setShowPaywall] = useState(false);
   useEffect(() => {
+    // Clear any pending timer whenever deps change.
+    // Rationale: on iPhone unlock, Supabase fires TOKEN_REFRESHED → session ref changes →
+    // this effect runs BEFORE TanStack Query's refetchOnWindowFocus starts. At that instant
+    // canUsePremium can be false (stale) and subFetching is still false (not yet started),
+    // which would open the paywall incorrectly for paying subscribers.
+    // The debounce below gives TanStack ~1 s to start + finish the refetch and restore
+    // canUsePremium=true, at which point the timer is cancelled before it ever fires.
+    if (paywallTimerRef.current) {
+      clearTimeout(paywallTimerRef.current);
+      paywallTimerRef.current = null;
+    }
+
     if (!subLoading && !!session) {
       if (canUsePremium) {
         // Fecha o paywall IMEDIATAMENTE quando subscription confirmada ativa
         setShowPaywall(false);
       } else if (!subFetching) {
-        // Abre o paywall SOMENTE após fetch concluído confirmando ausência de subscription
-        // Nunca abre durante um background refetch (evita falso negativo transitório)
-        setShowPaywall(true);
+        // Debounce 1 s antes de abrir o paywall.
+        // Se o refetch de subscription completar dentro desse janela e canUsePremium voltar
+        // a true, o timer é cancelado e o paywall NUNCA aparece para assinantes ativos.
+        paywallTimerRef.current = setTimeout(() => {
+          paywallTimerRef.current = null;
+          if (!canUsePremiumRef.current) setShowPaywall(true);
+        }, 1000);
       }
     }
+
+    return () => {
+      if (paywallTimerRef.current) {
+        clearTimeout(paywallTimerRef.current);
+        paywallTimerRef.current = null;
+      }
+    };
   }, [canUsePremium, subLoading, subFetching, session]);
 
   // ── App Lock: show logo while passkeys load (avoids content flash) ──────────

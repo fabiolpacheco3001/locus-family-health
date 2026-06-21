@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, UserPlus, Crown, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Settings2, Info, ShieldOff } from "lucide-react";
+import { ArrowLeft, Shield, UserPlus, Crown, Loader2, Mail, Trash2, Check, Copy, MessageCircle, Settings2, Info, ShieldOff, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,6 +70,7 @@ const GestaoAcessos = () => {
   const [permsSaving, setPermsSaving] = useState(false);
   const [roleChanging, setRoleChanging] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [resendingInviteId, setResendingInviteId] = useState<string | null>(null);
 
   // Fetch active group members
   const { data: groupMembers = [], isLoading: loadingMembers } = useQuery({
@@ -108,19 +109,38 @@ const GestaoAcessos = () => {
     return members.find(m => m.id === memberId)?.name ?? "Perfil removido";
   };
 
+  /** Chama a edge function para enfileirar o e-mail de convite (disparo inicial ou reenvio) */
+  const sendInviteEmail = async (inviteId: string) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return;
+    // Fire-and-forget: falha no e-mail não bloqueia a UX — convite já está registrado
+    supabase.functions.invoke("send-invite-email", {
+      body: { invite_id: inviteId },
+    }).then(({ error }) => {
+      if (error) console.warn("[invite-email] Falha ao enfileirar e-mail:", error);
+    });
+  };
+
   const handleSendInvite = async () => {
     if (!inviteEmail.trim() || !groupId || !user) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("group_invites").insert({
-        group_id: groupId,
-        email: inviteEmail.trim().toLowerCase(),
-        role: "user" as const, // always 'user' — DB policy forbids self-assigning 'admin'
-        family_member_id: inviteMemberId || null,
-        invited_by: user.id,
-      });
+      const { data: inserted, error } = await supabase
+        .from("group_invites")
+        .insert({
+          group_id: groupId,
+          email: inviteEmail.trim().toLowerCase(),
+          role: "user" as const, // always 'user' — DB policy forbids self-assigning 'admin'
+          family_member_id: inviteMemberId || null,
+          invited_by: user.id,
+        })
+        .select("id")
+        .single();
 
       if (error) throw error;
+
+      // Enviar e-mail automaticamente — fire-and-forget (não bloqueia sucesso do convite)
+      if (inserted?.id) sendInviteEmail(inserted.id);
 
       setSuccessEmail(inviteEmail.trim().toLowerCase());
       queryClient.invalidateQueries({ queryKey: ["group_invites", groupId] });
@@ -128,6 +148,21 @@ const GestaoAcessos = () => {
       toast.error("Erro ao salvar convite.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleResendInviteEmail = async (inviteId: string) => {
+    setResendingInviteId(inviteId);
+    try {
+      const { error } = await supabase.functions.invoke("send-invite-email", {
+        body: { invite_id: inviteId },
+      });
+      if (error) throw error;
+      toast.success("E-mail de convite reenviado!");
+    } catch {
+      toast.error("Não foi possível reenviar. Tente novamente.");
+    } finally {
+      setResendingInviteId(null);
     }
   };
 
@@ -343,6 +378,17 @@ const GestaoAcessos = () => {
                       <Badge className="bg-amber-100 text-amber-800 border-none text-[10px] px-2">
                         {inv.role === "admin" ? "Admin" : "Usuário"}
                       </Badge>
+                      {/* Reenviar e-mail de convite */}
+                      <button
+                        onClick={() => handleResendInviteEmail(inv.id)}
+                        disabled={resendingInviteId === inv.id}
+                        title="Reenviar e-mail de convite"
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-primary/10 [@media(hover:hover)]:hover:text-primary active:bg-primary/10 disabled:opacity-40"
+                      >
+                        {resendingInviteId === inv.id
+                          ? <Loader2 size={16} className="animate-spin" />
+                          : <Send size={15} />}
+                      </button>
                       <button
                         onClick={() => setDeleteTarget({ type: "invite", id: inv.id })}
                         className="w-8 h-8 flex items-center justify-center rounded-full text-muted-foreground [@media(hover:hover)]:hover:bg-destructive/10 [@media(hover:hover)]:hover:text-destructive active:bg-destructive/10"
@@ -373,8 +419,9 @@ const GestaoAcessos = () => {
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold text-foreground">Convite gerado com sucesso!</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    O acesso foi liberado no sistema. Agora, avise o convidado para baixar o aplicativo e criar uma conta usando o e-mail:{" "}
-                    <strong className="text-foreground">{successEmail}</strong>
+                    Um e-mail com as instruções foi enviado para{" "}
+                    <strong className="text-foreground">{successEmail}</strong>.
+                    Se preferir, também pode avisar pelo WhatsApp:
                   </p>
                 </div>
 
@@ -466,7 +513,7 @@ const GestaoAcessos = () => {
                     disabled={saving || !inviteEmail.trim()}
                     className="flex-1 rounded-xl bg-[#1C3333] text-white [@media(hover:hover)]:hover:bg-[#1C3333]/90"
                   >
-                    {saving ? <Loader2 className="animate-spin" size={16} /> : "Salvar Convite"}
+                    {saving ? <Loader2 className="animate-spin" size={16} /> : "Convidar e Enviar E-mail"}
                   </Button>
                 </div>
               </div>

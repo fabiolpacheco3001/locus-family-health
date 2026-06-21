@@ -3,12 +3,65 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
 
+/**
+ * Motivos comuns de tratamento — baseados nos capítulos do CID-10 (Classificação
+ * Internacional de Doenças, padrão DATASUS / Ministério da Saúde).
+ * Ordenados por frequência de uso em contexto familiar brasileiro.
+ * Complementados dinamicamente pelo histórico de medicamentos e diagnósticos do paciente.
+ */
 const DEFAULT_REASONS = [
+  // Sintomas gerais (CID-10 cap. XVIII / R-codes)
   "Dor e Febre",
+  "Dor de Cabeça",
+  "Dor Crônica",
   "Inflamação",
-  "Infecção",
+  "Náusea e Vômito",
+  "Insônia",
+  "Ansiedade",
+  "Depressão",
+  "Fadiga",
+
+  // Doenças crônicas (CID-10 cap. IV / IX / X)
   "Uso Contínuo",
+  "Diabetes",
+  "Hipertensão",
+  "Colesterol Elevado",
+  "Hipotireoidismo",
+  "Hipertireoidismo",
+  "Asma",
+  "Rinite Alérgica",
+  "Refluxo Gastroesofágico",
+  "Gastrite",
+
+  // Infecções e sistema imune (CID-10 cap. I / X)
+  "Infecção",
+  "Infecção Urinária",
+  "Infecção Respiratória",
+  "Gripe e Resfriado",
   "Alergia",
+
+  // Saúde da mulher (CID-10 cap. XIV / XV)
+  "Anticoncepcional",
+  "Reposição Hormonal",
+  "Endometriose",
+  "Síndrome do Ovário Policístico",
+  "Menopausa",
+
+  // Saúde óssea e muscular (CID-10 cap. XIII)
+  "Artrite / Artrose",
+  "Osteoporose",
+  "Dor nas Costas",
+
+  // Saúde mental (CID-10 cap. V)
+  "TDAH",
+  "Transtorno Bipolar",
+
+  // Outros fins comuns
+  "Emagrecimento",
+  "Suplementação",
+  "Prevenção / Vitamina",
+  "Pós-operatório",
+  "Tratamento de Pele",
 ];
 
 interface Props {
