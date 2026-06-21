@@ -33,7 +33,7 @@ import { log } from "../_shared/logger.ts";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ??
-  "BPc1Jl-B2jTYy5YJ9AARFRn26z4u8NHtnvglFkipZC_Ho1sbKDmhcJUPnJ58TeiIrifdGyWmAfEvOjYpZ60iFW4";
+  "BBvOiZ0bhzoRuuByv7Gae5NyZzWii_RB8VL-B3TBkaoinuyh-rDnAjyHStZMQOfoPeWuCAiv0HmX7T6pvk_JEMs";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:suporte@locustech.com.br";
 const CRON_SECRET = Deno.env.get("CRON_SECRET");

@@ -17,7 +17,7 @@
  *   "
  */
 export const VAPID_PUBLIC_KEY =
-  'BPc1Jl-B2jTYy5YJ9AARFRn26z4u8NHtnvglFkipZC_Ho1sbKDmhcJUPnJ58TeiIrifdGyWmAfEvOjYpZ60iFW4';
+  'BBvOiZ0bhzoRuuByv7Gae5NyZzWii_RB8VL-B3TBkaoinuyh-rDnAjyHStZMQOfoPeWuCAiv0HmX7T6pvk_JEMs';
 
 /** Contact email sent in VAPID header (required by some push services) */
 export const VAPID_SUBJECT = 'mailto:suporte@locustech.com.br';
