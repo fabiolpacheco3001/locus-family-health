@@ -614,6 +614,7 @@ export type Database = {
       }
       family_members: {
         Row: {
+          address_number: string | null
           avatar_url: string | null
           birth_date: string | null
           blood_type: string | null
@@ -629,6 +630,7 @@ export type Database = {
           name: string
           phone: string | null
           physical_activity: string | null
+          postal_code: string | null
           relationship: string
           species: string | null
           tracks_menstrual_cycle: boolean
@@ -636,6 +638,7 @@ export type Database = {
           weight: number | null
         }
         Insert: {
+          address_number?: string | null
           avatar_url?: string | null
           birth_date?: string | null
           blood_type?: string | null
@@ -651,6 +654,7 @@ export type Database = {
           name: string
           phone?: string | null
           physical_activity?: string | null
+          postal_code?: string | null
           relationship: string
           species?: string | null
           tracks_menstrual_cycle?: boolean
@@ -658,6 +662,7 @@ export type Database = {
           weight?: number | null
         }
         Update: {
+          address_number?: string | null
           avatar_url?: string | null
           birth_date?: string | null
           blood_type?: string | null
@@ -673,6 +678,7 @@ export type Database = {
           name?: string
           phone?: string | null
           physical_activity?: string | null
+          postal_code?: string | null
           relationship?: string
           species?: string | null
           tracks_menstrual_cycle?: boolean
