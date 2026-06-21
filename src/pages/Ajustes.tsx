@@ -323,140 +323,159 @@ const Ajustes = () => {
             </div>
           </div>
 
-          {/* Subscription Card - Netflix Style */}
-          {isLoading ? (
-            <div className="rounded-xl border border-border/40 p-4 space-y-3 animate-pulse">
-              <div className="h-10 bg-muted rounded-lg" />
-              <div className="h-4 bg-muted rounded w-3/4" />
-              <div className="h-10 bg-muted rounded-xl" />
-            </div>
-          ) : subscription ? (
-            <div className="rounded-xl overflow-hidden shadow-xs border border-border/40">
-              {/* Header gradient */}
-              <div className={`px-4 py-3 ${
-                isActive
-                  ? "bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]"
-                  : isPastDue
-                  ? "bg-gradient-to-r from-red-600 to-red-400"
-                  : isCanceled
-                  ? "bg-gradient-to-r from-gray-500 to-gray-400"
-                  : trialExpired
-                  ? "bg-gradient-to-r from-gray-500 to-gray-400"
-                  : "bg-gradient-to-r from-amber-500 to-amber-400"
-              }`}>
-                <div className="flex items-center justify-between">
+          {/* Subscription Card */}
+          {isAdmin ? (
+            /* ── Admin: card completo com gerenciamento ── */
+            isLoading ? (
+              <div className="rounded-xl border border-border/40 p-4 space-y-3 animate-pulse">
+                <div className="h-10 bg-muted rounded-lg" />
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-10 bg-muted rounded-xl" />
+              </div>
+            ) : subscription ? (
+              <div className="rounded-xl overflow-hidden shadow-xs border border-border/40">
+                {/* Header gradient */}
+                <div className={`px-4 py-3 ${
+                  isActive
+                    ? "bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]"
+                    : isPastDue
+                    ? "bg-gradient-to-r from-red-600 to-red-400"
+                    : isCanceled
+                    ? "bg-gradient-to-r from-gray-500 to-gray-400"
+                    : trialExpired
+                    ? "bg-gradient-to-r from-gray-500 to-gray-400"
+                    : "bg-gradient-to-r from-amber-500 to-amber-400"
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Crown size={16} className="text-white" />
+                      <span className="text-sm font-bold text-white">
+                        {isActive
+                          ? subscription.plan_type === "annual"
+                            ? "Plano Anual Locus Vita"
+                            : "Plano Mensal Locus Vita"
+                          : isPastDue
+                          ? "Pagamento Pendente"
+                          : isCanceled
+                          ? "Assinatura Cancelada"
+                          : "Assinatura"}
+                      </span>
+                    </div>
+                    {isActive && (
+                      <Badge className="bg-white/20 text-white border-none text-xs backdrop-blur-sm">Ativo</Badge>
+                    )}
+                    {isCanceled && (
+                      <Badge className="bg-white/20 text-white border-none text-xs backdrop-blur-sm">Cancelado</Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="bg-card p-4 space-y-3">
+                  {isActive && (
+                    <div className="flex justify-center items-baseline gap-1 mt-4">
+                      <span className="text-2xl font-bold text-foreground">
+                        {subscription.plan_type === "annual" ? PLAN_ANNUAL_DISPLAY : PLAN_MONTHLY_DISPLAY}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        /{subscription.plan_type === "annual" ? "ano" : "mês"}
+                      </span>
+                    </div>
+                  )}
+
+                  {isActive && subscription.next_billing_date && (
+                    <p className="text-sm text-muted-foreground">
+                      Próximo pagamento:{" "}
+                      <strong className="text-foreground">
+                        {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
+                      </strong>
+                    </p>
+                  )}
+
+                  {isCanceled && canceledButGracePeriod && subscription.next_billing_date && (
+                    <p className="text-sm text-muted-foreground">
+                      Acesso válido até:{" "}
+                      <strong className="text-foreground">
+                        {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
+                      </strong>
+                    </p>
+                  )}
+
+                  {/* Always visible navigation to /meu-plano */}
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/meu-plano")}
+                    className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
+                  >
+                    {isCanceled ? "Ver Meu Plano" : "Gerenciar Assinatura"}
+                  </Button>
+
+                  {isPastDue && (
+                    <Button
+                      onClick={handleRegularize}
+                      disabled={loadingSubscription}
+                      className="w-full h-10 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold shadow-md"
+                    >
+                      {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : (
+                        <span className="flex items-center gap-2">
+                          <AlertCircle size={16} />
+                          Regularizar Pagamento
+                        </span>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Plano Grátis Card — admin sem assinatura */
+              <div className="rounded-xl overflow-hidden shadow-xs border border-border/40">
+                <div className={`px-4 py-3 ${
+                  implicitTrialExpired
+                    ? "bg-gradient-to-r from-gray-500 to-gray-400"
+                    : "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
+                }`}>
                   <div className="flex items-center gap-2">
                     <Crown size={16} className="text-white" />
                     <span className="text-sm font-bold text-white">
-                      {isActive
-                        ? subscription.plan_type === "annual"
-                          ? "Plano Anual Locus Vita"
-                          : "Plano Mensal Locus Vita"
-                        : isPastDue
-                        ? "Pagamento Pendente"
-                        : isCanceled
-                        ? "Assinatura Cancelada"
-                        : "Assinatura"}
+                      {implicitTrialExpired ? "Acesso Gratuito Expirado" : "Você está no Plano Grátis"}
                     </span>
                   </div>
-                  {isActive && (
-                    <Badge className="bg-white/20 text-white border-none text-xs backdrop-blur-sm">Ativo</Badge>
+                </div>
+                <div className="bg-card p-4 space-y-3">
+                  {!implicitTrialExpired && trialDaysLeft > 0 && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock size={14} />
+                      <span>Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu acesso gratuito.</span>
+                    </div>
                   )}
-                  {isCanceled && (
-                    <Badge className="bg-white/20 text-white border-none text-xs backdrop-blur-sm">Cancelado</Badge>
+                  {implicitTrialExpired && (
+                    <p className="text-sm text-muted-foreground">
+                      Seus 30 dias de acesso gratuito terminaram. Assine para continuar.
+                    </p>
                   )}
+                  <Button
+                    onClick={() => setShowPaywall(true)}
+                    className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
+                  >
+                    Assinar Agora
+                  </Button>
                 </div>
               </div>
-
-              {/* Body */}
-              <div className="bg-card p-4 space-y-3">
-                {isActive && (
-                  <div className="flex justify-center items-baseline gap-1 mt-4">
-                    <span className="text-2xl font-bold text-foreground">
-                      {subscription.plan_type === "annual" ? PLAN_ANNUAL_DISPLAY : PLAN_MONTHLY_DISPLAY}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      /{subscription.plan_type === "annual" ? "ano" : "mês"}
-                    </span>
-                  </div>
-                )}
-
-                {isActive && subscription.next_billing_date && (
-                  <p className="text-sm text-muted-foreground">
-                    Próximo pagamento:{" "}
-                    <strong className="text-foreground">
-                      {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
-                    </strong>
-                  </p>
-                )}
-
-                {isCanceled && canceledButGracePeriod && subscription.next_billing_date && (
-                  <p className="text-sm text-muted-foreground">
-                    Acesso válido até:{" "}
-                    <strong className="text-foreground">
-                      {format(parseDateInSP(subscription.next_billing_date.substring(0, 10)) ?? new Date(), "dd MMM yyyy", { locale: ptBR })}
-                    </strong>
-                  </p>
-                )}
-
-                {/* Always visible navigation to /meu-plano */}
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/meu-plano")}
-                  className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
-                >
-                  {isCanceled ? "Ver Meu Plano" : "Gerenciar Assinatura"}
-                </Button>
-
-                {isPastDue && (
-                  <Button
-                    onClick={handleRegularize}
-                    disabled={loadingSubscription}
-                    className="w-full h-10 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 font-bold shadow-md"
-                  >
-                    {loadingSubscription ? <Loader2 className="animate-spin" size={16} /> : (
-                      <span className="flex items-center gap-2">
-                        <AlertCircle size={16} />
-                        Regularizar Pagamento
-                      </span>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </div>
+            )
           ) : (
-            /* Plano Grátis Card */
+            /* ── Usuário (não-admin): card informativo sem acesso a billing ── */
             <div className="rounded-xl overflow-hidden shadow-xs border border-border/40">
-              <div className={`px-4 py-3 ${
-                implicitTrialExpired
-                  ? "bg-gradient-to-r from-gray-500 to-gray-400"
-                  : "bg-gradient-to-r from-[#2A5C82] to-[#A0C4D7]"
-              }`}>
+              <div className="px-4 py-3 bg-gradient-to-r from-[#2A5C82] to-[#78C2AD]">
                 <div className="flex items-center gap-2">
                   <Crown size={16} className="text-white" />
-                  <span className="text-sm font-bold text-white">
-                    {implicitTrialExpired ? "Acesso Gratuito Expirado" : "Você está no Plano Grátis"}
-                  </span>
+                  <span className="text-sm font-bold text-white">Plano Familiar</span>
                 </div>
               </div>
-              <div className="bg-card p-4 space-y-3">
-                {!implicitTrialExpired && trialDaysLeft > 0 && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock size={14} />
-                    <span>Faltam <strong className="text-foreground">{trialDaysLeft} dias</strong> para o fim do seu acesso gratuito.</span>
-                  </div>
-                )}
-                {implicitTrialExpired && (
-                  <p className="text-sm text-muted-foreground">
-                    Seus 30 dias de acesso gratuito terminaram. Assine para continuar.
-                  </p>
-                )}
-                <Button
-                  onClick={() => setShowPaywall(true)}
-                  className="w-full h-10 rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 font-bold shadow-md"
-                >
-                  Assinar Agora
-                </Button>
+              <div className="bg-card p-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Você está usando o Locus Vita através do plano do administrador do grupo.
+                  Para gerenciar a assinatura, entre em contato com o administrador da sua família.
+                </p>
               </div>
             </div>
           )}

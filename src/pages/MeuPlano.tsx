@@ -45,7 +45,7 @@ const MeuPlano = () => {
   } = useSubscription();
 
   const { members } = useFamilyMembers();
-  const { linkedMemberId } = useFamilyGroup();
+  const { linkedMemberId, isAdmin } = useFamilyGroup();
   // PROD-01 guard: check if user has CPF filled for Asaas anti-fraud
   const hasCpf = !!members?.find((m) => m.id === linkedMemberId)?.cpf;
 
@@ -181,6 +181,28 @@ const MeuPlano = () => {
       setLoadingSubscription(false);
     }
   };
+
+  // Somente administradores do grupo podem gerenciar assinaturas
+  if (!isAdmin) {
+    return (
+      <div className="fixed inset-x-0 top-0 bottom-[72px] z-10 flex flex-col overflow-hidden bg-background">
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
+          <Crown size={40} className="text-muted-foreground/40" />
+          <h2 className="text-lg font-semibold text-foreground">Acesso restrito</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Apenas o administrador do grupo familiar pode gerenciar a assinatura.
+            Entre em contato com o administrador da sua família.
+          </p>
+          <button
+            onClick={() => navigate(-1)}
+            className="mt-2 text-sm font-medium text-primary underline underline-offset-2"
+          >
+            Voltar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-x-0 top-0 bottom-[72px] z-10 flex flex-col overflow-hidden bg-background">

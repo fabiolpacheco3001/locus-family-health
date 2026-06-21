@@ -249,7 +249,7 @@ const Cadastro = () => {
           <Button
             type="submit"
             className="w-full h-12 text-base font-semibold mt-2"
-            disabled={loading}
+            disabled={loading || !name.trim() || !email.trim() || password.length < 8 || !confirmPassword || !consentAccepted}
           >
             {loading ? <><Loader2 className="animate-spin mr-2" size={20} /> Criando conta...</> : "Criar Conta"}
           </Button>

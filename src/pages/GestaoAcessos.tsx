@@ -475,32 +475,56 @@ const GestaoAcessos = () => {
                     value={inviteEmail}
                     onChange={e => setInviteEmail(e.target.value)}
                     className={INPUT_CLASSES}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
                     onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 300)}
                   />
                 </div>
 
                 {/* Linked Profile (optional — auto-created on accept if empty) */}
                 {/* Security: invitees always join as 'user' — admin promotion is
-                    a separate action. Role selector removed (DB enforces role = 'user'). */}
-                {(
+                    a separate action. Role selector removed (DB enforces role = 'user').
+                    Filter: exclude pets (member_type='pet') and profiles already linked
+                    to a real user (auth_user_id != null in family_group_members). */}
+                {(() => {
+                  // IDs de perfis já vinculados a um usuário real no grupo
+                  const linkedProfileIds = new Set(
+                    groupMembers
+                      .filter(gm => gm.auth_user_id && gm.family_member_id)
+                      .map(gm => gm.family_member_id as string)
+                  );
+                  // Apenas perfis humanos sem usuário real associado
+                  const eligibleProfiles = members.filter(
+                    m => m.member_type !== "pet" && !linkedProfileIds.has(m.id)
+                  );
+                  return (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Perfil Vinculado (opcional)</Label>
                     <Select value={inviteMemberId} onValueChange={setInviteMemberId}>
                       <SelectTrigger className={INPUT_CLASSES}>
-                        <SelectValue placeholder="Selecione o usuário..." />
+                        <SelectValue placeholder="Selecione o perfil..." />
                       </SelectTrigger>
                       <SelectContent>
-                        {members.map(m => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.name} ({m.relationship})
+                        {eligibleProfiles.length === 0 ? (
+                          <SelectItem value="__none__" disabled>
+                            Todos os perfis já têm acesso
                           </SelectItem>
-                        ))}
+                        ) : (
+                          eligibleProfiles.map(m => (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name} ({m.relationship})
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-[11px] text-muted-foreground leading-tight">
                       Se não selecionar, um perfil será criado automaticamente quando o convidado aceitar.
                     </p>
                   </div>
+                  );
+                })()
                 )}
 
                 {/* Action buttons inside scrollable area for iOS keyboard */}
