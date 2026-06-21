@@ -224,7 +224,7 @@ const GestaoAcessos = () => {
               >
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
-              <h1 className="text-lg text-foreground flex-1">Gestão de Acessos</h1>
+              <h1 className="text-lg font-bold text-foreground flex-1">Gestão de Acessos</h1>
               <button
                 onClick={() => setInfoOpen(true)}
                 className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
