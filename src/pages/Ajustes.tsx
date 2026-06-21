@@ -476,7 +476,7 @@ const Ajustes = () => {
                   } else if (path?.startsWith("mailto:")) {
                     window.location.href = path;
                   } else if (path) {
-                    navigate(path);
+                    navigate(path, { state: { from: "/ajustes" } });
                   }
                 }}
                 className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors"

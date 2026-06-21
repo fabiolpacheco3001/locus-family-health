@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,13 +11,19 @@ import { Button } from "@/components/ui/button";
  */
 const PoliticaPrivacidade = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const handleBack = () => {
+    const from = (location.state as { from?: string } | null)?.from;
+    if (from) navigate(from);
+    else navigate(-1);
+  };
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-[#F4F1EB]/90 backdrop-blur-md border-b border-border/30 px-4 py-4 flex items-center gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted/60 transition-colors"
           aria-label="Voltar"
         >
@@ -194,7 +200,7 @@ const PoliticaPrivacidade = () => {
 
         <Button
           variant="outline"
-          onClick={() => navigate(-1)}
+          onClick={handleBack}
           className="w-full h-11 rounded-xl font-semibold mb-8"
         >
           Voltar
