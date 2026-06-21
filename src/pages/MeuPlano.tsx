@@ -79,8 +79,9 @@ const MeuPlano = () => {
     return { label: "Gratuito", color: "bg-gray-100 text-gray-500 border-gray-200" };
   }, [isActive, isPastDue, isCanceled, isTrialing, trialExpired, implicitTrialExpired]);
 
+  // Paleta brand: Azul Profundo (#1C3333) → Verde Menta (#78C2AD)
   const headerClass = isActive
-    ? "bg-gradient-to-r from-emerald-600 to-teal-500"
+    ? "bg-gradient-to-r from-[#1C3333] to-[#78C2AD]"
     : isPastDue
       ? "bg-gradient-to-r from-red-600 to-rose-500"
       : "bg-gradient-to-r from-slate-700 to-slate-600";
@@ -227,7 +228,7 @@ const MeuPlano = () => {
               <button onClick={() => navigate(-1)} className="rounded-full p-1 transition-colors hover:bg-muted/60">
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
-              <h1 className="text-2xl font-bold text-foreground">Meu Plano</h1>
+              <h1 className="text-lg font-bold text-foreground flex-1">Meu Plano</h1>
             </div>
           </div>
 
