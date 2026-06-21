@@ -96,7 +96,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       if (!subJson.endpoint || !subJson.keys) return;
 
       try {
-        await supabase.from('push_subscriptions').upsert(
+        await (supabase.from('push_subscriptions' as any) as any).upsert(
           {
             user_id: user.id,
             endpoint: subJson.endpoint,
@@ -119,8 +119,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     async (endpoint: string) => {
       if (!user) return;
       try {
-        await supabase
-          .from('push_subscriptions')
+        await (supabase.from('push_subscriptions' as any) as any)
           .delete()
           .eq('user_id', user.id)
           .eq('endpoint', endpoint);
@@ -165,7 +164,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       // 3. Subscribe via PushManager (VAPID)
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true, // Required — cannot send silent notifications
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
       });
 
       // 4. Persist to Supabase
