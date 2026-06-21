@@ -23,6 +23,25 @@ import { usePasskeys } from "@/hooks/usePasskeys";
 
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 min background → re-lock
 
+/**
+ * Flag de módulo JS — persiste na memória entre remontagens do AppLayout
+ * dentro da mesma sessão de página (não sobrevive a page reload).
+ *
+ * Por que módulo e não sessionStorage?
+ *  - Mais rápido (síncrono, sem serialização)
+ *  - Não persiste além do ciclo de vida do JS (segurança)
+ *  - Cada reload do PWA reinicia o flag corretamente
+ *
+ * Cenário que resolve:
+ *  - PWA resume → AppLayout monta → lock/unlock acontece → wasCheckedThisSession = true
+ *  - Usuário vai p/ PoliticaPrivacidade (fora do AppLayout) → AppLayout desmonta
+ *  - Usuário volta → AppLayout remonta → wasCheckedThisSession = true → NÃO re-trava
+ *
+ * O bloqueio por inatividade (>5 min em background) reseta o flag via
+ * handleVisibilityBackground() para garantir que o lock volte a funcionar.
+ */
+let wasCheckedThisSession = false;
+
 export function useAppLock() {
   const { user, session, freshlyLoggedIn } = useAuth();
   const { passkeys, isLoading } = usePasskeys();
@@ -41,11 +60,21 @@ export function useAppLock() {
   // ── Initial lock decision (runs once when passkeys query resolves) ──────────
   useEffect(() => {
     if (isLoading) return;
+
+    // Segunda+ montagem do AppLayout na mesma sessão JS:
+    // O usuário já passou pelo check inicial (biometria ou sem lock).
+    // Não re-trava para evitar logout falso ao voltar de páginas externas ao layout.
+    if (wasCheckedThisSession) {
+      setIsReady(true);
+      return;
+    }
+
     if (session && hasPasskeys && !wasFreshLogin) {
       // Session was restored from localStorage and user has passkeys → lock
       setIsLocked(true);
     }
     setIsReady(true);
+    wasCheckedThisSession = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]); // intentionally only on isLoading change (runs once on resolve)
 
@@ -59,6 +88,8 @@ export function useAppLock() {
           const elapsed = Date.now() - hiddenAt.current;
           if (elapsed > LOCK_TIMEOUT_MS) {
             setIsLocked(true);
+            // Reseta o flag para que o próximo mount do AppLayout também verifique
+            wasCheckedThisSession = false;
           }
         }
         hiddenAt.current = null;
@@ -79,7 +110,10 @@ export function useAppLock() {
     }
   }, [user]);
 
-  const unlock = useCallback(() => setIsLocked(false), []);
+  const unlock = useCallback(() => {
+    setIsLocked(false);
+    wasCheckedThisSession = true; // Usuário desbloqueou — não re-trava em remontagens
+  }, []);
 
   // hadInitialSession: true when it's a PWA resume (not a fresh login).
   // Used by AppLayout to show a pre-lock logo spinner instead of flashing content.
