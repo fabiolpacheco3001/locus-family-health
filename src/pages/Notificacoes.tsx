@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, BellOff, BellRing, CheckCheck, Trash2, MoreVertical, BellOff as BellOffIcon } from "lucide-react";
+import { ArrowLeft, BellOff, BellRing, CheckCheck, Trash2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -139,7 +139,7 @@ const Notificacoes = () => {
               {isSubscribed ? (
                 <BellRing size={20} className="text-[#78C2AD]" />
               ) : (
-                <BellOffIcon size={20} className="text-muted-foreground" />
+                <BellOff size={20} className="text-muted-foreground" />
               )}
             </div>
             <div className="flex-1 min-w-0">
