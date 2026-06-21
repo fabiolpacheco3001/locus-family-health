@@ -147,21 +147,23 @@ Deno.serve(async (req) => {
     const messageId = `invite-${invite_id}-${Date.now()}`;
 
     // Enqueue via PGMQ transactional_emails
-    const { error: queueErr } = await serviceClient.rpc("queue_message", {
+    // Nota: o RPC público chama-se enqueue_email (não queue_message)
+    const emailPayload = {
+      message_id: messageId,
+      to: safeEmail,
+      from: "noreply@locustech.com.br",
+      sender_domain: "locustech.com.br",
+      subject,
+      html,
+      text,
+      purpose: "transactional",
+      label: "family_invite",
+      idempotency_key: messageId,
+      queued_at: new Date().toISOString(),
+    };
+    const { error: queueErr } = await serviceClient.rpc("enqueue_email", {
       queue_name: "transactional_emails",
-      payload: {
-        message_id: messageId,
-        to: safeEmail,
-        from: "noreply@locustech.com.br",
-        sender_domain: "locustech.com.br",
-        subject,
-        html,
-        text,
-        purpose: "transactional",
-        label: "family_invite",
-        idempotency_key: messageId,
-        queued_at: new Date().toISOString(),
-      },
+      payload: emailPayload,
     });
 
     if (queueErr) {
