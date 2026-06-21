@@ -182,16 +182,30 @@ const MeuPlano = () => {
     }
   };
 
-  // Somente administradores do grupo podem gerenciar assinaturas
-  if (!isAdmin) {
+  // Somente o dono da assinatura (user que criou o grupo) pode gerenciar billing.
+  // isAdmin garante que não-admins não chegam aqui.
+  // isSubscriptionOwner garante que admins secundários (ex: cônjuge promovido a admin)
+  // não consigam criar uma nova assinatura acidentalmente — as edge functions de billing
+  // usam o JWT do caller para identificar o usuário, então um admin não-dono geraria
+  // uma assinatura duplicada no Asaas em nome dele, desvinculada do grupo.
+  const isSubscriptionOwner = !isLoading && (
+    // Sem assinatura ainda: o próprio usuário pode criar a primeira
+    !subscription ||
+    // Com assinatura: só o dono (user_id na tabela subscriptions)
+    subscription.user_id === user?.id
+  );
+
+  if (!isAdmin || !isSubscriptionOwner) {
+    const isNonAdmin = !isAdmin;
     return (
       <div className="fixed inset-x-0 top-0 bottom-[72px] z-10 flex flex-col overflow-hidden bg-background">
         <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4">
           <Crown size={40} className="text-muted-foreground/40" />
           <h2 className="text-lg font-semibold text-foreground">Acesso restrito</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Apenas o administrador do grupo familiar pode gerenciar a assinatura.
-            Entre em contato com o administrador da sua família.
+            {isNonAdmin
+              ? "Apenas o administrador do grupo familiar pode gerenciar a assinatura. Entre em contato com o administrador da sua família."
+              : "A assinatura está vinculada à conta do administrador que criou o grupo. Apenas esse usuário pode renovar, cancelar ou gerenciar o plano."}
           </p>
           <button
             onClick={() => navigate(-1)}

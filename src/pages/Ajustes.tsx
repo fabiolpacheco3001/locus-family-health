@@ -43,6 +43,11 @@ const Ajustes = () => {
   const { members } = useFamilyMembers();
   const { linkedMemberId } = useFamilyGroup();
   const { subscription, isLoading, isTrialing, isActive, isPastDue, isCanceled, canceledButGracePeriod, trialDaysLeft, trialExpired, isImplicitTrial, implicitTrialExpired, canUsePremium } = useSubscription();
+  // Dono da assinatura = quem criou o grupo (user_id na tabela subscriptions coincide com user logado).
+  // Admins secundários veem o card informativo mas não o botão "Gerenciar Assinatura",
+  // pois as edge functions de billing operam sobre o JWT do caller — outro admin criaria
+  // uma assinatura duplicada no Asaas em nome dele.
+  const isSubscriptionOwner = !isLoading && (!subscription || subscription.user_id === user?.id);
   const [showDeleteAccount, setShowDeleteAccount] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reauthPassword, setReauthPassword] = useState("");
@@ -401,16 +406,18 @@ const Ajustes = () => {
                     </p>
                   )}
 
-                  {/* Always visible navigation to /meu-plano */}
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate("/meu-plano")}
-                    className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
-                  >
-                    {isCanceled ? "Ver Meu Plano" : "Gerenciar Assinatura"}
-                  </Button>
+                  {/* Gerenciar Assinatura — só para o dono da assinatura */}
+                  {isSubscriptionOwner && (
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate("/meu-plano")}
+                      className="w-full h-10 rounded-xl border-primary/30 text-primary font-semibold"
+                    >
+                      {isCanceled ? "Ver Meu Plano" : "Gerenciar Assinatura"}
+                    </Button>
+                  )}
 
-                  {isPastDue && (
+                  {isPastDue && isSubscriptionOwner && (
                     <Button
                       onClick={handleRegularize}
                       disabled={loadingSubscription}
