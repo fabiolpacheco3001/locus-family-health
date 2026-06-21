@@ -188,14 +188,14 @@ const MeusDados = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10 animate-fade-in">
+    <div className="fixed top-0 left-0 right-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] flex flex-col bg-[#f2f0eb] overflow-hidden z-10 animate-fade-in">
       <div className="flex-none flex items-center gap-3 px-4 pt-6 mb-4">
         <button type="button" aria-label="Voltar" onClick={() => navigate("/ajustes")} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
         <h1 className="text-lg font-bold text-foreground flex-1 text-center pr-8">Meus Dados</h1>
       </div>
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-3">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-3 pb-6">
         <div className="pt-4" />
         <button type="button" aria-label="Alterar foto de perfil" className="flex justify-center mb-4 w-full" onClick={() => setAvatarOpen(true)}>
           <div className="relative">
@@ -314,12 +314,13 @@ const MeusDados = () => {
               onChange={(e) => setAddressNumber(e.target.value.slice(0, 10))} className="w-full max-w-full box-border min-w-0 text-[16px]" />
           </div>
         </div>
-      </div>
-      <div className="flex-none py-2 px-4 bg-card border-t border-border flex gap-4">
-        <Button variant="outline" className="flex-1" onClick={() => navigate('/ajustes')}>Cancelar</Button>
-        <Button className="flex-1 bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none" onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
-        </Button>
+        {/* Botões no conteúdo scrollável — sem footer fixo */}
+        <div className="flex gap-4 pt-2">
+          <Button variant="outline" className="flex-1" onClick={() => navigate('/ajustes')}>Cancelar</Button>
+          <Button className="flex-1 bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none" onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="animate-spin" size={18} /> : "Salvar"}
+          </Button>
+        </div>
       </div>
       <AvatarSelector open={avatarOpen} onOpenChange={setAvatarOpen} onSelect={setAvatarUrl} />
     </div>
