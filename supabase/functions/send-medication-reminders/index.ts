@@ -8,7 +8,7 @@
  * Lógica por frequency_type:
  *  - specific_times: verifica se algum horário do array cai no slot atual
  *  - specific_days:  verifica o dia da semana + horários
- *  - fixed_interval: calcula próxima dose a partir de start_date
+ *  - fixed_interval / interval: calcula próxima dose a partir de start_date + start_time
  *
  * Secret obrigatório: CRON_SECRET (mesmo valor configurado no pg_cron job).
  */
@@ -68,8 +68,8 @@ Deno.serve(async (req) => {
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   try {
-    // Fetch all active medications that have push subscribers
-    // Inner join ensures we only process users who have at least one active push subscription
+    // Fetch all active medications
+    // Inner join ensures deleted family members are excluded
     const { data: medications, error } = await adminClient
       .from("medications")
       .select(`
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
           deleted_at
         )
       `)
-      .eq("status", "Ativo")
+      .in("status", ["Ativo", "ativo"])
       .is("family_members.deleted_at", null);
 
     if (error) {
@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 
       let shouldNotify = false;
 
-      if (freqType === "specific_times" || specificTimes.length > 0) {
+      if (freqType === "specific_times" || (freqType !== "specific_days" && freqType !== "fixed_interval" && freqType !== "interval" && specificTimes.length > 0)) {
         // Check if current time matches any of the specific_times
         for (const t of specificTimes) {
           const [h, m] = t.split(":").map(Number);
@@ -140,25 +140,38 @@ Deno.serve(async (req) => {
             }
           }
         }
-      } else if (freqType === "fixed_interval") {
-        // For fixed_interval: calculate based on start_date + frequency_hours
-        if (!med.start_date || !med.frequency_hours || med.frequency_hours <= 0) continue;
+      } else if (freqType === "fixed_interval" || freqType === "interval") {
+        // Handles both 'fixed_interval' and 'interval' (legacy value) frequency types
+        if (!med.start_date) continue;
 
-        const dateStr = med.start_date.slice(0, 10);
-        const startISO = med.start_time ? `${dateStr}T${med.start_time}` : `${dateStr}T00:00:00`;
-        const startTime = new Date(new Date(startISO).toLocaleString("en-US", { timeZone: TZ }));
+        const dateStr = (med.start_date as string).slice(0, 10);
 
-        const nowMs = new Date(new Date().toLocaleString("en-US", { timeZone: TZ })).getTime();
-        const elapsedMs = nowMs - startTime.getTime();
-        if (elapsedMs < 0) continue;
+        if (!med.frequency_hours || (med.frequency_hours as number) <= 0) {
+          // No interval defined: treat start_time as a daily dose time (once per day)
+          if (med.start_time) {
+            const timePart = (med.start_time as string).slice(0, 5); // "HH:MM"
+            const [h, m] = timePart.split(":").map(Number);
+            if (isInWindow(h, m, hour, minute)) shouldNotify = true;
+          }
+        } else {
+          // Interval-based: calculate next dose from start_date + N × frequency_hours
+          const startISO = med.start_time
+            ? `${dateStr}T${(med.start_time as string).slice(0, 8)}`
+            : `${dateStr}T00:00:00`;
+          const startTime = new Date(new Date(startISO).toLocaleString("en-US", { timeZone: TZ }));
 
-        const intervalMs = med.frequency_hours * 60 * 60 * 1000;
-        const sinceLastDoseMs = elapsedMs % intervalMs;
+          const nowMs = new Date(new Date().toLocaleString("en-US", { timeZone: TZ })).getTime();
+          const elapsedMs = nowMs - startTime.getTime();
+          if (elapsedMs < 0) continue;
 
-        // Is the current time within MATCH_WINDOW_MINUTES of a dose?
-        const windowMs = MATCH_WINDOW_MINUTES * 60 * 1000;
-        if (sinceLastDoseMs <= windowMs || (intervalMs - sinceLastDoseMs) <= windowMs) {
-          shouldNotify = true;
+          const intervalMs = (med.frequency_hours as number) * 60 * 60 * 1000;
+          const sinceLastDoseMs = elapsedMs % intervalMs;
+
+          // Is the current time within MATCH_WINDOW_MINUTES of a dose?
+          const windowMs = MATCH_WINDOW_MINUTES * 60 * 1000;
+          if (sinceLastDoseMs <= windowMs || (intervalMs - sinceLastDoseMs) <= windowMs) {
+            shouldNotify = true;
+          }
         }
       }
 
