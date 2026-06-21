@@ -524,8 +524,7 @@ const GestaoAcessos = () => {
                     </p>
                   </div>
                   );
-                })()
-                )}
+                })()}
 
                 {/* Action buttons inside scrollable area for iOS keyboard */}
                 <div className="flex gap-3 pt-2">
