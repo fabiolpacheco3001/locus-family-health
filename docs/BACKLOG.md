@@ -33,7 +33,7 @@
 
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
-| BK-01 | Push notifications multi-dispositivo | 🔄 | **Em progresso (2026-06-21, sessão 35):** Web Push VAPID implementado. Arquivos criados: `public/sw.js`, `src/lib/pushConfig.ts`, `src/hooks/usePushSubscription.ts`, 3 Edge Functions (`send-push-notification`, `send-medication-reminders`, `send-appointment-reminders`), migration `20260621120000_push_notifications.sql`. **Pendente:** configurar Secrets VAPID + CRON_SECRET no Supabase Dashboard, aplicar migration, ativar pg_cron jobs (ver instruções no SQL da migration). |
+| BK-01 | Push notifications multi-dispositivo | ✅ | **E2E validado (2026-06-21, sessão 36):** Notificação chegando no iPhone com PWA completamente fechado. Root cause do não-funcionamento: `VAPID_PRIVATE_KEY` no Supabase Secrets não correspondia à `VAPID_PUBLIC_KEY` usada no frontend — chaves geradas inconsistentemente durante rotação anterior. Fix: par VAPID P-256 regenerado via Node.js WebCrypto, ambas as chaves atualizadas nos Secrets e `pushConfig.ts`. Diagnóstico via campo `push_details` na resposta do cron (`sent:0,failed:1` → `sent:1,failed:0` após fix). Bug colateral corrigido: `send-medication-reminders` contava `sent` por `res.ok` (HTTP 200), não pelo resultado real do APNs. JSDoc com private key removido de `send-push-notification/index.ts`. |
 | A7-E2E | Testes E2E Playwright | 🔴 | Fluxos críticos: login, cadastro de medicamento, marcação de dose, pagamento |
 
 ---
@@ -78,6 +78,7 @@
 | BK-04 | WebAuthn passkeys (Face ID / Touch ID) | Sprint 10 | 2026-06 |
 | BK-06 | Signed URLs para arquivos clínicos (LGPD) | Sprint 11 | 2026-06 |
 | BK-Asaas | Refactor motor financeiro → Cobrança Avulsa + tokenização | Sprint 13 | 2026-06-19 |
+| BK-01 | Push notifications multi-dispositivo (VAPID + pg_cron) | Sprint 35 | 2026-06-21 |
 | BK-07 | Importação de receitas via foto (câmera) | Sprint 27 | 2026-06-19 |
 | BK-08 | Compartilhamento de histórico com médico (Export PDF) | Sprint 21 | 2026-06-19 |
 | SEC-RLS | Fix subscriptions 42501 — column-level grants quebraram select("*") | Hotfix | 2026-06-20 |

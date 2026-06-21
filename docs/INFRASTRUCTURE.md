@@ -88,16 +88,18 @@ Configuradas em **Lovable Cloud → Settings → Secrets** (propagadas automatic
 
 ---
 
-### 1.9 Web Push — VAPID (BK-01) ⚠️ CONFIGURAR EM PRODUÇÃO
+### 1.9 Web Push — VAPID (BK-01) ✅ CONFIGURADO E VALIDADO EM PRODUÇÃO
 
 | Secret | Descrição | Valor / Como obter |
 |--------|-----------|-------------------|
-| `VAPID_PUBLIC_KEY` | Chave pública VAPID (P-256). **Já gerada** — usar valor exato abaixo | `BPc1Jl-B2jTYy5YJ9AARFRn26z4u8NHtnvglFkipZC_Ho1sbKDmhcJUPnJ58TeiIrifdGyWmAfEvOjYpZ60iFW4` |
-| `VAPID_PRIVATE_KEY` | Chave privada VAPID (P-256, base64url raw). **⚠️ Nunca versionar** | `MDpDKH2jN9NkKU8OOVON9mlEpHDymdcdaEs9D7lqNJA` |
+| `VAPID_PUBLIC_KEY` | Chave pública VAPID (P-256). **⚠️ Deve bater exatamente com `pushConfig.ts`** | Ver `src/lib/pushConfig.ts` — não versionar em docs |
+| `VAPID_PRIVATE_KEY` | Chave privada VAPID (P-256, base64url raw). **⚠️ Nunca versionar** | Apenas no Supabase Dashboard → Secrets |
 | `VAPID_SUBJECT` | Identificador do remetente (mailto) exigido pelo Web Push Protocol | `mailto:suporte@locustech.com.br` |
-| `CRON_SECRET` | Token de autenticação para pg_cron chamar Edge Functions sem JWT. Gerar com `openssl rand -hex 32` | _gerar valor aleatório_ |
+| `CRON_SECRET` | Token de autenticação para pg_cron chamar Edge Functions sem JWT. Gerar com `openssl rand -hex 32` | Apenas no Supabase Dashboard → Secrets |
 
-> **⚠️ Par de chaves VAPID é imutável após deploy.** Trocar as chaves invalida **todas** as subscriptions existentes — usuários precisarão optar novamente. Guardar backup das chaves em cofre seguro (1Password, etc.).
+> **⚠️ Consistência do par VAPID é crítica.** A `VAPID_PUBLIC_KEY` no Supabase Secret + `VAPID_PRIVATE_KEY` **devem ser geradas juntas** (mesmo par P-256). Se a private key no Supabase não corresponder à public key usada nas subscriptions, o APNs retorna 401 e `{sent:0, failed:1}` silenciosamente — nenhuma notificação chega. Incidente ocorrido em 2026-06-21 (sessão 36).
+>
+> **Rotação de chaves:** Para trocar as chaves, gerar novo par com Node.js WebCrypto (`subtle.generateKey` + JWK export), atualizar `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` no Supabase Secrets, atualizar `src/lib/pushConfig.ts` com a nova public key, e solicitar aos usuários que re-assinem as notificações (Desativar → Ativar). Guardar backup em cofre seguro (1Password, Bitwarden).
 
 > **CRON_SECRET:** Após configurar o secret no Supabase Dashboard, executar no SQL Editor:
 > ```sql

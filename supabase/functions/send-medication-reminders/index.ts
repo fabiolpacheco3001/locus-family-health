@@ -210,6 +210,7 @@ Deno.serve(async (req) => {
           ? `${memberName}: tomar ${medName} (${dosage}) agora`
           : `${memberName}: hora de tomar ${medName}`;
 
+        // Call send-push-notification (same project, internal call)
         const res = await fetch(
           `${SUPABASE_URL}/functions/v1/send-push-notification`,
           {
@@ -230,30 +231,28 @@ Deno.serve(async (req) => {
           }
         );
 
-        let pushResult: Record<string, unknown> = { http_ok: res.ok, http_status: res.status };
+        let pushResult: Record<string, unknown> = { http_ok: res.ok, status: res.status };
         try {
-          const json = await res.json();
-          pushResult = { ...pushResult, ...json };
-        } catch { /* ignore */ }
+          pushResult = { ...pushResult, ...(await res.json()) };
+        } catch { /* ignore parse errors */ }
 
-        log("info", "push_result_detail", { userId, medName, ...pushResult });
+        log("info", "push_result", { userId, medName, ...pushResult });
         return pushResult;
       })
     );
 
     const sent = results.filter(
-      (r) => r.status === "fulfilled" && (r.value as Record<string, unknown>)?.http_ok === true
+      (r) => r.status === "fulfilled" && (r.value as Record<string, unknown>)?.http_ok
     ).length;
     const pushDetails = results.map((r) =>
       r.status === "fulfilled" ? r.value : { error: String((r as PromiseRejectedResult).reason) }
     );
+    log("info", "med_reminders_completed", { sent, total: toNotify.length, details: pushDetails });
 
-    log("info", "med_reminders_completed", { sent, total: toNotify.length });
-
-    return new Response(
-      JSON.stringify({ processed: toNotify.length, sent, push_details: pushDetails }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ processed: toNotify.length, sent, push_details: pushDetails }), {
+      status: 200,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (err) {
     log("error", "med_reminders_unexpected_error", { error: String(err) });
     return new Response(JSON.stringify({ error: "Erro interno" }), {

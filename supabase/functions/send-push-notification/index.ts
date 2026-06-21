@@ -19,10 +19,10 @@
  *  }
  *
  * VAPID Secrets necessários (Supabase Dashboard → Edge Functions → Secrets):
- *  VAPID_PRIVATE_KEY   = MDpDKH2jN9NkKU8OOVON9mlEpHDymdcdaEs9D7lqNJA
- *  VAPID_PUBLIC_KEY    = BPc1Jl-B2jTYy5YJ9AARFRn26z4u8NHtnvglFkipZC_Ho1sbKDmhcJUPnJ58TeiIrifdGyWmAfEvOjYpZ60iFW4
+ *  VAPID_PRIVATE_KEY   = <configurar no Supabase Dashboard — nunca versionar>
+ *  VAPID_PUBLIC_KEY    = <configurar no Supabase Dashboard — nunca versionar>
  *  VAPID_SUBJECT       = mailto:suporte@locustech.com.br
- *  CRON_SECRET         = (string aleatória usada pelos pg_cron jobs internos)
+ *  CRON_SECRET         = <configurar no Supabase Dashboard — nunca versionar>
  */
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
