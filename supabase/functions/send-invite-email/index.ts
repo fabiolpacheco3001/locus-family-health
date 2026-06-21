@@ -171,9 +171,9 @@ Deno.serve(async (req) => {
     }
 
     // Build email
-    // appUrl: base URL do app. O CTA do e-mail aponta para /home (tela principal pós-login).
-    const appBaseUrl = (Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br").replace(/\/+$/, "");
-    const appUrl = `${appBaseUrl}/home`;
+    // appUrl: lido do secret APP_URL (ex: https://vita.locustech.com.br/home).
+    // Configurar o path completo no secret — não hardcodar aqui.
+    const appUrl = Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br/home";
     const appStoreUrl = Deno.env.get("APPLE_STORE_URL") ?? "#"; // publicar nas lojas — roadmap
     const playStoreUrl = Deno.env.get("GOOGLE_PLAY_URL") ?? "#"; // publicar nas lojas — roadmap
 
