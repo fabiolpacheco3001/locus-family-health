@@ -224,10 +224,7 @@ const GestaoAcessos = () => {
               >
                 <ArrowLeft size={22} className="text-foreground" />
               </button>
-              <div className="flex items-center gap-2 flex-1">
-                <Shield size={20} className="text-primary" />
-                <h1 className="text-lg font-bold text-foreground">Gestão de Acessos</h1>
-              </div>
+              <h1 className="text-lg text-foreground flex-1">Gestão de Acessos</h1>
               <button
                 onClick={() => setInfoOpen(true)}
                 className="w-9 h-9 flex items-center justify-center rounded-full transition-colors [@media(hover:hover)]:hover:bg-muted active:bg-muted/60"
@@ -240,11 +237,6 @@ const GestaoAcessos = () => {
           <div className="px-4 pb-28 space-y-6">
             {/* Section: Active Members */}
             <div>
-              <div className="flex items-center gap-2 mb-3 mt-2">
-                <Crown size={18} className="text-primary" />
-                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">Membros com Acesso</h2>
-              </div>
-
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2].map(i => (

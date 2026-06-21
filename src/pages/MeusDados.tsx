@@ -193,7 +193,7 @@ const MeusDados = () => {
         <button type="button" aria-label="Voltar" onClick={() => navigate("/ajustes")} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
-        <h1 className="text-lg font-bold text-foreground flex-1 text-center pr-8">Meus Dados</h1>
+        <h1 className="text-lg font-bold text-foreground flex-1">Meus Dados</h1>
       </div>
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-3 pb-6">
         <div className="pt-4" />
