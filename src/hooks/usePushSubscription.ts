@@ -164,7 +164,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       // 3. Subscribe via PushManager (VAPID)
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true, // Required — cannot send silent notifications
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
       });
 
       // 4. Persist to Supabase
