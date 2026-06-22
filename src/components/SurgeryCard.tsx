@@ -4,11 +4,7 @@ import {
   CheckCircle2,
   XCircle,
   Calendar,
-<<<<<<< HEAD
-  Hospital,
-=======
   Building2,
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   User,
   Share2,
   ChevronRight,
@@ -24,16 +20,12 @@ interface SurgeryCardProps {
   readOnly?: boolean;
 }
 
-<<<<<<< HEAD
-export function SurgeryCard({ surgery, onClick, onExportPdf, readOnly = false }: SurgeryCardProps) {
-=======
 export function SurgeryCard({
   surgery,
   onClick,
   onExportPdf,
   readOnly = false,
 }: SurgeryCardProps) {
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   const displayName =
     surgery.surgery_type === "outro" && surgery.custom_type
       ? surgery.custom_type
@@ -47,11 +39,7 @@ export function SurgeryCard({
 
   const isOverdue =
     surgery.status === "scheduled" &&
-<<<<<<< HEAD
-    scheduledDate &&
-=======
     scheduledDate != null &&
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     isValid(scheduledDate) &&
     isPast(scheduledDate);
 
@@ -68,10 +56,6 @@ export function SurgeryCard({
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-2">
-<<<<<<< HEAD
-=======
-        {/* Corpo */}
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-foreground text-sm leading-tight truncate">
             {displayName}
@@ -86,11 +70,7 @@ export function SurgeryCard({
 
           {surgery.hospital_clinic && (
             <div className="flex items-center gap-1 mt-0.5">
-<<<<<<< HEAD
-              <Hospital size={12} className="text-muted-foreground shrink-0" />
-=======
               <Building2 size={12} className="text-muted-foreground shrink-0" />
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
               <p className="text-xs text-muted-foreground truncate">{surgery.hospital_clinic}</p>
             </div>
           )}
@@ -111,10 +91,6 @@ export function SurgeryCard({
           )}
         </div>
 
-<<<<<<< HEAD
-=======
-        {/* Badges + ações */}
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         <div className="flex flex-col items-end gap-2 shrink-0">
           {surgery.status === "scheduled" && !isOverdue && (
             <span className="text-[11px] font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">

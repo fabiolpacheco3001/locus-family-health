@@ -117,14 +117,8 @@ export function useHomeData() {
         .order("date_performed", { ascending: true })
         .limit(5);
 
-<<<<<<< HEAD
       let sq = (supabase.from("surgeries" as any) as any)
-        .select("id, family_member_id, surgery_type, custom_type, scheduled_date, status, hospital_clinic, user_id, family_members!inner(name, member_type, deleted_at)")
-=======
-      let sq = supabase
-        .from("surgeries")
         .select("id, family_member_id, surgery_type, custom_type, scheduled_date, hospital_clinic, status, deleted_at, family_members!inner(name, member_type, deleted_at)")
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         .is("deleted_at", null)
         .is("family_members.deleted_at", null)
         .eq("status", "scheduled")
@@ -201,17 +195,7 @@ export function useHomeData() {
 
       (surgRes.data ?? []).forEach((s: any) => {
         const dateStr = s.scheduled_date;
-<<<<<<< HEAD
-        if (!dateStr || new Date(dateStr) <= now) return;
-        const displayName =
-          s.surgery_type === "outro" && s.custom_type ? s.custom_type : s.surgery_type;
-        items.push({
-          id: s.id,
-          title: displayName,
-          subtitle: s.hospital_clinic ?? "Cirurgia",
-          date: dateStr,
-=======
-        if (dateStr && isBefore(new Date(dateStr), now)) return; // skip past
+        if (dateStr && isBefore(new Date(dateStr), now)) return;
         const displayName =
           s.surgery_type === "outro" && s.custom_type
             ? s.custom_type
@@ -221,7 +205,6 @@ export function useHomeData() {
           title: displayName,
           subtitle: s.hospital_clinic ?? "Cirurgia agendada",
           date: dateStr ?? null,
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
           memberName: s.family_members?.name ?? "Usuário",
           kind: "surgery",
           familyMemberId: s.family_member_id,
@@ -230,10 +213,6 @@ export function useHomeData() {
         });
       });
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       items.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;

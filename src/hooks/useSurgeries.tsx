@@ -55,7 +55,6 @@ export type CreateSurgeryPayload = {
 export type UpdateSurgeryPayload = {
   id: string;
   surgery_type?: string;
-<<<<<<< HEAD
   custom_type?: string | null;
   scheduled_date?: string | null;
   hospital_clinic?: string | null;
@@ -64,51 +63,28 @@ export type UpdateSurgeryPayload = {
   notes?: string | null;
 };
 
-=======
-  custom_type?: string;
-  scheduled_date?: string;
-  hospital_clinic?: string;
-  surgeon_name?: string;
-  status?: "scheduled" | "completed" | "canceled";
-  notes?: string;
-};
-
 function genId(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 export function useSurgeries(familyMemberId?: string) {
   const { user } = useAuth();
   const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const queryClient = useQueryClient();
 
   const { data: surgeries = [], isLoading } = useQuery({
-<<<<<<< HEAD
     queryKey: ["surgeries", familyMemberId, groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
       // Cast `from` to any: tabelas recém-criadas podem não estar nos tipos gerados ainda
       let query = (supabase.from("surgeries" as any) as any)
-        .select(
-          `id, user_id, group_id, family_member_id, surgery_type, custom_type,
-           scheduled_date, hospital_clinic, surgeon_name, status, notes,
-           deleted_at, created_at, updated_at,
-           family_members!inner(name, member_type, deleted_at),
-           surgery_instructions(id, surgery_id, phase, items, raw_ocr_text)`
-=======
-    queryKey: ["surgeries", familyMemberId, groupId],
-    queryFn: async () => {
-      let query = supabase
-        .from("surgeries")
         .select(
           "id, user_id, group_id, family_member_id, surgery_type, custom_type, " +
           "scheduled_date, hospital_clinic, surgeon_name, status, notes, " +
           "deleted_at, created_at, updated_at, " +
           "family_members!inner(name, member_type, deleted_at), " +
           "surgery_instructions(id, surgery_id, phase, items, raw_ocr_text)"
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         )
         .is("deleted_at", null)
         .is("family_members.deleted_at", null)
@@ -135,25 +111,12 @@ export function useSurgeries(familyMemberId?: string) {
     queryClient.invalidateQueries({ queryKey: ["agenda"] });
   };
 
-<<<<<<< HEAD
-  const newId = () =>
-    typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : `item-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-=======
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   const createMutation = useMutation({
     mutationFn: async (payload: CreateSurgeryPayload) => {
       if (!user || !groupId) throw new Error("Usuário não autenticado");
 
-<<<<<<< HEAD
       const { data: surgery, error: surgeryError } = await (supabase
         .from("surgeries" as any) as any)
-=======
-      const { data: surgery, error: surgeryError } = await supabase
-        .from("surgeries")
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         .insert({
           user_id: user.id,
           group_id: groupId,
@@ -169,34 +132,6 @@ export function useSurgeries(familyMemberId?: string) {
         .select("id")
         .single();
 
-<<<<<<< HEAD
-      if (surgeryError || !surgery) throw surgeryError;
-
-      const instructionRows: any[] = [];
-      if (payload.pre_instructions && payload.pre_instructions.length > 0) {
-        instructionRows.push({
-          surgery_id: surgery.id,
-          phase: "pre",
-          items: payload.pre_instructions.map((item) => ({ ...item, id: item.id || newId() })),
-        });
-      }
-      if (payload.post_instructions && payload.post_instructions.length > 0) {
-        instructionRows.push({
-          surgery_id: surgery.id,
-          phase: "post",
-          items: payload.post_instructions.map((item) => ({ ...item, id: item.id || newId() })),
-        });
-      }
-
-      if (instructionRows.length > 0) {
-        const { error: instrError } = await (supabase
-          .from("surgery_instructions" as any) as any)
-          .insert(instructionRows);
-        if (instrError) throw instrError;
-      }
-
-      return surgery.id as string;
-=======
       if (surgeryError || !surgery) throw surgeryError ?? new Error("Erro ao criar cirurgia");
 
       const instructionInserts: Array<{
@@ -211,7 +146,6 @@ export function useSurgeries(familyMemberId?: string) {
           phase: "pre",
           items: payload.pre_instructions.map((item) => ({ ...item, id: item.id || genId() })),
         });
-      }
       if (payload.post_instructions && payload.post_instructions.length > 0) {
         instructionInserts.push({
           surgery_id: surgery.id,
@@ -242,12 +176,7 @@ export function useSurgeries(familyMemberId?: string) {
   const updateMutation = useMutation({
     mutationFn: async (payload: UpdateSurgeryPayload) => {
       const { id, ...updates } = payload;
-<<<<<<< HEAD
       const { error } = await (supabase.from("surgeries" as any) as any)
-=======
-      const { error } = await supabase
-        .from("surgeries")
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         .update(updates)
         .eq("id", id);
       if (error) throw error;
@@ -273,13 +202,8 @@ export function useSurgeries(familyMemberId?: string) {
       items: InstructionItem[];
       rawOcrText?: string;
     }) => {
-<<<<<<< HEAD
       const { error } = await (supabase
         .from("surgery_instructions" as any) as any)
-=======
-      const { error } = await supabase
-        .from("surgery_instructions")
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         .upsert(
           {
             surgery_id: surgeryId,
@@ -299,16 +223,9 @@ export function useSurgeries(familyMemberId?: string) {
     },
   });
 
-<<<<<<< HEAD
-  const deleteMutation = useMutation({
-    mutationFn: async (surgeryId: string) => {
-      const { error } = await (supabase.from("surgeries" as any) as any)
-=======
   const softDeleteMutation = useMutation({
     mutationFn: async (surgeryId: string) => {
-      const { error } = await supabase
-        .from("surgeries")
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
+      const { error } = await (supabase.from("surgeries" as any) as any)
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", surgeryId);
       if (error) throw error;
@@ -328,10 +245,6 @@ export function useSurgeries(familyMemberId?: string) {
     createMutation,
     updateMutation,
     updateInstructionsMutation,
-<<<<<<< HEAD
-    deleteMutation,
-=======
     softDeleteMutation,
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   };
 }

@@ -181,7 +181,7 @@ const App = () => (
               <Route path="/familiar/:id/doencas" element={<Doencas />} />
               <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
               <Route path="/familiar/:id/rotinas-pet" element={<PetRotinas />} />
-              <Route path="/familiar/:id/cirurgias" element={<Suspense fallback={<RouteLoader />}><Surgeries /></Suspense>} />
+              <Route path="/familiar/:id/cirurgias" element={<Surgeries />} />
               <Route path="/changelog" element={<Changelog />} />
               <Route path="/ajuda" element={<Ajuda />} />
               <Route path="/notificacoes" element={<Notificacoes />} />

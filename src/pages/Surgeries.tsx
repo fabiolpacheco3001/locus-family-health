@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { useState } from "react";
-=======
 import { useState, useEffect } from "react";
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 import { useParams } from "react-router-dom";
 import { ArrowLeft, Scissors, Plus, Loader2 } from "lucide-react";
 import useSmartBack from "@/hooks/useSmartBack";
@@ -24,17 +20,6 @@ const Surgeries = () => {
   const { members } = useFamilyMembers();
   const { surgeries, isLoading } = useSurgeries(id);
   const [drawerOpen, setDrawerOpen] = useState(false);
-<<<<<<< HEAD
-  const [activeTab, setActiveTab] = useState<"scheduled" | "completed">("scheduled");
-
-  useFamilyAccessGuard(id);
-
-  const member = members.find((m) => m.id === id);
-
-  const scheduled = surgeries.filter((s) => s.status === "scheduled");
-  const completed = surgeries.filter((s) => s.status !== "scheduled");
-  const displayed = activeTab === "scheduled" ? scheduled : completed;
-=======
   const [activeTab, setActiveTab] = useState<"scheduled" | "done">("scheduled");
 
   useFamilyAccessGuard(id);
@@ -48,17 +33,12 @@ const Surgeries = () => {
   const scheduled = surgeries.filter((s) => s.status === "scheduled");
   const done = surgeries.filter((s) => s.status !== "scheduled");
   const displayed = activeTab === "scheduled" ? scheduled : done;
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 
   const handleExportPdf = (surgery: Surgery) => {
     const doc = new jsPDF();
     const primaryColor: [number, number, number] = [26, 58, 92];
     const accentColor: [number, number, number] = [120, 194, 173];
 
-<<<<<<< HEAD
-=======
-    // Cabeçalho
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     doc.setFillColor(...primaryColor);
     doc.rect(0, 0, 210, 28, "F");
     doc.setTextColor(255, 255, 255);
@@ -104,11 +84,7 @@ const Surgeries = () => {
       columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
       body: [
         ["Procedimento", displayName],
-<<<<<<< HEAD
-        ["Membro", member?.name ?? "—"],
-=======
         ["Paciente", member?.name ?? "—"],
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         ["Status", statusMap[surgery.status] ?? surgery.status],
         ["Data / Hora", formattedDate],
         ["Hospital / Clínica", surgery.hospital_clinic ?? "—"],
@@ -125,10 +101,6 @@ const Surgeries = () => {
       doc.text("Instruções Pré-Operatórias", 14, y);
       doc.setDrawColor(...accentColor);
       doc.line(14, y + 2, 196, y + 2);
-<<<<<<< HEAD
-
-=======
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       autoTable(doc, {
         startY: y + 6,
         theme: "striped",
@@ -151,10 +123,6 @@ const Surgeries = () => {
       doc.text("Instruções Pós-Operatórias", 14, y);
       doc.setDrawColor(...accentColor);
       doc.line(14, y + 2, 196, y + 2);
-<<<<<<< HEAD
-
-=======
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       autoTable(doc, {
         startY: y + 6,
         theme: "striped",
@@ -173,23 +141,12 @@ const Surgeries = () => {
     doc.setTextColor(120, 120, 120);
     doc.text("Locus Vita — Saúde Familiar Simplificada · locustech.com.br", 14, 285);
 
-<<<<<<< HEAD
-    const fileName = `cirurgia-${displayName
-      .toLowerCase()
-      .replace(/\s+/g, "-")}-${format(new Date(), "ddMMyyyy")}.pdf`;
-    doc.save(fileName);
-=======
     const safeName = displayName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     doc.save(`cirurgia-${safeName}-${format(new Date(), "ddMMyyyy")}.pdf`);
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   };
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-<<<<<<< HEAD
-=======
-      {/* Header */}
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       <div className="flex-none bg-background border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={goBack} className="p-1 -ml-1" aria-label="Voltar">
           <ArrowLeft size={22} className="text-foreground" />
@@ -202,29 +159,6 @@ const Surgeries = () => {
         </div>
       </div>
 
-<<<<<<< HEAD
-      <div className="flex-none bg-background border-b border-border/40">
-        <div className="flex">
-          {(["scheduled", "completed"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 text-base font-medium border-b-2 transition-colors ${
-                activeTab === tab
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground"
-              }`}
-            >
-              {tab === "scheduled"
-                ? `Agendadas (${scheduled.length})`
-                : `Concluídas (${completed.length})`}
-            </button>
-          ))}
-        </div>
-      </div>
-
-=======
-      {/* Tabs */}
       <div className="flex-none bg-background border-b border-border/40">
         <div className="flex">
           <button
@@ -250,8 +184,6 @@ const Surgeries = () => {
         </div>
       </div>
 
-      {/* Lista */}
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-3">
         {isLoading && (
           <div className="flex justify-center py-8">
@@ -282,22 +214,14 @@ const Surgeries = () => {
         <div className="h-20" />
       </div>
 
-<<<<<<< HEAD
-=======
-      {/* FAB */}
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       <button
         onClick={() => setDrawerOpen(true)}
-        className="absolute bottom-6 right-4 w-14 h-14 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
+        className="absolute bottom-6 right-4 w-14 h-14 bg-[#E8916C] hover:bg-[#d4805d] active:bg-[#bf7052] text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
         aria-label="Adicionar cirurgia"
       >
         <Plus size={28} />
       </button>
 
-<<<<<<< HEAD
-=======
-      {/* Drawer */}
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       {id && (
         <AddSurgeryDrawer
           open={drawerOpen}

@@ -74,22 +74,12 @@ const Agenda = () => {
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true });
 
-<<<<<<< HEAD
       let sq = (supabase.from("surgeries" as any) as any)
-        .select("id, family_member_id, surgery_type, custom_type, scheduled_date, status, hospital_clinic, user_id, family_members!inner(name, member_type, deleted_at)")
-        .is("deleted_at", null)
-        .is("family_members.deleted_at", null)
-        .order("scheduled_date", { ascending: true });
-
-=======
-      let sq = supabase
-        .from("surgeries")
         .select("id, family_member_id, surgery_type, custom_type, scheduled_date, hospital_clinic, status, deleted_at, family_members!inner(name, member_type, deleted_at)")
         .is("deleted_at", null)
         .is("family_members.deleted_at", null)
         .eq("status", "scheduled")
         .order("scheduled_date", { ascending: true });
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 
       if (isAdmin && groupId) {
         // Trust RLS — no explicit group_id filter for admins (matches Home behavior)
@@ -172,45 +162,27 @@ const Agenda = () => {
       });
 
       const surgeries: AgendaItem[] = (surgRes.data ?? []).map((s: any) => {
-<<<<<<< HEAD
         const dateStr = s.scheduled_date;
         const displayName =
-          s.surgery_type === "outro" && s.custom_type ? s.custom_type : s.surgery_type;
+          s.surgery_type === "outro" && s.custom_type
+            ? s.custom_type
+            : s.surgery_type ?? "Cirurgia";
         const statusMap: Record<string, string> = {
           scheduled: "Agendada",
           completed: "Realizada",
           canceled: "Cancelada",
         };
-=======
-        const displayName =
-          s.surgery_type === "outro" && s.custom_type
-            ? s.custom_type
-            : s.surgery_type ?? "Cirurgia";
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         return {
           id: s.id,
           family_member_id: s.family_member_id,
           title: displayName,
-<<<<<<< HEAD
           subtitle: s.hospital_clinic ?? null,
-          date: dateStr,
+          date: dateStr ?? null,
           type: "surgery",
           status: statusMap[s.status] ?? s.status,
           memberName: s.family_members?.name ?? "Usuário",
           kind: "surgery" as const,
-          isOverdue:
-            s.status === "scheduled" && dateStr
-              ? isBefore(parseISO(dateStr), new Date())
-              : false,
-=======
-          subtitle: s.hospital_clinic ? `em ${s.hospital_clinic}` : "Cirurgia agendada",
-          date: s.scheduled_date ?? null,
-          type: "surgery",
-          status: "Agendada",
-          memberName: s.family_members?.name ?? "Usuário",
-          kind: "surgery" as const,
-          isOverdue: s.scheduled_date ? isBefore(parseISO(s.scheduled_date), new Date()) : false,
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
+          isOverdue: s.status === "scheduled" && dateStr ? isBefore(parseISO(dateStr), new Date()) : false,
           isPet: (s.family_members?.member_type || "human") === "pet",
         };
       });

@@ -3,12 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import useSmartBack from "@/hooks/useSmartBack";
 import {
   ArrowLeft, Stethoscope, Pill, FileText, AlertCircle, HeartPulse, ShieldAlert,
-<<<<<<< HEAD
-  UserCircle, Ban, Droplets, PawPrint, Syringe, Activity, ShowerHead, ClipboardCheck, Scissors,
-=======
   UserCircle, Ban, Droplets, PawPrint, Syringe, Activity, ShowerHead, ClipboardCheck,
   Scissors,
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -167,16 +163,6 @@ const FamiliarProfile = () => {
 
           <SectionTitle icon={HeartPulse} title="Gestão de Saúde" />
           {renderCardGrid(gestaoItems)}
-<<<<<<< HEAD
-          <div className="grid grid-cols-3 gap-3 mt-3">
-            <button
-              className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
-              onClick={() => navigate(`/familiar/${id}/cirurgias`)}
-            >
-              <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
-                <Scissors size={22} className="text-black" />
-=======
-          {/* Segunda linha: Cirurgias — alinhado à esquerda, mesmo tamanho dos cards acima */}
           <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => navigate(`/familiar/${id}/cirurgias`)}
@@ -184,7 +170,6 @@ const FamiliarProfile = () => {
             >
               <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
                 <Scissors className="text-black" size={22} />
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
               </div>
               <p className="text-xs font-semibold text-foreground">Cirurgias</p>
               <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Procedimentos</p>
