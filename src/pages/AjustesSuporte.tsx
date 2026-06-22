@@ -12,7 +12,7 @@ export interface SuporteItem {
 }
 
 export const suporteItems: SuporteItem[] = [
-  { icon: HelpCircle,     label: "Perguntas e Respostas", kind: "navigate", path: "/ajuda" },
+  { icon: HelpCircle,     label: "Dúvidas Frequentes",    kind: "navigate", path: "/ajuda" },
   { icon: MessageCircle,  label: "Fale Conosco",          kind: "support" },
   { icon: Sparkles,       label: "Novidade Locus Vita",   kind: "navigate", path: "/changelog" },
 ];

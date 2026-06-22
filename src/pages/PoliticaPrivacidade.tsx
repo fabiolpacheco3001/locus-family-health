@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -12,11 +12,7 @@ import { Button } from "@/components/ui/button";
 const PoliticaPrivacidade = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const handleBack = () => {
-    const from = (location.state as { from?: string } | null)?.from;
-    if (from) navigate(from);
-    else navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-[#f2f0eb]">

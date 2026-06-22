@@ -69,7 +69,7 @@ describe("Ajustes — topMenuItems (6 menus de topo)", () => {
     expect(labels).not.toContain("Exportar Meus Dados");
     expect(labels).not.toContain("Revogar Consentimento");
     expect(labels).not.toContain("Excluir Conta");
-    expect(labels).not.toContain("Perguntas e Respostas");
+    expect(labels).not.toContain("Dúvidas Frequentes");
     expect(labels).not.toContain("Fale Conosco");
     expect(labels).not.toContain("Novidade Locus Vita");
   });
@@ -182,14 +182,14 @@ describe("AjustesSuporte — suporteItems", () => {
 
   it("labels corretos na ordem", () => {
     expect(suporteItems.map((i) => i.label)).toEqual([
-      "Perguntas e Respostas",
+      "Dúvidas Frequentes",
       "Fale Conosco",
       "Novidade Locus Vita",
     ]);
   });
 
-  it("'Perguntas e Respostas' → navigate /ajuda", () => {
-    const item = suporteItems.find((i) => i.label === "Perguntas e Respostas");
+  it("'Dúvidas Frequentes' → navigate /ajuda", () => {
+    const item = suporteItems.find((i) => i.label === "Dúvidas Frequentes");
     expect(item?.kind).toBe("navigate");
     expect(item?.path).toBe("/ajuda");
   });

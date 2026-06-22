@@ -146,7 +146,7 @@ const Seguranca = () => {
         <button type="button" aria-label="Voltar" onClick={() => navigate(-1)} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
-        <h1 className="text-lg font-bold text-foreground">Segurança</h1>
+        <h1 className="text-lg font-bold text-foreground">Senha e Biometria</h1>
       </div>
 
       {/* Scrollable content */}
