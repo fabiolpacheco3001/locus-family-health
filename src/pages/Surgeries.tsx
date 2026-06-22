@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Plus, Loader2, ArrowUpDown, Share2 } from "lucide-react";
+import { ArrowLeft, Loader2, ArrowUpDown, Share2, Scissors } from "lucide-react";
 import useSmartBack from "@/hooks/useSmartBack";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Scissors } from "lucide-react";
+import FixedFAB from "@/components/ui/FixedFAB";
 
 const Surgeries = () => {
   const { id } = useParams<{ id: string }>();
@@ -144,28 +144,37 @@ const Surgeries = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
-      {/* Header */}
-      <div className="flex-none bg-background border-b border-border px-4 py-3 flex items-center gap-3">
-        <button onClick={goBack} className="p-1 -ml-1" aria-label="Voltar">
-          <ArrowLeft size={22} className="text-foreground" />
-        </button>
-        <h1 className="text-lg font-semibold text-foreground flex-1">Cirurgias</h1>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 text-[#78C2AD]"
-          onClick={handleExportAllPdf}
-          disabled={surgeries.length === 0}
-          aria-label="Exportar PDF"
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-      </div>
+    <>
+      {!drawerOpen && <FixedFAB onClick={handleAdd} />}
 
-      {/* Tabs pill + sort — padrão Consultas */}
-      <div className="flex-none bg-background px-4 py-2 border-b border-border/40">
-        <div className="flex items-center gap-2">
+      <AddSurgeryDrawer
+        open={drawerOpen}
+        onOpenChange={handleDrawerChange}
+        familyMemberId={id!}
+        editingSurgery={editingSurgery}
+      />
+
+      <div className="px-4 pt-6 pb-28 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <Button variant="ghost" size="icon" onClick={goBack}>
+            <ArrowLeft size={22} />
+          </Button>
+          <h1 className="text-lg font-bold text-foreground flex-1">Cirurgias</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 text-[#78C2AD]"
+            onClick={handleExportAllPdf}
+            disabled={surgeries.length === 0}
+            aria-label="Exportar PDF"
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Tabs pill + sort */}
+        <div className="mb-4 flex items-center gap-2">
           <div className="flex p-1 bg-slate-100 rounded-xl flex-1">
             <button
               onClick={() => setActiveTab("scheduled")}
@@ -210,10 +219,8 @@ const Surgeries = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </div>
 
-      {/* Conteúdo */}
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-3">
+        {/* Conteúdo */}
         {isLoading && (
           <div className="flex justify-center py-8">
             <Loader2 className="animate-spin text-primary" size={32} />
@@ -232,49 +239,32 @@ const Surgeries = () => {
             </p>
             <p className="text-muted-foreground text-sm">
               {activeTab === "scheduled"
-                ? "Toque em '+' para registrar."
+                ? "Toque no botão abaixo para adicionar."
                 : "Cirurgias realizadas ou canceladas aparecerão aqui."}
             </p>
           </div>
         )}
 
-        {!isLoading &&
-          displayed.map((surgery) => (
-            <SurgeryCard
-              key={surgery.id}
-              surgery={surgery}
-              onEdit={() => handleOpenEdit(surgery)}
-              onDelete={() => softDeleteMutation.mutate(surgery.id)}
-              onComplete={() =>
-                updateMutation.mutate({ id: surgery.id, status: "completed" })
-              }
-              isAdmin={isAdmin}
-              isOpen={openCardId === surgery.id}
-              onOpenChange={(open) => setOpenCardId(open ? surgery.id : null)}
-            />
-          ))}
-
-        <div className="h-20" />
+        {!isLoading && (
+          <div className="flex flex-col space-y-3">
+            {displayed.map((surgery) => (
+              <SurgeryCard
+                key={surgery.id}
+                surgery={surgery}
+                onEdit={() => handleOpenEdit(surgery)}
+                onDelete={() => softDeleteMutation.mutate(surgery.id)}
+                onComplete={() =>
+                  updateMutation.mutate({ id: surgery.id, status: "completed" })
+                }
+                isAdmin={isAdmin}
+                isOpen={openCardId === surgery.id}
+                onOpenChange={(open) => setOpenCardId(open ? surgery.id : null)}
+              />
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* FAB — cor preta */}
-      <button
-        onClick={handleAdd}
-        className="absolute bottom-6 right-4 w-14 h-14 bg-foreground hover:bg-foreground/90 active:bg-foreground/80 text-background rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
-        aria-label="Adicionar cirurgia"
-      >
-        <Plus size={28} />
-      </button>
-
-      {id && (
-        <AddSurgeryDrawer
-          open={drawerOpen}
-          onOpenChange={handleDrawerChange}
-          familyMemberId={id}
-          editingSurgery={editingSurgery}
-        />
-      )}
-    </div>
+    </>
   );
 };
 
