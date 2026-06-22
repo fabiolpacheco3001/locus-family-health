@@ -208,7 +208,7 @@ const Surgeries = () => {
                 onClick={() => setSortOrder("asc")}
                 className={sortOrder === "asc" ? "font-semibold" : ""}
               >
-                Mais próximas primeiro
+                Mais antigos primeiro
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setSortOrder("desc")}
