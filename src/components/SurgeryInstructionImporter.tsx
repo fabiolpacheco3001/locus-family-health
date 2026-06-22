@@ -242,7 +242,6 @@ export function SurgeryInstructionImporter({
         ref={fileInputRef}
         type="file"
         accept="image/*,application/pdf"
-        capture="environment"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];

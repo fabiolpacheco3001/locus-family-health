@@ -75,7 +75,7 @@ const Agenda = () => {
         .order("date_performed", { ascending: true });
 
       let sq = (supabase.from("surgeries" as any) as any)
-        .select("id, family_member_id, surgery_type, custom_type, scheduled_date, hospital_clinic, status, deleted_at, family_members!inner(name, member_type, deleted_at)")
+        .select("id, family_member_id, surgery_type, custom_type, scheduled_date, surgeon_name, hospital_clinic, status, deleted_at, family_members!inner(name, member_type, deleted_at)")
         .is("deleted_at", null)
         .is("family_members.deleted_at", null)
         .eq("status", "scheduled")
@@ -176,7 +176,7 @@ const Agenda = () => {
           id: s.id,
           family_member_id: s.family_member_id,
           title: displayName,
-          subtitle: s.hospital_clinic ?? null,
+          subtitle: s.surgeon_name ? `com ${s.surgeon_name}` : null,
           date: dateStr ?? null,
           type: "surgery",
           status: statusMap[s.status] ?? s.status,

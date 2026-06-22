@@ -256,7 +256,7 @@ const Consultas = () => {
                 abaAtiva === 'proximas' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Ativas
+              Agendadas
             </button>
             <button
               onClick={() => setAbaAtiva('historico')}
@@ -337,7 +337,7 @@ const Consultas = () => {
                               Atrasado
                             </Badge>
                           )}
-                          {c.type && (
+                          {c.type && c.type !== "Consulta" && (
                             <Badge
                               variant="outline"
                               className={`text-[10px] px-1.5 py-0 border-none ${
@@ -348,7 +348,7 @@ const Consultas = () => {
                                   : "bg-[#DCC5F1] text-black"
                               }`}
                             >
-                              {c.type === "Retorno" ? "Retorno" : c.type === "Emergência" ? "Emergência" : "Consulta"}
+                              {c.type}
                             </Badge>
                           )}
                           <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${statusColors[c.status] ?? ""}`}>
