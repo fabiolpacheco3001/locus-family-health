@@ -32,6 +32,13 @@ function tomorrowInSP(): string {
   return d.toLocaleDateString("sv-SE", { timeZone: TZ });
 }
 
+function dayRange(dateSP: string): { start: string; end: string } {
+  return {
+    start: `${dateSP}T00:00:00-03:00`,
+    end: `${dateSP}T23:59:59-03:00`,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
