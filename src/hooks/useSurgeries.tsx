@@ -146,6 +146,7 @@ export function useSurgeries(familyMemberId?: string) {
           phase: "pre",
           items: payload.pre_instructions.map((item) => ({ ...item, id: item.id || genId() })),
         });
+      }
       if (payload.post_instructions && payload.post_instructions.length > 0) {
         instructionInserts.push({
           surgery_id: surgery.id,
@@ -162,7 +163,6 @@ export function useSurgeries(familyMemberId?: string) {
       }
 
       return surgery.id;
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     },
     onSuccess: () => {
       invalidate();

@@ -161,8 +161,7 @@ export function SurgeryInstructionImporter({
         </p>
       )}
 
-      {/* Ações */
->>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
+      {/* Ações */}
       <div className="flex gap-2">
         <input
           ref={fileInputRef}
