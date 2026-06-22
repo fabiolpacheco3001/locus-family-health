@@ -76,7 +76,8 @@ Deno.serve(async (req) => {
       url = "/home",
       type = "generic",
       tag,
-      icon = "/icon-192.png",
+      icon = "https://locus-family-vita.lovable.app/icon-192.png",
+      badge = "https://locus-family-vita.lovable.app/icon-192.png",
       data: extraData = {},
     } = body;
 
@@ -110,7 +111,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const payload = JSON.stringify({ title, body: notifBody, url, type, tag, icon, data: extraData });
+    const payload = JSON.stringify({ title, body: notifBody, url, type, tag, icon, badge, data: extraData });
 
     let sent = 0;
     let failed = 0;

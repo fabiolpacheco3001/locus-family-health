@@ -8,8 +8,8 @@
  */
 
 const APP_NAME = 'Locus Vita';
-const DEFAULT_ICON = '/icon-192.png';
-const DEFAULT_BADGE = '/icon-192.png';
+const DEFAULT_ICON = 'https://locus-family-vita.lovable.app/icon-192.png';
+const DEFAULT_BADGE = 'https://locus-family-vita.lovable.app/icon-192.png';
 
 // ── Push event: fired when server sends a push message ──────────────────────
 self.addEventListener('push', (event) => {
