@@ -90,27 +90,7 @@ serve(async (req) => {
       });
     }
 
-    // ── FETCH DOCUMENTO ──
-    const fileResponse = await fetch(fileUrl);
-    if (!fileResponse.ok) {
-      return new Response(
-        JSON.stringify({ error: "Não foi possível acessar o documento" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const fileBuffer = await fileResponse.arrayBuffer();
-    // chunked btoa para arquivos grandes
-    const bytes = new Uint8Array(fileBuffer);
-    let binary = "";
-    const CHUNK = 0x8000;
-    for (let i = 0; i < bytes.length; i += CHUNK) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-    }
-    const base64File = btoa(binary);
-    const contentType = fileResponse.headers.get("content-type") ?? "image/jpeg";
-
-    // ── PROMPT GEMINI ──
+    // ── PROMPT ──
     const phaseLabel = phase === "pre" ? "pré-operatórias" : "pós-operatórias";
     const systemPrompt = `Você é um assistente de saúde que extrai e simplifica instruções médicas cirúrgicas ${phaseLabel}.
 
@@ -138,40 +118,47 @@ Formato de retorno JSON:
 
 O campo "confidence" deve ser "high" (texto legível, instruções claras), "medium" (texto parcialmente legível) ou "low" (texto ilegível ou sem instruções identificáveis).`;
 
-    const geminiApiKey =
-      Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY");
-    if (!geminiApiKey) {
-      throw new Error("GEMINI_API_KEY não configurada no Supabase Secrets");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+    const AI_GATEWAY_URL = Deno.env.get("AI_GATEWAY_URL") ?? "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const AI_MODEL = Deno.env.get("AI_MODEL") ?? "google/gemini-2.5-flash";
+
+    const isPdf = fileUrl.toLowerCase().includes(".pdf");
+    const userContent: unknown[] = [
+      { type: "text", text: `Extraia e simplifique TODAS as instruções ${phase === "pre" ? "pré-operatórias" : "pós-operatórias"} deste documento.` },
+    ];
+    if (isPdf) {
+      userContent.push({ type: "file", file: { url: fileUrl } });
+    } else {
+      userContent.push({ type: "image_url", image_url: { url: fileUrl } });
     }
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: systemPrompt },
-                { inline_data: { mime_type: contentType, data: base64File } },
-              ],
-            },
-          ],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
-        }),
-      }
-    );
+    const aiResponse = await fetch(AI_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        temperature: 0.1,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+      }),
+    });
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      log("error", "gemini_api_error", { status: geminiResponse.status, error: errText.slice(0, 200) });
-      throw new Error(`Gemini API error: ${geminiResponse.status}`);
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      log("error", "ai_gateway_error", { status: aiResponse.status, error: errText.slice(0, 200) });
+      throw new Error(`AI Gateway error: ${aiResponse.status}`);
     }
 
-    const geminiData = await geminiResponse.json();
-    const rawText: string =
-      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    const aiData = await aiResponse.json();
+    const rawText: string = aiData?.choices?.[0]?.message?.content ?? "";
 
     await logAiUsage(supabase, user.id, "analyze-surgery-instructions");
 
