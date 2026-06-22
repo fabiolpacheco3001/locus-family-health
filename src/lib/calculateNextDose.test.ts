@@ -2,7 +2,8 @@
  * calculateNextDose.test.ts
  *
  * Covers all three frequency_types:
- *   - fixed_interval (legacy)
+ *   - fixed_interval (current)
+ *   - interval (legacy DB alias for fixed_interval — Bug ∞ Fase 401)
  *   - specific_times
  *   - specific_days
  *
@@ -15,6 +16,7 @@
 
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { calculateNextDose } from "./calculateNextDose";
+import { advancePastTakenDoses } from "./advancePastTakenDoses";
 import { parseDateInSP } from "./dateUtils";
 
 // Reference wall-clock time: Tuesday 2026-06-16 at 10:00 SP (UTC 13:00)
@@ -257,6 +259,89 @@ describe("calculateNextDose — specific_days", () => {
       REF_SP_10H, "specific_days", ["09:00"], [5]
     );
     expect(fmtSP(result)).toBe("2026-06-19T09:00");
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// LEGACY "interval" ALIAS — Bug ∞ Fase 401
+// Regressão: frequency_type = "interval" deve se comportar
+// identicamente a "fixed_interval". Antes do fix, "interval"
+// caía fora de todos os branches e retornava null, causando
+// o medicamento sumir da Home ou mostrar ∞ indevidamente.
+// ─────────────────────────────────────────────────────────
+describe('calculateNextDose — legacy "interval" alias (regressão Bug ∞)', () => {
+  it('avança pelo intervalo de horas normalmente com frequencyType="interval"', () => {
+    // start = 08:00, freq = 8h, ref = 10:00 → next = 16:00 (igual a "fixed_interval")
+    const result = calculateNextDose("2026-06-16T08:00", 8, null, REF_SP_10H, "interval");
+    expect(fmtSP(result)).toBe("2026-06-16T16:00");
+  });
+
+  it('retorna null quando frequencyHours é null com frequencyType="interval"', () => {
+    // Medication com interval + frequency_hours=null → sem próxima dose calculável
+    const result = calculateNextDose("2026-06-16T08:00", null, null, REF_SP_10H, "interval");
+    expect(result).toBeNull();
+  });
+
+  it('retorna null quando frequencyHours é zero com frequencyType="interval"', () => {
+    const result = calculateNextDose("2026-06-16T08:00", 0, null, REF_SP_10H, "interval");
+    expect(result).toBeNull();
+  });
+
+  it('respeita end_date com frequencyType="interval"', () => {
+    // end = ontem → retorna null
+    const result = calculateNextDose("2026-06-14T08:00", 24, "2026-06-15", REF_SP_10H, "interval");
+    expect(result).toBeNull();
+  });
+
+  it('retorna start quando start está no futuro com frequencyType="interval"', () => {
+    const result = calculateNextDose("2026-06-17T08:00", 8, null, REF_SP_10H, "interval");
+    expect(fmtSP(result)).toBe("2026-06-17T08:00");
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// advancePastTakenDoses — com frequencyType="interval" legacy
+// ─────────────────────────────────────────────────────────
+describe('advancePastTakenDoses — legacy "interval" alias (regressão Bug ∞)', () => {
+  it('retorna próxima dose não tomada com frequencyType="interval"', () => {
+    // start = 08:00, freq = 8h, ref = startOfYesterday (2026-06-15T00:00 SP)
+    // Candidate = 16:00 ontem → não tomada → retorna 16:00 ontem
+    const ref = sp("2026-06-15T00:00");
+    const result = advancePastTakenDoses({
+      medicationId: "med-1",
+      startDateISO: "2026-06-16T08:00",
+      frequencyHours: 8,
+      endDate: null,
+      referenceTime: ref,
+      frequencyType: "interval",
+      specificTimes: null,
+      specificDays: null,
+      doseStatuses: {},
+    });
+    // First dose after ref: 2026-06-16T08:00 (start is in the future relative to ref)
+    expect(fmtSP(result)).toBe("2026-06-16T08:00");
+  });
+
+  it('pula doses já tomadas e retorna a próxima com frequencyType="interval"', () => {
+    // start = 2026-06-16T08:00, freq = 8h, ref = startOfYesterday
+    // Dose de 08:00 está tomada → avança para 16:00
+    const startUTC = sp("2026-06-16T08:00");
+    const doseStatuses: Record<string, "taken" | "skipped"> = {
+      [`med-2-${startUTC.toISOString()}`]: "taken",
+    };
+    const ref = sp("2026-06-15T00:00");
+    const result = advancePastTakenDoses({
+      medicationId: "med-2",
+      startDateISO: "2026-06-16T08:00",
+      frequencyHours: 8,
+      endDate: null,
+      referenceTime: ref,
+      frequencyType: "interval",
+      specificTimes: null,
+      specificDays: null,
+      doseStatuses,
+    });
+    expect(fmtSP(result)).toBe("2026-06-16T16:00");
   });
 });
 

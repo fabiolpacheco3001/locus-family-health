@@ -34,8 +34,10 @@ export function advancePastTakenDoses(opts: AdvanceOptions): Date | null {
     doseStatuses,
   } = opts;
 
+  // "interval" is the legacy DB value for fixed_interval — normalize it.
+  const rawType = (frequencyType as string) || "fixed_interval";
   const effType: FrequencyType =
-    (frequencyType as FrequencyType) || "fixed_interval";
+    rawType === "interval" ? "fixed_interval" : (rawType as FrequencyType);
 
   // First candidate from the calculation engine
   let candidate = calculateNextDose(

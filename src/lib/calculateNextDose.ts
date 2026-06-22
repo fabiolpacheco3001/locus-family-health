@@ -22,9 +22,11 @@ export function calculateNextDose(
   const ref = referenceTime ?? new Date();
   const refSP = toZonedTime(ref, APP_TIMEZONE);
 
-  // Determine effective frequency type (retrocompatibility)
+  // Determine effective frequency type (retrocompatibility).
+  // "interval" is the legacy DB value for fixed_interval — normalize it.
+  const rawType = (frequencyType as string) || "fixed_interval";
   const effType: FrequencyType =
-    (frequencyType as FrequencyType) || "fixed_interval";
+    rawType === "interval" ? "fixed_interval" : (rawType as FrequencyType);
 
   // Helper: parse end date with 23:59:59 ceiling
   const parseEnd = (): Date | null => {

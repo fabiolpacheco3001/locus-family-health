@@ -252,7 +252,9 @@ export function useHomeData() {
 
     return activeMeds
       .map((med) => {
-        const freqType = (med.frequency_type as string) || "fixed_interval";
+        // Normalize legacy "interval" value to "fixed_interval" (same semantics, old DB rows)
+        const rawFreqType = (med.frequency_type as string) || "fixed_interval";
+        const freqType = rawFreqType === "interval" ? "fixed_interval" : rawFreqType;
         const hasSpecificTimes =
           freqType === "specific_times" ||
           (Array.isArray(med.specific_times) && med.specific_times.length > 0);
