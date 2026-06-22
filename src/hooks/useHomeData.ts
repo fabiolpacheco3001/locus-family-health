@@ -193,6 +193,25 @@ export function useHomeData() {
         });
       });
 
+      (surgRes.data ?? []).forEach((s: any) => {
+        const dateStr = s.scheduled_date;
+        if (!dateStr || new Date(dateStr) <= now) return;
+        const displayName =
+          s.surgery_type === "outro" && s.custom_type ? s.custom_type : s.surgery_type;
+        items.push({
+          id: s.id,
+          title: displayName,
+          subtitle: s.hospital_clinic ?? "Cirurgia",
+          date: dateStr,
+          memberName: s.family_members?.name ?? "Usuário",
+          kind: "surgery",
+          familyMemberId: s.family_member_id,
+          isOverdue: false,
+          isPet: (s.family_members?.member_type || "human") === "pet",
+        });
+      });
+
+
       items.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
