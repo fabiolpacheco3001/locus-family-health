@@ -13,7 +13,7 @@ import { Loader2, X } from "lucide-react";
 import { SURGERY_TYPES } from "@/lib/surgeryTypes";
 import { useSurgeries } from "@/hooks/useSurgeries";
 import { SurgeryInstructionImporter } from "./SurgeryInstructionImporter";
-import { CustomDateTimePicker } from "@/components/ui/custom-date-time-picker";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import type { InstructionItem } from "@/hooks/useSurgeries";
 import { toast } from "sonner";
 
@@ -169,10 +169,11 @@ export function AddSurgeryDrawer({
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">Data e Hora</label>
-                    <CustomDateTimePicker
-                      value={scheduledDate}
-                      onChange={setScheduledDate}
+                    <DateTimePicker
+                      value={scheduledDate ?? undefined}
+                      onChange={(d) => setScheduledDate(d ?? null)}
                       placeholder="Selecionar data e hora"
+                      mode="datetime"
                     />
                   </div>
 
