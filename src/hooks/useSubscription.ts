@@ -20,12 +20,21 @@ export interface Subscription {
   updated_at: string;
 }
 
-/** Read a valid active subscription from localStorage (max 24h cache, must have future billing date). */
-function readLocalCache(): Subscription | undefined {
+/**
+ * Read a valid active subscription from localStorage (max 24h cache, must have future billing date).
+ * SECURITY: userId is required — cache belonging to a different user is discarded immediately.
+ * This prevents cross-session contamination when users share the same browser/device.
+ */
+function readLocalCache(userId: string | undefined): Subscription | undefined {
   try {
     const raw = localStorage.getItem(LOCAL_SUB_KEY);
     if (!raw) return undefined;
     const parsed = JSON.parse(raw) as Subscription & { _cachedAt: number };
+    // CRITICAL: discard cache that belongs to a different user
+    if (!userId || parsed.user_id !== userId) {
+      localStorage.removeItem(LOCAL_SUB_KEY);
+      return undefined;
+    }
     if (parsed.status !== "active" && parsed.status !== "trialing") return undefined;
     // Cache expires after 24 hours
     if (Date.now() - (parsed._cachedAt ?? 0) > 24 * 60 * 60 * 1000) return undefined;
@@ -69,8 +78,9 @@ export function useSubscription() {
   const { user, session } = useAuth();
   const queryClient = useQueryClient();
 
-  // Read localStorage cache once (synchronous, before query runs)
-  const localCache = readLocalCache();
+  // Read localStorage cache once (synchronous, before query runs).
+  // Pass user?.id to reject cache from a different user immediately.
+  const localCache = readLocalCache(user?.id);
 
   const { data: subscription, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["subscription", user?.id],

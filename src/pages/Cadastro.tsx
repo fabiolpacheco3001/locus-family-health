@@ -40,8 +40,10 @@ const Cadastro = () => {
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [consentError, setConsentError] = useState(false);
 
-  // Clear any stale cached session to prevent auth limbo
+  // Clear any stale cached session and subscription cache to prevent auth limbo
+  // and cross-user localStorage contamination (lv_sub_cache must not leak between sessions).
   useEffect(() => {
+    try { localStorage.removeItem("lv_sub_cache"); } catch { /* ignore */ }
     supabase.auth.signOut();
   }, []);
 

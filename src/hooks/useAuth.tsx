@@ -80,6 +80,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    // Clear subscription cache so the next user doesn't inherit it
+    try { localStorage.removeItem("lv_sub_cache"); } catch { /* ignore */ }
     await supabase.auth.signOut();
   };
 
