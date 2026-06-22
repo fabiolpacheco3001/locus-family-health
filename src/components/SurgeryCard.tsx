@@ -163,8 +163,8 @@ export function SurgeryCard({
           ? {
               icon: <CheckCircle size={20} />,
               label: "Concluir",
-              bgColor: "bg-[#AEE2D4]",
-              textColor: "text-slate-800",
+              bgColor: "#AEE2D4",
+              textColor: "#1e293b",
               onAction: onComplete,
             }
           : undefined

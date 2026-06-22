@@ -113,6 +113,7 @@ export const prefetchCriticalChunks = () => {
   importConsultas();
   importMedicamentos();
   importExames();
+  importSurgeries();
 };
 
 export const prefetchByRoute: Record<string, () => void> = {
@@ -176,7 +177,7 @@ const App = () => (
               <Route path="/familiar/:id/medicamentos" element={<Medicamentos />} />
               <Route path="/medicamentos" element={<MedicamentosGeral />} />
               <Route path="/familiar/:id/exames" element={<Exames />} />
-              <Route path="/familiar/:id/cirurgias" element={<Surgeries />} />
+              <Route path="/familiar/:id/cirurgias" element={<Suspense fallback={<RouteLoader />}><Surgeries /></Suspense>} />
               <Route path="/familiar/:id/alergias" element={<Alergias />} />
               <Route path="/familiar/:id/doencas" element={<Doencas />} />
               <Route path="/familiar/:id/vacinas" element={<Vacinas />} />
