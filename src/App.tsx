@@ -91,6 +91,7 @@ const AjustesSeguranca = lazy(importAjustesSeguranca);
 const AjustesConformidade = lazy(importAjustesConformidade);
 const AjustesSuporte = lazy(importAjustesSuporte);
 const PetRotinas = lazy(importPetRotinas);
+const Surgeries = lazy(importSurgeries);
 const Ajuda = lazy(importAjuda);
 const CCDashboard = lazy(importCCDashboard);
 const CCClientes = lazy(importCCClientes);
