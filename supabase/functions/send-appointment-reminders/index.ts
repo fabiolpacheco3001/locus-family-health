@@ -153,6 +153,51 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── 4. Surgeries ─────────────────────────────────────────────────────────
+    const todayRange = dayRange(today);
+    const tomorrowRange = dayRange(tomorrow);
+
+    const { data: surgeriesToday } = await adminClient
+      .from("surgeries")
+      .select(`
+        id, surgery_type, custom_type, scheduled_date, surgeon_name, hospital_clinic,
+        family_members!inner (id, name, group_id, deleted_at)
+      `)
+      .gte("scheduled_date", todayRange.start)
+      .lte("scheduled_date", todayRange.end)
+      .eq("status", "scheduled")
+      .is("family_members.deleted_at", null);
+
+    const { data: surgeriesTomorrow } = await adminClient
+      .from("surgeries")
+      .select(`
+        id, surgery_type, custom_type, scheduled_date, surgeon_name, hospital_clinic,
+        family_members!inner (id, name, group_id, deleted_at)
+      `)
+      .gte("scheduled_date", tomorrowRange.start)
+      .lte("scheduled_date", tomorrowRange.end)
+      .eq("status", "scheduled")
+      .is("family_members.deleted_at", null);
+
+    for (const [items, isToday] of [[surgeriesToday ?? [], true], [surgeriesTomorrow ?? [], false]] as const) {
+      for (const s of items) {
+        const member = Array.isArray(s.family_members) ? s.family_members[0] : s.family_members;
+        if (!member?.id || !member?.group_id) continue;
+        const surgeryName = s.surgery_type === "outro" && s.custom_type
+          ? s.custom_type
+          : s.surgery_type.replace(/_/g, " ");
+        const surgeonStr = s.surgeon_name ? ` com ${s.surgeon_name}` : "";
+        const hospitalStr = s.hospital_clinic ? ` em ${s.hospital_clinic}` : "";
+        await enqueue(member.id, member.group_id, {
+          title: isToday ? "🏨 Cirurgia Hoje!" : "🏨 Cirurgia Amanhã",
+          body: `${member.name}: ${surgeryName}${surgeonStr}${hospitalStr}`,
+          url: `/familiar/${member.id}/cirurgias`,
+          type: "appointment",
+          tag: `surgery-${s.id}-${isToday ? "today" : "tomorrow"}`,
+        });
+      }
+    }
+
     log("info", "appointment_reminders_matched", { count: notificationsToSend.length });
 
     if (notificationsToSend.length === 0) {
