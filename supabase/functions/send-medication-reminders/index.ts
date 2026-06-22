@@ -16,6 +16,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
+import { getNotificationTargets } from "../_shared/notification-targets.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
         family_members!inner (
           id,
           name,
-          user_id,
+          group_id,
           deleted_at
         )
       `)
@@ -112,7 +113,7 @@ Deno.serve(async (req) => {
 
     for (const med of medications) {
       const member = Array.isArray(med.family_members) ? med.family_members[0] : med.family_members;
-      if (!member?.user_id) continue;
+      if (!member?.id || !member?.group_id) continue;
 
       const freqType = (med.frequency_type as string) || "fixed_interval";
       const specificTimes = (med.specific_times as string[] | null) ?? [];
@@ -184,13 +185,19 @@ Deno.serve(async (req) => {
       }
 
       if (shouldNotify) {
-        toNotify.push({
-          userId: member.user_id,
-          medName: med.name,
-          dosage: med.dosage,
-          memberName: member.name,
-          medId: med.id,
-        });
+        // Resolve destinatários via RBAC:
+        // admin do grupo recebe tudo; usuário regular recebe apenas se member
+        // está em seus managed_profiles.
+        const targetUserIds = await getNotificationTargets(adminClient, member.id, member.group_id);
+        for (const userId of targetUserIds) {
+          toNotify.push({
+            userId,
+            medName: med.name,
+            dosage: med.dosage,
+            memberName: member.name,
+            medId: med.id,
+          });
+        }
       }
     }
 
