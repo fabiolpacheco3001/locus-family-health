@@ -56,6 +56,7 @@ const importAjustesSeguranca = () => import("./pages/AjustesSeguranca");
 const importAjustesConformidade = () => import("./pages/AjustesConformidade");
 const importAjustesSuporte = () => import("./pages/AjustesSuporte");
 const importPetRotinas = () => import("./pages/PetRotinas");
+const importSurgeries = () => import("./pages/Surgeries");
 const importAjuda = () => import("./pages/Ajuda");
 const importCCDashboard = () => import("./pages/command-center/Dashboard");
 const importCCClientes = () => import("./pages/command-center/Clientes");
@@ -90,6 +91,7 @@ const AjustesSeguranca = lazy(importAjustesSeguranca);
 const AjustesConformidade = lazy(importAjustesConformidade);
 const AjustesSuporte = lazy(importAjustesSuporte);
 const PetRotinas = lazy(importPetRotinas);
+const Surgeries = lazy(importSurgeries);
 const Ajuda = lazy(importAjuda);
 const CCDashboard = lazy(importCCDashboard);
 const CCClientes = lazy(importCCClientes);
@@ -174,6 +176,7 @@ const App = () => (
               <Route path="/familiar/:id/medicamentos" element={<Medicamentos />} />
               <Route path="/medicamentos" element={<MedicamentosGeral />} />
               <Route path="/familiar/:id/exames" element={<Exames />} />
+              <Route path="/familiar/:id/cirurgias" element={<Surgeries />} />
               <Route path="/familiar/:id/alergias" element={<Alergias />} />
               <Route path="/familiar/:id/doencas" element={<Doencas />} />
               <Route path="/familiar/:id/vacinas" element={<Vacinas />} />

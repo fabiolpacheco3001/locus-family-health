@@ -2,7 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { parseISO } from "date-fns";
-import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown, Loader2 } from "lucide-react";
+import { Calendar, Stethoscope, FileText, X, ArrowLeft, PawPrint, ArrowUpDown, Loader2, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useSmartBack from "@/hooks/useSmartBack";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -27,7 +27,7 @@ type AgendaItem = {
   type: string | null;
   status: string;
   memberName: string;
-  kind: "consultation" | "exam" | "pet_routine";
+  kind: "consultation" | "exam" | "pet_routine" | "surgery";
   isOverdue: boolean;
   isPet: boolean;
 };
@@ -74,6 +74,12 @@ const Agenda = () => {
         .eq("status", "Agendado")
         .order("date_performed", { ascending: true });
 
+      let sq = (supabase.from("surgeries" as any) as any)
+        .select("id, family_member_id, surgery_type, custom_type, scheduled_date, status, hospital_clinic, user_id, family_members!inner(name, member_type, deleted_at)")
+        .is("deleted_at", null)
+        .is("family_members.deleted_at", null)
+        .order("scheduled_date", { ascending: true });
+
 
       if (isAdmin && groupId) {
         // Trust RLS — no explicit group_id filter for admins (matches Home behavior)
@@ -82,17 +88,20 @@ const Agenda = () => {
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
         pq = pq.in("family_member_id", allowedIds);
+        sq = sq.in("family_member_id", allowedIds);
       } else {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
         pq = pq.eq("user_id", user!.id);
+        sq = sq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
+      const [consultRes, examRes, petRes, surgRes] = await Promise.all([cq, eq, pq, sq]);
 
       if (consultRes.error) throw consultRes.error;
       if (examRes.error) throw examRes.error;
       if (petRes.error) throw petRes.error;
+      if (surgRes.error) throw surgRes.error;
 
       const consultations: AgendaItem[] = (consultRes.data ?? []).map((c: any) => {
         const dateStr = c.consultation_date;
@@ -152,7 +161,34 @@ const Agenda = () => {
         };
       });
 
-      const merged = [...consultations, ...exams, ...petRoutines];
+      const surgeries: AgendaItem[] = (surgRes.data ?? []).map((s: any) => {
+        const dateStr = s.scheduled_date;
+        const displayName =
+          s.surgery_type === "outro" && s.custom_type ? s.custom_type : s.surgery_type;
+        const statusMap: Record<string, string> = {
+          scheduled: "Agendada",
+          completed: "Realizada",
+          canceled: "Cancelada",
+        };
+        return {
+          id: s.id,
+          family_member_id: s.family_member_id,
+          title: displayName,
+          subtitle: s.hospital_clinic ?? null,
+          date: dateStr,
+          type: "surgery",
+          status: statusMap[s.status] ?? s.status,
+          memberName: s.family_members?.name ?? "Usuário",
+          kind: "surgery" as const,
+          isOverdue:
+            s.status === "scheduled" && dateStr
+              ? isBefore(parseISO(dateStr), new Date())
+              : false,
+          isPet: (s.family_members?.member_type || "human") === "pet",
+        };
+      });
+
+      const merged = [...consultations, ...exams, ...petRoutines, ...surgeries];
       merged.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
@@ -288,8 +324,11 @@ const Agenda = () => {
             {displayedItems.map((item) => {
               const isExam = item.kind === "exam";
               const isPetRoutine = item.kind === "pet_routine";
-              const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
-              const route = isPetRoutine
+              const isSurgery = item.kind === "surgery";
+              const Icon = isSurgery ? Scissors : isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+              const route = isSurgery
+                ? `/familiar/${item.family_member_id}/cirurgias`
+                : isPetRoutine
                 ? `/familiar/${item.family_member_id}/rotinas-pet`
                 : isExam
                 ? `/familiar/${item.family_member_id}/exames`
@@ -350,7 +389,12 @@ const Agenda = () => {
                            Exame
                         </Badge>
                       )}
-                      {!isExam && !isPetRoutine && (
+                      {isSurgery && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700 border-none">
+                          Cirurgia
+                        </Badge>
+                      )}
+                      {!isExam && !isPetRoutine && !isSurgery && (
                         <Badge
                           variant="outline"
                           className={`text-[10px] px-1.5 py-0 border-none ${

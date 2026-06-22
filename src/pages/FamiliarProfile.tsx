@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import useSmartBack from "@/hooks/useSmartBack";
 import {
   ArrowLeft, Stethoscope, Pill, FileText, AlertCircle, HeartPulse, ShieldAlert,
-  UserCircle, Ban, Droplets, PawPrint, Syringe, Activity, ShowerHead, ClipboardCheck,
+  UserCircle, Ban, Droplets, PawPrint, Syringe, Activity, ShowerHead, ClipboardCheck, Scissors,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -162,6 +162,18 @@ const FamiliarProfile = () => {
 
           <SectionTitle icon={HeartPulse} title="Gestão de Saúde" />
           {renderCardGrid(gestaoItems)}
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            <button
+              className="flex flex-col items-center p-4 bg-card rounded-xl border border-border/50 active:bg-muted/50 sm:hover:bg-muted/50 transition-colors text-center"
+              onClick={() => navigate(`/familiar/${id}/cirurgias`)}
+            >
+              <div className="w-11 h-11 rounded-xl bg-[#A7D3CB] flex items-center justify-center mb-2">
+                <Scissors size={22} className="text-black" />
+              </div>
+              <p className="text-xs font-semibold text-foreground">Cirurgias</p>
+              <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">Procedimentos</p>
+            </button>
+          </div>
 
           <SectionTitle icon={ShieldAlert} title="Informações de Saúde" />
           {renderCardGrid(infoItems)}

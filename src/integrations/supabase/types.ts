@@ -1294,6 +1294,110 @@ export type Database = {
         }
         Relationships: []
       }
+      surgeries: {
+        Row: {
+          created_at: string
+          custom_type: string | null
+          deleted_at: string | null
+          family_member_id: string
+          group_id: string
+          hospital_clinic: string | null
+          id: string
+          notes: string | null
+          scheduled_date: string | null
+          status: string
+          surgeon_name: string | null
+          surgery_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_type?: string | null
+          deleted_at?: string | null
+          family_member_id: string
+          group_id: string
+          hospital_clinic?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          status?: string
+          surgeon_name?: string | null
+          surgery_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_type?: string | null
+          deleted_at?: string | null
+          family_member_id?: string
+          group_id?: string
+          hospital_clinic?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          status?: string
+          surgeon_name?: string | null
+          surgery_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surgeries_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surgeries_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      surgery_instructions: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          phase: string
+          raw_ocr_text: string | null
+          surgery_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          phase: string
+          raw_ocr_text?: string | null
+          surgery_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          phase?: string
+          raw_ocr_text?: string | null
+          surgery_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surgery_instructions_surgery_id_fkey"
+            columns: ["surgery_id"]
+            isOneToOne: false
+            referencedRelation: "surgeries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_configs: {
         Row: {
           description: string
