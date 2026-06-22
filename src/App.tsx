@@ -56,6 +56,7 @@ const importAjustesSeguranca = () => import("./pages/AjustesSeguranca");
 const importAjustesConformidade = () => import("./pages/AjustesConformidade");
 const importAjustesSuporte = () => import("./pages/AjustesSuporte");
 const importPetRotinas = () => import("./pages/PetRotinas");
+const importSurgeries = () => import("./pages/Surgeries");
 const importAjuda = () => import("./pages/Ajuda");
 const importCCDashboard = () => import("./pages/command-center/Dashboard");
 const importCCClientes = () => import("./pages/command-center/Clientes");
