@@ -26,7 +26,7 @@ export type UpcomingItem = {
   subtitle: string;
   date: string | null;
   memberName: string;
-  kind: "consultation" | "exam" | "pet_routine";
+  kind: "consultation" | "exam" | "pet_routine" | "surgery";
   familyMemberId: string;
   isOverdue: boolean;
   consultationType?: string | null;
