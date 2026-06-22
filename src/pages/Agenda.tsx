@@ -27,7 +27,7 @@ type AgendaItem = {
   type: string | null;
   status: string;
   memberName: string;
-  kind: "consultation" | "exam" | "pet_routine";
+  kind: "consultation" | "exam" | "pet_routine" | "surgery";
   isOverdue: boolean;
   isPet: boolean;
 };
