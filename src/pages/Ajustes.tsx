@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { parseDateInSP } from "@/lib/dateUtils";
 import { useNavigate } from "react-router-dom";
-import { LogOut, User, Users, Bell, Shield, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Mail, Sparkles, Download, ShieldOff } from "lucide-react";
+import { LogOut, User, Users, Bell, HelpCircle, ChevronRight, Trash2, Loader2, FileText, UserCog, Crown, AlertCircle, Clock, Sparkles, Download, ShieldOff, MessageCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,20 +21,155 @@ import { createSubscription } from "@/services/asaasService";
 import MemberAvatar from "@/components/MemberAvatar";
 import PaywallModal from "@/components/PaywallModal";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
 import { ptBR } from "date-fns/locale";
 
-const menuItems = [
-  { icon: User, label: "Meus Dados", path: "/meus-dados" },
-  { icon: Users, label: "Gerenciar Família", path: "/gerenciar-familia" },
-  { icon: Bell, label: "Notificações", path: "/notificacoes" },
-  { icon: Shield, label: "Segurança e Senha", path: "/seguranca-conta" },
-  { icon: FileText, label: "Política de Privacidade", path: "/politica-de-privacidade" },
-  { icon: Sparkles, label: "Novidades do Locus Vita", path: "/changelog" },
-  { icon: HelpCircle, label: "Ajuda e Suporte", path: "/ajuda" },
-  { icon: Mail, label: "Fale Conosco", path: "__support__" },
+// ── Tipos de item de menu ──────────────────────────────────────────────────
+type MenuAction =
+  | { kind: "navigate"; path: string }
+  | { kind: "support" }
+  | { kind: "export" }
+  | { kind: "revoke" }
+  | { kind: "delete" };
+
+interface MenuItem {
+  icon: React.ElementType;
+  label: string;
+  sublabel?: string;
+  action: MenuAction;
+  adminOnly?: boolean;
+  danger?: boolean;
+  warning?: boolean;
+  accent?: boolean;
+}
+
+interface MenuGroup {
+  title?: string;
+  items: MenuItem[];
+}
+
+export const buildMenuGroups = (isAdmin: boolean): MenuGroup[] => [
+  // ── Item solto: Meus Dados ─────────────────────────────────────────────
+  {
+    items: [
+      { icon: User, label: "Meus Dados", action: { kind: "navigate", path: "/meus-dados" } },
+    ],
+  },
+  // ── Item solto: Gerenciar Família ──────────────────────────────────────
+  {
+    items: [
+      { icon: Users, label: "Gerenciar Família", action: { kind: "navigate", path: "/gerenciar-familia" } },
+    ],
+  },
+  // ── Grupo: Segurança ───────────────────────────────────────────────────
+  {
+    title: "Segurança",
+    items: [
+      { icon: Lock, label: "Senha e Biometria", action: { kind: "navigate", path: "/seguranca-conta" } },
+      ...(isAdmin
+        ? [{ icon: UserCog, label: "Gestão de Acessos", action: { kind: "navigate", path: "/gestao-acessos" } as MenuAction }]
+        : []),
+    ],
+  },
+  // ── Item solto: Notificações ───────────────────────────────────────────
+  {
+    items: [
+      { icon: Bell, label: "Notificações", action: { kind: "navigate", path: "/notificacoes" } },
+    ],
+  },
+  // ── Grupo: Conformidade ────────────────────────────────────────────────
+  {
+    title: "Conformidade",
+    items: [
+      { icon: FileText, label: "Política de Privacidade", action: { kind: "navigate", path: "/politica-de-privacidade" } },
+      { icon: Download, label: "Exportar Meus Dados", sublabel: "LGPD Art. 18-V — portabilidade", action: { kind: "export" }, accent: true },
+      { icon: ShieldOff, label: "Revogar Consentimento", sublabel: "LGPD Art. 18-IX — revogação", action: { kind: "revoke" }, warning: true },
+      { icon: Trash2, label: "Excluir Conta", action: { kind: "delete" }, danger: true },
+    ],
+  },
+  // ── Grupo: Suporte ─────────────────────────────────────────────────────
+  {
+    title: "Suporte",
+    items: [
+      { icon: HelpCircle, label: "Perguntas e Respostas", action: { kind: "navigate", path: "/ajuda" } },
+      { icon: MessageCircle, label: "Fale Conosco", action: { kind: "support" } },
+      { icon: Sparkles, label: "Novidade Locus Vita", action: { kind: "navigate", path: "/changelog" } },
+    ],
+  },
 ];
+
+// ── Item de menu genérico ──────────────────────────────────────────────────
+interface MenuItemButtonProps {
+  item: MenuItem;
+  exportingData: boolean;
+  onAction: (action: MenuAction) => void;
+}
+
+const MenuItemButton = ({ item, exportingData, onAction }: MenuItemButtonProps) => {
+  const isExporting = item.action.kind === "export" && exportingData;
+
+  const containerClass = item.danger
+    ? "w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-destructive/20 active:bg-destructive/5 transition-colors"
+    : item.warning
+    ? "w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-amber-200/60 active:bg-amber-50 transition-colors"
+    : "w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors";
+
+  const iconBgClass = item.danger
+    ? "w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0"
+    : item.warning
+    ? "w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0"
+    : item.accent
+    ? "w-10 h-10 rounded-full bg-[#78C2AD]/15 flex items-center justify-center shrink-0"
+    : "w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0";
+
+  const iconClass = item.danger
+    ? "text-destructive"
+    : item.warning
+    ? "text-amber-600"
+    : item.accent
+    ? "text-[#78C2AD]"
+    : "text-black";
+
+  const labelClass = item.danger
+    ? "text-sm font-medium text-destructive"
+    : item.warning
+    ? "text-sm font-medium text-amber-800"
+    : "text-sm font-medium text-foreground";
+
+  const chevronClass = item.danger
+    ? "text-destructive/50"
+    : item.warning
+    ? "text-amber-400"
+    : "text-muted-foreground";
+
+  const Icon = item.icon;
+
+  return (
+    <button
+      onClick={() => onAction(item.action)}
+      disabled={isExporting}
+      className={`${containerClass} disabled:opacity-60`}
+      aria-label={item.label}
+    >
+      <div className={iconBgClass}>
+        {isExporting
+          ? <Loader2 size={20} className="text-[#78C2AD] animate-spin" />
+          : <Icon size={20} className={iconClass} />
+        }
+      </div>
+      <div className="flex-1 text-left">
+        <span className={`${labelClass} block`}>{item.label}</span>
+        {item.sublabel && (
+          <span className={`text-xs block ${item.warning ? "text-amber-600/80" : "text-muted-foreground"}`}>
+            {item.sublabel}
+          </span>
+        )}
+      </div>
+      <ChevronRight size={18} className={chevronClass} />
+    </button>
+  );
+};
 
 const Ajustes = () => {
   const { signOut, user } = useAuth();
@@ -487,94 +622,45 @@ const Ajustes = () => {
             </div>
           )}
 
-          {/* Menu Items */}
-          <div className="space-y-3">
-            {menuItems.map(({ icon: Icon, label, path }) => (
-              <button
-                key={label}
-                onClick={() => {
-                  if (path === "__support__") {
-                    if (supportUrl) {
-                      window.open(supportUrl, "_blank");
-                    } else {
-                      window.location.href = `mailto:${supportEmail}`;
-                    }
-                  } else if (path?.startsWith("mailto:")) {
-                    window.location.href = path;
-                  } else if (path) {
-                    navigate(path, { state: { from: "/ajustes" } });
-                  }
-                }}
-                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
-                  <Icon size={20} className="text-black" />
-                </div>
-                <span className="flex-1 text-left text-sm font-medium text-foreground">{label}</span>
-                <ChevronRight size={18} className="text-muted-foreground" />
-              </button>
-            ))}
-
-            {/* Access Management - Admin only */}
-            {isAdmin && (
-              <button
-                onClick={() => navigate("/gestao-acessos")}
-                className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-full bg-[#A7D3CB] flex items-center justify-center shrink-0">
-                  <UserCog size={20} className="text-black" />
-                </div>
-                <span className="flex-1 text-left text-sm font-medium text-foreground">Gestão de Acessos</span>
-                <ChevronRight size={18} className="text-muted-foreground" />
-              </button>
-            )}
-
-            {/* A15 — Exportar dados (LGPD Art. 18-V) */}
-            <button
-              onClick={handleExportData}
-              disabled={exportingData}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-border/40 active:bg-muted/40 transition-colors disabled:opacity-60"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#78C2AD]/15 flex items-center justify-center shrink-0">
-                {exportingData
-                  ? <Loader2 size={20} className="text-[#78C2AD] animate-spin" />
-                  : <Download size={20} className="text-[#78C2AD]" />
-                }
+          {/* Menu Groups */}
+          {buildMenuGroups(isAdmin).map((group, gi) => (
+            <div key={gi} className="space-y-2">
+              {group.title && (
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1 pt-2">
+                  {group.title}
+                </p>
+              )}
+              <div className="space-y-2">
+                {group.items.map((item) => (
+                  <MenuItemButton
+                    key={item.label}
+                    item={item}
+                    exportingData={exportingData}
+                    onAction={(action) => {
+                      switch (action.kind) {
+                        case "navigate":
+                          navigate(action.path, { state: { from: "/ajustes" } });
+                          break;
+                        case "support":
+                          if (supportUrl) window.open(supportUrl, "_blank");
+                          else window.location.href = `mailto:${supportEmail}`;
+                          break;
+                        case "export":
+                          handleExportData();
+                          break;
+                        case "revoke":
+                          setShowRevokeConsent(true);
+                          break;
+                        case "delete":
+                          setShowDeleteAccount(true);
+                          break;
+                      }
+                    }}
+                  />
+                ))}
               </div>
-              <div className="flex-1 text-left">
-                <span className="text-sm font-medium text-foreground block">Exportar Meus Dados</span>
-                <span className="text-xs text-muted-foreground">LGPD Art. 18-V — portabilidade</span>
-              </div>
-              <ChevronRight size={18} className="text-muted-foreground" />
-            </button>
-
-            {/* M14 — Revogar consentimento (LGPD Art. 18-IX) */}
-            <button
-              onClick={() => setShowRevokeConsent(true)}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-amber-200/60 active:bg-amber-50 transition-colors"
-            >
-              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-                <ShieldOff size={20} className="text-amber-600" />
-              </div>
-              <div className="flex-1 text-left">
-                <span className="text-sm font-medium text-amber-800 block">Revogar Consentimento</span>
-                <span className="text-xs text-amber-600/80">LGPD Art. 18-IX — revogação</span>
-              </div>
-              <ChevronRight size={18} className="text-amber-400" />
-            </button>
-
-            {/* Delete Account - danger item */}
-            <button
-              onClick={() => setShowDeleteAccount(true)}
-              className="w-full flex items-center gap-3 p-4 bg-card rounded-xl shadow-xs border border-destructive/20 active:bg-destructive/5 transition-colors"
-            >
-              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-                <Trash2 size={20} className="text-destructive" />
-              </div>
-              <span className="flex-1 text-left text-sm font-medium text-destructive">Excluir Conta</span>
-              <ChevronRight size={18} className="text-destructive/50" />
-            </button>
-          </div>
+            </div>
+          ))}
 
           {/* Sair da conta — parte do conteúdo scrollável, sem footer fixo */}
           <Button
