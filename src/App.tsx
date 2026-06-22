@@ -52,6 +52,9 @@ const importDoencas = () => import("./pages/Doencas");
 const importVacinas = () => import("./pages/Vacinas");
 const importSeguranca = () => import("./pages/Seguranca");
 const importGestaoAcessos = () => import("./pages/GestaoAcessos");
+const importAjustesSeguranca = () => import("./pages/AjustesSeguranca");
+const importAjustesConformidade = () => import("./pages/AjustesConformidade");
+const importAjustesSuporte = () => import("./pages/AjustesSuporte");
 const importPetRotinas = () => import("./pages/PetRotinas");
 const importAjuda = () => import("./pages/Ajuda");
 const importCCDashboard = () => import("./pages/command-center/Dashboard");
@@ -83,6 +86,9 @@ const Doencas = lazy(importDoencas);
 const Vacinas = lazy(importVacinas);
 const Seguranca = lazy(importSeguranca);
 const GestaoAcessos = lazy(importGestaoAcessos);
+const AjustesSeguranca = lazy(importAjustesSeguranca);
+const AjustesConformidade = lazy(importAjustesConformidade);
+const AjustesSuporte = lazy(importAjustesSuporte);
 const PetRotinas = lazy(importPetRotinas);
 const Ajuda = lazy(importAjuda);
 const CCDashboard = lazy(importCCDashboard);
@@ -178,6 +184,9 @@ const App = () => (
               <Route path="/seguranca-conta" element={<Seguranca />} />
               <Route path="/meu-plano" element={<MeuPlano />} />
               <Route path="/gestao-acessos" element={<GestaoAcessos />} />
+              <Route path="/ajustes/seguranca" element={<AjustesSeguranca />} />
+              <Route path="/ajustes/conformidade" element={<AjustesConformidade />} />
+              <Route path="/ajustes/suporte" element={<AjustesSuporte />} />
             </Route>
             <Route path="/command_center/login" element={<Suspense fallback={<RouteLoader />}><AdminLogin /></Suspense>} />
             <Route path="/command_center" element={<AdminRoute><Suspense fallback={<RouteLoader />}><CommandCenterLayout /></Suspense></AdminRoute>}>

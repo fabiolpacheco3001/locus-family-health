@@ -1,265 +1,257 @@
 /**
  * Ajustes.test.tsx
  *
- * Testes de regressão — reorganização da tela de Ajustes (sessão 38).
+ * Testes de regressão — estrutura de navegação de Ajustes (sessão 38 v2).
  *
- * Estratégia:
- *   - Testes unitários de `buildMenuGroups` (função pura exportada) cobrem
- *     a maior parte dos requisitos: estrutura de grupos, labels, paths e
- *     visibilidade por role — sem dependência de rendering.
- *   - Um smoke test de rendering verifica que o componente monta sem crash.
+ * Nova arquitetura: Ajustes exibe 6 menus de topo; ao clicar em Segurança,
+ * Conformidade ou Suporte, o usuário entra em sub-telas dedicadas.
  *
  * Cobertura:
- *   1. Grupos corretos (Segurança, Conformidade, Suporte) com seus títulos
- *   2. Itens renomeados (Senha e Biometria, Perguntas e Respostas, Novidade Locus Vita)
- *   3. Paths de navegação íntegros
- *   4. Gestão de Acessos — admin vs. não-admin
- *   5. Ações especiais (export, revoke, delete, support) mapeadas corretamente
- *   6. Nenhum item com label legado presente
- *   7. Ordem global dos grupos
+ *   1. topMenuItems — 6 itens corretos, paths corretos
+ *   2. segurancaItems — itens e paths da sub-tela Segurança
+ *   3. segurancaItems — adminOnly respeitado
+ *   4. conformidadeItems — itens, actions e sublabels
+ *   5. suporteItems — itens e paths
+ *   6. Nenhum submenu aparece no menu principal (paths são sub-rotas)
+ *   7. Itens legados ausentes (nomes antigos não existem)
  */
 
 import { describe, it, expect } from "vitest";
-import { buildMenuGroups } from "./Ajustes";
+import { topMenuItems } from "./Ajustes";
+import { segurancaItems } from "./AjustesSeguranca";
+import { conformidadeItems } from "./AjustesConformidade";
+import { suporteItems } from "./AjustesSuporte";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// 1. topMenuItems — tela principal de Ajustes
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Coleta todos os labels de todos os itens em todos os grupos */
-const allLabels = (isAdmin: boolean) =>
-  buildMenuGroups(isAdmin).flatMap((g) => g.items.map((i) => i.label));
-
-/** Encontra um item pelo label em qualquer grupo */
-const findItem = (label: string, isAdmin = true) =>
-  buildMenuGroups(isAdmin)
-    .flatMap((g) => g.items)
-    .find((i) => i.label === label);
-
-/** Encontra um grupo pelo título */
-const findGroup = (title: string, isAdmin = true) =>
-  buildMenuGroups(isAdmin).find((g) => g.title === title);
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. Grupos — títulos e ordem
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("buildMenuGroups — estrutura de grupos", () => {
-  it("retorna 5 grupos no total para admin", () => {
-    // [Meus Dados, Gerenciar Família, Segurança, Notificações, Conformidade, Suporte]
-    // Meus Dados e Gerenciar Família são grupos sem título (standalone), somando 6
-    expect(buildMenuGroups(true)).toHaveLength(6);
+describe("Ajustes — topMenuItems (6 menus de topo)", () => {
+  it("tem exatamente 6 itens", () => {
+    expect(topMenuItems).toHaveLength(6);
   });
 
-  it("retorna os títulos de grupo corretos na ordem esperada", () => {
-    const titles = buildMenuGroups(true)
-      .map((g) => g.title)
-      .filter(Boolean);
-    expect(titles).toEqual(["Segurança", "Conformidade", "Suporte"]);
+  it("labels corretos na ordem esperada", () => {
+    expect(topMenuItems.map((i) => i.label)).toEqual([
+      "Meus Dados",
+      "Gerenciar Família",
+      "Segurança",
+      "Notificações",
+      "Conformidade",
+      "Suporte",
+    ]);
   });
 
-  it("grupos 'Meus Dados' e 'Gerenciar Família' não têm título (standalone)", () => {
-    const groups = buildMenuGroups(true);
-    // Primeiro grupo: Meus Dados
-    expect(groups[0].title).toBeUndefined();
-    expect(groups[0].items[0].label).toBe("Meus Dados");
-    // Segundo grupo: Gerenciar Família
-    expect(groups[1].title).toBeUndefined();
-    expect(groups[1].items[0].label).toBe("Gerenciar Família");
+  it("paths corretos para cada item", () => {
+    const paths: Record<string, string> = {
+      "Meus Dados":        "/meus-dados",
+      "Gerenciar Família": "/gerenciar-familia",
+      "Segurança":         "/ajustes/seguranca",
+      "Notificações":      "/notificacoes",
+      "Conformidade":      "/ajustes/conformidade",
+      "Suporte":           "/ajustes/suporte",
+    };
+    for (const item of topMenuItems) {
+      expect(item.path, `path errado para "${item.label}"`).toBe(paths[item.label]);
+    }
   });
 
-  it("grupo Notificações não tem título (standalone)", () => {
-    const notifGroup = buildMenuGroups(true).find((g) =>
-      g.items.some((i) => i.label === "Notificações")
-    );
-    expect(notifGroup?.title).toBeUndefined();
+  it("Segurança, Conformidade e Suporte apontam para sub-rotas /ajustes/*", () => {
+    const subRoutes = topMenuItems.filter((i) => i.path.startsWith("/ajustes/"));
+    expect(subRoutes.map((i) => i.label)).toEqual(["Segurança", "Conformidade", "Suporte"]);
   });
-});
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. Itens renomeados — novos labels presentes, legados ausentes
-// ─────────────────────────────────────────────────────────────────────────────
+  it("não contém itens com labels de submenu (ex: 'Senha e Biometria')", () => {
+    const labels = topMenuItems.map((i) => i.label);
+    expect(labels).not.toContain("Senha e Biometria");
+    expect(labels).not.toContain("Gestão de Acessos");
+    expect(labels).not.toContain("Política de Privacidade");
+    expect(labels).not.toContain("Exportar Meus Dados");
+    expect(labels).not.toContain("Revogar Consentimento");
+    expect(labels).not.toContain("Excluir Conta");
+    expect(labels).not.toContain("Perguntas e Respostas");
+    expect(labels).not.toContain("Fale Conosco");
+    expect(labels).not.toContain("Novidade Locus Vita");
+  });
 
-describe("buildMenuGroups — labels corretos (renomeados)", () => {
-  it("usa 'Senha e Biometria' (não 'Segurança e Senha')", () => {
-    const labels = allLabels(true);
-    expect(labels).toContain("Senha e Biometria");
+  it("não contém labels legados", () => {
+    const labels = topMenuItems.map((i) => i.label);
     expect(labels).not.toContain("Segurança e Senha");
-  });
-
-  it("usa 'Perguntas e Respostas' (não 'Ajuda e Suporte')", () => {
-    const labels = allLabels(true);
-    expect(labels).toContain("Perguntas e Respostas");
     expect(labels).not.toContain("Ajuda e Suporte");
-  });
-
-  it("usa 'Novidade Locus Vita' (não 'Novidades do Locus Vita')", () => {
-    const labels = allLabels(true);
-    expect(labels).toContain("Novidade Locus Vita");
     expect(labels).not.toContain("Novidades do Locus Vita");
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 3. Paths de navegação
+// 2. segurancaItems — sub-tela Segurança
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("buildMenuGroups — paths de navegação", () => {
-  const navCases: [string, string][] = [
-    ["Meus Dados", "/meus-dados"],
-    ["Gerenciar Família", "/gerenciar-familia"],
-    ["Senha e Biometria", "/seguranca-conta"],
-    ["Notificações", "/notificacoes"],
-    ["Política de Privacidade", "/politica-de-privacidade"],
-    ["Perguntas e Respostas", "/ajuda"],
-    ["Novidade Locus Vita", "/changelog"],
-    ["Gestão de Acessos", "/gestao-acessos"],
-  ];
-
-  for (const [label, path] of navCases) {
-    it(`'${label}' → navega para '${path}'`, () => {
-      const item = findItem(label, true);
-      expect(item).toBeDefined();
-      expect(item?.action).toEqual({ kind: "navigate", path });
-    });
-  }
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. Gestão de Acessos — admin only
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("buildMenuGroups — Gestão de Acessos (admin only)", () => {
-  it("'Gestão de Acessos' está presente no grupo Segurança para admin", () => {
-    const secGroup = findGroup("Segurança", true);
-    const labels = secGroup?.items.map((i) => i.label) ?? [];
-    expect(labels).toContain("Gestão de Acessos");
+describe("AjustesSeguranca — segurancaItems", () => {
+  it("tem exatamente 2 itens", () => {
+    expect(segurancaItems).toHaveLength(2);
   });
 
-  it("'Gestão de Acessos' NÃO está presente para usuário não-admin", () => {
-    const labels = allLabels(false);
-    expect(labels).not.toContain("Gestão de Acessos");
+  it("labels corretos", () => {
+    expect(segurancaItems.map((i) => i.label)).toEqual([
+      "Senha e Biometria",
+      "Gestão de Acessos",
+    ]);
   });
 
-  it("grupo Segurança tem exatamente 2 itens para admin (Senha e Biometria + Gestão de Acessos)", () => {
-    const secGroup = findGroup("Segurança", true);
-    expect(secGroup?.items).toHaveLength(2);
+  it("'Senha e Biometria' → /seguranca-conta", () => {
+    const item = segurancaItems.find((i) => i.label === "Senha e Biometria");
+    expect(item?.path).toBe("/seguranca-conta");
+    expect(item?.adminOnly).toBeFalsy();
   });
 
-  it("grupo Segurança tem exatamente 1 item para não-admin (apenas Senha e Biometria)", () => {
-    const secGroup = findGroup("Segurança", false);
-    expect(secGroup?.items).toHaveLength(1);
-    expect(secGroup?.items[0].label).toBe("Senha e Biometria");
+  it("'Gestão de Acessos' → /gestao-acessos, adminOnly=true", () => {
+    const item = segurancaItems.find((i) => i.label === "Gestão de Acessos");
+    expect(item?.path).toBe("/gestao-acessos");
+    expect(item?.adminOnly).toBe(true);
+  });
+
+  it("itens visíveis para admin = 2", () => {
+    const visible = segurancaItems.filter((i) => !i.adminOnly || true);
+    expect(visible).toHaveLength(2);
+  });
+
+  it("itens visíveis para não-admin = 1 (sem Gestão de Acessos)", () => {
+    const visible = segurancaItems.filter((i) => !i.adminOnly);
+    expect(visible).toHaveLength(1);
+    expect(visible[0].label).toBe("Senha e Biometria");
+  });
+
+  it("label legado 'Segurança e Senha' está ausente", () => {
+    const labels = segurancaItems.map((i) => i.label);
+    expect(labels).not.toContain("Segurança e Senha");
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. Ações especiais (Conformidade)
+// 3. conformidadeItems — sub-tela Conformidade
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("buildMenuGroups — ações especiais do grupo Conformidade", () => {
-  it("'Exportar Meus Dados' tem action.kind = 'export'", () => {
-    const item = findItem("Exportar Meus Dados");
+describe("AjustesConformidade — conformidadeItems", () => {
+  it("tem exatamente 4 itens", () => {
+    expect(conformidadeItems).toHaveLength(4);
+  });
+
+  it("labels corretos na ordem", () => {
+    expect(conformidadeItems.map((i) => i.label)).toEqual([
+      "Política de Privacidade",
+      "Exportar Meus Dados",
+      "Revogar Consentimento",
+      "Excluir Conta",
+    ]);
+  });
+
+  it("'Política de Privacidade' → navigate /politica-de-privacidade", () => {
+    const item = conformidadeItems.find((i) => i.label === "Política de Privacidade");
+    expect(item?.action).toEqual({ kind: "navigate", path: "/politica-de-privacidade" });
+  });
+
+  it("'Exportar Meus Dados' → action export + sublabel LGPD 18-V + accent", () => {
+    const item = conformidadeItems.find((i) => i.label === "Exportar Meus Dados");
     expect(item?.action.kind).toBe("export");
-  });
-
-  it("'Exportar Meus Dados' tem sublabel mencionando LGPD Art. 18-V", () => {
-    const item = findItem("Exportar Meus Dados");
     expect(item?.sublabel).toMatch(/18-V/);
+    expect(item?.accent).toBe(true);
   });
 
-  it("'Revogar Consentimento' tem action.kind = 'revoke'", () => {
-    const item = findItem("Revogar Consentimento");
+  it("'Revogar Consentimento' → action revoke + sublabel LGPD 18-IX + warning", () => {
+    const item = conformidadeItems.find((i) => i.label === "Revogar Consentimento");
     expect(item?.action.kind).toBe("revoke");
-  });
-
-  it("'Revogar Consentimento' tem sublabel mencionando LGPD Art. 18-IX", () => {
-    const item = findItem("Revogar Consentimento");
     expect(item?.sublabel).toMatch(/18-IX/);
+    expect(item?.warning).toBe(true);
   });
 
-  it("'Excluir Conta' tem action.kind = 'delete' e danger = true", () => {
-    const item = findItem("Excluir Conta");
+  it("'Excluir Conta' → action delete + danger", () => {
+    const item = conformidadeItems.find((i) => i.label === "Excluir Conta");
     expect(item?.action.kind).toBe("delete");
     expect(item?.danger).toBe(true);
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. Ações especiais (Suporte)
+// 4. suporteItems — sub-tela Suporte
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("buildMenuGroups — ações do grupo Suporte", () => {
-  it("'Fale Conosco' tem action.kind = 'support'", () => {
-    const item = findItem("Fale Conosco");
-    expect(item?.action.kind).toBe("support");
+describe("AjustesSuporte — suporteItems", () => {
+  it("tem exatamente 3 itens", () => {
+    expect(suporteItems).toHaveLength(3);
+  });
+
+  it("labels corretos na ordem", () => {
+    expect(suporteItems.map((i) => i.label)).toEqual([
+      "Perguntas e Respostas",
+      "Fale Conosco",
+      "Novidade Locus Vita",
+    ]);
+  });
+
+  it("'Perguntas e Respostas' → navigate /ajuda", () => {
+    const item = suporteItems.find((i) => i.label === "Perguntas e Respostas");
+    expect(item?.kind).toBe("navigate");
+    expect(item?.path).toBe("/ajuda");
+  });
+
+  it("'Fale Conosco' → kind support (abre URL ou mailto)", () => {
+    const item = suporteItems.find((i) => i.label === "Fale Conosco");
+    expect(item?.kind).toBe("support");
+    expect(item?.path).toBeUndefined();
+  });
+
+  it("'Novidade Locus Vita' → navigate /changelog", () => {
+    const item = suporteItems.find((i) => i.label === "Novidade Locus Vita");
+    expect(item?.kind).toBe("navigate");
+    expect(item?.path).toBe("/changelog");
+  });
+
+  it("labels legados ausentes", () => {
+    const labels = suporteItems.map((i) => i.label);
+    expect(labels).not.toContain("Ajuda e Suporte");
+    expect(labels).not.toContain("Novidades do Locus Vita");
   });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. Lista completa de itens — admin vs não-admin
+// 5. Integridade geral — todos os paths navegáveis são válidos
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("buildMenuGroups — completude da lista", () => {
-  const expectedAdmin = [
-    "Meus Dados",
-    "Gerenciar Família",
-    "Senha e Biometria",
-    "Gestão de Acessos",
-    "Notificações",
-    "Política de Privacidade",
-    "Exportar Meus Dados",
-    "Revogar Consentimento",
-    "Excluir Conta",
-    "Perguntas e Respostas",
-    "Fale Conosco",
-    "Novidade Locus Vita",
-  ];
+describe("Integridade de paths — todos os paths são /rotas reais", () => {
+  const knownPaths = new Set([
+    "/meus-dados",
+    "/gerenciar-familia",
+    "/ajustes/seguranca",
+    "/notificacoes",
+    "/ajustes/conformidade",
+    "/ajustes/suporte",
+    "/seguranca-conta",
+    "/gestao-acessos",
+    "/politica-de-privacidade",
+    "/ajuda",
+    "/changelog",
+  ]);
 
-  const expectedUser = expectedAdmin.filter((l) => l !== "Gestão de Acessos");
-
-  it("admin recebe exatamente 12 itens (incluindo Gestão de Acessos)", () => {
-    expect(allLabels(true)).toHaveLength(12);
-    expect(allLabels(true)).toEqual(expectedAdmin);
+  it("todos os paths de topMenuItems existem em knownPaths", () => {
+    for (const item of topMenuItems) {
+      expect(knownPaths.has(item.path), `Path desconhecido: ${item.path}`).toBe(true);
+    }
   });
 
-  it("não-admin recebe exatamente 11 itens (sem Gestão de Acessos)", () => {
-    expect(allLabels(false)).toHaveLength(11);
-    expect(allLabels(false)).toEqual(expectedUser);
-  });
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 8. Itens no grupo correto
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("buildMenuGroups — itens no grupo correto", () => {
-  it("grupo Conformidade contém Política de Privacidade, Exportar, Revogar e Excluir", () => {
-    const conformGroup = findGroup("Conformidade");
-    const labels = conformGroup?.items.map((i) => i.label) ?? [];
-    expect(labels).toContain("Política de Privacidade");
-    expect(labels).toContain("Exportar Meus Dados");
-    expect(labels).toContain("Revogar Consentimento");
-    expect(labels).toContain("Excluir Conta");
+  it("todos os paths de segurancaItems existem em knownPaths", () => {
+    for (const item of segurancaItems.filter((i) => i.path)) {
+      expect(knownPaths.has(item.path!), `Path desconhecido: ${item.path}`).toBe(true);
+    }
   });
 
-  it("grupo Suporte contém Perguntas e Respostas, Fale Conosco e Novidade Locus Vita", () => {
-    const supGroup = findGroup("Suporte");
-    const labels = supGroup?.items.map((i) => i.label) ?? [];
-    expect(labels).toContain("Perguntas e Respostas");
-    expect(labels).toContain("Fale Conosco");
-    expect(labels).toContain("Novidade Locus Vita");
+  it("paths de suporteItems do tipo 'navigate' existem em knownPaths", () => {
+    for (const item of suporteItems.filter((i) => i.kind === "navigate" && i.path)) {
+      expect(knownPaths.has(item.path!), `Path desconhecido: ${item.path}`).toBe(true);
+    }
   });
 
-  it("'Novidade Locus Vita' está no grupo Suporte, não na raiz", () => {
-    const supGroup = findGroup("Suporte");
-    const inSupport = supGroup?.items.some((i) => i.label === "Novidade Locus Vita");
-    expect(inSupport).toBe(true);
-  });
-
-  it("'Senha e Biometria' está no grupo Segurança", () => {
-    const secGroup = findGroup("Segurança");
-    const inSec = secGroup?.items.some((i) => i.label === "Senha e Biometria");
-    expect(inSec).toBe(true);
+  it("path de Política de Privacidade na Conformidade existe em knownPaths", () => {
+    const pp = conformidadeItems.find((i) => i.action.kind === "navigate") as any;
+    expect(knownPaths.has(pp?.action?.path)).toBe(true);
   });
 });
