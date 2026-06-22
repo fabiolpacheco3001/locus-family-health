@@ -13,8 +13,8 @@
 --   - pg_net habilitado (já habilitado desde migration 20260327205549)
 --
 -- SECRETS a configurar em Supabase Dashboard → Edge Functions → Secrets:
---   VAPID_PUBLIC_KEY  = BPc1Jl-B2jTYy5YJ9AARFRn26z4u8NHtnvglFkipZC_Ho1sbKDmhcJUPnJ58TeiIrifdGyWmAfEvOjYpZ60iFW4
---   VAPID_PRIVATE_KEY = MDpDKH2jN9NkKU8OOVON9mlEpHDymdcdaEs9D7lqNJA
+--   VAPID_PUBLIC_KEY  = <ver src/lib/pushConfig.ts — não versionar aqui>
+--   VAPID_PRIVATE_KEY = <apenas no Supabase Dashboard → Secrets — NUNCA versionar>
 --   VAPID_SUBJECT     = mailto:suporte@locustech.com.br
 --   CRON_SECRET       = <gere com: openssl rand -hex 32>
 --

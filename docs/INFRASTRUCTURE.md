@@ -1,6 +1,6 @@
 # Locus Vita — Infraestrutura: Secrets & Edge Functions
 
-> **Versão:** 1.0 | **Atualizado em:** 2026-06-21  
+> **Versão:** 1.1 | **Atualizado em:** 2026-06-21  
 > Referência operacional para configuração do ambiente e manutenção das Edge Functions Supabase.  
 > ⚠️ **Nunca** versionar valores reais de secrets. Use o painel Lovable Cloud → Settings → Secrets.
 
@@ -271,8 +271,13 @@ Para configurar um ambiente do zero (fork, staging, etc.):
 [ ] 4. Verificar domínio locustech.com.br no Resend (DNS SPF/DKIM)
 [ ] 5. Configurar webhook no Asaas apontando para a URL da Edge Function
 [ ] 6. Deploy de todas as Edge Functions via Lovable MCP
-[ ] 7. Testar fluxo de pagamento em modo sandbox
-[ ] 8. Testar envio de e-mail de convite
+[ ] 7. Ativar pg_cron jobs de push (SQL em 20260621120000_push_notifications.sql):
+       - send-medication-reminders (a cada 5 min)
+       - send-appointment-reminders (diário às 8h BRT)
+       - push_subscriptions TTL cleanup (semanal, domingo)
+[ ] 8. Testar fluxo de pagamento em modo sandbox
+[ ] 9. Testar envio de e-mail de convite
+[ ] 10. Testar opt-in de push em iOS PWA + confirmar chegada da notificação
 ```
 
 ---

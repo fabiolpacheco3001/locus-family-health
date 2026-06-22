@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 1.0 | **Criado em:** 2026-06-19
+> **Versão:** 1.1 | **Atualizado em:** 2026-06-21
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -23,9 +23,9 @@
 
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
-| PROD-01 | CPF real do usuário em `creditCardHolderInfo` | 🔴 | `create-asaas-checkout` usa fallback `"00000000191"`. Precisa buscar CPF real do perfil ou capturar no onboarding |
-| PROD-02 | Endereço/telefone real em `creditCardHolderInfo` | 🔴 | Campos hardcoded na edge function. Asaas exige para antifraude em produção |
-| PROD-03 | Validar tokenização em conta Asaas de produção | 🔴 | Tokenização testada apenas em sandbox. Confirmar que `credit_card_token` vem corretamente em prod |
+| PROD-01 | ~~CPF real do usuário em `creditCardHolderInfo`~~ | ✅ | Resolvido (sessão 33): `create-asaas-checkout` agora busca `cpf` real de `family_members`. Se ausente, usa fallback `"00000000191"` + log `warn "checkout_cpf_fallback"`. Migration adicionou campo `cpf` à tabela; tela MeusDados permite preenchimento. |
+| PROD-02 | ~~Endereço/telefone real em `creditCardHolderInfo`~~ | ✅ | Resolvido (sessão 33): edge function busca `phone`, `postal_code`, `address_number` reais do perfil familiar. Campos CEP e número adicionados à tela MeusDados. Migration `postal_code + address_number` aplicada. |
+| PROD-03 | Validar tokenização em conta Asaas de produção | 🔴 | Tokenização testada apenas em sandbox. Confirmar que `credit_card_token` vem corretamente em prod com cobrança real. Logging melhorado (sessão 33) para diagnóstico. |
 
 ---
 
@@ -33,7 +33,7 @@
 
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
-| BK-01 | Push notifications multi-dispositivo | ✅ | **E2E validado (2026-06-21, sessão 36):** Notificação chegando no iPhone com PWA completamente fechado. Root cause do não-funcionamento: `VAPID_PRIVATE_KEY` no Supabase Secrets não correspondia à `VAPID_PUBLIC_KEY` usada no frontend — chaves geradas inconsistentemente durante rotação anterior. Fix: par VAPID P-256 regenerado via Node.js WebCrypto, ambas as chaves atualizadas nos Secrets e `pushConfig.ts`. Diagnóstico via campo `push_details` na resposta do cron (`sent:0,failed:1` → `sent:1,failed:0` após fix). Bug colateral corrigido: `send-medication-reminders` contava `sent` por `res.ok` (HTTP 200), não pelo resultado real do APNs. JSDoc com private key removido de `send-push-notification/index.ts`. |
+| BK-01 | ~~Push notifications multi-dispositivo~~ | ✅ | **E2E validado em produção (sessão 36, 2026-06-21).** Implementação completa: SW, PushManager, `send-push-notification`, `send-medication-reminders` (±3 min), `send-appointment-reminders` (D-0/D-1 às 8h BRT), migration com pg_cron. Incidente de segurança (sessão 35): VAPID_PRIVATE_KEY exposta em JSDoc → chaves rotacionadas. E2E fix (sessão 36): par VAPID inconsistente pós-rotação → par regenerado via Node.js WebCrypto; contagem `sent` corrigida para ler APNs response body, não HTTP 200. Notificação "💊 Hora do Remédio!" chegando no iPhone com PWA fechado ✅. |
 | A7-E2E | Testes E2E Playwright | 🔴 | Fluxos críticos: login, cadastro de medicamento, marcação de dose, pagamento |
 
 ---
@@ -78,10 +78,14 @@
 | BK-04 | WebAuthn passkeys (Face ID / Touch ID) | Sprint 10 | 2026-06 |
 | BK-06 | Signed URLs para arquivos clínicos (LGPD) | Sprint 11 | 2026-06 |
 | BK-Asaas | Refactor motor financeiro → Cobrança Avulsa + tokenização | Sprint 13 | 2026-06-19 |
-| BK-01 | Push notifications multi-dispositivo (VAPID + pg_cron) | Sprint 35 | 2026-06-21 |
+| BK-01 | Push notifications multi-dispositivo — implementação (VAPID + pg_cron + SW) | Sprint 35 | 2026-06-21 |
+| BK-01-E2E | Push notifications — E2E validado no iPhone (fix par VAPID + contagem APNs) | Sprint 36 | 2026-06-21 |
+| BUG-∞ | Bug ∞ Dipirona (Fase 401) — alias `"interval"` normalizado em `calculateNextDose` | Sprint 37 | 2026-06-21 |
+| PROD-01 | CPF real em `creditCardHolderInfo` (busca de `family_members`) | Sprint 33 | 2026-06-20 |
+| PROD-02 | Endereço/telefone real em `creditCardHolderInfo` (busca de `family_members`) | Sprint 33 | 2026-06-20 |
+| SEC-RLS | Fix subscriptions 42501 — column-level grants quebraram select("*") | Hotfix | 2026-06-20 |
 | BK-07 | Importação de receitas via foto (câmera) | Sprint 27 | 2026-06-19 |
 | BK-08 | Compartilhamento de histórico com médico (Export PDF) | Sprint 21 | 2026-06-19 |
-| SEC-RLS | Fix subscriptions 42501 — column-level grants quebraram select("*") | Hotfix | 2026-06-20 |
 
 ---
 
