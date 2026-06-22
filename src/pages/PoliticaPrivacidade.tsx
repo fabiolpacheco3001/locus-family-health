@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
  */
 const PoliticaPrivacidade = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const handleBack = () => navigate(-1);
 
   return (
