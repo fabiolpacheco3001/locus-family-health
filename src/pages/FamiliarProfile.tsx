@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import useSmartBack from "@/hooks/useSmartBack";
 import {
   ArrowLeft, Stethoscope, Pill, FileText, AlertCircle, HeartPulse, ShieldAlert,
-  UserCircle, Ban, Droplets, PawPrint, Syringe, Activity, ShowerHead, ClipboardCheck,
+  UserCircle, Ban, Droplets, PawPrint, Syringe, Activity, ShowerHead, ClipboardCheck, Scissors,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
