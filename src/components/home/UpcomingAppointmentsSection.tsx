@@ -1,4 +1,4 @@
-import { Calendar, PawPrint, FileText, Stethoscope, ChevronRight } from "lucide-react";
+import { Calendar, PawPrint, FileText, Stethoscope, ChevronRight, Scissors } from "lucide-react";
 import { AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
