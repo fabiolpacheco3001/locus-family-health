@@ -41,14 +41,25 @@ export function UpcomingAppointmentsSection({ upcomingLoading, upcoming }: Props
             {upcoming.map((item) => {
               const isExam = item.kind === "exam";
               const isPetRoutine = item.kind === "pet_routine";
-              const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
-              const route = isPetRoutine
+              const isSurgery = item.kind === "surgery";
+              const Icon = isSurgery
+                ? Scissors
+                : isPetRoutine
+                ? PawPrint
+                : isExam
+                ? FileText
+                : Stethoscope;
+              const route = isSurgery
+                ? `/familiar/${item.familyMemberId}/cirurgias`
+                : isPetRoutine
                 ? `/familiar/${item.familyMemberId}/rotinas-pet`
                 : isExam
                 ? `/familiar/${item.familyMemberId}/exames`
                 : `/familiar/${item.familyMemberId}/consultas`;
 
-              const badgeClass = isPetRoutine
+              const badgeClass = isSurgery
+                ? "bg-blue-100 text-blue-700"
+                : isPetRoutine
                 ? "bg-[#A7D3CB]/30 text-[#1C3333]"
                 : isExam
                 ? "bg-[#FFF4A3] text-black"
@@ -58,7 +69,9 @@ export function UpcomingAppointmentsSection({ upcomingLoading, upcoming }: Props
                 ? "bg-[#F87171] text-white"
                 : "bg-[#DCC5F1] text-black";
 
-              const badgeLabel = isPetRoutine
+              const badgeLabel = isSurgery
+                ? "Cirurgia"
+                : isPetRoutine
                 ? "Rotina Pet"
                 : isExam
                 ? "Exame"
