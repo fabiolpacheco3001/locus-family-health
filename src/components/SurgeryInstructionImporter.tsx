@@ -299,9 +299,9 @@ export function SurgeryInstructionImporter({
                     {item.text}
                   </p>
                   {item.createdByAi && (
-                    <p className="text-[10px] text-amber-600 mt-0.5">
-                      ⚠ Verificar com seu médico
-                    </p>
+                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-800">
+                      Verificar com seu médico
+                    </span>
                   )}
                   {alarmFormatted && item.alarmEnabled && (
                     <p className="text-[11px] text-muted-foreground mt-0.5">

@@ -1,30 +1,53 @@
 import { format, parseISO, isValid, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  CheckCircle2,
-  XCircle,
   Calendar,
   Building2,
   User,
   Share2,
-  ChevronRight,
   AlertCircle,
+  Scissors,
+  CheckCircle,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { getSurgeryLabel } from "@/lib/surgeryTypes";
 import type { Surgery } from "@/hooks/useSurgeries";
+import SwipeableActionCard from "@/components/SwipeableActionCard";
+
+const statusColors: Record<string, string> = {
+  scheduled: "bg-[#AEE2D4] text-slate-800 border-none",
+  completed: "bg-[#F2A97F] text-slate-900 border-none",
+  canceled:  "bg-[#F87171] text-white border-none",
+};
+
+const statusLabels: Record<string, string> = {
+  scheduled: "Agendada",
+  completed: "Realizada",
+  canceled:  "Cancelada",
+};
 
 interface SurgeryCardProps {
   surgery: Surgery;
   onClick?: () => void;
   onExportPdf?: () => void;
+  onDelete?: () => void;
+  onComplete?: () => void;
+  isAdmin?: boolean;
   readOnly?: boolean;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function SurgeryCard({
   surgery,
   onClick,
   onExportPdf,
+  onDelete,
+  onComplete,
+  isAdmin = false,
   readOnly = false,
+  isOpen,
+  onOpenChange,
 }: SurgeryCardProps) {
   const displayName =
     surgery.surgery_type === "outro" && surgery.custom_type
@@ -48,18 +71,51 @@ export function SurgeryCard({
   const postCount =
     surgery.surgery_instructions?.find((i) => i.phase === "post")?.items?.length ?? 0;
 
-  return (
+  const cardContent = (
     <div
       className={`bg-card rounded-xl border border-border/50 p-4 shadow-xs ${
         onClick ? "active:bg-muted/50 cursor-pointer" : ""
       }`}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start gap-3">
+        {/* Ícone */}
+        <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0">
+          <Scissors size={20} className="text-black" />
+        </div>
+
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-foreground text-sm leading-tight truncate">
-            {displayName}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold text-foreground text-sm leading-tight truncate">
+              {displayName}
+            </p>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isOverdue ? (
+                <Badge className="bg-yellow-100 text-yellow-800 border-none text-[11px]">
+                  <AlertCircle size={10} className="mr-0.5" />
+                  Atualizar
+                </Badge>
+              ) : (
+                <Badge className={`${statusColors[surgery.status] ?? statusColors.scheduled} text-[11px]`}>
+                  {statusLabels[surgery.status] ?? surgery.status}
+                </Badge>
+              )}
+
+              {onExportPdf && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onExportPdf();
+                  }}
+                  className="p-1 rounded-md hover:bg-muted/50 active:bg-muted"
+                  aria-label="Exportar PDF"
+                >
+                  <Share2 size={15} className="text-[#78C2AD]" />
+                </button>
+              )}
+            </div>
+          </div>
 
           {formattedDate && (
             <div className="flex items-center gap-1 mt-1">
@@ -90,50 +146,33 @@ export function SurgeryCard({
             </p>
           )}
         </div>
-
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          {surgery.status === "scheduled" && !isOverdue && (
-            <span className="text-[11px] font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              Agendada
-            </span>
-          )}
-          {surgery.status === "scheduled" && isOverdue && (
-            <span className="text-[11px] font-medium bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <AlertCircle size={10} />
-              Atualizar status
-            </span>
-          )}
-          {surgery.status === "completed" && (
-            <span className="text-[11px] font-medium text-green-600 flex items-center gap-1">
-              <CheckCircle2 size={14} className="text-green-500" />
-              Realizada
-            </span>
-          )}
-          {surgery.status === "canceled" && (
-            <span className="text-[11px] font-medium text-red-600 flex items-center gap-1">
-              <XCircle size={14} className="text-red-500" />
-              Cancelada
-            </span>
-          )}
-
-          {onExportPdf && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onExportPdf();
-              }}
-              className="p-1 rounded-md hover:bg-muted/50 active:bg-muted"
-              aria-label="Exportar PDF"
-            >
-              <Share2 size={16} className="text-[#78C2AD]" />
-            </button>
-          )}
-
-          {!readOnly && onClick && (
-            <ChevronRight size={16} className="text-muted-foreground" />
-          )}
-        </div>
       </div>
     </div>
+  );
+
+  if (readOnly || !onDelete) {
+    return cardContent;
+  }
+
+  return (
+    <SwipeableActionCard
+      onDelete={onDelete}
+      disableDelete={!isAdmin}
+      leadingAction={
+        surgery.status === "scheduled" && onComplete
+          ? {
+              icon: <CheckCircle size={20} />,
+              label: "Concluir",
+              bgColor: "bg-[#AEE2D4]",
+              textColor: "text-slate-800",
+              onAction: onComplete,
+            }
+          : undefined
+      }
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+    >
+      {cardContent}
+    </SwipeableActionCard>
   );
 }

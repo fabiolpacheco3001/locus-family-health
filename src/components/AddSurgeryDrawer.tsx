@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Drawer } from "vaul";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -110,25 +109,32 @@ export function AddSurgeryDrawer({
           </div>
 
           <div className="flex-1 overflow-hidden flex flex-col">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 overflow-hidden">
-              <TabsList className="w-full rounded-none border-b border-border/40 bg-background h-auto p-0 shrink-0">
-                {[
-                  { value: "agendamento", label: "Agendamento" },
-                  { value: "pre", label: "Pré-Op" },
-                  { value: "pos", label: "Pós-Op" },
-                ].map(({ value, label }) => (
-                  <TabsTrigger
-                    key={value}
-                    value={value}
-                    className="flex-1 text-base py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-                  >
-                    {label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+            {/* Pill tabs (Padrão drawer) */}
+            <div className="flex p-1 bg-slate-100 rounded-xl mx-4 my-3 shrink-0">
+              {[
+                { value: "agendamento", label: "Agendamento" },
+                { value: "pre", label: "Pré-Op" },
+                { value: "pos", label: "Pós-Op" },
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setActiveTab(value)}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                    activeTab === value
+                      ? "bg-white text-slate-900 shadow-xs"
+                      : "text-slate-500"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
+            <div className="flex-1 overflow-hidden flex flex-col">
               <div className="flex-1 overflow-y-auto no-scrollbar">
-                <TabsContent value="agendamento" className="p-4 space-y-4 mt-0">
+                {activeTab === "agendamento" && (
+                <div className="p-4 space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">
                       Tipo de Cirurgia *
@@ -200,9 +206,11 @@ export function AddSurgeryDrawer({
                       rows={3}
                     />
                   </div>
-                </TabsContent>
+                </div>
+                )}
 
-                <TabsContent value="pre" className="p-4 mt-0">
+                {activeTab === "pre" && (
+                <div className="p-4">
                   <p className="text-xs text-muted-foreground mb-3">
                     Instruções a seguir ANTES da cirurgia: jejum, medicamentos, preparo.
                   </p>
@@ -211,9 +219,11 @@ export function AddSurgeryDrawer({
                     items={preItems}
                     onChange={setPreItems}
                   />
-                </TabsContent>
+                </div>
+                )}
 
-                <TabsContent value="pos" className="p-4 mt-0">
+                {activeTab === "pos" && (
+                <div className="p-4">
                   <p className="text-xs text-muted-foreground mb-3">
                     Cuidados APÓS a cirurgia: repouso, curativo, retorno médico.
                   </p>
@@ -222,9 +232,10 @@ export function AddSurgeryDrawer({
                     items={postItems}
                     onChange={setPostItems}
                   />
-                </TabsContent>
+                </div>
+                )}
               </div>
-            </Tabs>
+            </div>
           </div>
 
           <div className="p-4 border-t border-border/40 shrink-0">

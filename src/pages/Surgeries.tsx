@@ -1,26 +1,37 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Scissors, Plus, Loader2 } from "lucide-react";
+import { ArrowLeft, Scissors, Plus, Loader2, ArrowUpDown } from "lucide-react";
 import useSmartBack from "@/hooks/useSmartBack";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
+import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useSurgeries } from "@/hooks/useSurgeries";
 import { SurgeryCard } from "@/components/SurgeryCard";
 import { AddSurgeryDrawer } from "@/components/AddSurgeryDrawer";
 import { getSurgeryLabel } from "@/lib/surgeryTypes";
-import { format, parseISO, isValid } from "date-fns";
+import { format, parseISO, isValid, compareAsc, compareDesc } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { Surgery } from "@/hooks/useSurgeries";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const Surgeries = () => {
   const { id } = useParams<{ id: string }>();
   const goBack = useSmartBack();
   const { members } = useFamilyMembers();
-  const { surgeries, isLoading } = useSurgeries(id);
+  const { isAdmin } = useFamilyGroup();
+  const { surgeries, isLoading, softDeleteMutation, updateMutation } = useSurgeries(id);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"scheduled" | "done">("scheduled");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [openCardId, setOpenCardId] = useState<string | null>(null);
 
   useFamilyAccessGuard(id);
 
@@ -32,7 +43,15 @@ const Surgeries = () => {
 
   const scheduled = surgeries.filter((s) => s.status === "scheduled");
   const done = surgeries.filter((s) => s.status !== "scheduled");
-  const displayed = activeTab === "scheduled" ? scheduled : done;
+
+  const sortSurgeries = (list: Surgery[]) =>
+    [...list].sort((a, b) => {
+      const dateA = a.scheduled_date ? new Date(a.scheduled_date) : new Date(0);
+      const dateB = b.scheduled_date ? new Date(b.scheduled_date) : new Date(0);
+      return sortOrder === "asc" ? compareAsc(dateA, dateB) : compareDesc(dateA, dateB);
+    });
+
+  const displayed = sortSurgeries(activeTab === "scheduled" ? scheduled : done);
 
   const handleExportPdf = (surgery: Surgery) => {
     const doc = new jsPDF();
@@ -147,18 +166,41 @@ const Surgeries = () => {
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10">
+      {/* Header */}
       <div className="flex-none bg-background border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={goBack} className="p-1 -ml-1" aria-label="Voltar">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
-        <div className="flex items-center gap-2">
-          <Scissors className="w-5 h-5 text-primary" />
-          <h1 className="text-lg font-semibold text-foreground">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Scissors className="w-5 h-5 text-primary shrink-0" />
+          <h1 className="text-lg font-semibold text-foreground truncate">
             Cirurgias{member ? ` — ${member.name}` : ""}
           </h1>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="shrink-0">
+              <ArrowUpDown className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() => setSortOrder("asc")}
+              className={sortOrder === "asc" ? "font-semibold" : ""}
+            >
+              Mais próximas primeiro
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setSortOrder("desc")}
+              className={sortOrder === "desc" ? "font-semibold" : ""}
+            >
+              Mais recentes primeiro
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
+      {/* Tabs underline (Padrão B) */}
       <div className="flex-none bg-background border-b border-border/40">
         <div className="flex">
           <button
@@ -184,6 +226,7 @@ const Surgeries = () => {
         </div>
       </div>
 
+      {/* Conteúdo */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-4 space-y-3">
         {isLoading && (
           <div className="flex justify-center py-8">
@@ -192,12 +235,19 @@ const Surgeries = () => {
         )}
 
         {!isLoading && displayed.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <Scissors size={48} className="text-muted-foreground/40" />
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-16 h-16 rounded-full bg-[#A7D3CB] flex items-center justify-center mb-4">
+              <Scissors className="text-black" size={28} />
+            </div>
+            <p className="text-foreground font-semibold mb-1">
+              {activeTab === "scheduled"
+                ? "Nenhuma cirurgia agendada"
+                : "Nenhuma cirurgia concluída"}
+            </p>
             <p className="text-muted-foreground text-sm">
               {activeTab === "scheduled"
-                ? "Nenhuma cirurgia agendada. Toque em '+' para registrar."
-                : "Nenhuma cirurgia concluída ou cancelada."}
+                ? "Toque em '+' para registrar."
+                : "Cirurgias realizadas ou canceladas aparecerão aqui."}
             </p>
           </div>
         )}
@@ -208,12 +258,20 @@ const Surgeries = () => {
               key={surgery.id}
               surgery={surgery}
               onExportPdf={() => handleExportPdf(surgery)}
+              onDelete={() => softDeleteMutation.mutate(surgery.id)}
+              onComplete={() =>
+                updateMutation.mutate({ id: surgery.id, status: "completed" })
+              }
+              isAdmin={isAdmin}
+              isOpen={openCardId === surgery.id}
+              onOpenChange={(open) => setOpenCardId(open ? surgery.id : null)}
             />
           ))}
 
         <div className="h-20" />
       </div>
 
+      {/* FAB inline (Padrão B) */}
       <button
         onClick={() => setDrawerOpen(true)}
         className="absolute bottom-6 right-4 w-14 h-14 bg-[#E8916C] hover:bg-[#d4805d] active:bg-[#bf7052] text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
