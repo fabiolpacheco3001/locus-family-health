@@ -31,7 +31,7 @@ export function AddSurgeryDrawer({
   familyMemberId,
   editingSurgery,
 }: AddSurgeryDrawerProps) {
-  const { createMutation, updateMutation } = useSurgeries(familyMemberId);
+  const { createMutation, updateMutation, updateInstructionsMutation } = useSurgeries(familyMemberId);
   const isEditing = !!editingSurgery;
   const [activeTab, setActiveTab] = useState("agendamento");
 
@@ -79,7 +79,7 @@ export function AddSurgeryDrawer({
     setActiveTab("agendamento");
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
+  const isPending = createMutation.isPending || updateMutation.isPending || updateInstructionsMutation.isPending;
 
   const handleSave = async () => {
     if (!surgeryType) {
@@ -103,6 +103,16 @@ export function AddSurgeryDrawer({
           hospital_clinic: hospitalClinic.trim() || null,
           surgeon_name: surgeonName.trim() || null,
           notes: notes.trim() || null,
+        });
+        await updateInstructionsMutation.mutateAsync({
+          surgeryId: editingSurgery.id,
+          phase: "pre",
+          items: preItems,
+        });
+        await updateInstructionsMutation.mutateAsync({
+          surgeryId: editingSurgery.id,
+          phase: "post",
+          items: postItems,
         });
       } else {
         await createMutation.mutateAsync({
