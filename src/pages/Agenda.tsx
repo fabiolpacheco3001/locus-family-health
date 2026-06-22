@@ -324,8 +324,11 @@ const Agenda = () => {
             {displayedItems.map((item) => {
               const isExam = item.kind === "exam";
               const isPetRoutine = item.kind === "pet_routine";
-              const Icon = isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
-              const route = isPetRoutine
+              const isSurgery = item.kind === "surgery";
+              const Icon = isSurgery ? Scissors : isPetRoutine ? PawPrint : isExam ? FileText : Stethoscope;
+              const route = isSurgery
+                ? `/familiar/${item.family_member_id}/cirurgias`
+                : isPetRoutine
                 ? `/familiar/${item.family_member_id}/rotinas-pet`
                 : isExam
                 ? `/familiar/${item.family_member_id}/exames`
