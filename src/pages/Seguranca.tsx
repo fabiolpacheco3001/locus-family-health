@@ -143,7 +143,7 @@ const Seguranca = () => {
     <div className="fixed top-0 left-0 right-0 bottom-[72px] flex flex-col bg-[#f2f0eb] overflow-hidden z-10 animate-fade-in">
       {/* Header */}
       <div className="flex-none flex items-center gap-3 px-4 pt-6 mb-4">
-        <button type="button" aria-label="Voltar" onClick={() => navigate("/ajustes")} className="p-1">
+        <button type="button" aria-label="Voltar" onClick={() => navigate(-1)} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
         <h1 className="text-lg font-bold text-foreground">Segurança</h1>

@@ -178,7 +178,7 @@ const MeusDados = () => {
       queryClient.invalidateQueries({ queryKey: ["family_members"] });
       queryClient.invalidateQueries({ queryKey: ["family_group_membership"] });
       toast.success("Dados atualizados com sucesso!");
-      navigate("/ajustes");
+      navigate(-1);
     } catch (err) {
       console.error("Erro ao salvar Meus Dados:", err);
       toast.error("Erro ao salvar. Tente novamente.");
@@ -190,7 +190,7 @@ const MeusDados = () => {
   return (
     <div className="fixed top-0 left-0 right-0 bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] flex flex-col bg-[#f2f0eb] overflow-hidden z-10 animate-fade-in">
       <div className="flex-none flex items-center gap-3 px-4 pt-6 mb-4">
-        <button type="button" aria-label="Voltar" onClick={() => navigate("/ajustes")} className="p-1">
+        <button type="button" aria-label="Voltar" onClick={() => navigate(-1)} className="p-1">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
         <h1 className="text-lg font-bold text-foreground flex-1">Meus Dados</h1>

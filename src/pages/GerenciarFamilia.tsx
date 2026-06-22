@@ -67,7 +67,7 @@ const GerenciarFamilia = () => {
           <div className="p-4 space-y-3 min-h-[calc(100%+1px)]">
           {/* Sticky Header with Glassmorphism */}
           <div className="sticky top-0 z-30 bg-[#F4F1EB]/80 backdrop-blur-md -mx-4 -mt-4 px-4 py-3 flex items-center gap-3">
-            <button onClick={() => navigate("/ajustes")} className="p-1">
+            <button onClick={() => navigate(-1)} className="p-1">
               <ArrowLeft size={22} className="text-foreground" />
             </button>
             <h1 className="text-lg font-bold text-foreground">Gerenciar Família</h1>
