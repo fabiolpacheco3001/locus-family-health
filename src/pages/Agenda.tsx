@@ -161,7 +161,34 @@ const Agenda = () => {
         };
       });
 
-      const merged = [...consultations, ...exams, ...petRoutines];
+      const surgeries: AgendaItem[] = (surgRes.data ?? []).map((s: any) => {
+        const dateStr = s.scheduled_date;
+        const displayName =
+          s.surgery_type === "outro" && s.custom_type ? s.custom_type : s.surgery_type;
+        const statusMap: Record<string, string> = {
+          scheduled: "Agendada",
+          completed: "Realizada",
+          canceled: "Cancelada",
+        };
+        return {
+          id: s.id,
+          family_member_id: s.family_member_id,
+          title: displayName,
+          subtitle: s.hospital_clinic ?? null,
+          date: dateStr,
+          type: "surgery",
+          status: statusMap[s.status] ?? s.status,
+          memberName: s.family_members?.name ?? "Usuário",
+          kind: "surgery" as const,
+          isOverdue:
+            s.status === "scheduled" && dateStr
+              ? isBefore(parseISO(dateStr), new Date())
+              : false,
+          isPet: (s.family_members?.member_type || "human") === "pet",
+        };
+      });
+
+      const merged = [...consultations, ...exams, ...petRoutines, ...surgeries];
       merged.sort((a, b) => {
         if (!a.date) return 1;
         if (!b.date) return -1;
