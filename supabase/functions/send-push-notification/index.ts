@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
       type = "generic",
       tag,
       icon = "https://locus-family-vita.lovable.app/icon-192.png",
-      badge = "https://locus-family-vita.lovable.app/icon-192.png",
+      badge = "https://locus-family-vita.lovable.app/badge-96.png",
       data: extraData = {},
     } = body;
 
