@@ -117,18 +117,28 @@ export function useHomeData() {
         .order("date_performed", { ascending: true })
         .limit(5);
 
+      let sq = (supabase.from("surgeries" as any) as any)
+        .select("id, family_member_id, surgery_type, custom_type, scheduled_date, status, hospital_clinic, user_id, family_members!inner(name, member_type, deleted_at)")
+        .is("deleted_at", null)
+        .is("family_members.deleted_at", null)
+        .eq("status", "scheduled")
+        .order("scheduled_date", { ascending: true })
+        .limit(5);
+
       if (!isAdmin && linkedMemberId) {
         const allowedIds = [linkedMemberId, ...(managedProfiles ?? [])];
         cq = cq.in("family_member_id", allowedIds);
         eq = eq.in("family_member_id", allowedIds);
         pq = pq.in("family_member_id", allowedIds);
+        sq = sq.in("family_member_id", allowedIds);
       } else if (!isAdmin) {
         cq = cq.eq("user_id", user!.id);
         eq = eq.eq("user_id", user!.id);
         pq = pq.eq("user_id", user!.id);
+        sq = sq.eq("user_id", user!.id);
       }
 
-      const [consultRes, examRes, petRes] = await Promise.all([cq, eq, pq]);
+      const [consultRes, examRes, petRes, surgRes] = await Promise.all([cq, eq, pq, sq]);
 
       const items: UpcomingItem[] = [];
       const now = new Date();
