@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ArrowLeft, Scissors, Plus, Loader2, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, ArrowUpDown, Share2 } from "lucide-react";
 import useSmartBack from "@/hooks/useSmartBack";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Scissors } from "lucide-react";
 
 const Surgeries = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,7 @@ const Surgeries = () => {
   const { isAdmin } = useFamilyGroup();
   const { surgeries, isLoading, softDeleteMutation, updateMutation } = useSurgeries(id);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editingSurgery, setEditingSurgery] = useState<Surgery | null>(null);
   const [activeTab, setActiveTab] = useState<"scheduled" | "done">("scheduled");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [openCardId, setOpenCardId] = useState<string | null>(null);
@@ -53,7 +55,22 @@ const Surgeries = () => {
 
   const displayed = sortSurgeries(activeTab === "scheduled" ? scheduled : done);
 
-  const handleExportPdf = (surgery: Surgery) => {
+  const handleOpenEdit = (surgery: Surgery) => {
+    setEditingSurgery(surgery);
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerChange = (open: boolean) => {
+    setDrawerOpen(open);
+    if (!open) setEditingSurgery(null);
+  };
+
+  const handleAdd = () => {
+    setEditingSurgery(null);
+    setDrawerOpen(true);
+  };
+
+  const handleExportAllPdf = () => {
     const doc = new jsPDF();
     const primaryColor: [number, number, number] = [26, 58, 92];
     const accentColor: [number, number, number] = [120, 194, 173];
@@ -63,25 +80,14 @@ const Surgeries = () => {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("Locus Vita — Relatório de Cirurgia", 14, 12);
+    doc.text("Locus Vita — Relatório de Cirurgias", 14, 12);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text(
-      `Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
+      `Paciente: ${member?.name ?? "—"} · Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
       14,
       20
     );
-
-    const displayName =
-      surgery.surgery_type === "outro" && surgery.custom_type
-        ? surgery.custom_type
-        : getSurgeryLabel(surgery.surgery_type);
-
-    const scheduledDate = surgery.scheduled_date ? parseISO(surgery.scheduled_date) : null;
-    const formattedDate =
-      scheduledDate && isValid(scheduledDate)
-        ? format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-        : "Não definida";
 
     const statusMap: Record<string, string> = {
       scheduled: "Agendada",
@@ -89,79 +95,52 @@ const Surgeries = () => {
       canceled: "Cancelada",
     };
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(13);
-    doc.setFont("helvetica", "bold");
-    doc.text("Dados do Procedimento", 14, 38);
-    doc.setDrawColor(...accentColor);
-    doc.line(14, 40, 196, 40);
+    let yOffset = 38;
 
-    autoTable(doc, {
-      startY: 44,
-      theme: "plain",
-      styles: { fontSize: 10, cellPadding: 3 },
-      columnStyles: { 0: { fontStyle: "bold", cellWidth: 50 } },
-      body: [
-        ["Procedimento", displayName],
-        ["Paciente", member?.name ?? "—"],
-        ["Status", statusMap[surgery.status] ?? surgery.status],
-        ["Data / Hora", formattedDate],
-        ["Hospital / Clínica", surgery.hospital_clinic ?? "—"],
-        ["Cirurgião(ã)", surgery.surgeon_name ?? "—"],
-        ["Observações", surgery.notes ?? "—"],
-      ],
+    surgeries.forEach((surgery, idx) => {
+      const displayName =
+        surgery.surgery_type === "outro" && surgery.custom_type
+          ? surgery.custom_type
+          : getSurgeryLabel(surgery.surgery_type);
+
+      const scheduledDate = surgery.scheduled_date ? parseISO(surgery.scheduled_date) : null;
+      const formattedDate =
+        scheduledDate && isValid(scheduledDate)
+          ? format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+          : "Não definida";
+
+      if (idx > 0) yOffset += 6;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${idx + 1}. ${displayName}`, 14, yOffset);
+      doc.setDrawColor(...accentColor);
+      doc.line(14, yOffset + 2, 196, yOffset + 2);
+
+      autoTable(doc, {
+        startY: yOffset + 6,
+        theme: "plain",
+        styles: { fontSize: 9, cellPadding: 2 },
+        columnStyles: { 0: { fontStyle: "bold", cellWidth: 45 } },
+        body: [
+          ["Status", statusMap[surgery.status] ?? surgery.status],
+          ["Data / Hora", formattedDate],
+          ["Hospital / Clínica", surgery.hospital_clinic ?? "—"],
+          ["Profissional", surgery.surgeon_name ?? "—"],
+          ["Observações", surgery.notes ?? "—"],
+        ],
+      });
+
+      yOffset = (doc as any).lastAutoTable.finalY + 8;
     });
-
-    const preInstr = surgery.surgery_instructions?.find((i) => i.phase === "pre");
-    if (preInstr && preInstr.items.length > 0) {
-      const y = (doc as any).lastAutoTable.finalY + 10;
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text("Instruções Pré-Operatórias", 14, y);
-      doc.setDrawColor(...accentColor);
-      doc.line(14, y + 2, 196, y + 2);
-      autoTable(doc, {
-        startY: y + 6,
-        theme: "striped",
-        styles: { fontSize: 9, cellPadding: 3 },
-        head: [["#", "Instrução", "Status"]],
-        headStyles: { fillColor: primaryColor, textColor: 255 },
-        body: preInstr.items.map((item, i) => [
-          i + 1,
-          item.text,
-          item.completed ? "✓ Concluído" : "Pendente",
-        ]),
-      });
-    }
-
-    const postInstr = surgery.surgery_instructions?.find((i) => i.phase === "post");
-    if (postInstr && postInstr.items.length > 0) {
-      const y = (doc as any).lastAutoTable.finalY + 10;
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text("Instruções Pós-Operatórias", 14, y);
-      doc.setDrawColor(...accentColor);
-      doc.line(14, y + 2, 196, y + 2);
-      autoTable(doc, {
-        startY: y + 6,
-        theme: "striped",
-        styles: { fontSize: 9, cellPadding: 3 },
-        head: [["#", "Instrução", "Status"]],
-        headStyles: { fillColor: primaryColor, textColor: 255 },
-        body: postInstr.items.map((item, i) => [
-          i + 1,
-          item.text,
-          item.completed ? "✓ Concluído" : "Pendente",
-        ]),
-      });
-    }
 
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
     doc.text("Locus Vita — Saúde Familiar Simplificada · locustech.com.br", 14, 285);
 
-    const safeName = displayName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    doc.save(`cirurgia-${safeName}-${format(new Date(), "ddMMyyyy")}.pdf`);
+    const memberSlug = member?.name?.toLowerCase().replace(/\s+/g, "-") ?? "membro";
+    doc.save(`cirurgias-${memberSlug}-${format(new Date(), "ddMMyyyy")}.pdf`);
   };
 
   return (
@@ -171,58 +150,65 @@ const Surgeries = () => {
         <button onClick={goBack} className="p-1 -ml-1" aria-label="Voltar">
           <ArrowLeft size={22} className="text-foreground" />
         </button>
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <Scissors className="w-5 h-5 text-primary shrink-0" />
-          <h1 className="text-lg font-semibold text-foreground truncate">
-            Cirurgias{member ? ` — ${member.name}` : ""}
-          </h1>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="shrink-0">
-              <ArrowUpDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => setSortOrder("asc")}
-              className={sortOrder === "asc" ? "font-semibold" : ""}
-            >
-              Mais próximas primeiro
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setSortOrder("desc")}
-              className={sortOrder === "desc" ? "font-semibold" : ""}
-            >
-              Mais recentes primeiro
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <h1 className="text-lg font-semibold text-foreground flex-1">Cirurgias</h1>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 text-[#78C2AD]"
+          onClick={handleExportAllPdf}
+          disabled={surgeries.length === 0}
+          aria-label="Exportar PDF"
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
       </div>
 
-      {/* Tabs underline (Padrão B) */}
-      <div className="flex-none bg-background border-b border-border/40">
-        <div className="flex">
-          <button
-            onClick={() => setActiveTab("scheduled")}
-            className={`flex-1 py-3 text-base font-medium border-b-2 transition-colors ${
-              activeTab === "scheduled"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground"
-            }`}
-          >
-            Agendadas ({scheduled.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("done")}
-            className={`flex-1 py-3 text-base font-medium border-b-2 transition-colors ${
-              activeTab === "done"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground"
-            }`}
-          >
-            Concluídas ({done.length})
-          </button>
+      {/* Tabs pill + sort — padrão Consultas */}
+      <div className="flex-none bg-background px-4 py-2 border-b border-border/40">
+        <div className="flex items-center gap-2">
+          <div className="flex p-1 bg-slate-100 rounded-xl flex-1">
+            <button
+              onClick={() => setActiveTab("scheduled")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeTab === "scheduled"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Agendadas ({scheduled.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("done")}
+              className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+                activeTab === "done"
+                  ? "bg-white text-slate-900 shadow-xs"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Concluídas ({done.length})
+            </button>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setSortOrder("asc")}
+                className={sortOrder === "asc" ? "font-semibold" : ""}
+              >
+                Mais próximas primeiro
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setSortOrder("desc")}
+                className={sortOrder === "desc" ? "font-semibold" : ""}
+              >
+                Mais recentes primeiro
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -257,7 +243,7 @@ const Surgeries = () => {
             <SurgeryCard
               key={surgery.id}
               surgery={surgery}
-              onExportPdf={() => handleExportPdf(surgery)}
+              onEdit={() => handleOpenEdit(surgery)}
               onDelete={() => softDeleteMutation.mutate(surgery.id)}
               onComplete={() =>
                 updateMutation.mutate({ id: surgery.id, status: "completed" })
@@ -271,10 +257,10 @@ const Surgeries = () => {
         <div className="h-20" />
       </div>
 
-      {/* FAB inline (Padrão B) */}
+      {/* FAB — cor preta */}
       <button
-        onClick={() => setDrawerOpen(true)}
-        className="absolute bottom-6 right-4 w-14 h-14 bg-[#E8916C] hover:bg-[#d4805d] active:bg-[#bf7052] text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
+        onClick={handleAdd}
+        className="absolute bottom-6 right-4 w-14 h-14 bg-foreground hover:bg-foreground/90 active:bg-foreground/80 text-background rounded-full shadow-lg flex items-center justify-center transition-colors z-10"
         aria-label="Adicionar cirurgia"
       >
         <Plus size={28} />
@@ -283,8 +269,9 @@ const Surgeries = () => {
       {id && (
         <AddSurgeryDrawer
           open={drawerOpen}
-          onOpenChange={setDrawerOpen}
+          onOpenChange={handleDrawerChange}
           familyMemberId={id}
+          editingSurgery={editingSurgery}
         />
       )}
     </div>

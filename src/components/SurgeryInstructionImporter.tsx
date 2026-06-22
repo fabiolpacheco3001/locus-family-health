@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Loader2,
   Camera,
@@ -7,13 +8,10 @@ import {
   CheckCircle2,
   Circle,
   Trash2,
-  Bell,
-  BellOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { InstructionItem } from "@/hooks/useSurgeries";
-import { parseISO, isValid } from "date-fns";
 
 interface SurgeryInstructionImporterProps {
   phase: "pre" | "post";
@@ -21,7 +19,6 @@ interface SurgeryInstructionImporterProps {
   items: InstructionItem[];
   onChange: (items: InstructionItem[]) => void;
 }
-
 
 function genId(): string {
   return typeof crypto !== "undefined" && crypto.randomUUID
@@ -35,12 +32,8 @@ export function SurgeryInstructionImporter({
   onChange,
 }: SurgeryInstructionImporterProps) {
   const [analyzing, setAnalyzing] = useState(false);
-  const [showManualAdd, setShowManualAdd] = useState(false);
   const [newItemText, setNewItemText] = useState("");
-
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const phaseLabel = phase === "pre" ? "pré-cirúrgicas" : "pós-cirúrgicas";
 
   const handleFileSelect = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
@@ -58,13 +51,11 @@ export function SurgeryInstructionImporter({
 
       if (uploadError || !uploadData) throw uploadError ?? new Error("upload failed");
 
-
       const { data: signedData, error: signedError } = await supabase.storage
         .from("surgery-documents")
         .createSignedUrl(uploadData.path, 300);
 
       if (signedError || !signedData) throw signedError ?? new Error("Erro ao gerar URL");
-
 
       const { data: sessionData } = await supabase.auth.getSession();
       const response = await fetch(
@@ -89,12 +80,10 @@ export function SurgeryInstructionImporter({
 
       const result = await response.json();
 
-      // Deletar do storage após extração (minimização LGPD)
       await supabase.storage.from("surgery-documents").remove([uploadData.path]);
 
       if (result.confidence === "low" || !result.items?.length) {
         toast.warning("Não foi possível estruturar automaticamente. Edite as instruções abaixo.");
-
         if (result.raw_text) {
           onChange([
             ...items,
@@ -126,12 +115,9 @@ export function SurgeryInstructionImporter({
   const toggleCompleted = (id: string) =>
     onChange(items.map((i) => (i.id === id ? { ...i, completed: !i.completed } : i)));
 
-  const toggleAlarm = (id: string) =>
-    onChange(items.map((i) => (i.id === id ? { ...i, alarmEnabled: !i.alarmEnabled } : i)));
-
   const removeItem = (id: string) => onChange(items.filter((i) => i.id !== id));
 
-  const addManualItem = () => {
+  const handleAddItem = () => {
     if (!newItemText.trim()) return;
     onChange([
       ...items,
@@ -145,198 +131,126 @@ export function SurgeryInstructionImporter({
       },
     ]);
     setNewItemText("");
-
-    setShowManualAdd(false);
   };
 
-  const completedCount = items.filter((i) => i.completed).length;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddItem();
+    }
+  };
 
   return (
-    <div className="space-y-3">
-
+    <div className="space-y-4">
+      {/* Lista numerada de instruções */}
       {items.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          {completedCount} de {items.length}{" "}
-          {completedCount === 1 ? "item concluído" : "itens concluídos"}
+        <ol className="space-y-2">
+          {items.map((item, idx) => (
+            <li key={item.id} className="flex items-start gap-3">
+              {/* Número do passo */}
+              <button
+                type="button"
+                onClick={() => toggleCompleted(item.id)}
+                className="shrink-0 mt-0.5"
+                aria-label={item.completed ? "Marcar como pendente" : "Marcar como concluído"}
+              >
+                {item.completed ? (
+                  <CheckCircle2 size={20} className="text-green-500" />
+                ) : (
+                  <span className="w-5 h-5 rounded-full border-2 border-muted-foreground flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                    {idx + 1}
+                  </span>
+                )}
+              </button>
+
+              {/* Texto */}
+              <p
+                className={`flex-1 text-sm leading-snug pt-0.5 ${
+                  item.completed ? "line-through text-muted-foreground" : "text-foreground"
+                }`}
+              >
+                {item.text}
+                {item.createdByAi && (
+                  <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-800 no-underline">
+                    Verificar com médico
+                  </span>
+                )}
+              </p>
+
+              {/* Remover */}
+              <button
+                type="button"
+                onClick={() => removeItem(item.id)}
+                className="shrink-0 p-1 rounded hover:bg-muted/50 mt-0.5"
+                aria-label="Remover"
+              >
+                <Trash2 size={14} className="text-muted-foreground" />
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {/* Empty state */}
+      {items.length === 0 && (
+        <p className="text-sm text-muted-foreground text-center py-3">
+          Nenhuma instrução ainda. Adicione abaixo ou importe via IA.
         </p>
       )}
 
-      {/* Ações */}
+      {/* Adicionar instrução inline */}
       <div className="flex gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,application/pdf"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleFileSelect(file);
-          }}
+        <Input
+          value={newItemText}
+          onChange={(e) => setNewItemText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Adicionar instrução..."
+          className="text-base flex-1"
         />
         <Button
           type="button"
           variant="outline"
-          size="sm"
-          className="text-base flex-1"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={analyzing}
-        >
-          {analyzing ? (
-            <>
-              <Loader2 size={16} className="animate-spin mr-2" />
-              Analisando documento...
-            </>
-          ) : (
-            <>
-              <Camera size={16} className="mr-2" />
-              Importar via IA
-            </>
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="text-base px-3"
-          onClick={() => setShowManualAdd(!showManualAdd)}
-          disabled={analyzing}
-          aria-label="Adicionar instrução manualmente"
+          size="icon"
+          onClick={handleAddItem}
+          disabled={!newItemText.trim()}
+          aria-label="Adicionar"
         >
           <Plus size={16} />
         </Button>
       </div>
 
-
-      {showManualAdd && (
-        <div className="bg-muted/40 rounded-lg p-3 space-y-2 border border-border/50">
-          <textarea
-            value={newItemText}
-            onChange={(e) => setNewItemText(e.target.value)}
-            placeholder={`Descreva a instrução ${phaseLabel}...`}
-            className="w-full text-base bg-background border border-input rounded-md px-3 py-2 resize-none min-h-[72px] outline-none focus:ring-1 focus:ring-ring"
-            rows={3}
-          />
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              size="sm"
-              className="text-base flex-1"
-              onClick={addManualItem}
-            >
-              Adicionar
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="text-base"
-              onClick={() => {
-                setShowManualAdd(false);
-                setNewItemText("");
-
-              }}
-            >
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Lista vazia */}
-      {items.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          Nenhuma instrução adicionada.
-          <br />
-          Use "Importar via IA" ou adicione manualmente.
-        </p>
-      )}
-
-      {/* Items */}
-      <div className="space-y-2">
-        {items.map((item) => {
-          const alarmDate = item.alarmAt ? parseISO(item.alarmAt) : null;
-          const alarmFormatted =
-            alarmDate && isValid(alarmDate)
-              ? alarmDate.toLocaleString("pt-BR", {
-                  timeZone: "America/Sao_Paulo",
-                  day: "2-digit",
-                  month: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : null;
-
-          return (
-            <div
-              key={item.id}
-              className={`bg-card rounded-lg border border-border/50 p-3 transition-opacity ${
-                item.completed ? "opacity-60" : ""
-              }`}
-            >
-              <div className="flex items-start gap-2">
-                <button
-                  type="button"
-                  onClick={() => toggleCompleted(item.id)}
-                  className="shrink-0 mt-0.5"
-                  aria-label={item.completed ? "Marcar como pendente" : "Marcar como concluído"}
-                >
-                  {item.completed ? (
-                    <CheckCircle2 size={18} className="text-green-500" />
-                  ) : (
-                    <Circle size={18} className="text-muted-foreground" />
-                  )}
-                </button>
-
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={`text-sm leading-snug ${
-                      item.completed
-                        ? "line-through text-muted-foreground"
-                        : "text-foreground"
-                    }`}
-                  >
-                    {item.text}
-                  </p>
-                  {item.createdByAi && (
-                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-800">
-                      Verificar com seu médico
-                    </span>
-                  )}
-                  {alarmFormatted && item.alarmEnabled && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                      🔔 Alarme: {alarmFormatted}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => toggleAlarm(item.id)}
-                    className="p-1 rounded hover:bg-muted/50"
-                    aria-label={item.alarmEnabled ? "Desativar alarme" : "Ativar alarme"}
-                  >
-                    {item.alarmEnabled ? (
-                      <Bell size={14} className="text-[#78C2AD]" />
-                    ) : (
-                      <BellOff size={14} className="text-muted-foreground" />
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="p-1 rounded hover:bg-muted/50"
-                    aria-label="Remover instrução"
-                  >
-                    <Trash2 size={14} className="text-muted-foreground" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      {/* Importar via IA */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileSelect(file);
+        }}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="w-full text-muted-foreground text-sm"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={analyzing}
+      >
+        {analyzing ? (
+          <>
+            <Loader2 size={14} className="animate-spin mr-2" />
+            Analisando documento...
+          </>
+        ) : (
+          <>
+            <Camera size={14} className="mr-2" />
+            Importar instruções via IA
+          </>
+        )}
+      </Button>
     </div>
   );
 }

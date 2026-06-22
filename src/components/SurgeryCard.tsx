@@ -4,7 +4,6 @@ import {
   Calendar,
   Building2,
   User,
-  Share2,
   AlertCircle,
   Scissors,
   CheckCircle,
@@ -28,8 +27,7 @@ const statusLabels: Record<string, string> = {
 
 interface SurgeryCardProps {
   surgery: Surgery;
-  onClick?: () => void;
-  onExportPdf?: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
   onComplete?: () => void;
   isAdmin?: boolean;
@@ -40,8 +38,7 @@ interface SurgeryCardProps {
 
 export function SurgeryCard({
   surgery,
-  onClick,
-  onExportPdf,
+  onEdit,
   onDelete,
   onComplete,
   isAdmin = false,
@@ -72,11 +69,9 @@ export function SurgeryCard({
     surgery.surgery_instructions?.find((i) => i.phase === "post")?.items?.length ?? 0;
 
   const cardContent = (
-    <div
-      className={`bg-card rounded-xl border border-border/50 p-4 shadow-xs ${
-        onClick ? "active:bg-muted/50 cursor-pointer" : ""
-      }`}
-      onClick={onClick}
+    <button
+      className="w-full text-left bg-card rounded-xl border border-border/50 p-4 shadow-xs active:bg-muted/50 transition-colors"
+      onClick={onEdit}
     >
       <div className="flex items-start gap-3">
         {/* Ícone */}
@@ -85,52 +80,24 @@ export function SurgeryCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
+          {/* Título + badge status */}
+          <div className="flex items-start justify-between gap-2 mb-1">
             <p className="font-semibold text-foreground text-sm leading-tight truncate">
               {displayName}
             </p>
-
-            <div className="flex items-center gap-1.5 shrink-0">
-              {isOverdue ? (
-                <Badge className="bg-yellow-100 text-yellow-800 border-none text-[11px]">
-                  <AlertCircle size={10} className="mr-0.5" />
-                  Atualizar
-                </Badge>
-              ) : (
-                <Badge className={`${statusColors[surgery.status] ?? statusColors.scheduled} text-[11px]`}>
-                  {statusLabels[surgery.status] ?? surgery.status}
-                </Badge>
-              )}
-
-              {onExportPdf && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onExportPdf();
-                  }}
-                  className="p-1 rounded-md hover:bg-muted/50 active:bg-muted"
-                  aria-label="Exportar PDF"
-                >
-                  <Share2 size={15} className="text-[#78C2AD]" />
-                </button>
-              )}
-            </div>
+            {isOverdue ? (
+              <Badge className="bg-yellow-100 text-yellow-800 border-none text-[11px] shrink-0">
+                <AlertCircle size={10} className="mr-0.5" />
+                Atualizar
+              </Badge>
+            ) : (
+              <Badge className={`${statusColors[surgery.status] ?? statusColors.scheduled} text-[11px] shrink-0`}>
+                {statusLabels[surgery.status] ?? surgery.status}
+              </Badge>
+            )}
           </div>
 
-          {formattedDate && (
-            <div className="flex items-center gap-1 mt-1">
-              <Calendar size={12} className="text-muted-foreground shrink-0" />
-              <p className="text-xs text-muted-foreground">{formattedDate}</p>
-            </div>
-          )}
-
-          {surgery.hospital_clinic && (
-            <div className="flex items-center gap-1 mt-0.5">
-              <Building2 size={12} className="text-muted-foreground shrink-0" />
-              <p className="text-xs text-muted-foreground truncate">{surgery.hospital_clinic}</p>
-            </div>
-          )}
-
+          {/* 1. Médico */}
           {surgery.surgeon_name && (
             <div className="flex items-center gap-1 mt-0.5">
               <User size={12} className="text-muted-foreground shrink-0" />
@@ -138,6 +105,23 @@ export function SurgeryCard({
             </div>
           )}
 
+          {/* 2. Data e Hora */}
+          {formattedDate && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <Calendar size={12} className="text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">{formattedDate}</p>
+            </div>
+          )}
+
+          {/* 3. Local */}
+          {surgery.hospital_clinic && (
+            <div className="flex items-center gap-1 mt-0.5">
+              <Building2 size={12} className="text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground truncate">{surgery.hospital_clinic}</p>
+            </div>
+          )}
+
+          {/* 4. Instruções */}
           {(preCount > 0 || postCount > 0) && (
             <p className="text-xs text-muted-foreground mt-1">
               {preCount > 0 && `${preCount} instrução${preCount > 1 ? "ões" : ""} pré-op`}
@@ -147,7 +131,7 @@ export function SurgeryCard({
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 
   if (readOnly || !onDelete) {
