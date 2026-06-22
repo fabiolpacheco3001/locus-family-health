@@ -7,7 +7,11 @@ export interface SurgeryType {
 export const SURGERY_TYPES: SurgeryType[] = [
   // Obstetrícia
   { value: "cesariana", label: "Cesariana", category: "Obstetrícia" },
+<<<<<<< HEAD
   { value: "parto_normal_forceps", label: "Parto (fórceps/vácuo)", category: "Obstetrícia" },
+=======
+  { value: "parto_forceps", label: "Parto (fórceps/vácuo)", category: "Obstetrícia" },
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 
   // Geral / Digestivo
   { value: "apendicectomia", label: "Apendicectomia", category: "Geral" },
@@ -15,8 +19,13 @@ export const SURGERY_TYPES: SurgeryType[] = [
   { value: "hernia_inguinal", label: "Correção de Hérnia Inguinal", category: "Geral" },
   { value: "hernia_umbilical", label: "Correção de Hérnia Umbilical", category: "Geral" },
   { value: "hemorroidectomia", label: "Hemorroidectomia", category: "Geral" },
+<<<<<<< HEAD
   { value: "colostomia", label: "Colostomia", category: "Geral" },
   { value: "gastrectomia", label: "Gastrectomia", category: "Geral" },
+=======
+  { value: "gastrectomia", label: "Gastrectomia", category: "Geral" },
+  { value: "colostomia", label: "Colostomia", category: "Geral" },
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 
   // Bariátrica
   { value: "bypass_gastrico", label: "Bypass Gástrico (Roux-en-Y)", category: "Bariátrica" },
@@ -33,7 +42,11 @@ export const SURGERY_TYPES: SurgeryType[] = [
   // Oncologia
   { value: "mastectomia", label: "Mastectomia", category: "Oncologia" },
   { value: "reconstrucao_mama", label: "Reconstrução de Mama", category: "Oncologia" },
+<<<<<<< HEAD
   { value: "prostatectomia", label: "Prostatectomia", category: "Oncologia" },
+=======
+  { value: "prostatectomia_radical", label: "Prostatectomia Radical", category: "Oncologia" },
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   { value: "tireoidectomia", label: "Tireoidectomia", category: "Oncologia" },
   { value: "colectomia", label: "Colectomia", category: "Oncologia" },
 
@@ -44,8 +57,13 @@ export const SURGERY_TYPES: SurgeryType[] = [
   { value: "marcapasso", label: "Implante de Marcapasso", category: "Cardiovascular" },
 
   // Urologia
+<<<<<<< HEAD
   { value: "nefrolitotripsia", label: "Nefrolitotripsia (rim)", category: "Urologia" },
   { value: "prostatectomia_benigna", label: "RTU de Próstata (HBP)", category: "Urologia" },
+=======
+  { value: "nefrolitotripsia", label: "Nefrolitotripsia (rim/pedra)", category: "Urologia" },
+  { value: "rtu_prostata", label: "RTU de Próstata (HBP)", category: "Urologia" },
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   { value: "nefrectomia", label: "Nefrectomia", category: "Urologia" },
 
   // Ginecologia
@@ -64,7 +82,10 @@ export const SURGERY_TYPES: SurgeryType[] = [
   { value: "adenoidectomia", label: "Adenoidectomia", category: "ORL" },
   { value: "septoplastia", label: "Septoplastia (desvio de septo)", category: "ORL" },
   { value: "timpanoplastia", label: "Timpanoplastia", category: "ORL" },
+<<<<<<< HEAD
   { value: "implante_coclear", label: "Implante Coclear", category: "ORL" },
+=======
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 
   // Plástica
   { value: "rinoplastia", label: "Rinoplastia", category: "Plástica" },
@@ -82,7 +103,18 @@ export const SURGERY_TYPES: SurgeryType[] = [
   { value: "outro", label: "Outro (especificar)", category: "Outro" },
 ];
 
+<<<<<<< HEAD
 export const SURGERY_TYPES_LIST = SURGERY_TYPES.map((t) => t.value);
+=======
+export const SURGERY_TYPES_BY_CATEGORY = SURGERY_TYPES.reduce<Record<string, SurgeryType[]>>(
+  (acc, type) => {
+    if (!acc[type.category]) acc[type.category] = [];
+    acc[type.category].push(type);
+    return acc;
+  },
+  {}
+);
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 
 export function getSurgeryLabel(value: string): string {
   return SURGERY_TYPES.find((t) => t.value === value)?.label ?? value;

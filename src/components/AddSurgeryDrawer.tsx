@@ -14,7 +14,11 @@ import { Loader2, X } from "lucide-react";
 import { SURGERY_TYPES } from "@/lib/surgeryTypes";
 import { useSurgeries } from "@/hooks/useSurgeries";
 import { SurgeryInstructionImporter } from "./SurgeryInstructionImporter";
+<<<<<<< HEAD
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+=======
+import { CustomDateTimePicker } from "@/components/ui/custom-date-time-picker";
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 import type { InstructionItem } from "@/hooks/useSurgeries";
 import { toast } from "sonner";
 
@@ -34,18 +38,29 @@ export function AddSurgeryDrawer({
 
   const [surgeryType, setSurgeryType] = useState("");
   const [customType, setCustomType] = useState("");
+<<<<<<< HEAD
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
   const [hospitalClinic, setHospitalClinic] = useState("");
   const [surgeonName, setSurgeonName] = useState("");
   const [notes, setNotes] = useState("");
 
+=======
+  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
+  const [hospitalClinic, setHospitalClinic] = useState("");
+  const [surgeonName, setSurgeonName] = useState("");
+  const [notes, setNotes] = useState("");
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   const [preItems, setPreItems] = useState<InstructionItem[]>([]);
   const [postItems, setPostItems] = useState<InstructionItem[]>([]);
 
   const reset = () => {
     setSurgeryType("");
     setCustomType("");
+<<<<<<< HEAD
     setScheduledDate(undefined);
+=======
+    setScheduledDate(null);
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     setHospitalClinic("");
     setSurgeonName("");
     setNotes("");
@@ -66,6 +81,7 @@ export function AddSurgeryDrawer({
       return;
     }
 
+<<<<<<< HEAD
     try {
       await createMutation.mutateAsync({
         family_member_id: familyMemberId,
@@ -83,6 +99,22 @@ export function AddSurgeryDrawer({
     } catch {
       // toast já é exibido no onError do hook
     }
+=======
+    await createMutation.mutateAsync({
+      family_member_id: familyMemberId,
+      surgery_type: surgeryType,
+      custom_type: surgeryType === "outro" ? customType.trim() : undefined,
+      scheduled_date: scheduledDate ? scheduledDate.toISOString() : undefined,
+      hospital_clinic: hospitalClinic.trim() || undefined,
+      surgeon_name: surgeonName.trim() || undefined,
+      notes: notes.trim() || undefined,
+      pre_instructions: preItems.length > 0 ? preItems : undefined,
+      post_instructions: postItems.length > 0 ? postItems : undefined,
+    });
+
+    reset();
+    onOpenChange(false);
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
   };
 
   return (
@@ -90,10 +122,18 @@ export function AddSurgeryDrawer({
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-[20px] max-h-[92dvh] flex flex-col">
+<<<<<<< HEAD
+=======
+          {/* Handle */}
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
           <div className="flex justify-center pt-3 pb-1 shrink-0">
             <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
           </div>
 
+<<<<<<< HEAD
+=======
+          {/* Header */}
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
           <div className="flex items-center justify-between px-4 pb-3 shrink-0 border-b border-border/40">
             <Drawer.Title className="text-base font-semibold text-foreground">
               Nova Cirurgia
@@ -110,6 +150,7 @@ export function AddSurgeryDrawer({
             </button>
           </div>
 
+<<<<<<< HEAD
           <div className="flex-1 overflow-y-auto no-scrollbar">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
               <TabsList className="w-full rounded-none border-b border-border/40 bg-background h-auto p-0">
@@ -120,10 +161,28 @@ export function AddSurgeryDrawer({
                     className="flex-1 text-base py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
                   >
                     {tab === "agendamento" ? "Agendamento" : tab === "pre" ? "Pré-Op" : "Pós-Op"}
+=======
+          {/* Conteúdo com scroll */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 overflow-hidden">
+              <TabsList className="w-full rounded-none border-b border-border/40 bg-background h-auto p-0 shrink-0">
+                {[
+                  { value: "agendamento", label: "Agendamento" },
+                  { value: "pre", label: "Pré-Op" },
+                  { value: "pos", label: "Pós-Op" },
+                ].map(({ value, label }) => (
+                  <TabsTrigger
+                    key={value}
+                    value={value}
+                    className="flex-1 text-base py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+                  >
+                    {label}
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
                   </TabsTrigger>
                 ))}
               </TabsList>
 
+<<<<<<< HEAD
               <TabsContent value="agendamento" className="p-4 space-y-4 mt-0">
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-foreground">
@@ -220,6 +279,114 @@ export function AddSurgeryDrawer({
             </Tabs>
           </div>
 
+=======
+              <div className="flex-1 overflow-y-auto no-scrollbar">
+                {/* Aba Agendamento */}
+                <TabsContent value="agendamento" className="p-4 space-y-4 mt-0">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">
+                      Tipo de Cirurgia *
+                    </label>
+                    <Select value={surgeryType} onValueChange={setSurgeryType}>
+                      <SelectTrigger className="text-base">
+                        <SelectValue placeholder="Selecione o tipo..." />
+                      </SelectTrigger>
+                      <SelectContent className="text-base max-h-64">
+                        {SURGERY_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value} className="text-base">
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {surgeryType === "outro" && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-foreground">
+                        Descreva a Cirurgia *
+                      </label>
+                      <Input
+                        value={customType}
+                        onChange={(e) => setCustomType(e.target.value)}
+                        placeholder="Ex: Septoplastia endoscópica"
+                        className="text-base"
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">Data e Hora</label>
+                    <CustomDateTimePicker
+                      value={scheduledDate}
+                      onChange={setScheduledDate}
+                      placeholder="Selecionar data e hora"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">
+                      Hospital / Clínica
+                    </label>
+                    <Input
+                      value={hospitalClinic}
+                      onChange={(e) => setHospitalClinic(e.target.value)}
+                      placeholder="Nome do hospital ou clínica"
+                      className="text-base"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">Cirurgião(ã)</label>
+                    <Input
+                      value={surgeonName}
+                      onChange={(e) => setSurgeonName(e.target.value)}
+                      placeholder="Nome do cirurgião"
+                      className="text-base"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-foreground">Observações</label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Anotações livres sobre a cirurgia..."
+                      className="w-full text-base bg-background border border-input rounded-md px-3 py-2 resize-none min-h-[72px] outline-none focus:ring-1 focus:ring-ring"
+                      rows={3}
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Aba Pré-Op */}
+                <TabsContent value="pre" className="p-4 mt-0">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Instruções a seguir ANTES da cirurgia: jejum, medicamentos, preparo.
+                  </p>
+                  <SurgeryInstructionImporter
+                    phase="pre"
+                    items={preItems}
+                    onChange={setPreItems}
+                  />
+                </TabsContent>
+
+                {/* Aba Pós-Op */}
+                <TabsContent value="pos" className="p-4 mt-0">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Cuidados APÓS a cirurgia: repouso, curativo, retorno médico.
+                  </p>
+                  <SurgeryInstructionImporter
+                    phase="post"
+                    items={postItems}
+                    onChange={setPostItems}
+                  />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
+
+          {/* Footer */}
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
           <div className="p-4 border-t border-border/40 shrink-0">
             <Button
               className="w-full text-base font-semibold h-12"
@@ -228,7 +395,12 @@ export function AddSurgeryDrawer({
             >
               {createMutation.isPending ? (
                 <>
+<<<<<<< HEAD
                   <Loader2 size={18} className="animate-spin mr-2" /> Salvando...
+=======
+                  <Loader2 size={18} className="animate-spin mr-2" />
+                  Salvando...
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
                 </>
               ) : (
                 "Salvar Cirurgia"

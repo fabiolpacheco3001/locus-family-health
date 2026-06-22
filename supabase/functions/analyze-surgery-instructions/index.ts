@@ -1,3 +1,16 @@
+<<<<<<< HEAD
+=======
+/**
+ * analyze-surgery-instructions — Edge Function para OCR de instruções cirúrgicas.
+ *
+ * Recebe imageUrl (Supabase Storage) + phase ('pre'|'post').
+ * Processa via Gemini com prompt de simplificação de linguagem médica.
+ * Retorna InstructionItem[] estruturado.
+ *
+ * Template: analyze-prescription/index.ts
+ * VAPID/secrets: apenas no Supabase Dashboard — nunca em código.
+ */
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
@@ -10,6 +23,10 @@ serve(async (req) => {
   }
 
   try {
+<<<<<<< HEAD
+=======
+    // ── AUTH ──
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -32,6 +49,10 @@ serve(async (req) => {
       });
     }
 
+<<<<<<< HEAD
+=======
+    // ── RATE LIMIT (compartilhado com analyze-prescription) ──
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     const { allowed, count, limit } = await checkAiRateLimit(
       supabase,
       user.id,
@@ -46,7 +67,13 @@ serve(async (req) => {
       );
     }
 
+<<<<<<< HEAD
     const { fileUrl, phase = "pre" } = await req.json();
+=======
+    const body = await req.json();
+    const { fileUrl, phase = "pre" } = body;
+
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     if (!fileUrl) {
       return new Response(JSON.stringify({ error: "fileUrl é obrigatório" }), {
         status: 400,
@@ -55,6 +82,7 @@ serve(async (req) => {
     }
 
     if (!["pre", "post"].includes(phase)) {
+<<<<<<< HEAD
       return new Response(
         JSON.stringify({ error: "phase deve ser 'pre' ou 'post'" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -62,6 +90,15 @@ serve(async (req) => {
     }
 
     // SSRF protection — only Supabase Storage URLs
+=======
+      return new Response(JSON.stringify({ error: "phase deve ser 'pre' ou 'post'" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── SSRF PROTECTION — apenas Supabase Storage ──
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     const allowedHost = new URL(Deno.env.get("SUPABASE_URL")!).host;
     try {
       const parsedUrl = new URL(fileUrl);
@@ -78,6 +115,10 @@ serve(async (req) => {
       });
     }
 
+<<<<<<< HEAD
+=======
+    // ── FETCH DOCUMENTO ──
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     const fileResponse = await fetch(fileUrl);
     if (!fileResponse.ok) {
       return new Response(
@@ -87,6 +128,7 @@ serve(async (req) => {
     }
 
     const fileBuffer = await fileResponse.arrayBuffer();
+<<<<<<< HEAD
     // chunked btoa para arquivos grandes
     const bytes = new Uint8Array(fileBuffer);
     let binary = "";
@@ -97,10 +139,17 @@ serve(async (req) => {
     const base64File = btoa(binary);
     const contentType = fileResponse.headers.get("content-type") ?? "image/jpeg";
 
+=======
+    const base64File = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+    const contentType = fileResponse.headers.get("content-type") ?? "image/jpeg";
+
+    // ── PROMPT GEMINI ──
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     const phaseLabel = phase === "pre" ? "pré-operatórias" : "pós-operatórias";
     const systemPrompt = `Você é um assistente de saúde que extrai e simplifica instruções médicas cirúrgicas ${phaseLabel}.
 
 REGRAS OBRIGATÓRIAS:
+<<<<<<< HEAD
 1. Reescreva CADA instrução em linguagem simples, acessível a quem tem ensino fundamental. NUNCA use termos técnicos ou siglas médicas sem explicar. Exemplos: "NPO" → "Não comer nem beber NADA", "jejum hídrico" → "não beber nenhum líquido, nem água", "anticoagulante" → "remédio que afina o sangue".
 2. Identifique itens com data/hora específica (ex: "jejum a partir das 22h", "tomar medicamento às 8h do dia da cirurgia") e extraia o horário no campo alarmAt.
 3. Para itens críticos com horário (jejum, medicamentos, banho antisséptico), sugira ativar alarme (alarmEnabled: true).
@@ -112,6 +161,19 @@ Formato de retorno:
   "items": [
     {
       "text": "Descrição da instrução em linguagem simples",
+=======
+1. Reescreva CADA instrução em linguagem simples, acessível a quem tem ensino fundamental. NUNCA use termos técnicos ou siglas médicas sem explicar. Exemplos: "NPO" → "Não comer nem beber NADA", "jejum hídrico" → "não beber nenhum líquido, nem água", "anticoagulante" → "remédio que afina o sangue", "deambulação precoce" → "andar o mais cedo possível após a cirurgia".
+2. Identifique itens com data/hora específica e extraia o horário no campo alarmAt (formato ISO 8601, ex: "2026-07-09T22:00:00").
+3. Para itens críticos com horário (jejum, medicamentos, banho antisséptico), sugira ativar alarme (alarmEnabled: true).
+4. Extraia TODOS os itens, mesmo que o texto seja parcialmente legível.
+5. Retorne APENAS JSON válido, sem markdown ou blocos de código.
+
+Formato de retorno JSON:
+{
+  "items": [
+    {
+      "text": "Descrição simplificada da instrução",
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       "completed": false,
       "alarmEnabled": true,
       "alarmAt": "2026-07-09T22:00:00",
@@ -119,12 +181,24 @@ Formato de retorno:
     }
   ],
   "raw_text": "Texto bruto extraído do documento",
+<<<<<<< HEAD
   "confidence": "high" | "medium" | "low"
 }`;
 
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY");
     if (!geminiApiKey) {
       throw new Error("GEMINI_API_KEY não configurada");
+=======
+  "confidence": "high"
+}
+
+O campo "confidence" deve ser "high" (texto legível, instruções claras), "medium" (texto parcialmente legível) ou "low" (texto ilegível ou sem instruções identificáveis).`;
+
+    const geminiApiKey =
+      Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("LOVABLE_API_KEY");
+    if (!geminiApiKey) {
+      throw new Error("GEMINI_API_KEY não configurada no Supabase Secrets");
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     }
 
     const geminiResponse = await fetch(
@@ -137,6 +211,7 @@ Formato de retorno:
             {
               parts: [
                 { text: systemPrompt },
+<<<<<<< HEAD
                 {
                   inline_data: {
                     mime_type: contentType,
@@ -150,21 +225,41 @@ Formato de retorno:
             temperature: 0.1,
             maxOutputTokens: 2048,
           },
+=======
+                { inline_data: { mime_type: contentType, data: base64File } },
+              ],
+            },
+          ],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
         }),
       }
     );
 
     if (!geminiResponse.ok) {
       const errText = await geminiResponse.text();
+<<<<<<< HEAD
       log("error", "gemini_api_error", { status: geminiResponse.status, error: errText });
+=======
+      log("error", "gemini_api_error", { status: geminiResponse.status, error: errText.slice(0, 200) });
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       throw new Error(`Gemini API error: ${geminiResponse.status}`);
     }
 
     const geminiData = await geminiResponse.json();
+<<<<<<< HEAD
     const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
     await logAiUsage(supabase, user.id, "analyze-surgery-instructions");
 
+=======
+    const rawText: string =
+      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+
+    await logAiUsage(supabase, user.id, "analyze-surgery-instructions");
+
+    // ── PARSE JSON ──
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     let parsed: { items: any[]; raw_text: string; confidence: string } = {
       items: [],
       raw_text: rawText,
@@ -180,15 +275,34 @@ Formato de retorno:
       log("warn", "analyze_surgery_json_parse_failed", { rawText: rawText.slice(0, 200) });
     }
 
+<<<<<<< HEAD
     const itemsWithIds = (parsed.items ?? []).map((item: any, i: number) => ({
       id: `ai-${Date.now()}-${i}`,
       text: item.text ?? "",
       completed: false,
       alarmEnabled: item.alarmEnabled ?? false,
+=======
+    const now = Date.now();
+    const itemsWithIds = (parsed.items ?? []).map((item: any, i: number) => ({
+      id: `ai-${now}-${i}`,
+      text: String(item.text ?? ""),
+      completed: false,
+      alarmEnabled: Boolean(item.alarmEnabled),
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
       alarmAt: item.alarmAt ?? null,
       createdByAi: true,
     }));
 
+<<<<<<< HEAD
+=======
+    log("info", "analyze_surgery_success", {
+      user_id: user.id,
+      phase,
+      items_count: itemsWithIds.length,
+      confidence: parsed.confidence,
+    });
+
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     return new Response(
       JSON.stringify({
         items: itemsWithIds,
@@ -198,9 +312,13 @@ Formato de retorno:
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
+<<<<<<< HEAD
     log("error", "analyze_surgery_unexpected_error", {
       error: err instanceof Error ? err.message : String(err),
     });
+=======
+    log("error", "analyze_surgery_unexpected_error", { error: String(err) });
+>>>>>>> 6553987 (feat: módulo Cirurgias (SPEC v1.2))
     return new Response(
       JSON.stringify({ error: "Erro interno ao analisar documento" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
