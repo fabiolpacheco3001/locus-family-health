@@ -67,6 +67,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
       setSymptoms(editingConsultation.symptoms ?? "");
       setQuestions(editingConsultation.questions ?? "");
       setStatusValue(editingConsultation.status);
+      setLocation(editingConsultation.location ?? "");
 
       // Fetch existing BP for this consultation
       supabase
