@@ -145,6 +145,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
           status: editingConsultation.status,
+          location: location.trim() || null,
         });
         await saveBP(editingConsultation.id);
         toast.success("Consulta atualizada!");
