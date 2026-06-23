@@ -219,6 +219,16 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               />
             </div>
 
+            <div className="space-y-1.5">
+              <Label>Local (Hospital / Clínica / Laboratório)</Label>
+              <Input
+                placeholder="Ex: Hospital das Clínicas"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                className="text-[16px] scroll-m-20"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Data e Hora</Label>
