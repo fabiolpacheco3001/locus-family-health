@@ -103,6 +103,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setCancelReason("");
     setSystolic("");
     setDiastolic("");
+    setLocation("");
   };
 
   const saveBP = async (consultationId: string) => {
