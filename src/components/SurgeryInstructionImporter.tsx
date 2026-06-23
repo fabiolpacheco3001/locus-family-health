@@ -15,6 +15,16 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { InstructionItem } from "@/hooks/useSurgeries";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SurgeryInstructionImporterProps {
   phase: "pre" | "post";
@@ -39,6 +49,44 @@ export function SurgeryInstructionImporter({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [consentChecked, setConsentChecked] = useState<boolean | null>(null);
+
+  const handleImportClick = async () => {
+    if (consentChecked === true) {
+      fileInputRef.current?.click();
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from("consent_log")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("consent_type", "surgery_ocr_processing")
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      setConsentChecked(true);
+      fileInputRef.current?.click();
+    } else {
+      setShowConsentDialog(true);
+    }
+  };
+
+  const handleConsentAccept = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("consent_log").insert({
+      user_id: user.id,
+      consent_type: "surgery_ocr_processing",
+      policy_version: "1.0",
+      user_agent: navigator.userAgent,
+    });
+    setConsentChecked(true);
+    setShowConsentDialog(false);
+    fileInputRef.current?.click();
+  };
 
   const handleFileSelect = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
@@ -180,7 +228,7 @@ export function SurgeryInstructionImporter({
         variant="outline"
         size="sm"
         className="w-full text-sm border-dashed border-[#78C2AD] text-[#78C2AD] hover:bg-[#78C2AD]/10"
-        onClick={() => fileInputRef.current?.click()}
+        onClick={handleImportClick}
         disabled={analyzing}
       >
         {analyzing ? (
@@ -323,6 +371,23 @@ export function SurgeryInstructionImporter({
           Nenhuma instrução ainda. Adicione acima ou importe via IA.
         </p>
       )}
+
+      <AlertDialog open={showConsentDialog} onOpenChange={setShowConsentDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Análise de Documento por IA</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para importar as instruções automaticamente, seu documento será processado pela nossa IA (Gemini). O arquivo é analisado e deletado imediatamente — não armazenamos documentos cirúrgicos. Ao continuar, você consente com esse processamento para facilitar o registro das suas instruções.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConsentAccept} className="text-[#78C2AD]">
+              Entendido, continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

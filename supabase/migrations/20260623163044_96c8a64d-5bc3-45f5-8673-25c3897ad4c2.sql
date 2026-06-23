@@ -1,0 +1,2 @@
+ALTER TABLE public.consent_log DROP CONSTRAINT IF EXISTS consent_log_consent_type_check;
+ALTER TABLE public.consent_log ADD CONSTRAINT consent_log_consent_type_check CHECK (consent_type IN ('privacy_policy', 'health_data', 'revoked', 'surgery_ocr_processing'));
