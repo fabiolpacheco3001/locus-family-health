@@ -242,6 +242,7 @@ export type Database = {
           family_member_id: string
           group_id: string | null
           id: string
+          location: string | null
           professional_name: string | null
           questions: string | null
           specialty: string
@@ -258,6 +259,7 @@ export type Database = {
           family_member_id: string
           group_id?: string | null
           id?: string
+          location?: string | null
           professional_name?: string | null
           questions?: string | null
           specialty: string
@@ -274,6 +276,7 @@ export type Database = {
           family_member_id?: string
           group_id?: string | null
           id?: string
+          location?: string | null
           professional_name?: string | null
           questions?: string | null
           specialty?: string
