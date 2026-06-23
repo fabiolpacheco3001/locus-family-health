@@ -389,7 +389,7 @@ const Agenda = () => {
                         </Badge>
                       )}
                       {isSurgery && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700 border-none">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-[#AEE2D4] text-slate-800 border-none">
                           Cirurgia
                         </Badge>
                       )}

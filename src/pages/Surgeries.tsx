@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, ArrowUpDown, Share2, Scissors } from "lucide-react";
+import { toast } from "sonner";
+import { isFuture, parseISO, isValid } from "date-fns";
 import useSmartBack from "@/hooks/useSmartBack";
 import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
@@ -218,9 +220,14 @@ const Surgeries = () => {
                 surgery={surgery}
                 onEdit={() => handleOpenEdit(surgery)}
                 onDelete={() => softDeleteMutation.mutate(surgery.id)}
-                onComplete={() =>
-                  updateMutation.mutate({ id: surgery.id, status: "completed" })
-                }
+                onComplete={() => {
+                  const d = surgery.scheduled_date ? parseISO(surgery.scheduled_date) : null;
+                  if (d && isValid(d) && isFuture(d)) {
+                    toast.error("A cirurgia ainda não ocorreu. Só é possível concluir após a data agendada.");
+                    return;
+                  }
+                  updateMutation.mutate({ id: surgery.id, status: "completed" });
+                }}
                 isAdmin={isAdmin}
                 isOpen={openCardId === surgery.id}
                 onOpenChange={(open) => setOpenCardId(open ? surgery.id : null)}
