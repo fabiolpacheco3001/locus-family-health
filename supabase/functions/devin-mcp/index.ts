@@ -4,7 +4,7 @@ import { log } from "../_shared/logger.ts";
 // ── Config ──────────────────────────────────────────────────────────────────
 const DEVIN_API_KEY = Deno.env.get("DEVIN_API_KEY") ?? "";
 const DEVIN_ORG_ID = Deno.env.get("DEVIN_ORG_ID") ?? "";
-const MCP_AUTH_TOKEN = Deno.env.get("DEVIN_MCP_AUTH_TOKEN") ?? "";
+
 const DEVIN_BASE = "https://api.devin.ai/v3";
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
@@ -272,18 +272,6 @@ serve(async (req) => {
     return new Response(null, { headers: CORS_HEADERS });
   }
 
-  // Auth: Bearer token (DEVIN_MCP_AUTH_TOKEN secret)
-  const auth = req.headers.get("Authorization");
-  if (!MCP_AUTH_TOKEN || auth !== `Bearer ${MCP_AUTH_TOKEN}`) {
-    return new Response(
-      JSON.stringify({
-        jsonrpc: "2.0",
-        id: null,
-        error: { code: -32600, message: "Unauthorized" },
-      }),
-      { status: 401, headers: JSON_HEADERS },
-    );
-  }
 
   let body: unknown;
   try {
