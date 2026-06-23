@@ -1,0 +1,19 @@
+{
+  "name": "devin-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server para usar Devin AI a partir do Cowork/Claude Code",
+  "type": "module",
+  "main": "server.mjs",
+  "bin": {
+    "devin-mcp": "./server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
