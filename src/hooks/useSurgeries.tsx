@@ -8,8 +8,6 @@ export type InstructionItem = {
   id: string;
   text: string;
   completed: boolean;
-  alarmEnabled: boolean;
-  alarmAt: string | null;
   createdByAi: boolean;
 };
 

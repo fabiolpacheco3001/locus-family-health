@@ -7,8 +7,6 @@ import {
   Plus,
   CheckCircle2,
   Trash2,
-  Bell,
-  BellOff,
   Pencil,
   Check,
 } from "lucide-react";
@@ -144,8 +142,6 @@ export function SurgeryInstructionImporter({
               id: genId(),
               text: result.raw_text,
               completed: false,
-              alarmEnabled: false,
-              alarmAt: null,
               createdByAi: false,
             },
           ]);
@@ -167,9 +163,6 @@ export function SurgeryInstructionImporter({
 
   const toggleCompleted = (id: string) =>
     onChange(items.map((i) => (i.id === id ? { ...i, completed: !i.completed } : i)));
-
-  const toggleAlarm = (id: string) =>
-    onChange(items.map((i) => (i.id === id ? { ...i, alarmEnabled: !i.alarmEnabled } : i)));
 
   const removeItem = (id: string) => onChange(items.filter((i) => i.id !== id));
 
@@ -195,8 +188,6 @@ export function SurgeryInstructionImporter({
         id: genId(),
         text: newItemText.trim(),
         completed: false,
-        alarmEnabled: false,
-        alarmAt: null,
         createdByAi: false,
       },
     ]);
@@ -336,20 +327,6 @@ export function SurgeryInstructionImporter({
                     aria-label="Editar instrução"
                   >
                     <Pencil size={14} className="text-muted-foreground" />
-                  </button>
-
-                  {/* Alarme */}
-                  <button
-                    type="button"
-                    onClick={() => toggleAlarm(item.id)}
-                    className="shrink-0 p-1 rounded hover:bg-muted/50 mt-0.5"
-                    aria-label={item.alarmEnabled ? "Desativar alarme" : "Ativar alarme"}
-                  >
-                    {item.alarmEnabled ? (
-                      <Bell size={14} className="text-[#78C2AD]" />
-                    ) : (
-                      <BellOff size={14} className="text-muted-foreground" />
-                    )}
                   </button>
 
                   {/* Remover */}
