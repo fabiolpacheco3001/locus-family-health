@@ -49,6 +49,44 @@ export function SurgeryInstructionImporter({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showConsentDialog, setShowConsentDialog] = useState(false);
+  const [consentChecked, setConsentChecked] = useState<boolean | null>(null);
+
+  const handleImportClick = async () => {
+    if (consentChecked === true) {
+      fileInputRef.current?.click();
+      return;
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from("consent_log")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("consent_type", "surgery_ocr_processing")
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      setConsentChecked(true);
+      fileInputRef.current?.click();
+    } else {
+      setShowConsentDialog(true);
+    }
+  };
+
+  const handleConsentAccept = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    await supabase.from("consent_log").insert({
+      user_id: user.id,
+      consent_type: "surgery_ocr_processing",
+      policy_version: "1.0",
+      user_agent: navigator.userAgent,
+    });
+    setConsentChecked(true);
+    setShowConsentDialog(false);
+    fileInputRef.current?.click();
+  };
 
   const handleFileSelect = async (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
