@@ -1,22 +1,29 @@
 import { useState, useEffect } from "react";
 import { Drawer } from "vaul";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Loader2, X } from "lucide-react";
-import { SURGERY_TYPES } from "@/lib/surgeryTypes";
+import { Loader2, X, Check, ChevronsUpDown } from "lucide-react";
+import { SURGERY_TYPES_BY_CATEGORY, getSurgeryLabel } from "@/lib/surgeryTypes";
 import { useSurgeries } from "@/hooks/useSurgeries";
 import { SurgeryInstructionImporter } from "./SurgeryInstructionImporter";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import type { InstructionItem, Surgery } from "@/hooks/useSurgeries";
 import { toast } from "sonner";
 import { parseISO, isValid } from "date-fns";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 interface AddSurgeryDrawerProps {
   open: boolean;
@@ -34,6 +41,7 @@ export function AddSurgeryDrawer({
   const { createMutation, updateMutation, updateInstructionsMutation } = useSurgeries(familyMemberId);
   const isEditing = !!editingSurgery;
   const [activeTab, setActiveTab] = useState("agendamento");
+  const [surgeryTypeOpen, setSurgeryTypeOpen] = useState(false);
 
   const [surgeryType, setSurgeryType] = useState("");
   const [customType, setCustomType] = useState("");
@@ -143,7 +151,7 @@ export function AddSurgeryDrawer({
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/40 z-50" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-[20px] max-h-[92dvh] flex flex-col">
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-[20px] h-[90dvh] flex flex-col">
           {/* Handle */}
           <div className="flex justify-center pt-3 pb-1 shrink-0">
             <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
@@ -193,18 +201,61 @@ export function AddSurgeryDrawer({
                     <label className="text-sm font-medium text-foreground">
                       Tipo de Cirurgia *
                     </label>
-                    <Select value={surgeryType} onValueChange={setSurgeryType}>
-                      <SelectTrigger className="text-base">
-                        <SelectValue placeholder="Selecione o tipo..." />
-                      </SelectTrigger>
-                      <SelectContent className="text-base max-h-64">
-                        {SURGERY_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value} className="text-base">
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={surgeryTypeOpen} onOpenChange={setSurgeryTypeOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={surgeryTypeOpen}
+                          className="flex h-10 w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-[16px] font-normal hover:bg-background"
+                        >
+                          <span className={cn("truncate", !surgeryType && "text-muted-foreground")}>
+                            {surgeryType
+                              ? getSurgeryLabel(surgeryType)
+                              : "Ex: Bypass Gástrico, Apendicectomia..."}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[var(--radix-popover-trigger-width)] p-0 z-[200]"
+                        align="start"
+                      >
+                        <Command>
+                          <CommandInput
+                            placeholder="Buscar tipo de cirurgia..."
+                            className="text-base"
+                          />
+                          <CommandList className="max-h-52">
+                            <CommandEmpty>Tipo não encontrado.</CommandEmpty>
+                            {Object.entries(SURGERY_TYPES_BY_CATEGORY).map(([category, types]) => (
+                              <CommandGroup key={category} heading={category}>
+                                {types.map((type) => (
+                                  <CommandItem
+                                    key={type.value}
+                                    value={`${type.label} ${type.category}`}
+                                    onSelect={() => {
+                                      setSurgeryType(type.value);
+                                      setSurgeryTypeOpen(false);
+                                    }}
+                                    className="text-base"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        surgeryType === type.value ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                    {type.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            ))}
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {surgeryType === "outro" && (
@@ -226,7 +277,7 @@ export function AddSurgeryDrawer({
                     <Input
                       value={surgeonName}
                       onChange={(e) => setSurgeonName(e.target.value)}
-                      placeholder="Nome do cirurgião ou médico responsável"
+                      placeholder="Ex: Dr. João Silva, Dra. Maria Oliveira"
                       className="text-base"
                     />
                   </div>
@@ -236,7 +287,7 @@ export function AddSurgeryDrawer({
                     <DateTimePicker
                       value={scheduledDate ?? undefined}
                       onChange={(d) => setScheduledDate(d ?? null)}
-                      placeholder="Selecionar data e hora"
+                      placeholder="Ex: 15/07/2025 às 08:00"
                       mode="datetime"
                     />
                   </div>
@@ -246,7 +297,7 @@ export function AddSurgeryDrawer({
                     <Input
                       value={hospitalClinic}
                       onChange={(e) => setHospitalClinic(e.target.value)}
-                      placeholder="Nome do hospital ou clínica"
+                      placeholder="Ex: Hospital das Clínicas, Clínica Saúde Total"
                       className="text-base"
                     />
                   </div>
@@ -256,7 +307,7 @@ export function AddSurgeryDrawer({
                     <textarea
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Anotações livres sobre a cirurgia..."
+                      placeholder="Ex: Trazer exames pré-operatórios, alergia a iodo..."
                       className="w-full text-base bg-background border border-input rounded-md px-3 py-2 resize-none min-h-[72px] outline-none focus:ring-1 focus:ring-ring"
                       rows={3}
                     />

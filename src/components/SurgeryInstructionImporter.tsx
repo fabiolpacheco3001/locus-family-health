@@ -9,6 +9,8 @@ import {
   Trash2,
   Bell,
   BellOff,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +36,8 @@ export function SurgeryInstructionImporter({
 }: SurgeryInstructionImporterProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [newItemText, setNewItemText] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (file: File) => {
@@ -121,6 +125,20 @@ export function SurgeryInstructionImporter({
 
   const removeItem = (id: string) => onChange(items.filter((i) => i.id !== id));
 
+  const startEdit = (item: InstructionItem) => {
+    setEditingId(item.id);
+    setEditText(item.text);
+  };
+
+  const confirmEdit = (id: string) => {
+    const trimmed = editText.trim();
+    if (!trimmed) return;
+    onChange(items.map((i) => (i.id === id ? { ...i, text: trimmed } : i)));
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
   const handleAddItem = () => {
     if (!newItemText.trim()) return;
     onChange([
@@ -145,99 +163,8 @@ export function SurgeryInstructionImporter({
   };
 
   return (
-    <div className="space-y-4">
-      {/* Lista numerada de instruções */}
-      {items.length > 0 && (
-        <ol className="space-y-2">
-          {items.map((item, idx) => (
-            <li key={item.id} className="flex items-start gap-3">
-              {/* Número do passo */}
-              <button
-                type="button"
-                onClick={() => toggleCompleted(item.id)}
-                className="shrink-0 mt-0.5"
-                aria-label={item.completed ? "Marcar como pendente" : "Marcar como concluído"}
-              >
-                {item.completed ? (
-                  <CheckCircle2 size={20} className="text-green-500" />
-                ) : (
-                  <span className="w-5 h-5 rounded-full border-2 border-muted-foreground flex items-center justify-center text-[10px] font-bold text-muted-foreground">
-                    {idx + 1}
-                  </span>
-                )}
-              </button>
-
-              {/* Texto */}
-              <p
-                className={`flex-1 text-sm leading-snug pt-0.5 ${
-                  item.completed ? "line-through text-muted-foreground" : "text-foreground"
-                }`}
-              >
-                {item.text}
-                {item.createdByAi && (
-                  <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-800 no-underline">
-                    Verificar com médico
-                  </span>
-                )}
-              </p>
-
-              {/* Alarme */}
-              <button
-                type="button"
-                onClick={() => toggleAlarm(item.id)}
-                className="shrink-0 p-1 rounded hover:bg-muted/50 mt-0.5"
-                aria-label={item.alarmEnabled ? "Desativar alarme" : "Ativar alarme"}
-              >
-                {item.alarmEnabled ? (
-                  <Bell size={14} className="text-[#78C2AD]" />
-                ) : (
-                  <BellOff size={14} className="text-muted-foreground" />
-                )}
-              </button>
-
-              {/* Remover */}
-              <button
-                type="button"
-                onClick={() => removeItem(item.id)}
-                className="shrink-0 p-1 rounded hover:bg-muted/50 mt-0.5"
-                aria-label="Remover"
-              >
-                <Trash2 size={14} className="text-muted-foreground" />
-              </button>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {/* Empty state */}
-      {items.length === 0 && (
-        <p className="text-sm text-muted-foreground text-center py-3">
-          Nenhuma instrução ainda. Adicione abaixo ou importe via IA.
-        </p>
-      )}
-
-      {/* Adicionar instrução inline */}
-      <div className="flex gap-2">
-        <Input
-          value={newItemText}
-          onChange={(e) => setNewItemText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Adicionar instrução..."
-          className="text-base flex-1"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={handleAddItem}
-          disabled={!newItemText.trim()}
-          aria-label="Adicionar"
-        >
-          <Plus size={16} />
-        </Button>
-      </div>
-
-      {/* Importar via IA */}
+    <div className="space-y-3">
+      {/* 1. Importar via IA — primeira opção */}
       <input
         ref={fileInputRef}
         type="file"
@@ -250,9 +177,9 @@ export function SurgeryInstructionImporter({
       />
       <Button
         type="button"
-        variant="ghost"
+        variant="outline"
         size="sm"
-        className="w-full text-muted-foreground text-sm"
+        className="w-full text-sm border-dashed border-[#78C2AD] text-[#78C2AD] hover:bg-[#78C2AD]/10"
         onClick={() => fileInputRef.current?.click()}
         disabled={analyzing}
       >
@@ -268,6 +195,134 @@ export function SurgeryInstructionImporter({
           </>
         )}
       </Button>
+
+      {/* 2. Adicionar instrução manualmente */}
+      <div className="flex gap-2">
+        <Input
+          value={newItemText}
+          onChange={(e) => setNewItemText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ex: Realizar jejum de 12 horas"
+          className="text-base flex-1"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={handleAddItem}
+          disabled={!newItemText.trim()}
+          aria-label="Adicionar"
+        >
+          <Plus size={16} />
+        </Button>
+      </div>
+
+      {/* 3. Lista de instruções */}
+      {items.length > 0 ? (
+        <ol className="space-y-2">
+          {items.map((item, idx) => (
+            <li key={item.id} className="flex items-start gap-3">
+              {/* Círculo de conclusão */}
+              <button
+                type="button"
+                onClick={() => toggleCompleted(item.id)}
+                className="shrink-0 mt-0.5"
+                aria-label={item.completed ? "Marcar como pendente" : "Marcar como concluído"}
+              >
+                {item.completed ? (
+                  <CheckCircle2 size={20} className="text-green-500" />
+                ) : (
+                  <span className="w-5 h-5 rounded-full border-2 border-muted-foreground flex items-center justify-center text-[10px] font-bold text-muted-foreground">
+                    {idx + 1}
+                  </span>
+                )}
+              </button>
+
+              {/* Texto ou input de edição */}
+              {editingId === item.id ? (
+                <div className="flex-1 flex gap-2">
+                  <Input
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); confirmEdit(item.id); }
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                    className="text-base flex-1"
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    onClick={() => confirmEdit(item.id)}
+                    aria-label="Confirmar edição"
+                    className="shrink-0"
+                  >
+                    <Check size={14} />
+                  </Button>
+                </div>
+              ) : (
+                <p
+                  className={`flex-1 text-sm leading-snug pt-0.5 ${
+                    item.completed ? "line-through text-muted-foreground" : "text-foreground"
+                  }`}
+                >
+                  {item.text}
+                  {item.createdByAi && (
+                    <span className="ml-2 inline-block px-1.5 py-0.5 rounded text-[10px] font-medium bg-yellow-100 text-yellow-800 no-underline">
+                      Verificar com médico
+                    </span>
+                  )}
+                </p>
+              )}
+
+              {/* Ações (ocultas durante edição) */}
+              {editingId !== item.id && (
+                <>
+                  {/* Editar */}
+                  <button
+                    type="button"
+                    onClick={() => startEdit(item)}
+                    className="shrink-0 p-1 rounded hover:bg-muted/50 mt-0.5"
+                    aria-label="Editar instrução"
+                  >
+                    <Pencil size={14} className="text-muted-foreground" />
+                  </button>
+
+                  {/* Alarme */}
+                  <button
+                    type="button"
+                    onClick={() => toggleAlarm(item.id)}
+                    className="shrink-0 p-1 rounded hover:bg-muted/50 mt-0.5"
+                    aria-label={item.alarmEnabled ? "Desativar alarme" : "Ativar alarme"}
+                  >
+                    {item.alarmEnabled ? (
+                      <Bell size={14} className="text-[#78C2AD]" />
+                    ) : (
+                      <BellOff size={14} className="text-muted-foreground" />
+                    )}
+                  </button>
+
+                  {/* Remover */}
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    className="shrink-0 p-1 rounded hover:bg-muted/50 mt-0.5"
+                    aria-label="Remover"
+                  >
+                    <Trash2 size={14} className="text-muted-foreground" />
+                  </button>
+                </>
+              )}
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center py-3">
+          Nenhuma instrução ainda. Adicione acima ou importe via IA.
+        </p>
+      )}
     </div>
   );
 }

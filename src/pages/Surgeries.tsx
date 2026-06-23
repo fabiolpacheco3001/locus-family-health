@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, ArrowUpDown, Share2, Scissors } from "lucide-react";
 import useSmartBack from "@/hooks/useSmartBack";
@@ -6,13 +6,10 @@ import { useFamilyMembers } from "@/hooks/useFamilyMembers";
 import { useFamilyAccessGuard } from "@/hooks/useFamilyAccessGuard";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { useSurgeries } from "@/hooks/useSurgeries";
+import { useAuth } from "@/hooks/useAuth";
 import { SurgeryCard } from "@/components/SurgeryCard";
 import { AddSurgeryDrawer } from "@/components/AddSurgeryDrawer";
-import { getSurgeryLabel } from "@/lib/surgeryTypes";
-import { format, parseISO, isValid, compareAsc, compareDesc } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { compareAsc, compareDesc } from "date-fns";
 import type { Surgery } from "@/hooks/useSurgeries";
 import {
   DropdownMenu,
@@ -28,7 +25,9 @@ const Surgeries = () => {
   const goBack = useSmartBack();
   const { members } = useFamilyMembers();
   const { isAdmin } = useFamilyGroup();
+  const { user } = useAuth();
   const { surgeries, isLoading, softDeleteMutation, updateMutation } = useSurgeries(id);
+  const logoBase64Ref = useRef<string | undefined>(undefined);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingSurgery, setEditingSurgery] = useState<Surgery | null>(null);
   const [activeTab, setActiveTab] = useState<"scheduled" | "done">("scheduled");
@@ -40,6 +39,17 @@ const Surgeries = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
   }, [id]);
+
+  useEffect(() => {
+    fetch("/logo-locus-vita-pdf.png")
+      .then((r) => r.blob())
+      .then((blob) => {
+        const reader = new FileReader();
+        reader.onload = () => { logoBase64Ref.current = reader.result as string; };
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => { /* logo opcional */ });
+  }, []);
 
   const member = members.find((m) => m.id === id);
 
@@ -70,77 +80,32 @@ const Surgeries = () => {
     setDrawerOpen(true);
   };
 
-  const handleExportAllPdf = () => {
-    const doc = new jsPDF();
-    const primaryColor: [number, number, number] = [26, 58, 92];
-    const accentColor: [number, number, number] = [120, 194, 173];
-
-    doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, 210, 28, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.text("Locus Vita — Relatório de Cirurgias", 14, 12);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      `Paciente: ${member?.name ?? "—"} · Gerado em ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`,
-      14,
-      20
-    );
-
-    const statusMap: Record<string, string> = {
-      scheduled: "Agendada",
-      completed: "Realizada",
-      canceled: "Cancelada",
-    };
-
-    let yOffset = 38;
-
-    surgeries.forEach((surgery, idx) => {
-      const displayName =
-        surgery.surgery_type === "outro" && surgery.custom_type
-          ? surgery.custom_type
-          : getSurgeryLabel(surgery.surgery_type);
-
-      const scheduledDate = surgery.scheduled_date ? parseISO(surgery.scheduled_date) : null;
-      const formattedDate =
-        scheduledDate && isValid(scheduledDate)
-          ? format(scheduledDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-          : "Não definida";
-
-      if (idx > 0) yOffset += 6;
-
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.text(`${idx + 1}. ${displayName}`, 14, yOffset);
-      doc.setDrawColor(...accentColor);
-      doc.line(14, yOffset + 2, 196, yOffset + 2);
-
-      autoTable(doc, {
-        startY: yOffset + 6,
-        theme: "plain",
-        styles: { fontSize: 9, cellPadding: 2 },
-        columnStyles: { 0: { fontStyle: "bold", cellWidth: 45 } },
-        body: [
-          ["Status", statusMap[surgery.status] ?? surgery.status],
-          ["Data / Hora", formattedDate],
-          ["Hospital / Clínica", surgery.hospital_clinic ?? "—"],
-          ["Profissional", surgery.surgeon_name ?? "—"],
-          ["Observações", surgery.notes ?? "—"],
-        ],
-      });
-
-      yOffset = (doc as any).lastAutoTable.finalY + 8;
+  const handleExportAllPdf = async () => {
+    const { generateSurgeriesPdf } = await import("@/lib/generateSurgeriesPdf");
+    const emitterName = user?.user_metadata?.full_name ?? user?.email ?? "Usuário";
+    const blob = generateSurgeriesPdf({
+      memberName: member?.name ?? "—",
+      surgeries: surgeries.map((s) => ({
+        surgery_type: s.surgery_type,
+        custom_type: s.custom_type,
+        scheduled_date: s.scheduled_date,
+        surgeon_name: s.surgeon_name,
+        hospital_clinic: s.hospital_clinic,
+        status: s.status,
+        notes: s.notes,
+        surgery_instructions: s.surgery_instructions,
+      })),
+      emitterName,
+      logoBase64: logoBase64Ref.current,
     });
-
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
-    doc.text("Locus Vita — Saúde Familiar Simplificada · locustech.com.br", 14, 285);
-
     const memberSlug = member?.name?.toLowerCase().replace(/\s+/g, "-") ?? "membro";
-    doc.save(`cirurgias-${memberSlug}-${format(new Date(), "ddMMyyyy")}.pdf`);
+    const dateSuffix = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `cirurgias-${memberSlug}-${dateSuffix}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (

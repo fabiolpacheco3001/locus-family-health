@@ -250,7 +250,7 @@ const Exames = () => {
                 abaAtiva === 'pendentes' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Ativos
+              Agendados
             </button>
             <button
               onClick={() => setAbaAtiva('resultados')}
