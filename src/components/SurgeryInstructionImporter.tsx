@@ -371,6 +371,23 @@ export function SurgeryInstructionImporter({
           Nenhuma instrução ainda. Adicione acima ou importe via IA.
         </p>
       )}
+
+      <AlertDialog open={showConsentDialog} onOpenChange={setShowConsentDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Análise de Documento por IA</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para importar as instruções automaticamente, seu documento será processado pela nossa IA (Gemini). O arquivo é analisado e deletado imediatamente — não armazenamos documentos cirúrgicos. Ao continuar, você consente com esse processamento para facilitar o registro das suas instruções.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConsentAccept} className="text-[#78C2AD]">
+              Entendido, continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
