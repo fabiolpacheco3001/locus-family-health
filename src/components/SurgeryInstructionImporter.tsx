@@ -228,7 +228,7 @@ export function SurgeryInstructionImporter({
         variant="outline"
         size="sm"
         className="w-full text-sm border-dashed border-[#78C2AD] text-[#78C2AD] hover:bg-[#78C2AD]/10"
-        onClick={() => fileInputRef.current?.click()}
+        onClick={handleImportClick}
         disabled={analyzing}
       >
         {analyzing ? (
