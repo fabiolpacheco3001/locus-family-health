@@ -12,10 +12,9 @@ import { toast } from "sonner";
 import { parseISO, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Drawer as ShadcnDrawer,
+  DrawerContent as ShadcnDrawerContent,
+} from "@/components/ui/drawer";
 import {
   Command,
   CommandEmpty,
@@ -42,6 +41,7 @@ export function AddSurgeryDrawer({
   const isEditing = !!editingSurgery;
   const [activeTab, setActiveTab] = useState("agendamento");
   const [surgeryTypeOpen, setSurgeryTypeOpen] = useState(false);
+  const [surgerySearch, setSurgerySearch] = useState("");
 
   const [surgeryType, setSurgeryType] = useState("");
   const [customType, setCustomType] = useState("");
@@ -201,61 +201,83 @@ export function AddSurgeryDrawer({
                     <label className="text-sm font-medium text-foreground">
                       Tipo de Cirurgia *
                     </label>
-                    <Popover open={surgeryTypeOpen} onOpenChange={setSurgeryTypeOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={surgeryTypeOpen}
-                          className="flex h-10 w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-[16px] font-normal hover:bg-background"
-                        >
-                          <span className={cn("truncate", !surgeryType && "text-muted-foreground")}>
-                            {surgeryType
-                              ? getSurgeryLabel(surgeryType)
-                              : "Ex: Bypass Gástrico, Apendicectomia..."}
-                          </span>
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-[var(--radix-popover-trigger-width)] p-0 z-[200]"
-                        align="start"
-                      >
-                        <Command>
-                          <CommandInput
-                            placeholder="Buscar tipo de cirurgia..."
-                            className="text-base"
-                          />
-                          <CommandList className="max-h-52">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={surgeryTypeOpen}
+                      onClick={() => setSurgeryTypeOpen(true)}
+                      className="flex h-10 w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-[16px] font-normal hover:bg-background"
+                    >
+                      <span className={cn("truncate", !surgeryType && "text-muted-foreground")}>
+                        {surgeryType
+                          ? getSurgeryLabel(surgeryType)
+                          : "Ex: Bypass Gástrico, Apendicectomia..."}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+
+                    <ShadcnDrawer
+                      open={surgeryTypeOpen}
+                      onOpenChange={(o) => {
+                        setSurgeryTypeOpen(o);
+                        if (!o) setSurgerySearch("");
+                      }}
+                    >
+                      <ShadcnDrawerContent className="flex flex-col max-h-[90vh]">
+                        <div className="px-4 pt-4 pb-2">
+                          <h3 className="text-base font-semibold text-foreground mb-3">
+                            Tipo de Cirurgia
+                          </h3>
+                        </div>
+                        <Command shouldFilter={false} className="border-none">
+                          <div className="px-4">
+                            <CommandInput
+                              placeholder="Buscar tipo de cirurgia..."
+                              value={surgerySearch}
+                              onValueChange={setSurgerySearch}
+                              className="text-[16px]"
+                            />
+                          </div>
+                          <CommandList className="max-h-[55vh] overflow-y-auto px-2 pb-safe-or-4">
                             <CommandEmpty>Tipo não encontrado.</CommandEmpty>
-                            {Object.entries(SURGERY_TYPES_BY_CATEGORY).map(([category, types]) => (
-                              <CommandGroup key={category} heading={category}>
-                                {types.map((type) => (
-                                  <CommandItem
-                                    key={type.value}
-                                    value={`${type.label} ${type.category}`}
-                                    onSelect={() => {
-                                      setSurgeryType(type.value);
-                                      setSurgeryTypeOpen(false);
-                                    }}
-                                    className="text-base"
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-4 w-4",
-                                        surgeryType === type.value ? "opacity-100" : "opacity-0"
-                                      )}
-                                    />
-                                    {type.label}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            ))}
+                            {Object.entries(SURGERY_TYPES_BY_CATEGORY)
+                              .map(([category, types]) => ({
+                                category,
+                                types: types.filter((t) =>
+                                  t.label.toLowerCase().includes(surgerySearch.toLowerCase()) ||
+                                  t.category.toLowerCase().includes(surgerySearch.toLowerCase())
+                                ),
+                              }))
+                              .filter(({ types }) => types.length > 0)
+                              .map(({ category, types }) => (
+                                <CommandGroup key={category} heading={category}>
+                                  {types.map((type) => (
+                                    <CommandItem
+                                      key={type.value}
+                                      value={type.value}
+                                      onSelect={() => {
+                                        setSurgeryType(type.value);
+                                        setSurgerySearch("");
+                                        setSurgeryTypeOpen(false);
+                                      }}
+                                      className="rounded-lg"
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          surgeryType === type.value ? "opacity-100" : "opacity-0"
+                                        )}
+                                      />
+                                      {type.label}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              ))}
                           </CommandList>
                         </Command>
-                      </PopoverContent>
-                    </Popover>
+                      </ShadcnDrawerContent>
+                    </ShadcnDrawer>
                   </div>
 
                   {surgeryType === "outro" && (
