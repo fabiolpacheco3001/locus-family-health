@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import { Stethoscope, Pill, FileText, ExternalLink, X } from "lucide-react";
+import { Stethoscope, Pill, FileText, ExternalLink, X, Scissors, Shield } from "lucide-react";
 import { getDisplaySignedUrl } from "@/lib/storage";
 import { parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -10,19 +10,22 @@ import { Button } from "@/components/ui/button";
 import type { ClinicalEvent } from "@/hooks/useClinicalTimeline";
 
 const typeConfig: Record<ClinicalEvent["type"], { icon: React.ElementType; bg: string; iconColor: string }> = {
-  consulta: { icon: Stethoscope, bg: "bg-blue-100", iconColor: "text-blue-700" },
-  medicamento: { icon: Pill, bg: "bg-emerald-100", iconColor: "text-emerald-700" },
-  exame: { icon: FileText, bg: "bg-violet-100", iconColor: "text-violet-700" },
+  consulta:    { icon: Stethoscope, bg: "bg-blue-100",   iconColor: "text-blue-700"   },
+  medicamento: { icon: Pill,        bg: "bg-emerald-100", iconColor: "text-emerald-700" },
+  exame:       { icon: FileText,    bg: "bg-violet-100",  iconColor: "text-violet-700"  },
+  cirurgia:    { icon: Scissors,    bg: "bg-orange-100",  iconColor: "text-orange-700"  },
+  vacina:      { icon: Shield,      bg: "bg-teal-100",    iconColor: "text-teal-700"    },
 };
 
 const statusBadge: Record<string, string> = {
-  Agendada: "bg-blue-50 text-blue-700",
-  Realizada: "bg-slate-100 text-slate-700",
-  Ativo: "bg-green-100 text-green-800",
-  Finalizado: "bg-slate-100 text-slate-700",
-  Agendado: "bg-blue-50 text-blue-700",
-  Coletado: "bg-slate-100 text-slate-700",
-  Pronto: "bg-slate-100 text-slate-700",
+  Agendada:  "bg-blue-50 text-blue-700",
+  Realizada: "bg-green-50 text-green-700",
+  Aplicada:  "bg-teal-50 text-teal-700",
+  Ativo:     "bg-green-100 text-green-800",
+  Finalizado:"bg-slate-100 text-slate-700",
+  Agendado:  "bg-blue-50 text-blue-700",
+  Coletado:  "bg-slate-100 text-slate-700",
+  Pronto:    "bg-slate-100 text-slate-700",
   Concluído: "bg-slate-100 text-slate-700",
 };
 
