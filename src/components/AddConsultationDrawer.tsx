@@ -46,6 +46,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
   const [statusValue, setStatusValue] = useState("Agendada");
   const [systolic, setSystolic] = useState("");
   const [diastolic, setDiastolic] = useState("");
+  const [location, setLocation] = useState("");
 
   const isEditing = !!editingConsultation;
   const isCancelled = editingConsultation?.status === "Cancelada";
@@ -66,6 +67,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
       setSymptoms(editingConsultation.symptoms ?? "");
       setQuestions(editingConsultation.questions ?? "");
       setStatusValue(editingConsultation.status);
+      setLocation(editingConsultation.location ?? "");
 
       // Fetch existing BP for this consultation
       supabase
@@ -101,6 +103,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     setCancelReason("");
     setSystolic("");
     setDiastolic("");
+    setLocation("");
   };
 
   const saveBP = async (consultationId: string) => {
@@ -142,6 +145,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
           status: editingConsultation.status,
+          location: location.trim() || null,
         });
         await saveBP(editingConsultation.id);
         toast.success("Consulta atualizada!");
@@ -154,6 +158,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
+          location: location.trim() || null,
         };
         const result = await addConsultation.mutateAsync(consultation);
         await saveBP(result.id);
@@ -210,6 +215,16 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 placeholder="Ex: Dr. Carlos Silva"
                 value={professionalName}
                 onChange={(e) => setProfessionalName(e.target.value)}
+                className="text-[16px] scroll-m-20"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Local (Hospital / Clínica / Laboratório)</Label>
+              <Input
+                placeholder="Ex: Hospital das Clínicas"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
                 className="text-[16px] scroll-m-20"
               />
             </div>

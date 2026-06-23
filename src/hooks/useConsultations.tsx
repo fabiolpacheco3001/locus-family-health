@@ -15,6 +15,7 @@ export type Consultation = {
   questions: string | null;
   status: string;
   cancel_reason: string | null;
+  location: string | null;
   created_at: string;
 };
 
@@ -28,6 +29,7 @@ export type NewConsultation = {
   questions?: string | null;
   status?: string;
   cancel_reason?: string | null;
+  location?: string | null;
 };
 
 export type UpdateConsultation = {
@@ -40,6 +42,7 @@ export type UpdateConsultation = {
   questions?: string | null;
   status?: string;
   cancel_reason?: string | null;
+  location?: string | null;
 };
 
 export const useConsultations = (familyMemberId: string) => {
