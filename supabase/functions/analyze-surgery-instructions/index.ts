@@ -96,10 +96,8 @@ serve(async (req) => {
 
 REGRAS OBRIGATÓRIAS:
 1. Reescreva CADA instrução em linguagem simples, acessível a quem tem ensino fundamental. NUNCA use termos técnicos ou siglas médicas sem explicar. Exemplos: "NPO" → "Não comer nem beber NADA", "jejum hídrico" → "não beber nenhum líquido, nem água", "anticoagulante" → "remédio que afina o sangue", "deambulação precoce" → "andar o mais cedo possível após a cirurgia".
-2. Identifique itens com data/hora específica e extraia o horário no campo alarmAt (formato ISO 8601, ex: "2026-07-09T22:00:00").
-3. Para itens críticos com horário (jejum, medicamentos, banho antisséptico), sugira ativar alarme (alarmEnabled: true).
-4. Extraia TODOS os itens, mesmo que o texto seja parcialmente legível.
-5. Retorne APENAS JSON válido, sem markdown ou blocos de código.
+2. Extraia TODOS os itens, mesmo que o texto seja parcialmente legível.
+3. Retorne APENAS JSON válido, sem markdown ou blocos de código.
 
 Formato de retorno JSON:
 {
@@ -107,8 +105,6 @@ Formato de retorno JSON:
     {
       "text": "Descrição simplificada da instrução",
       "completed": false,
-      "alarmEnabled": true,
-      "alarmAt": "2026-07-09T22:00:00",
       "createdByAi": true
     }
   ],
@@ -183,8 +179,6 @@ O campo "confidence" deve ser "high" (texto legível, instruções claras), "med
       id: `ai-${now}-${i}`,
       text: String(item.text ?? ""),
       completed: false,
-      alarmEnabled: Boolean(item.alarmEnabled),
-      alarmAt: item.alarmAt ?? null,
       createdByAi: true,
     }));
 
