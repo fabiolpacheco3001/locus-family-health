@@ -158,6 +158,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           type,
           symptoms: symptoms.trim() || null,
           questions: questions.trim() || null,
+          location: location.trim() || null,
         };
         const result = await addConsultation.mutateAsync(consultation);
         await saveBP(result.id);
