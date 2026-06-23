@@ -202,7 +202,7 @@ const AddExamDrawer = ({ open, onOpenChange, familyMemberId, editingExam }: Prop
             </div>
 
             <div className="space-y-1.5">
-              <Label>Clínica / Laboratório</Label>
+              <Label>Local (Hospital / Clínica / Laboratório)</Label>
               <Input
                 placeholder="Ex: Clínica Santa Luzia"
                 value={location}

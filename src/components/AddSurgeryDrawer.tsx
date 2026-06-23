@@ -315,7 +315,7 @@ export function AddSurgeryDrawer({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-foreground">Local (Hospital / Clínica)</label>
+                    <label className="text-sm font-medium text-foreground">Local (Hospital / Clínica / Laboratório)</label>
                     <Input
                       value={hospitalClinic}
                       onChange={(e) => setHospitalClinic(e.target.value)}

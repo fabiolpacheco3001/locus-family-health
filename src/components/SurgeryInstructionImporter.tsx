@@ -202,7 +202,7 @@ export function SurgeryInstructionImporter({
           value={newItemText}
           onChange={(e) => setNewItemText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ex: Realizar jejum de 12 horas"
+          placeholder={phase === "pre" ? "Ex: Realizar jejum de 12 horas" : "Ex: Trocar curativo 2x ao dia"}
           className="text-base flex-1"
         />
         <Button
