@@ -33,6 +33,7 @@ const ResetPassword = lazy(importResetPassword);
 const Home = lazy(importHome);
 const AdminLogin = lazy(importAdminLogin);
 const NotFound = lazy(importNotFound);
+const AuthCallback = lazy(importAuthCallback);
 
 // Lazy chunk import functions (reused for prefetching)
 const importAgenda = () => import("./pages/Agenda");
