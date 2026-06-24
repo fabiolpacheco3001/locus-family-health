@@ -18,7 +18,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
-  getUserIdentities: () => Promise<ReturnType<typeof supabase.auth.getUserIdentities>>;
+  getUserIdentities: () => ReturnType<typeof supabase.auth.getUserIdentities>;
   linkIdentity: (provider: "google" | "apple") => Promise<{ error: Error | null }>;
   unlinkIdentity: (identity: any) => Promise<{ error: Error | null }>;
 }
