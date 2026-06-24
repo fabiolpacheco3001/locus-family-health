@@ -24,6 +24,7 @@ const importResetPassword = () => import("./pages/ResetPassword");
 const importHome = () => import("./pages/Home");
 const importAdminLogin = () => import("./pages/AdminLogin");
 const importNotFound = () => import("./pages/NotFound");
+const importAuthCallback = () => import("./pages/AuthCallback");
 
 const Landing = lazy(importLanding);
 const Login = lazy(importLogin);
