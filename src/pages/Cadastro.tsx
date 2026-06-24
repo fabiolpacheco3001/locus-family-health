@@ -130,6 +130,11 @@ const Cadastro = () => {
           <p className="text-muted-foreground text-sm mt-1">Saúde Familiar Simplificada</p>
         </div>
 
+        <p className="text-xs text-muted-foreground text-center mb-3 font-medium">
+          Criar conta rapidamente
+        </p>
+        <SocialLoginButtons context="cadastro" planFromUrl={planFromUrl} />
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-xs text-muted-foreground">
             Campos marcados com <span className="text-destructive">*</span> são obrigatórios.
