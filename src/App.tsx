@@ -161,6 +161,7 @@ const App = () => (
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
             <Route path="/cadastro" element={<Suspense fallback={<RouteLoader />}><Cadastro /></Suspense>} />
             <Route path="/reset-password" element={<Suspense fallback={<RouteLoader />}><ResetPassword /></Suspense>} />
+            <Route path="/auth/callback" element={<Suspense fallback={<RouteLoader />}><AuthCallback /></Suspense>} />
             {/* Públicas — acessíveis sem login (LGPD exige disponibilidade pré-consentimento) */}
             <Route path="/politica-de-privacidade" element={<Suspense fallback={<RouteLoader />}><PoliticaPrivacidade /></Suspense>} />
             <Route path="/termos-de-uso" element={<Suspense fallback={<RouteLoader />}><TermosUso /></Suspense>} />
