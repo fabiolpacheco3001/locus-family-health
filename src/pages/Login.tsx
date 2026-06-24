@@ -213,6 +213,9 @@ const Login = () => {
           </Button>
         </form>
 
+        <SocialLoginButtons context="login" planFromUrl={planFromUrl} />
+
+
         <button
           onClick={() => navigate(planFromUrl ? `/cadastro?plan=${planFromUrl}` : "/cadastro")}
           className="mt-6 text-sm text-muted-foreground hover:text-primary transition-colors text-center"
