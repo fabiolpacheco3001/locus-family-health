@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,6 +16,11 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithApple: () => Promise<{ error: Error | null }>;
+  getUserIdentities: () => Promise<ReturnType<typeof supabase.auth.getUserIdentities>>;
+  linkIdentity: (provider: "google" | "apple") => Promise<{ error: Error | null }>;
+  unlinkIdentity: (identity: any) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [freshlyLoggedIn, setFreshlyLoggedIn] = useState(false);
   // If we found a cached user, don't block rendering
   const [loading, setLoading] = useState(!user);
+  const prevSessionRef = useRef<Session | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -46,11 +52,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         setLoading(false);
 
+        // Fresh login via social OAuth (no signIn/signUp called in this JS session).
+        if (_event === "SIGNED_IN" && prevSessionRef.current === null && session) {
+          setFreshlyLoggedIn(true);
+        }
+
         // Clear all cached queries on sign-out to prevent stale RBAC state
         if (_event === "SIGNED_OUT") {
           queryClient.removeQueries();
           queryClient.clear();
         }
+
+        prevSessionRef.current = session;
       }
     );
 
@@ -58,6 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      prevSessionRef.current = session;
     });
 
     return () => subscription.unsubscribe();
@@ -85,8 +99,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin + "/auth/callback" },
+    });
+    return { error: error as Error | null };
+  };
+
+  const signInWithApple = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "apple",
+      options: { redirectTo: window.location.origin + "/auth/callback" },
+    });
+    return { error: error as Error | null };
+  };
+
+  const getUserIdentities = async () => {
+    return await supabase.auth.getUserIdentities();
+  };
+
+  const linkIdentity = async (provider: "google" | "apple") => {
+    const { error } = await supabase.auth.linkIdentity({ provider });
+    return { error: error as Error | null };
+  };
+
+  const unlinkIdentity = async (identity: any) => {
+    const { error } = await supabase.auth.unlinkIdentity(identity);
+    return { error: error as Error | null };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, freshlyLoggedIn, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        freshlyLoggedIn,
+        signIn,
+        signUp,
+        signOut,
+        signInWithGoogle,
+        signInWithApple,
+        getUserIdentities,
+        linkIdentity,
+        unlinkIdentity,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
