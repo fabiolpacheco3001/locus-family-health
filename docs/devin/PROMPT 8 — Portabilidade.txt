@@ -1,0 +1,32 @@
+1) Ambiente & configuração
+	•	O project_id está hardcoded em supabase/config.toml, e há outros valores fixos relevantes no código como as URLs do IBGE em src/hooks/useIbgeLocations.ts e os defaults de AI_GATEWAY_URL, AI_MODEL e PLAN_ANNUAL_THRESHOLD nas Edge Functions de IA e pagamento. config.toml:1-4 useIbgeLocations.ts:19-37 index.ts:85-93 index.ts:84-91 asaas-env.ts:14-31 index.ts:11-17 index.ts:18-20
+	•	No frontend, src/integrations/supabase/client.ts exige VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY, src/lib/sentry.ts documenta VITE_SENTRY_DSN, e src/hooks/useAuth.tsx depende de VITE_SUPABASE_PROJECT_ID para montar a chave do localStorage. client.ts:5-17 sentry.ts:4-12 useAuth.tsx:26-35
+	•	Não encontrei .env.example no repositório, e o README.md ainda está como TODO, então a lista oficial de variáveis necessárias não está centralizada em um onboarding único. README.md:1-3
+	•	O setup local é apenas parcial sem Lovable Cloud: o frontend pode subir com as envs do Supabase e o Sentry é opcional, mas IA, OCR, e-mail e pagamento dependem de LOVABLE_API_KEY, LOVABLE_SEND_URL e secrets do Asaas configurados no ambiente. sentry.ts:9-12 index.ts:85-93 index.ts:84-91 index.ts:99-110 index.ts:272-276 DEPLOY_SESSAO4.md:46-60
+	•	Os buckets de arquivos médicos só aparecem explicitamente no runbook de LGPD como exam-files e receitas, não como configuração centralizada no código que eu tenha visto. runbook-lgpd-art48.md:21-29
+2) Supabase / banco
+	•	Há uma trilha forte de migrations e hardening, mas os próprios runbooks mostram mudanças aplicadas manualmente no Supabase SQL Editor e outras correções feitas só em código, então existe histórico de alterações fora do fluxo ideal de migration. DEPLOY_SEGURANCA_LOVABLE.md:15-17 DEPLOY_SEGURANCA_LOVABLE.md:55-67 DEPLOY_SEGURANCA_LOVABLE.md:72-82 DEPLOY_SESSAO4.md:169-175
+	•	A cobertura de RLS parece ampla, com correções documentadas para family_group_members, system_configs, as tabelas clínicas, ai_usage_logs, check_group_access, decrement_stock e storage, mas eu não consegui provar cobertura completa do schema nem listar todas as tabelas sem RLS apenas com os arquivos acessíveis aqui. DEPLOY_SEGURANCA_LOVABLE.md:30-90 DEPLOY_SEGURANCA_LOVABLE.md:250-261
+3) Edge Functions (Deno)
+	•	O acoplamento com Lovable é explícito: analyze-exam e analyze-prescription usam AI_GATEWAY_URL com fallback para https://ai.gateway.lovable.dev/v1/chat/completions e exigem LOVABLE_API_KEY, enquanto process-email-queue chama sendLovableEmail diretamente. index.ts:85-93 index.ts:84-91 index.ts:1-3 index.ts:272-276
+	•	O import_map.json central existe, mas não cobre todos os imports reais porque process-email-queue usa npm:@lovable.dev/email-js diretamente e o supabase/functions/process-email-queue/deno.json está vazio. import_map.json:1-7 index.ts:1-3 deno.json:1
+	•	Não encontrei require()/CJS nos arquivos de Edge Functions inspecionados.
+	•	supabase/config.toml define verify_jwt por função, então a base está declarada no projeto, mas o runtime Deno em si não está pinado no repositório. config.toml:3-22
+4) Build & CI/CD
+	•	O CI cobre lint, typecheck e testes em Node 22, mas não há etapa de deploy automático no workflow que eu vi. ci.yml:9-35
+	•	Não encontrei Dockerfile no repositório, então não há uma rota de containerização explícita para portabilidade de infraestrutura.
+	•	Não encontrei package-lock.json; o repositório usa bun.lock, então o uso de npm ci na CI precisa estar alinhado com o gerenciador de pacotes adotado, senão a reprodução do build fica frágil. ci.yml:19-26
+	•	Os próprios guias operacionais exigem passos manuais no Supabase Dashboard e no SQL Editor para secrets e migrations, então o bootstrapping local não está totalmente automatizado nem documentado no README. DEPLOY_SESSAO4.md:46-60 DEPLOY_SESSAO4.md:72-88 DEPLOY_SEGURANCA_LOVABLE.md:156-166
+5) Acoplamento a serviços externos
+	•	O swap do gateway de pagamento não é trivial, porque há uma abstração parcial em resolveAsaasEnv, mas ainda existem chamadas diretas ao Asaas em src/services/asaasService.ts, create-asaas-checkout, cancel-asaas-subscription e asaas-webhook. asaas-env.ts:14-31 asaasService.ts:1-54 index.ts:61-203 index.ts:7-125 index.ts:84-347
+	•	O OCR/IA está fortemente acoplado ao contrato da Lovable/Gemini, porque os prompts, o model default e o tool-calling estão hardcoded em analyze-exam e analyze-prescription. index.ts:90-103 index.ts:147-219 index.ts:89-108 index.ts:174-288
+	•	O IBGE falha de forma graciosa, porque os catch limpam o estado para arrays vazios, o que evita crash mas degrada o formulário se a API estiver fora. useIbgeLocations.ts:19-37
+	•	A fila de e-mail está amarrada ao Supabase por RPCs e tabelas específicas (read_email_batch, delete_email, move_to_dlq, email_send_state, email_send_log), então portar isso para outro provider exigiria reescrever a camada de fila. index.ts:134-165 index.ts:228-295
+6) Documentação técnica
+	•	Não vi ADR formal; o que existe são runbooks e planos operacionais em DEPLOY_SESSAO4.md, DEPLOY_SEGURANCA_LOVABLE.md, .lovable/plan.md e docs/runbook-lgpd-art48.md, enquanto o README.md ainda está incompleto. DEPLOY_SESSAO4.md:1-5 DEPLOY_SEGURANCA_LOVABLE.md:1-17 plan.md:2-19 runbook-lgpd-art48.md:1-16 README.md:1-3
+	•	O onboarding não é auto-suficiente hoje, porque a documentação de variáveis, secrets, migrations e deploy está espalhada entre código e runbooks, e não encontrei uma instrução única para subir o projeto do zero sem conhecer o ecossistema Lovable/Supabase. sentry.ts:4-12 DEPLOY_SESSAO4.md:46-88 DEPLOY_SEGURANCA_LOVABLE.md:94-166
+Prioridade prática
+	•	Bloqueia migração: falta de documentação central (README/.env.example), dependência de secrets Lovable/Asaas, e CI alinhada com npm ci sem lockfile npm visível. README.md:1-3 ci.yml:19-35
+	•	Adiciona custo: acoplamento a Asaas, Lovable/Gemini, IBGE e fila Supabase, além de mudanças manuais já documentadas no banco. asaasService.ts:1-54 index.ts:90-219 useIbgeLocations.ts:19-37 index.ts:134-295 DEPLOY_SEGURANCA_LOVABLE.md:15-17
+	•	Cosmético: a base técnica está melhor documentada do que parece em torno de segurança e operação, mas ainda não está empacotada para portabilidade. runbook-lgpd-art48.md:1-16 DEPLOY_SESSAO4.md:183-188
+Se você quiser, eu posso resumir isso em uma matriz impacto × esforço por item.

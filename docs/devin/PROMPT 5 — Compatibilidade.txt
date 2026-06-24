@@ -1,0 +1,22 @@
+1) Browser / WebView support
+	•	src/lib/webauthn.ts usa navigator.credentials.create/get e browserSupportsWebAuthn() só checa navigator.credentials e PublicKeyCredential, enquanto src/pages/Seguranca.tsx apenas esconde o toggle e mostra mensagem quando não há suporte, então há fallback de UI, mas não polyfill/fallback funcional para WebAuthn em browsers antigos. webauthn.ts:63-68 webauthn.ts:81-89 Seguranca.tsx:164-177
+	•	src/pages/Landing.tsx usa IntersectionObserver sem guarda explícita de suporte, então em webviews/browsers sem essa API o hook pode falhar em vez de degradar graciosamente. Landing.tsx:47-60
+	•	src/hooks/use-mobile.tsx depende de window.matchMedia(...).addEventListener("change") sem fallback adicional, o que pode ficar inconsistente em engines/webviews mais antigas. use-mobile.tsx:5-15
+	•	Não encontrei nos arquivos abertos uso de ResizeObserver, CSS :has(), container queries, @property ou View Transitions, então não há evidência de fallback específico para esses recursos.
+2) iOS Safari específico
+	•	src/components/MobileShell.tsx já usa min-h-[100dvh], o que é o ajuste certo para o problema clássico de 100vh no iOS Safari. MobileShell.tsx:7-11
+	•	src/pages/Home.tsx, src/pages/Seguranca.tsx e src/components/BottomNav.tsx usam layout fixed com bottom-[72px]/h-16, mas não vi compensação explícita com env(safe-area-inset-bottom), então há risco de sobreposição/clipping em iPhones com safe area. Home.tsx:90-92 Seguranca.tsx:143-153 BottomNav.tsx:60-61
+	•	src/pages/Seguranca.tsx já usa text-[16px] nos inputs, então o anti-autozoom do iOS parece tratado nesse componente. Seguranca.tsx:139-140
+	•	Não encontrei nos arquivos abertos uso de getUserMedia, indexedDB ou navigator.storage, então não há evidência de implementação/fallback específico para câmera, microfone ou quota de storage no iOS PWA.
+3) PWA manifest & installability
+	•	public/manifest.json está bem configurado para instalação básica porque define start_url: "/login", display: "standalone", background_color, theme_color e ícones 192x192 e 512x512 com purpose: "any maskable". manifest.json:1-23
+	•	Não localizei nos arquivos abertos o registro de um service worker nem estratégia de precache, então a parte offline da instalabilidade do PWA não ficou comprovada aqui.
+	•	Não vi referências a assets ou endpoints servidos por HTTP nos trechos inspecionados, então não há evidência direta de violação de HTTPS no código aberto analisado.
+4) TypeScript strict mode
+	•	tsconfig.json e tsconfig.app.json mantêm noImplicitAny: true e strictNullChecks: true, mas strict: false, noUnusedLocals: false e noUnusedParameters: false no app reduzem a capacidade do TypeScript de pegar bugs sutis de compatibilidade. tsconfig.json:2-14 tsconfig.app.json:2-31
+	•	tsconfig.node.json é mais rígido que o app principal, porque lá strict: true e noFallthroughCasesInSwitch: true estão ativos. tsconfig.node.json:2-20
+5) Supabase SDK
+	•	O frontend usa sintaxe compatível com @supabase/supabase-js v2, como supabase.functions.invoke(...) em src/lib/webauthn.ts e o acesso à sessão em src/hooks/useAuth.tsx, sem sinais de chamadas v1 legadas nos arquivos abertos. webauthn.ts:87-90 useAuth.tsx:26-35
+	•	supabase/config.toml não declara versão do runtime Deno; ele só configura import_map e verify_jwt por função, então a compatibilidade de runtime depende do ambiente gerenciado pelo Supabase, não de um pin explícito no repo. config.toml:1-22
+	•	Em WebAuthn, src/lib/webauthn.ts força rp.id para window.location.hostname, o que é bom para compatibilidade com iOS/Android modernos, mas continua sem fallback funcional para browsers sem suporte a WebAuthn. webauthn.ts:98-105 webauthn.ts:177-204
+Se quiser, eu posso transformar isso em uma matriz curta de “quebra silenciosa vs. degrada UX vs. bloqueio” por arquivo.

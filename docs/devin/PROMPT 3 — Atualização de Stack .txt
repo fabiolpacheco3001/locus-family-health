@@ -1,0 +1,110 @@
+Não consegui consultar npm registry nem deno.land diretamente daqui, então latest, gap exato e breaking changes ficam como n/d; abaixo eu marco o estado atual pinado no repositório e o risco relativo. package.json:15-96 import_map.json:1-7
+1) Frontend (package.json)
+Categoria
+Pacotes atuais
+Versão atual
+Latest / gap
+Breaking changes relevantes
+Ação
+Runtime crítico
+react, react-dom, react-router-dom, @supabase/supabase-js, @tanstack/react-query, zod
+^19.0.0, ^19.0.0, ^7.16.0, ^2.99.3, ^5.83.0, ^3.25.76
+n/d
+n/d
+Verificar agora
+UI / interação
+@radix-ui/* (accordion, alert-dialog, aspect-ratio, avatar, checkbox, collapsible, context-menu, dialog, dropdown-menu, hover-card, label, menubar, navigation-menu, popover, progress, radio-group, scroll-area, select, separator, slider, slot, switch, tabs, toast, toggle, toggle-group, tooltip), lucide-react, framer-motion, sonner, next-themes, vaul, cmdk, class-variance-authority, clsx, tailwind-merge, tailwindcss-animate, embla-carousel-react, embla-carousel-autoplay
+^1.1.7–^2.2.15, ^0.462.0, ^12.38.0, ^1.7.4, ^0.3.0, ^1.1.2, ^1.1.1, ^0.7.1, ^2.1.1, ^2.6.0, ^1.0.7, ^8.6.0, ^8.6.0
+n/d
+n/d
+Aguardar
+Dados / datas / formulários / PDF
+date-fns, date-fns-tz, react-hook-form, @hookform/resolvers, react-day-picker, recharts, jspdf, jspdf-autotable, pdfjs-dist, input-otp, react-resizable-panels
+^4.0.0, ^3.2.0, ^7.61.1, ^3.10.0, ^9.0.0, ^3.0.0, ^4.2.1, ^5.0.7, ^5.7.284, ^1.4.2, ^2.1.9
+n/d
+n/d
+Aguardar
+Build / teste / DX
+vite, typescript, eslint, @eslint/js, @vitejs/plugin-react-swc, @playwright/test, vitest, @testing-library/jest-dom, @testing-library/react, @types/node, @types/react, @types/react-dom, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, jsdom, lovable-tagger, postcss, tailwindcss, @tailwindcss/vite, @tailwindcss/typography, typescript-eslint
+^6.0.0, ^5.8.3, ^9.32.0, ^9.32.0, ^3.11.0, ^1.57.0, ^3.2.4, ^6.6.0, ^16.0.0, ^22.16.5, ^19.0.0, ^19.0.0, ^5.2.0, ^0.4.20, ^15.15.0, ^20.0.3, ^1.1.13, ^8.5.6, ^4.0.0, ^4.0.0, ^0.5.16, ^8.38.0
+n/d
+n/d
+Manter
+Observações do frontend
+	•	O pacote mais sensível é @supabase/supabase-js, porque ele é usado tanto no frontend quanto nas Edge Functions, mas em versões diferentes: ^2.99.3 no frontend e 2.49.4 nas funções, então há risco de divergência de comportamento entre runtimes. package.json:44-46 import_map.json:3-6
+	•	A stack está com versões aproximadas via ^, então sem package-lock.json eu não consigo afirmar o build exato instalado, só o intervalo aceito pelo npm.
+2) Deno Edge Functions (import_map.json + imports diretas)
+Dependência
+Forma
+Versão atual
+Latest / gap
+Breaking changes relevantes
+Ação
+std/http/server
+URL direta
+0.224.0
+n/d
+n/d
+Aguardar
+@supabase/supabase-js
+URL / npm import
+2.49.4
+n/d
+n/d
+Verificar agora
+zod
+URL / npm import
+3.25.76
+n/d
+n/d
+Manter
+@simplewebauthn/server
+URL / npm import
+9.0.3
+n/d
+n/d
+Verificar agora
+npm:@lovable.dev/email-js em process-email-queue
+import npm sem versão explícita
+sem pin explícito
+n/d
+n/d
+Atualizar agora
+Observações do Deno
+	•	std/http/server e os pacotes do import_map.json estão todos pinados a versões específicas, não a @latest, o que é bom para reprodutibilidade, mas exige bump manual. import_map.json:3-6
+	•	process-email-queue/deno.json está vazio, então não há baseline de runtime Deno declarada ali; o que existe são imports explícitos no código. deno.json:1 index.ts:1-3
+	•	O import npm:@lovable.dev/email-js sem versão explícita é o ponto de drift mais claro da pasta supabase/functions, porque depende da resolução implícita do npm em vez de um pin determinístico. index.ts:1-3
+3) Runtime & tooling
+Item
+Estado no repo
+Leitura de risco
+Node.js no CI
+actions/setup-node@v4 com node-version: 22
+O CI está em Node 22, mas eu não consigo comparar com o LTS atual a partir daqui. ci.yml:19-26
+Deno nas Edge Functions
+O runtime não é declarado em deno.json, e os imports usam https://deno.land/std@0.224.0/...
+O repo fixa o std, mas não fixa a versão do runtime Deno em si. index.ts:1-4 deno.json:1
+TypeScript no app
+strict: false, allowJs: true, noUnusedLocals: false, noUnusedParameters: false, noImplicitAny: true, strictNullChecks: true
+Está abaixo do baseline comum de 2026 para apps de saúde; o ponto mais fraco é strict: false no bundle principal. tsconfig.app.json:2-31
+TypeScript no node tooling
+strict: true, noFallthroughCasesInSwitch: true
+O tooling de build está mais rígido que o app, o que cria assimetria entre vite.config.ts e src/. tsconfig.node.json:2-20
+4) Oportunidades de simplificação
+	•	Há uma duplicidade de stack de data/time entre date-fns/date-fns-tz e os helpers próprios de timezone já consolidados em src/lib/tz.ts, então vale revisar se date-fns-tz ainda é realmente necessário. package.json:50-51 TECH_DEBT.md:459-461
+	•	@supabase/supabase-js está duplicado entre frontend e Edge Functions com versões diferentes, então alinhar a versão reduz superfície de bugs e de debugging cross-runtime. package.json:44-46 import_map.json:3-6
+	•	Eu não consegui confirmar dependências realmente não usadas só com esse conjunto de buscas, então qualquer remoção aqui exigiria um scan de import graph mais completo.
+Ações priorizadas por impacto
+	1	Pin e revisar npm:@lovable.dev/email-js em supabase/functions/process-email-queue/index.ts, porque hoje ele é o único import direto sem versão explícita nas Edge Functions. index.ts:1-3
+	2	Alinhar @supabase/supabase-js entre frontend e Edge Functions, porque hoje há ^2.99.3 no frontend e 2.49.4 nas funções. package.json:44-46 import_map.json:3-6
+	3	Endurecer tsconfig.app.json para strict: true e flags de unused mais rígidas, porque a aplicação principal ainda está abaixo do baseline seguro de TypeScript. tsconfig.app.json:2-31
+	4	Reavaliar date-fns-tz junto com src/lib/tz.ts, porque há dois caminhos de timezone/data no projeto. package.json:50-51 TECH_DEBT.md:459-461
+	5	Manter a fila de atualização por criticidade: primeiro runtime crítico (react, react-dom, react-router-dom, @supabase/supabase-js), depois build/tooling e por fim UI libs. package.json:44-46 package.json:61-66 package.json:93-96
+Se você quiser, eu posso transformar isso em uma matriz “atual → alvo → risco” por pacote, mas para fechar latest real eu precisaria de acesso ao registry externo.
+
+
+
+
+
+
+Ask a follow-up
