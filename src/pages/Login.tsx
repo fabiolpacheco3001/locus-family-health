@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 type ViewMode = "login" | "forgot";
 
@@ -211,6 +212,9 @@ const Login = () => {
             {loading ? <><Loader2 className="animate-spin mr-2" size={20} /> Entrando...</> : "Entrar"}
           </Button>
         </form>
+
+        <SocialLoginButtons context="login" planFromUrl={planFromUrl} />
+
 
         <button
           onClick={() => navigate(planFromUrl ? `/cadastro?plan=${planFromUrl}` : "/cadastro")}

@@ -24,6 +24,7 @@ const importResetPassword = () => import("./pages/ResetPassword");
 const importHome = () => import("./pages/Home");
 const importAdminLogin = () => import("./pages/AdminLogin");
 const importNotFound = () => import("./pages/NotFound");
+const importAuthCallback = () => import("./pages/AuthCallback");
 
 const Landing = lazy(importLanding);
 const Login = lazy(importLogin);
@@ -32,6 +33,7 @@ const ResetPassword = lazy(importResetPassword);
 const Home = lazy(importHome);
 const AdminLogin = lazy(importAdminLogin);
 const NotFound = lazy(importNotFound);
+const AuthCallback = lazy(importAuthCallback);
 
 // Lazy chunk import functions (reused for prefetching)
 const importAgenda = () => import("./pages/Agenda");
@@ -159,6 +161,7 @@ const App = () => (
             <Route path="/login" element={<Suspense fallback={<RouteLoader />}><Login /></Suspense>} />
             <Route path="/cadastro" element={<Suspense fallback={<RouteLoader />}><Cadastro /></Suspense>} />
             <Route path="/reset-password" element={<Suspense fallback={<RouteLoader />}><ResetPassword /></Suspense>} />
+            <Route path="/auth/callback" element={<Suspense fallback={<RouteLoader />}><AuthCallback /></Suspense>} />
             {/* Públicas — acessíveis sem login (LGPD exige disponibilidade pré-consentimento) */}
             <Route path="/politica-de-privacidade" element={<Suspense fallback={<RouteLoader />}><PoliticaPrivacidade /></Suspense>} />
             <Route path="/termos-de-uso" element={<Suspense fallback={<RouteLoader />}><TermosUso /></Suspense>} />

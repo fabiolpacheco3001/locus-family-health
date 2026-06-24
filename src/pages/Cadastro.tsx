@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 /** Registra o consentimento LGPD na tabela consent_log após o cadastro. */
 async function logConsent(userId: string) {
@@ -128,6 +129,11 @@ const Cadastro = () => {
           <h1 className="text-lg font-semibold text-foreground">Criar sua Conta</h1>
           <p className="text-muted-foreground text-sm mt-1">Saúde Familiar Simplificada</p>
         </div>
+
+        <p className="text-xs text-muted-foreground text-center mb-3 font-medium">
+          Criar conta rapidamente
+        </p>
+        <SocialLoginButtons context="cadastro" planFromUrl={planFromUrl} />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-xs text-muted-foreground">
