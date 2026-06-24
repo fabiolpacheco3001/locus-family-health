@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 type ViewMode = "login" | "forgot";
 
