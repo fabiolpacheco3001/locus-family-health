@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
+import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 /** Registra o consentimento LGPD na tabela consent_log após o cadastro. */
 async function logConsent(userId: string) {
