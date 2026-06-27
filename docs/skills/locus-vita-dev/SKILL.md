@@ -302,7 +302,48 @@ captureException(err)  // invisível para o usuário, capturado no Sentry dashbo
 
 Esta regra se aplica a: copy de UI, toast messages, push notifications, descrições de Badge, resumos de OCR. Em dúvida: "descrevo o fato registrado" → OK. "sugiro o que pode significar" → NÃO.
 
-### 8. Comentários explicam o PORQUÊ, nunca o óbvio
+**Push notifications e lock screen:** mascarar nome de medicamento para não revelar diagnóstico:
+```typescript
+// Nome completo no lock screen é visível a qualquer pessoa com acesso ao celular
+function mascaraNomeMedicamentoNotificacao(nome: string): string {
+    const termos = nome.split(' ')
+    return termos.slice(0, 2).join(' ') + (termos.length > 2 ? '…' : '')
+}
+// NUNCA incluir CID, diagnóstico ou condição de saúde no título/corpo de push
+```
+
+### 8. TanStack Query v5 — Armadilha com `enabled` condicional
+
+> Bug real de produção: com `enabled` condicional (ex: aguardar `familyMemberId`), `isFetching` causa spinner "infinito" quando enabled muda false→true com latência de rede de 2–5s.
+
+```typescript
+// ❌ ERRADO — isFetching=true quando enabled muda false→true esconde cache
+const { data, isFetching } = useQuery({ queryKey: [...], enabled: !!familyMemberId })
+if (isFetching) return <Spinner />
+
+// ✅ CORRETO — spinner só quando não há dados utilizáveis
+const { data: medications, isLoading, isFetching } = useQuery({
+    queryKey: ['medications', familyMemberId],
+    queryFn: () => fetchMedications(familyMemberId!),
+    enabled: !!familyMemberId,
+    staleTime: 0,        // PHI: sempre frescos
+    gcTime: 5 * 60_000,
+})
+// isLoading = isPending && isFetching (TQ v5)
+// enabled=false → isPending=true, isFetching=false → isLoading=false → sem spinner ✅
+const showSpinner = isLoading || (isFetching && !medications?.length)
+if (showSpinner) return <SkeletonList />
+
+// Query encadeada correta (família → dependente):
+const { data: members } = useQuery({ queryKey: ['family', 'members'], staleTime: 5 * 60_000 })
+const { data: consultations } = useQuery({
+    queryKey: ['consultations', selectedMemberId],
+    enabled: !!selectedMemberId && members?.some(m => m.id === selectedMemberId),
+    staleTime: 0,
+})
+```
+
+### 9. Comentários explicam o PORQUÊ, nunca o óbvio
 
 ```typescript
 // ❌ INÚTIL
@@ -318,6 +359,276 @@ const meds = await supabase.from('medications').select(...)
 
 // UNIQUE(medication_id, scheduled_for) previne duplicatas de dose mesmo sob
 // retry de rede — idempotência garantida no banco, não só no app.
+```
+
+---
+
+## Acessibilidade — WCAG 2.1 AA (Obrigatório)
+
+> Os primitivos `components/ui/` do shadcn/Radix **já são acessíveis** por padrão — não tocar. O trabalho de a11y é nos componentes compostos do produto.
+
+### Ícones decorativos — `aria-hidden` sempre
+
+```tsx
+// ❌ Screen reader anuncia o ícone além do texto
+<Button><Bell /> Notificações</Button>
+
+// ✅ Ícone decorativo oculto
+<Button><Bell aria-hidden="true" /> Notificações</Button>
+// Aplicar em: ArrowRight, ChevronRight/Down, Globe, Plus em cards informativos, etc.
+```
+
+### Botões icon-only — `aria-label` obrigatório
+
+```tsx
+// ❌ Screen reader anuncia apenas "button"
+<Button variant="ghost" onClick={openNotifications}><Bell /></Button>
+
+// ✅
+<Button variant="ghost" aria-label="Abrir notificações" onClick={openNotifications}>
+    <Bell aria-hidden="true" />
+</Button>
+
+// Padrão para ações contextuais em cards de saúde:
+<Button variant="ghost" aria-label={`Mais opções para ${medication.name}`}>
+    <MoreVertical aria-hidden="true" />
+</Button>
+```
+
+### Conteúdo dinâmico — `aria-live`
+
+```tsx
+// aria-live="polite": updates de background (adesão, status de OCR)
+// aria-live="assertive": APENAS para erros críticos (dose urgente atrasada)
+
+<div aria-live="polite" aria-atomic="true">
+    {lateAlert && (
+        <Alert variant="destructive">
+            <AlertDescription>
+                Dose de {medication.name} atrasada — {formatTime(dose.scheduledFor)}
+            </AlertDescription>
+        </Alert>
+    )}
+</div>
+
+<div aria-live="polite">
+    {ocrStatus === 'processing' && <span className="sr-only">Processando imagem da receita...</span>}
+    {ocrStatus === 'done' && <span className="sr-only">Dados extraídos. Revise os campos.</span>}
+</div>
+```
+
+### Cards clicáveis — teclado e foco
+
+```tsx
+// ❌ div não é focável por teclado
+<div onClick={openDetail} className="cursor-pointer"><ConsultationCard /></div>
+
+// ✅ Opção 1: role + tabIndex + onKeyDown
+<div
+    role="button"
+    tabIndex={0}
+    aria-label={`Ver detalhes — consulta de ${consultation.specialty}, ${formatDate(consultation.date)}`}
+    onClick={openDetail}
+    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') openDetail() }}
+    className="cursor-pointer focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+>
+    <ConsultationCard consultation={consultation} />
+</div>
+
+// ✅ Opção 2 (preferível): Button asChild — trata teclado automaticamente
+<Button variant="ghost" asChild className="h-auto w-full p-0">
+    <Link to={`/consultas/${consultation.id}`} aria-label={`Ver detalhes — ${consultation.specialty}`}>
+        <ConsultationCard consultation={consultation} />
+    </Link>
+</Button>
+```
+
+### Tabelas de dados de saúde
+
+```tsx
+<Table aria-label="Histórico de exames">
+    <TableHeader>
+        <TableRow>
+            <TableHead scope="col">Tipo</TableHead>
+            <TableHead scope="col">Data</TableHead>
+            <TableHead scope="col">Status</TableHead>
+            <TableHead scope="col"><span className="sr-only">Ações</span></TableHead>
+        </TableRow>
+    </TableHeader>
+    <TableBody>
+        {exams.map(e => (
+            <TableRow key={e.id}>
+                <TableCell>{e.type}</TableCell>
+                <TableCell>{formatDate(e.performedAt)}</TableCell>
+                <TableCell><Badge aria-label={`Status: ${e.status}`}>{e.status}</Badge></TableCell>
+                <TableCell>
+                    <Button variant="ghost" size="sm" aria-label={`Ver laudo do exame ${e.type}`}>
+                        Ver laudo
+                    </Button>
+                </TableCell>
+            </TableRow>
+        ))}
+    </TableBody>
+</Table>
+```
+
+### Navegação e avatares
+
+```tsx
+// Links ativos no menu
+<nav aria-label="Menu principal">
+    {items.map(item => (
+        <Link key={item.href} to={item.href}
+              aria-current={location.pathname === item.href ? 'page' : undefined}>
+            <item.icon aria-hidden="true" />
+            {item.label}
+        </Link>
+    ))}
+</nav>
+
+// Avatares
+<AvatarImage src={member.avatarUrl} alt={`Foto de perfil de ${member.name}`} />
+<AvatarFallback aria-hidden="true">{initials(member.name)}</AvatarFallback>
+```
+
+### Contraste — sempre tokens semânticos
+
+```tsx
+// ❌ Risco de falha de contraste
+<p className="text-gray-400">Próxima dose: 14:00</p>
+
+// ✅ Tokens shadcn/ui garantem AA (4.5:1 texto normal, 3:1 texto grande)
+<p className="text-muted-foreground">Próxima dose: 14:00</p>
+<Badge className="bg-destructive text-destructive-foreground">Dose atrasada</Badge>
+```
+
+### Checklist a11y por componente
+
+| Componente | Verificação |
+|---|---|
+| Card de medicamento | `aria-label` descritivo; botão "mais opções" com nome do medicamento |
+| Alerta de dose atrasada | `aria-live="assertive"` — urgente |
+| Status de adesão | `aria-live="polite"` — atualização de fundo |
+| Formulário de cadastro | Todo input tem `<label>` associado; erro com `aria-describedby` |
+| Upload de receita | Área de drop com `role="button"` e `aria-label`; progresso via `aria-live` |
+| Tabela de exames | `aria-label` na tabela; `scope="col"` nos headers; "Ações" com `sr-only` |
+| Avatar de membro | `alt` descritivo na AvatarImage |
+| Ícones decorativos | `aria-hidden="true"` em 100% dos casos |
+
+---
+
+## Performance de Banco de Dados — Padrões PostgreSQL
+
+### Índices obrigatórios para tabelas de alto crescimento
+
+As tabelas `medication_doses`, `push_subscriptions` e arquivos clínicos crescem rapidamente. Índices são criados na migration inicial — **nunca em hotfix de produção sem `CONCURRENTLY`**.
+
+```sql
+-- Padrão obrigatório: índice parcial filtra apenas o subconjunto relevante
+-- medication_doses: cron de notificações e relatórios de adesão consultam constantemente
+CREATE INDEX CONCURRENTLY idx_medication_doses_medication_scheduled
+    ON medication_doses (medication_id, scheduled_for)
+    WHERE status IN ('pending', 'late');  -- minoria da tabela — índice menor e mais rápido
+
+-- Relatório de adesão por período (dashboard do usuário)
+CREATE INDEX CONCURRENTLY idx_medication_doses_member_period
+    ON medication_doses (family_member_id, scheduled_for DESC);
+
+-- Medicamentos: filtro de ativos é 99% das consultas
+CREATE INDEX CONCURRENTLY idx_medications_member_active
+    ON medications (family_member_id)
+    WHERE deleted_at IS NULL;
+
+-- GIN para colunas array (specific_days, specific_times)
+CREATE INDEX CONCURRENTLY idx_medications_specific_days
+    ON medications USING GIN (specific_days);
+
+-- Push subscriptions: lookup rápido no cron de envio
+CREATE INDEX CONCURRENTLY idx_push_subscriptions_active
+    ON push_subscriptions (user_id)
+    WHERE is_active = true;
+```
+
+**Regra**: toda FK de tabela com acesso frequente precisa de índice. O linter do Supabase não detecta isso — verificar manualmente em code review.
+
+### Diagnóstico de queries lentas (pg_stat_statements)
+
+```sql
+-- Rodar no SQL Editor do Supabase Dashboard (pg_stat_statements já ativo)
+SELECT
+    left(query, 120) AS query_preview,
+    calls,
+    round(mean_exec_time::numeric, 2) AS media_ms,
+    round(total_exec_time::numeric / 1000, 2) AS total_s,
+    rows / NULLIF(calls, 0) AS media_linhas
+FROM pg_stat_statements
+WHERE mean_exec_time > 100  -- queries acima de 100ms
+ORDER BY mean_exec_time DESC
+LIMIT 10;
+```
+
+### EXPLAIN ANALYZE — como interpretar
+
+```sql
+-- Sempre rodar no Supabase SQL Editor, nunca em produção sem cuidado
+EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT md.*, m.name
+FROM medication_doses md
+INNER JOIN medications m ON md.medication_id = m.id
+WHERE md.family_member_id = 'MEMBER-UUID'
+  AND md.scheduled_for >= NOW() - INTERVAL '30 days'
+  AND md.status IN ('pending', 'late')
+ORDER BY md.scheduled_for DESC;
+
+-- Interpretar o resultado:
+-- "Index Scan using idx_..."       → ✅ índice sendo usado
+-- "Seq Scan on ... (rows=XYYY)"    → ❌ criar índice ou verificar seletividade
+-- "Buffers: hit=N read=M" (M alto) → cache miss, pode indicar falta de índice
+-- "Rows Removed by Filter: N" alto → índice existe mas não é seletivo o suficiente
+```
+
+### Quando particionar `medication_doses`
+
+Com 10.000 usuários ativos e 3 medicamentos/dia → ~1,8M linhas/ano. Avaliar particionamento quando:
+- Tabela ultrapassar **500k linhas**, OU
+- `mean_exec_time > 200ms` nas queries de adesão (verificar pg_stat_statements)
+
+Particionamento por `RANGE (scheduled_for)` mensal. Executar apenas em janela de manutenção.
+
+### Função SQL agregada — elimina N+1 em Edge Functions de cron
+
+```sql
+-- Padrão: uma função SQL agrega tudo — Edge Function faz UMA query, não N
+CREATE OR REPLACE FUNCTION get_pending_doses_window(
+    p_start TIMESTAMPTZ,
+    p_end   TIMESTAMPTZ
+)
+RETURNS TABLE (
+    family_member_id UUID,
+    medication_id UUID,
+    medication_name TEXT,
+    dose_id UUID,
+    scheduled_for TIMESTAMPTZ,
+    quantity NUMERIC,
+    unit TEXT
+)
+LANGUAGE sql STABLE AS $$
+    SELECT
+        m.family_member_id,
+        m.id AS medication_id,
+        m.name AS medication_name,
+        md.id AS dose_id,
+        md.scheduled_for,
+        md.quantity,
+        md.unit
+    FROM medication_doses md
+    INNER JOIN medications m ON md.medication_id = m.id
+    WHERE m.deleted_at IS NULL
+      AND md.scheduled_for BETWEEN p_start AND p_end
+      AND md.status = 'pending';
+$$;
+-- Na Edge Function: supabase.rpc('get_pending_doses_window', { p_start, p_end })
+-- Uma query, zero N+1.
 ```
 
 ---
@@ -492,7 +803,7 @@ Ao revisar qualquer diff antes de concluir a entrega:
 2. `service_role` key aparece em algum arquivo frontend? → bloqueador imediato
 3. PHI sendo salvo em localStorage/sessionStorage?
 4. Resultado de OCR/IA apresentado sem badge "Verificar com médico"?
-5. Dados de saúde em eventos de analytics (Sentry metadata, PostHog properties)?
+5. Dados de saúde em eventos de analytics (Sentry metadata, PostHog properties)? PostHog deve ter `autocapture: false` e campos PHI marcados com `data-phi`.
 6. Arquivo em bucket sem signed URL (acesso público indevido)?
 
 **TypeScript e Qualidade:**
