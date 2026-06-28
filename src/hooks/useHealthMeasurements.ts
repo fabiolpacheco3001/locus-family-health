@@ -31,7 +31,10 @@ export function useHealthMeasurements(familyMemberId: string | undefined) {
       return data || [];
     },
     enabled: !!familyMemberId && !!user,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: dado de saúde é sensível — staleTime: 0 garante que nunca
+    // servimos medidas corporais de uma sessão anterior do mesmo dispositivo.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 
   const addMutation = useMutation({

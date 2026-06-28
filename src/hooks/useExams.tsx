@@ -61,7 +61,10 @@ export const useExams = (familyMemberId: string) => {
       return data as Exam[];
     },
     enabled: !!user && !!familyMemberId,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: exames médicos são dados de saúde sensíveis — staleTime: 0
+    // impede que laudos ou resultados de exame sejam vistos de cache obsoleto.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 
   const addExam = useMutation({

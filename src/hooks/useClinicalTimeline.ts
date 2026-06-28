@@ -149,6 +149,10 @@ export const useClinicalTimeline = (familyMemberId: string | undefined) => {
       return events;
     },
     enabled: !!familyMemberId,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: a timeline clínica agrega consultas, exames, cirurgias, vacinas e
+    // medicamentos — todos dados de saúde sensíveis. staleTime: 0 impede que o prontuário
+    // histórico seja exibido de cache de uma sessão anterior do mesmo dispositivo.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 };

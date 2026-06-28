@@ -100,7 +100,10 @@ export function useSurgeries(familyMemberId?: string) {
       return (data ?? []) as Surgery[];
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: cirurgias são dados de saúde sensíveis — staleTime: 0
+    // garante que instruções pré/pós-operatórias nunca vêm de cache de sessão anterior.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 
   const invalidate = () => {

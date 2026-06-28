@@ -63,7 +63,10 @@ export const useConsultations = (familyMemberId: string) => {
       return data as Consultation[];
     },
     enabled: !!user && !!familyMemberId,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: consultas médicas são dados de saúde sensíveis — staleTime: 0
+    // garante que o histórico clínico nunca é servido de cache de sessão anterior.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 
   const addConsultation = useMutation({

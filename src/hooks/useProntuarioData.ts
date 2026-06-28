@@ -20,7 +20,10 @@ export function useProntuarioData(id: string | undefined) {
       return data;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: alergias são dados de saúde sensíveis — staleTime: 0 impede
+    // que uma sessão anterior contamine a visualização do prontuário atual.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 
   const { data: diseases } = useQuery({
@@ -34,7 +37,10 @@ export function useProntuarioData(id: string | undefined) {
       return data;
     },
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: doenças são dados de saúde sensíveis — staleTime: 0 garante
+    // que o prontuário sempre reflete o estado atual no banco.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 
   return {

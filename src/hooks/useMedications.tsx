@@ -111,7 +111,10 @@ export const useMedications = (familyMemberId?: string) => {
       return data as Medication[];
     },
     enabled: !!user && !groupLoading,
-    staleTime: 5 * 60 * 1000,
+    // LGPD art. 11: medicamentos em uso são dados de saúde sensíveis — staleTime: 0
+    // garante que a posologia e o histórico de doses nunca vêm de cache desatualizado.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
 
   const addMedication = useMutation({
