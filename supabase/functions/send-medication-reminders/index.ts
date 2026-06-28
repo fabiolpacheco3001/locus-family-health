@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
 
     if (error) {
       log("error", "med_reminders_fetch_failed", { error: error.message });
-      return new Response(JSON.stringify({ error: error.message }), {
+      return new Response(JSON.stringify({ error: "Erro interno ao buscar medicamentos" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
