@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 5.5 | **Atualizado em:** 2026-06-28 (sessão 38 — 3 achados críticos do diagnóstico LGPD corrigidos)  
+> **Versão:** 5.6 | **Atualizado em:** 2026-06-28 (sessão 39 — ID-003 staleTime: 0 em 7 hooks PHI)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -34,6 +34,7 @@
 | Sessão 36 | BK-01 E2E fix ✅: diagnóstico completo do push não chegar no iPhone. Root cause: par VAPID inconsistente — `VAPID_PRIVATE_KEY` no Supabase Secrets não correspondia à public key em `pushConfig.ts` (geradas em momentos distintos durante a rotação da sessão 35). Evidência: campo `push_details` adicionado ao response de `send-medication-reminders` revelou `{sent:0,failed:1}` (APNs rejeitando) → `{sent:1,failed:0}` após fix. Fix: par VAPID P-256 regenerado via Node.js WebCrypto (`subtle.generateKey` + JWK export), ambas as chaves atualizadas no Supabase Secrets, `pushConfig.ts` atualizado, usuário re-subscreveu. **Validação E2E:** notificação "💊 Hora do Remédio!" recebida no iPhone com PWA completamente fechado ✅. Bug fix colateral: `send-medication-reminders` contava `sent` por `res.ok` (HTTP 200), não pelo resultado real do APNs — corrigido com leitura do response body. | Sprint 36 ✅ CONCLUÍDO |
 | Sessão 37 | Bug ∞ Dipirona ✅ (Fase 401 — causa raiz real identificada e corrigida): `frequency_type = "interval"` (valor legado no banco de medicamentos criados antes da Fase 398) não era reconhecido por `calculateNextDose` nem por `advancePastTakenDoses` — `"interval"` é truthy, impedia o fallback para `"fixed_interval"`. Dois sintomas: (a) med com `frequency_hours>0` sumia silenciosamente do widget Home; (b) med com `frequency_hours=null` exibia ∞ indevidamente. Fix: normalização `rawType === "interval" ? "fixed_interval" : rawType` em `calculateNextDose.ts`, `advancePastTakenDoses.ts` e `useHomeData.ts`. Testes de regressão: 2 novos `describe` / 7 novos `it` em `calculateNextDose.test.ts`. CI #184 ✅ VERDE (commit 88cbefd). | Sprint 37 ✅ CONCLUÍDO |
 | Sessão 38 | Diagnóstico completo do codebase (`docs/DIAGNOSTICO_CODEBASE_2026-06-27.md`) — 20 achados em 5 domínios; 3 críticos corrigidos nesta sessão: **[ID-004/005]** 7 `console.log` com PHI removidos de `parseSusVaccinePdf.ts` (CPF completo, texto PDF inteiro, colunas detectadas, vacinas extraídas) e `useVaccineImport.ts` (CPF em texto plano); comparação CPF preservada — ocorre apenas em memória. **[ID-001]** `error.message` exposto em resposta HTTP de `send-medication-reminders` → substituído por mensagem genérica; `log()` interno preservado com detalhe. **[ID-011]** `asaas_customer_id`, `asaas_subscription_id`, `asaas_payment_id` removidos de `writeLocalCache` em `useSubscription.ts`; `MeuPlano.tsx` atualizado para chamar `refetchSubscription()` no handler de cancelamento (prevenção de regressão — IDs não mais disponíveis em cold-start do localStorage). Commits: `95bf1d74` (Lovable MCP — edge fn) + `a8f6e2c` (local — 5 arquivos). | Sprint 38 ✅ CONCLUÍDO |
+| Sessão 39 | **[ID-003]** `staleTime: 5 * 60 * 1000` → `staleTime: 0 + gcTime: 5 * 60_000` nos 7 hooks PHI clínicos: `useHealthMeasurements`, `useProntuarioData` (2 queries: alergias + doenças), `useClinicalTimeline`, `useConsultations`, `useExams`, `useMedications`, `useSurgeries`. LGPD art. 11: dados de saúde não podem ser servidos de cache de sessão anterior. Análise de regressão: `isFetching` só consumido por `useSubscription` (não-PHI); todos hooks PHI consomem `isLoading` nos componentes — sem risco de spinner infinito. Commit: `62e5589` (7 arquivos, canal LOCAL). | Sprint 39 ✅ CONCLUÍDO |
 
 ---
 
@@ -315,6 +316,22 @@
 - **Resolução:** Linha 90 substituída: `{ error: error.message }` → `{ error: "Erro interno ao buscar medicamentos" }`. `log("error", "med_reminders_fetch_failed", { error: error.message })` preservado para diagnóstico interno no Supabase Dashboard.
 - **Arquivos:** `supabase/functions/send-medication-reminders/index.ts`
 - **Status:** ✅ Resolvido (sessão 38, commit Lovable MCP `95bf1d74`)
+
+---
+
+### ID-003 · `staleTime: 5min` em hooks PHI clínicos ✅
+- **Risco resolvido:** LGPD Art. 11 — 7 hooks de dados de saúde configurados com `staleTime: 5 * 60 * 1000`, permitindo que medicamentos, consultas, exames, cirurgias, medidas corporais, alergias e doenças fossem servidos de cache por até 5 minutos. Em dispositivos compartilhados ou após troca de membro familiar, o usuário poderia ver dados clínicos de uma sessão anterior.
+- **Resolução:** `staleTime: 0` + `gcTime: 5 * 60_000` aplicados em todos os 7 hooks PHI:
+  - `useHealthMeasurements` — medidas corporais (peso, altura, IMC)
+  - `useProntuarioData` — alergias (query 1) + doenças (query 2)
+  - `useClinicalTimeline` — timeline histórica agregada
+  - `useConsultations` — histórico de consultas médicas
+  - `useExams` — exames e laudos
+  - `useMedications` — medicamentos em uso e posologia
+  - `useSurgeries` — cirurgias e instruções pré/pós-operatórias
+- **Análise de regressão:** `isFetching` consumido apenas por `useSubscription` (não-PHI). Todos hooks PHI usam `isLoading` nos componentes — nenhum spinner infinito. Cache (gcTime) servido sincronamente durante refetch em background — sem flash de loading.
+- **Arquivos:** `src/hooks/useHealthMeasurements.ts`, `src/hooks/useProntuarioData.ts`, `src/hooks/useClinicalTimeline.ts`, `src/hooks/useConsultations.tsx`, `src/hooks/useExams.tsx`, `src/hooks/useMedications.tsx`, `src/hooks/useSurgeries.tsx`
+- **Status:** ✅ Resolvido (sessão 39, commit `62e5589`)
 
 ---
 
@@ -656,6 +673,9 @@ Sprint 38 — Diagnóstico LGPD + 3 Achados Críticos ✅ CONCLUÍDO (sessão 20
 ├── ✅ ID-004/005                           → PHI removido de console.log (parseSusVaccinePdf + useVaccineImport)
 ├── ✅ ID-001                               → error.message → mensagem genérica em send-medication-reminders
 └── ✅ ID-011                               → IDs Asaas removidos de localStorage (writeLocalCache + refetch no cancel)
+
+Sprint 39 — [ID-003] staleTime PHI ✅ CONCLUÍDO (sessão 2026-06-28)
+└── ✅ ID-003                               → staleTime: 0 + gcTime: 5min nos 7 hooks PHI clínicos (LGPD art. 11)
 
 Sprint 35+36 — Web Push VAPID ✅ CONCLUÍDO E2E (sessão 2026-06-21)
 ├── ✅ BK-01 (código)                    → Infraestrutura Web Push VAPID implementada no repo local
