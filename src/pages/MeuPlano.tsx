@@ -33,6 +33,7 @@ const MeuPlano = () => {
   const { user } = useAuth();
   const {
     subscription,
+    refetch: refetchSubscription,
     isActive,
     isPastDue,
     isCanceled,
@@ -117,13 +118,19 @@ const MeuPlano = () => {
     setCancelling(true);
     try {
       if (!user?.id) throw new Error("Sessão inválida.");
-      if (!subscription?.asaas_subscription_id) throw new Error("Assinatura não encontrada.");
+
+      // IDs do Asaas não persistem em localStorage (segurança) — força fetch fresco antes de usar.
+      // Isso garante que asaas_subscription_id esteja disponível independente do cache local.
+      const { data: freshSub } = await refetchSubscription();
+      const asaasSubscriptionId =
+        freshSub?.asaas_subscription_id ?? subscription?.asaas_subscription_id;
+      if (!asaasSubscriptionId) throw new Error("Assinatura não encontrada.");
 
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       if (refreshError || !refreshData?.session) throw new Error("Sessão inválida.");
 
       const { data, error } = await supabase.functions.invoke("cancel-asaas-subscription", {
-        body: { asaasSubscriptionId: subscription.asaas_subscription_id },
+        body: { asaasSubscriptionId },
         headers: {
           Authorization: `Bearer ${refreshData.session.access_token}`,
           "x-request-id": crypto.randomUUID(),

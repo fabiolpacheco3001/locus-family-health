@@ -95,8 +95,8 @@ export function useVaccineImport({
         return;
       }
 
+      // LGPD Art. 11: CPF não é logado — comparação ocorre apenas em memória, sem persistência
       const cleanCandidates = result.allCpfCandidates;
-      console.log("DEBUG CPF -> Candidatos no PDF:", cleanCandidates, "| Banco:", memberCpf);
       if (!cleanCandidates.includes(memberCpf)) {
         toast.error(
           "Este documento pertence a outra pessoa. Verifique o arquivo e o perfil selecionado."
@@ -112,8 +112,7 @@ export function useVaccineImport({
 
       setImportVaccines(result.vaccines);
       setReviewOpen(true);
-    } catch (error) {
-      console.error("Erro no Parser:", error);
+    } catch {
       toast.error("Erro ao processar o arquivo. Tente novamente.");
     } finally {
       setUploading(false);
@@ -171,8 +170,7 @@ export function useVaccineImport({
           ? `${newVaccines.length} vacina(s) importada(s). ${skipped} já existente(s) ignorada(s).`
           : `${newVaccines.length} vacina(s) importada(s) com sucesso`;
       toast.success(msg);
-    } catch (err) {
-      console.error("Import error:", err);
+    } catch {
       toast.error("Erro ao importar vacinas");
     } finally {
       setImportPending(false);

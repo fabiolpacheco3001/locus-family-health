@@ -48,7 +48,14 @@ function readLocalCache(userId: string | undefined): Subscription | undefined {
 
 function writeLocalCache(sub: Subscription) {
   try {
-    localStorage.setItem(LOCAL_SUB_KEY, JSON.stringify({ ...sub, _cachedAt: Date.now() }));
+    // Segurança: IDs de pagamento do Asaas não são necessários para o cold-start sem flash de Paywall.
+    // Persistimos apenas os campos necessários para determinar canUsePremium — IDs sensíveis
+    // ficam apenas em memória (React Query) e são descartados ao fechar a aba.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { asaas_customer_id, asaas_subscription_id, ...safeFields } = sub;
+    // asaas_payment_id pode vir como campo extra não tipado na interface — remover também
+    const { asaas_payment_id: _apid, ...cachePayload } = safeFields as typeof safeFields & { asaas_payment_id?: string | null };
+    localStorage.setItem(LOCAL_SUB_KEY, JSON.stringify({ ...cachePayload, _cachedAt: Date.now() }));
   } catch {
     // localStorage unavailable (e.g., private browsing) — safe to ignore
   }

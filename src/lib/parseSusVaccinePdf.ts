@@ -322,7 +322,7 @@ function extractVaccinesFromTable(rows: TableRow[], columns: ColumnBounds): Impo
       mi++;
     }
   }
-  console.log("MERGED ROWS COUNT:", mergedRows.length, "from original", rows.length - startIndex);
+  // LGPD Art. 11: logs de debug removidos — dados de saúde/CPF não podem ser expostos em console de produção
 
   for (let i = 0; i < mergedRows.length; i++) {
     const row = mergedRows[i];
@@ -477,8 +477,6 @@ export async function parseSusVaccinePdf(file: File): Promise<ParsedSusResult> {
   // Single-pass extraction: avoids detached ArrayBuffer issues
   const { flatText, tableRows } = await extractAll(buffer);
 
-  console.log("FULL PDF TEXT:", flatText);
-
   // CPF from flat text (unchanged logic)
   const cpf = extractCpf(flatText);
   const formatted = flatText.match(/\d{3}\.\d{3}\.\d{3}-\d{2}/g) || [];
@@ -489,11 +487,9 @@ export async function parseSusVaccinePdf(file: File): Promise<ParsedSusResult> {
 
   // Detect column layout from header rows
   const columns = detectColumns(tableRows);
-  console.log("DETECTED COLUMNS:", JSON.stringify(columns));
 
   // Extract vaccines using column-based approach
   const vaccines = extractVaccinesFromTable(tableRows, columns);
-  console.log("EXTRACTED VACCINES:", JSON.stringify(vaccines, null, 2));
 
   return { cpf, allCpfCandidates, vaccines };
 }
