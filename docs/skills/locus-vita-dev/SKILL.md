@@ -551,6 +551,68 @@ CREATE INDEX CONCURRENTLY idx_push_subscriptions_active
 
 **Regra**: toda FK de tabela com acesso frequente precisa de índice. O linter do Supabase não detecta isso — verificar manualmente em code review.
 
+### RLS — Otimizações de Políticas (medido pelo time Supabase em 100K linhas)
+
+**Descoberta crítica:** `auth.uid()` chamado diretamente em política RLS é avaliado em CADA linha. Envolver em `(select auth.uid())` força o PostgreSQL a executar `initPlan` — o resultado é cacheado uma vez por query. Diferença medida:
+
+| Política | Tempo em 100K linhas |
+|----------|---------------------|
+| `auth.uid() = user_id` sem índice | **171ms** |
+| `(select auth.uid()) = user_id` sem índice | **9ms** |
+| `auth.uid() = user_id` + índice em user_id | **< 0.1ms** |
+
+```sql
+-- ❌ LENTO — auth.uid() executado N vezes (uma por linha)
+CREATE POLICY "medications_own" ON medications
+    FOR ALL USING (user_id = auth.uid());
+
+-- ✅ RÁPIDO — initPlan: auth.uid() executado UMA vez por query
+CREATE POLICY "medications_own" ON medications
+    FOR ALL TO authenticated   -- ← TO authenticated: exclui anon sem custo
+    USING (user_id = (select auth.uid()));
+
+-- Para funções de segurança (is_group_admin, etc.):
+-- ❌ LENTO: is_group_admin() chamado por linha (11.000ms!)
+-- ✅ RÁPIDO: (select is_group_admin()) — de 11.000ms → 7ms
+CREATE POLICY "medications_family" ON medications
+    FOR SELECT TO authenticated
+    USING (
+        user_id = (select auth.uid())
+        OR (select is_group_admin())
+    );
+```
+
+**Regra `TO authenticated` em TODAS as políticas:** sem esse filtro, o PostgreSQL avalia a política para usuários `anon` também, custando tempo sem necessidade. Adicionar `TO authenticated` é zero-custo e elimina esse overhead.
+
+**Índice obrigatório em colunas de RLS:**
+```sql
+-- Todo campo usado em política RLS que não é PK precisa de índice btree
+CREATE INDEX CONCURRENTLY idx_medications_user_id
+    ON medications (user_id);
+-- Sem esse índice: 171ms. Com ele: < 0.1ms.
+```
+
+**Pattern de join em família (ordem importa):**
+```sql
+-- ❌ LENTO — join por coluna da linha atual (9.000ms)
+USING (auth.uid() IN (SELECT user_id FROM family_group_members
+                       WHERE group_id = medications.group_id))
+
+-- ✅ RÁPIDO — busca grupos do usuário primeiro, depois filtra (20ms)
+USING (group_id IN (SELECT group_id FROM family_group_members
+                     WHERE user_id = (select auth.uid())))
+```
+
+**Dupla proteção (RLS + filtro explícito na query):**
+```typescript
+// RLS garante segurança, mas o filtro explícito ajuda o planner a usar o índice
+// ❌ Só RLS (mais lento — planner pode fazer Seq Scan mesmo com RLS)
+supabase.from('medications').select('*')
+
+// ✅ RLS + filtro explícito (planner usa índice de user_id)
+supabase.from('medications').select('*').eq('family_member_id', memberId)
+```
+
 ### Diagnóstico de queries lentas (pg_stat_statements)
 
 ```sql
@@ -566,6 +628,41 @@ WHERE mean_exec_time > 100  -- queries acima de 100ms
 ORDER BY mean_exec_time DESC
 LIMIT 10;
 ```
+
+### Saúde dos índices — queries de diagnóstico operacional
+
+Rodar no SQL Editor do Supabase Dashboard quando houver suspeita de degradação:
+
+```sql
+-- 1. Cache hit rate — meta: >= 99%
+-- Abaixo de 99% = possível falta de memória (upgrade de tier) ou índices ausentes
+SELECT
+    'index hit rate' AS name,
+    (sum(idx_blks_hit)) / NULLIF(sum(idx_blks_hit + idx_blks_read), 0) AS ratio
+FROM pg_statio_user_indexes
+UNION ALL
+SELECT
+    'table hit rate' AS name,
+    sum(heap_blks_hit) / NULLIF(sum(heap_blks_hit) + sum(heap_blks_read), 0) AS ratio
+FROM pg_statio_user_tables;
+-- ratio < 0.99 → analisar índices ou considerar upgrade de memória
+
+-- 2. Tabelas com baixo uso de índice (suspeitas de Seq Scan desnecessário)
+SELECT
+    relname AS tabela,
+    100 * idx_scan / (seq_scan + idx_scan) AS pct_uso_indice,
+    n_live_tup AS total_linhas
+FROM pg_stat_user_tables
+WHERE seq_scan + idx_scan > 0
+ORDER BY n_live_tup DESC;
+-- pct_uso_indice < 90% em tabela grande → criar índice ou revisar a query
+
+-- 3. Verificar índices não utilizados (ocupam espaço sem benefício)
+-- Via CLI (após supabase link):
+-- npx supabase inspect db unused-indexes
+```
+
+**index_advisor no Dashboard:** Supabase Dashboard → Database → Query Performance → "Performance Advisor" usa o `index_advisor` para sugerir índices automaticamente. Verificar antes de criar índices manualmente — evita duplicatas.
 
 ### EXPLAIN ANALYZE — como interpretar
 
@@ -777,9 +874,12 @@ Aplicar antes do commit (LOCAL) ou sobre o diff (MCP). Em ordem de severidade:
   [ ] IDOR: recurso acessado sem verificar ownership? → adicionar check
   [ ] Hex de cor fora da paleta oficial do Design System? → corrigir
   [ ] aria-label ausente em card ou widget de saúde? → adicionar
-  [ ] N+1 query em Edge Function de cron? → usar função SQL agregada (RPC)
+  [ ] N+1 query em Edge Function de cron? → usar função SQL agregada (RPC) ou .in('id', ids)
   [ ] PHI em evento de analytics (PostHog, Sentry metadata)? → remover
   [ ] Formulário com PHI sem validação Zod? → adicionar schema
+  [ ] Nova política RLS sem `TO authenticated`? → adicionar (elimina avaliação para anon)
+  [ ] Nova política RLS usa `auth.uid()` diretamente? → envolver em `(select auth.uid())`
+  [ ] Nova tabela com coluna de RLS (user_id, group_id) sem índice btree? → criar índice
 
 🟡 DETALHE — corrigir se tocar o arquivo
 
