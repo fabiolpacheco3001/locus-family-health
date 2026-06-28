@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 1.1 | **Atualizado em:** 2026-06-21
+> **Versão:** 1.2 | **Atualizado em:** 2026-06-28
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -81,6 +81,7 @@
 | BK-01 | Push notifications multi-dispositivo — implementação (VAPID + pg_cron + SW) | Sprint 35 | 2026-06-21 |
 | BK-01-E2E | Push notifications — E2E validado no iPhone (fix par VAPID + contagem APNs) | Sprint 36 | 2026-06-21 |
 | BUG-∞ | Bug ∞ Dipirona (Fase 401) — alias `"interval"` normalizado em `calculateNextDose` | Sprint 37 | 2026-06-21 |
+| SEC-LGPD | Diagnóstico LGPD: 3 achados críticos — PHI em console.log (7 logs), error.message em HTTP, IDs Asaas em localStorage | Sprint 38 | 2026-06-28 |
 | PROD-01 | CPF real em `creditCardHolderInfo` (busca de `family_members`) | Sprint 33 | 2026-06-20 |
 | PROD-02 | Endereço/telefone real em `creditCardHolderInfo` (busca de `family_members`) | Sprint 33 | 2026-06-20 |
 | SEC-RLS | Fix subscriptions 42501 — column-level grants quebraram select("*") | Hotfix | 2026-06-20 |

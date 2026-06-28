@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 5.4 | **Atualizado em:** 2026-06-21 (sessão 37 — Bug ∞ Dipirona fix: alias "interval" normalizado)  
+> **Versão:** 5.5 | **Atualizado em:** 2026-06-28 (sessão 38 — 3 achados críticos do diagnóstico LGPD corrigidos)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -33,6 +33,7 @@
 | Sessão 35 | BK-01 ✅ Web Push VAPID end-to-end: `public/sw.js` (push + notificationclick + pushsubscriptionchange), `src/lib/pushConfig.ts`, `src/hooks/usePushSubscription.ts` (PushManager.subscribe + upsert push_subscriptions), `src/pages/Notificacoes.tsx` (opt-in card). Edge Functions: `send-push-notification` (npm:web-push@3.6.7, auto-deactivates 410/404), `send-medication-reminders` (±3min window, 3 frequency_types, BRT), `send-appointment-reminders` (D-0 e D-1, 8h BRT). Migration `20260621120000_push_notifications.sql`: tabela, RLS, índices, TTL pg_cron dominical. pg_cron jobs ativos com `timeout_milliseconds:=30000`. **Incidente de segurança:** `VAPID_PRIVATE_KEY` exposta em comentário JSDoc no GitHub → chaves rotacionadas via force push, Supabase Secrets atualizados. JSDoc reescrito com placeholder. Smoke test final: `net._http_response` ID 20 → `200 {"processed":0}` ✅. | Sprint 35 ✅ CONCLUÍDO |
 | Sessão 36 | BK-01 E2E fix ✅: diagnóstico completo do push não chegar no iPhone. Root cause: par VAPID inconsistente — `VAPID_PRIVATE_KEY` no Supabase Secrets não correspondia à public key em `pushConfig.ts` (geradas em momentos distintos durante a rotação da sessão 35). Evidência: campo `push_details` adicionado ao response de `send-medication-reminders` revelou `{sent:0,failed:1}` (APNs rejeitando) → `{sent:1,failed:0}` após fix. Fix: par VAPID P-256 regenerado via Node.js WebCrypto (`subtle.generateKey` + JWK export), ambas as chaves atualizadas no Supabase Secrets, `pushConfig.ts` atualizado, usuário re-subscreveu. **Validação E2E:** notificação "💊 Hora do Remédio!" recebida no iPhone com PWA completamente fechado ✅. Bug fix colateral: `send-medication-reminders` contava `sent` por `res.ok` (HTTP 200), não pelo resultado real do APNs — corrigido com leitura do response body. | Sprint 36 ✅ CONCLUÍDO |
 | Sessão 37 | Bug ∞ Dipirona ✅ (Fase 401 — causa raiz real identificada e corrigida): `frequency_type = "interval"` (valor legado no banco de medicamentos criados antes da Fase 398) não era reconhecido por `calculateNextDose` nem por `advancePastTakenDoses` — `"interval"` é truthy, impedia o fallback para `"fixed_interval"`. Dois sintomas: (a) med com `frequency_hours>0` sumia silenciosamente do widget Home; (b) med com `frequency_hours=null` exibia ∞ indevidamente. Fix: normalização `rawType === "interval" ? "fixed_interval" : rawType` em `calculateNextDose.ts`, `advancePastTakenDoses.ts` e `useHomeData.ts`. Testes de regressão: 2 novos `describe` / 7 novos `it` em `calculateNextDose.test.ts`. CI #184 ✅ VERDE (commit 88cbefd). | Sprint 37 ✅ CONCLUÍDO |
+| Sessão 38 | Diagnóstico completo do codebase (`docs/DIAGNOSTICO_CODEBASE_2026-06-27.md`) — 20 achados em 5 domínios; 3 críticos corrigidos nesta sessão: **[ID-004/005]** 7 `console.log` com PHI removidos de `parseSusVaccinePdf.ts` (CPF completo, texto PDF inteiro, colunas detectadas, vacinas extraídas) e `useVaccineImport.ts` (CPF em texto plano); comparação CPF preservada — ocorre apenas em memória. **[ID-001]** `error.message` exposto em resposta HTTP de `send-medication-reminders` → substituído por mensagem genérica; `log()` interno preservado com detalhe. **[ID-011]** `asaas_customer_id`, `asaas_subscription_id`, `asaas_payment_id` removidos de `writeLocalCache` em `useSubscription.ts`; `MeuPlano.tsx` atualizado para chamar `refetchSubscription()` no handler de cancelamento (prevenção de regressão — IDs não mais disponíveis em cold-start do localStorage). Commits: `95bf1d74` (Lovable MCP — edge fn) + `a8f6e2c` (local — 5 arquivos). | Sprint 38 ✅ CONCLUÍDO |
 
 ---
 
@@ -295,6 +296,35 @@
 - **Fix completo (sessão 18 / B9-A):** Atualizado para `"^5.7.284"`. Caminho do worker `build/pdf.worker.min.mjs` preservado em v5 — `parseSusVaccinePdf.ts` sem alterações necessárias.
 - **Arquivos:** `package.json`
 - **Status:** ✅ Resolvido (sessão 14 → atualizado sessão 18)
+
+---
+
+### ID-004/005 · PHI em `console.log` — `parseSusVaccinePdf.ts` e `useVaccineImport.ts` ✅
+- **Risco resolvido:** LGPD Art. 11 — dados de saúde sensíveis (CPF, texto completo do PDF da carteira SUS, vacinas extraídas) expostos em console do browser, visíveis no DevTools de qualquer sessão aberta.
+- **Resolução:** 7 chamadas `console.log` removidas:
+  - `parseSusVaccinePdf.ts`: `"FULL PDF TEXT"` (texto integral com CPF), `"DETECTED COLUMNS"`, `"EXTRACTED VACCINES"`, `"MERGED ROWS COUNT"` — 4 remoções.
+  - `useVaccineImport.ts`: `"DEBUG CPF"` (CPF do membro + candidatos do PDF em texto plano), `catch (error) { console.error("Erro no Parser")`, `catch (err) { console.error("Import error")` — 3 remoções.
+  - Comentário `// LGPD Art. 11: CPF não é logado — comparação ocorre apenas em memória, sem persistência` adicionado no ponto de comparação.
+- **Arquivos:** `src/lib/parseSusVaccinePdf.ts`, `src/hooks/useVaccineImport.ts`
+- **Status:** ✅ Resolvido (sessão 38, commit `a8f6e2c`)
+
+---
+
+### ID-001 · `error.message` exposto em resposta HTTP — `send-medication-reminders` ✅
+- **Risco resolvido:** Mensagem de erro interno do Supabase retornada diretamente ao chamador HTTP — vaza detalhes de implementação e schema de banco para qualquer consumidor da Edge Function.
+- **Resolução:** Linha 90 substituída: `{ error: error.message }` → `{ error: "Erro interno ao buscar medicamentos" }`. `log("error", "med_reminders_fetch_failed", { error: error.message })` preservado para diagnóstico interno no Supabase Dashboard.
+- **Arquivos:** `supabase/functions/send-medication-reminders/index.ts`
+- **Status:** ✅ Resolvido (sessão 38, commit Lovable MCP `95bf1d74`)
+
+---
+
+### ID-011 · IDs de pagamento Asaas em `localStorage` ✅
+- **Risco resolvido:** `asaas_customer_id`, `asaas_subscription_id` (e campo extra `asaas_payment_id`) persistidos em `lv_sub_cache` no localStorage do browser — IDs de processador de pagamento acessíveis via DevTools, XSS, ou compartilhamento de dispositivo.
+- **Resolução:**
+  - `writeLocalCache` em `useSubscription.ts` agora desestrutura e descarta os 3 campos antes de gravar. localStorage armazena apenas o que é necessário para determinar `canUsePremium` (status, datas de faturamento, tipo de plano).
+  - `MeuPlano.tsx`: `handleCancelSubscription` chama `refetchSubscription()` no início para obter `asaas_subscription_id` fresco do Supabase — prevenção de regressão, pois o ID não está mais disponível no cold-start do localStorage. Fallback `freshSub?.asaas_subscription_id ?? subscription?.asaas_subscription_id` cobre falhas transitórias de rede.
+- **Arquivos:** `src/hooks/useSubscription.ts`, `src/pages/MeuPlano.tsx`
+- **Status:** ✅ Resolvido (sessão 38, commit `a8f6e2c`)
 
 ---
 
@@ -620,6 +650,12 @@ Sprint 12 — Pendente (sugestão)
 ├── ⬜ A7 E2E                            → Playwright: login, cadastro de medicamento, marcação de dose
 ├── ⬜ BK-02                             → Ciclos posológicos complexos (anticoncepcional 21+7)
 └── ⬜ BK-03                             → OAuth Google / Apple (login social)
+
+Sprint 38 — Diagnóstico LGPD + 3 Achados Críticos ✅ CONCLUÍDO (sessão 2026-06-28)
+├── ✅ DIAGNOSTICO_CODEBASE_2026-06-27.md  → 20 achados em 5 domínios gerados e commitados
+├── ✅ ID-004/005                           → PHI removido de console.log (parseSusVaccinePdf + useVaccineImport)
+├── ✅ ID-001                               → error.message → mensagem genérica em send-medication-reminders
+└── ✅ ID-011                               → IDs Asaas removidos de localStorage (writeLocalCache + refetch no cancel)
 
 Sprint 35+36 — Web Push VAPID ✅ CONCLUÍDO E2E (sessão 2026-06-21)
 ├── ✅ BK-01 (código)                    → Infraestrutura Web Push VAPID implementada no repo local
