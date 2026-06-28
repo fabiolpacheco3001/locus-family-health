@@ -151,6 +151,15 @@
 
 ---
 
+### ID-002 · N+1 query em cron de lembretes de medicamento
+- **Risco:** N+1 query em `send-medication-reminders` — `getNotificationTargets` é chamado dentro do `for (const med of medications)`. Para cada medicamento com `shouldNotify = true`, executa 1 SELECT em `family_group_members`. Em 50 meds simultâneos → 50 queries extras a cada 5 minutos. Sob carga pode causar timeouts e esgotar o connection pool.
+- **Arquivos:** `supabase/functions/send-medication-reminders/index.ts:114,191`
+- **Fix:** Pré-carregar todos os `group_ids` únicos antes do loop → 1 query `.in("group_id", groupIds)` → mapa em memória para resolver targets em O(1).
+- **Severidade × Esforço:** 🔴 Crítico × Médio (4h)
+- **Status:** ⬜ Pendente
+
+---
+
 ## 🔴 ALTO — Risco operacional ou segurança significativa
 
 ### A1 · CORS wildcard (`*`) em todas as Edge Functions ✅
@@ -345,6 +354,86 @@
 
 ---
 
+### ID-006 · Políticas RLS sem `TO authenticated` em migrations antigas
+- **Risco:** Sem `TO authenticated`, a política se aplica a `PUBLIC` (inclui `anon`). Um usuário anônimo pode ter acesso a dados de `family_group_members` e `exams` se a cláusula `USING` for satisfeita com uid NULL — depende da lógica da política.
+- **Arquivos:** `supabase/migrations/20260326172842_0ea886ad.sql:4,13,24,33`, `supabase/migrations/20260321145854_2e5d89ab.sql:16,20,24,28`, `supabase/migrations/20260402155636_8aea726c.sql:18,40,62`
+- **Fix:** Migration de correção com `ALTER POLICY "..." ON public.[tabela] TO authenticated;` para todas as políticas afetadas.
+- **Severidade × Esforço:** 🟠 Importante × Baixo (2h)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-007 · `auth.uid()` direto em RLS sem `(select auth.uid())`
+- **Risco:** `auth.uid()` chamado diretamente em `USING/WITH CHECK` é re-avaliado para cada linha. `(select auth.uid())` usa `initPlan` — avaliado 1× por query. Em tabelas com > 10K linhas: diferença medida de 9ms vs 171ms (sem índice). Afeta múltiplas migrations (`20260321145854`, `20260402155636`, `20260621120000`, `20260622172313`, `20260622000000`).
+- **Fix:** Migration de `ALTER POLICY` para tabelas de alto volume (medications, consultations, exams, medication_doses) substituindo `auth.uid()` por `(select auth.uid())`.
+- **Severidade × Esforço:** 🟠 Importante × Médio (4h)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-009 · N+1 latente em cron de lembretes de consultas/exames
+- **Risco:** `send-appointment-reminders` chama `getNotificationTargets` dentro dos loops de consultas, exames e cirurgias. Em dias com muitos compromissos, escala linearmente com o número de items.
+- **Arquivos:** `supabase/functions/send-appointment-reminders/index.ts:77,94,119`
+- **Fix:** Mesma estratégia de ID-002 — pré-carregar `family_group_members` de todos os grupos relevantes antes dos loops.
+- **Severidade × Esforço:** 🟠 Importante × Médio (3h)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-010 · `select("*")` em tabelas com PHI
+- **Risco:** Busca todas as colunas incluindo futuras colunas adicionadas por migrations. Se uma migration adicionar uma coluna sensível, ela será retornada automaticamente sem revisão. Também transfere dados desnecessários pela rede.
+- **Arquivos:** `src/hooks/useHealthMeasurements.ts:27` (health_measurements), `src/hooks/useFamilyMembers.tsx:53` (family_members)
+- **Fix:** Listar colunas explicitamente no `.select()` de cada hook afetado.
+- **Severidade × Esforço:** 🟠 Importante × Baixo (1h)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-012 · Índice btree ausente em `consent_log.user_id`
+- **Risco:** A política RLS `USING (user_id = auth.uid())` em `consent_log` executa seq scan — tabela de auditoria que cresce constantemente (1 linha por aceite/revogação de consentimento).
+- **Arquivos:** `supabase/migrations/20260616000009_lgpd_consent_log.sql`
+- **Fix:** Nova migration com `CREATE INDEX IF NOT EXISTS idx_consent_log_user_id ON public.consent_log (user_id);`
+- **Severidade × Esforço:** 🟠 Importante × Baixo (30 min)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-013 · `onSuccess` em `useFamilyMembers` invalida queryKeys insuficientes
+- **Risco:** Após soft-delete de um membro, `["upcoming-appointments"]`, `["pending-counts"]` e `["today-pet-routines"]` não são invalidados. O membro deletado pode aparecer no carrossel da Home por até 5 minutos.
+- **Arquivos:** `src/hooks/useFamilyMembers.tsx:76,92,105`
+- **Fix:** Adicionar invalidações de `["upcoming-appointments"]`, `["pending-counts"]`, `["today-pet-routines"]` e `["agenda"]` no `deleteMember.onSuccess`.
+- **Severidade × Esforço:** 🟠 Importante × Baixo (30 min)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-014 · `addMedication` / `updateMedication` não invalidam `["agenda"]`
+- **Risco:** Após adicionar ou editar um medicamento, a Agenda não é invalidada. Inconsistência com `useConsultations` que invalida `["agenda"]` corretamente — usuário vê agenda desatualizada até próximo mount.
+- **Arquivos:** `src/hooks/useMedications.tsx:128,146`
+- **Fix:** Adicionar `queryClient.invalidateQueries({ queryKey: ["agenda"] })` nos `onSuccess` de `addMedication` e `updateMedication`.
+- **Severidade × Esforço:** 🟠 Importante × Baixo (15 min)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-016 · Formulários com PHI sem validação Zod
+- **Risco:** Cadastro, Login, AddMedicationDrawer, AddConsultationDrawer e AddSurgeryDrawer validam PHI com lógica imperativa dispersa. Sem schema Zod centralizado, inconsistências entre frontend e backend passam despercebidas e erros de validação são difíceis de testar.
+- **Arquivos:** `src/pages/Cadastro.tsx`, `src/pages/Login.tsx`, `src/components/AddMedicationDrawer.tsx`, `src/components/AddConsultationDrawer.tsx`, `src/components/AddSurgeryDrawer.tsx`
+- **Fix:** Criar `src/lib/schemas/` com schemas Zod por domínio (auth, medication, consultation, surgery). Usar `zodResolver` com React Hook Form.
+- **Severidade × Esforço:** 🟠 Importante × Alto (8h+)
+- **Status:** ⬜ Pendente (ver também BACKLOG.md)
+
+---
+
+### ID-018 · `aria-label` ausente em cards de saúde interativos
+- **Risco:** Cards de medicamento, consulta, exame e cirurgia com gesto de swipe não têm `aria-label` nos elementos interativos. VoiceOver iOS e TalkBack Android não conseguem descrever as ações para usuários com deficiência visual. Apenas 15 ocorrências de `aria-label` em toda a pasta `src/components/`.
+- **Arquivos:** `src/components/SwipeableCard.tsx`, `src/components/ExamSwipeableCard.tsx`, `src/components/SurgeryCard.tsx`, `src/components/medications/MedicationListItem.tsx`
+- **Fix:** Adicionar `role="listitem"`, `aria-label` descritivo e `onKeyDown` handlers nos containers de swipe. Ver padrão em seção Acessibilidade do SKILL.md.
+- **Severidade × Esforço:** 🟠 Importante × Médio (4h)
+- **Status:** ⬜ Pendente
+
+---
+
 ## 🟡 MÉDIO — Degradação com crescimento ou manutenibilidade
 
 ### M1 · Sem APM/Sentry
@@ -491,6 +580,42 @@
 
 ---
 
+### ID-008 · `as any` sem narrowing em hooks críticos
+- **Risco:** `supabase.from("surgeries" as any) as any` em `useSurgeries.tsx` (9 ocorrências) — ocorre porque `types.ts` não foi regenerado após criação da tabela (ver TD-SRG-04). `med: any` exportado em `useHomeData.ts` remove segurança de tipo em `TodayMedicationsSection`. Erros de runtime passam sem detecção pelo CI.
+- **Arquivos:** `src/hooks/useHomeData.ts:37,120`, `src/hooks/useSurgeries.tsx:79,117,177,204,226`, `src/hooks/usePushSubscription.ts:99,122`
+- **Fix:** Regenerar `types.ts` via Supabase CLI → remover todos os `as any`. Tipar `MedWithNextDose.med` como `Medication` (ver ID-019).
+- **Pré-requisito:** Regeneração de `types.ts` pelo Fábio (`supabase gen types typescript --project-id <ID>`).
+- **Severidade × Esforço:** 🟠 Importante × Médio
+- **Status:** ⬜ Pendente (bloqueado por regeneração de types.ts)
+
+---
+
+### ID-015 · `console.log`/`console.error` não-PHI em produção
+- **Risco:** 15+ ocorrências em `InviteAcceptInterceptor.tsx:83,132,246`, `useMedicationAlarms.ts:39`, `Cadastro.tsx:23`, `NotFound.tsx:8` e outros. Expõe mensagens de erro internas, pathnames e estados de autenticação via DevTools. Menor que ID-004/005 pois não envolve PHI direto.
+- **Fix:** Substituir por `captureException(err, { context: "..." })` via `@/lib/sentry` nos pontos de erro; remover logs de debug.
+- **Severidade × Esforço:** 🟡 Melhoria × Baixo (2h)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-019 · `MedWithNextDose.med` tipado como `any` em tipo exportado
+- **Risco:** `MedWithNextDose` é consumido por `TodayMedicationsSection.tsx`. O campo `med: any` remove toda a segurança de tipo na renderização dos cards de medicamento na Home — erros de acesso a propriedades inexistentes não são detectados pelo TypeScript.
+- **Arquivos:** `src/hooks/useHomeData.ts:37`
+- **Fix:** `import type { Medication } from "@/hooks/useMedications"` → `med: Medication` no tipo exportado.
+- **Severidade × Esforço:** 🟡 Melhoria × Baixo (30 min)
+- **Status:** ⬜ Pendente
+
+---
+
+### ID-020 · Migrations conflitantes para módulo Cirurgias
+- **Risco:** `20260622000000_add_surgeries_module.sql` usa `fgm.user_id` (campo inexistente — correto é `fgm.auth_user_id`). Supersedida por `20260622172313`. Em staging, as políticas com campo errado podem ter ficado ativas entre os dois deploys, potencialmente permitindo acesso indevido temporário.
+- **Arquivos:** `supabase/migrations/20260622000000_add_surgeries_module.sql`, `supabase/migrations/20260622172313_d78937ea.sql`
+- **Fix:** Adicionar comentário no topo de `20260622000000` indicando que foi supersedida. Documentar historicamente — não remover (imutabilidade das migrations).
+- **Severidade × Esforço:** 🟡 Melhoria × Alto (documentação + auditoria)
+- **Status:** ⬜ Pendente
+
+---
+
 ## 🟢 BAIXO — Higiene técnica e polish
 
 ### B1 · `deno.land/std@0.168.0` desatualizado (atual: 0.224+)
@@ -565,6 +690,15 @@
 | `zod` | ⬜ 3.x (4.x — não usado em src/, baixíssima prioridade) |
 
 - **Status:** ✅ Itens de alto risco concluídos. Restam 4 pacotes de baixo risco para sprint futuro.
+
+---
+
+### ID-017 · Comentário preventivo ausente no padrão `window.open("about:blank")`
+- **Observação:** O padrão está CORRETO — `window.open("about:blank")` é chamado antes de qualquer `await` em todos os 5 locais de checkout, satisfazendo o gate do Safari/iOS popup blocker. O risco é regressão futura por desenvolvedor que não conhece o motivo e move o `window.open` para depois de um `await`.
+- **Arquivos:** `src/pages/MeuPlano.tsx:97,167`, `src/pages/Ajustes.tsx:64`, `src/components/PaywallModal.tsx:151`, `src/pages/Landing.tsx:128`
+- **Fix:** Adicionar comentário `// iOS Safari popup blocker: must open window synchronously BEFORE any await.` antes de cada `window.open("about:blank")`.
+- **Severidade × Esforço:** 🟡 Melhoria × Baixo (30 min)
+- **Status:** ⬜ Pendente
 
 ---
 

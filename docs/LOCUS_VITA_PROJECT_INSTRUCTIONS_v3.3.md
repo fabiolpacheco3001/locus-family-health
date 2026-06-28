@@ -1,6 +1,6 @@
 # LOCUS VITA — Instrução de Projeto para Cowork (Claude)
 
-> **Versão:** 3.3 | **Atualizado em:** 2026-06-23
+> **Versão:** 3.4 | **Atualizado em:** 2026-06-28
 >
 > Este documento é a **referência arquitetural do projeto** — padrões, regras, estrutura de dados e workflow.
 > Ele **não** controla bugs, backlog ou débito técnico.
@@ -127,10 +127,20 @@ supabase/
 const useMedications = (familyMemberId: string) => {
   const queryClient = useQueryClient()
 
+  // ⚠️ ATENÇÃO — staleTime depende do tipo de dado:
+  // PHI (medicamentos, consultas, exames, cirurgias, vacinas, alergias,
+  //      doenças, medições corporais, timeline clínica):
+  //   staleTime: 0, gcTime: 5 * 60_000
+  //   LGPD art. 11 — dado de saúde sensível nunca deve ser servido de cache
+  //   de sessão anterior no mesmo dispositivo.
+  // Não-PHI (subscription, group config, plano):
+  //   staleTime: 5 * 60 * 1000
   const { data, isLoading } = useQuery({
     queryKey: ['medications', familyMemberId],
     queryFn: async () => { /* supabase query */ },
-    staleTime: 5 * 60 * 1000,
+    // PHI — LGPD art. 11: medicamentos são dados de saúde sensíveis
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   })
 
   const mutation = useMutation({
