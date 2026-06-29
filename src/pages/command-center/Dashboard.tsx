@@ -39,6 +39,9 @@ const Dashboard = () => {
     },
     retry: false,
     refetchOnWindowFocus: false,
+    // Same queryKey as Clientes tab — shared cache means navigating between tabs
+    // reuses data fetched by the first tab (zero extra requests for 5 min).
+    staleTime: 5 * 60 * 1000,
   });
   const stats = [
     {

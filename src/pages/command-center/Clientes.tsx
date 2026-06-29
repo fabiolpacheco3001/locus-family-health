@@ -4,10 +4,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Search, MoreHorizontal, Users, Ban, KeyRound, Eye, FlaskConical } from "lucide-react";
+import { Search, MoreHorizontal, Users, Ban, KeyRound, Eye, FlaskConical, Clock, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -21,8 +22,13 @@ import {
   AlertDialog, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+
+const PAGE_SIZE = 20;
 
 interface ClientRow {
   user_id: string;
@@ -70,8 +76,12 @@ const planStatusBadge = (client: ClientRow) => {
 
 const Clientes = () => {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
   const [selectedClient, setSelectedClient] = useState<ClientRow | null>(null);
   const [blockTarget, setBlockTarget] = useState<ClientRow | null>(null);
+  const [trialTarget, setTrialTarget] = useState<ClientRow | null>(null);
+  const [trialDays, setTrialDays] = useState("7");
+  const [trialPending, setTrialPending] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: clients = [], isLoading, error: queryError } = useQuery({
@@ -83,6 +93,9 @@ const Clientes = () => {
     },
     retry: false,
     refetchOnWindowFocus: false,
+    // Admin data is non-PHI — 5 min staleTime prevents redundant fetches when
+    // navigating between Dashboard and Clientes tabs (same queryKey, shared cache).
+    staleTime: 5 * 60 * 1000,
   });
 
   const filtered = useMemo(() => {
@@ -95,6 +108,15 @@ const Clientes = () => {
         c.user_id.toLowerCase().includes(q)
     );
   }, [clients, search]);
+
+  // Reset to page 0 when search changes
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(0);
+  };
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   const handleResetPassword = async (client: ClientRow) => {
     if (!client.email) {
@@ -132,6 +154,31 @@ const Clientes = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
     }
     setBlockTarget(null);
+  };
+
+  const handleSetTrial = async () => {
+    if (!trialTarget) return;
+    const days = parseInt(trialDays, 10);
+    if (isNaN(days) || days < 1 || days > 365) {
+      toast.error("Informe um número de dias entre 1 e 365.");
+      return;
+    }
+    setTrialPending(true);
+    try {
+      const { error } = await supabase.rpc("admin_set_user_trial", {
+        target_user_id: trialTarget.user_id,
+        days_remaining: days,
+      });
+      if (error) throw error;
+      toast.success(`Plano Grátis de ${days} dia(s) ativado para ${trialTarget.full_name || trialTarget.email}.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-clients"] });
+      setTrialTarget(null);
+      setTrialDays("7");
+    } catch {
+      toast.error("Erro ao alterar Plano Grátis. Verifique suas permissões.");
+    } finally {
+      setTrialPending(false);
+    }
   };
 
   const handleToggleTestMode = async (client: ClientRow) => {
@@ -184,8 +231,8 @@ const Clientes = () => {
         <Input
           placeholder="Buscar por nome, e-mail ou ID..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 bg-white border-gray-200"
+          onChange={(e) => handleSearch(e.target.value)}
+          className="pl-9 bg-white border-gray-200 text-base"
         />
       </div>
 
@@ -223,7 +270,7 @@ const Clientes = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((client) => (
+              paginated.map((client) => (
                 <TableRow key={client.user_id} className="hover:bg-gray-50/50">
                   <TableCell>
                     <div>
@@ -259,6 +306,13 @@ const Clientes = () => {
                           Resetar Senha
                         </DropdownMenuItem>
                         <DropdownMenuItem
+                          className="text-blue-600 focus:text-blue-600"
+                          onClick={() => { setTrialTarget(client); setTrialDays("7"); }}
+                        >
+                          <Clock className="w-4 h-4 mr-2" />
+                          Alterar Plano Grátis
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           className={client.test_mode ? "text-emerald-600 focus:text-emerald-600" : "text-amber-600 focus:text-amber-600"}
                           onClick={() => handleToggleTestMode(client)}
                         >
@@ -283,6 +337,35 @@ const Clientes = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-sm text-muted-foreground">
+            {filtered.length} resultado(s) · página {page + 1} de {totalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Client Detail Sheet */}
       <Sheet open={!!selectedClient} onOpenChange={(open) => !open && setSelectedClient(null)}>
@@ -324,6 +407,43 @@ const Clientes = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Trial Days Dialog */}
+      <Dialog open={!!trialTarget} onOpenChange={(open) => !open && setTrialTarget(null)}>
+        <DialogContent className="max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#2A5C82]">
+              <Clock size={18} aria-hidden="true" />
+              Alterar Plano Grátis
+            </DialogTitle>
+            <DialogDescription>
+              Define quantos dias de acesso gratuito o usuário{" "}
+              <strong>{trialTarget?.full_name || trialTarget?.email}</strong> terá a partir de agora.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="trial-days">Dias de trial</Label>
+            <Input
+              id="trial-days"
+              type="number"
+              min={1}
+              max={365}
+              value={trialDays}
+              onChange={(e) => setTrialDays(e.target.value)}
+              className="text-base w-28"
+            />
+            <p className="text-xs text-muted-foreground">Entre 1 e 365 dias a partir de agora.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTrialTarget(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSetTrial} disabled={trialPending}>
+              {trialPending ? <Loader2 size={16} className="animate-spin" /> : "Confirmar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Block Confirm Dialog */}
       <AlertDialog open={!!blockTarget} onOpenChange={() => setBlockTarget(null)}>

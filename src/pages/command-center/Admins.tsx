@@ -66,6 +66,10 @@ const Admins = () => {
       if (error) throw error;
       return (data?.admins ?? []) as Admin[];
     },
+    // Edge Function has Deno cold start (~400-600ms). 5 min staleTime avoids
+    // redundant invocations when navigating back to this tab.
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const createMutation = useMutation({
