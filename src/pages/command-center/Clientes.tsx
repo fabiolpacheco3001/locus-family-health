@@ -2,7 +2,7 @@ import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { useState, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, isFuture } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Search, MoreHorizontal, Users, Ban, KeyRound, Eye, FlaskConical, Clock, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -47,8 +47,18 @@ const planStatusBadge = (client: ClientRow) => {
       ? "Premium Anual" : "Premium Mensal";
     return <Badge className="bg-emerald-500 text-white border-none">{label}</Badge>;
   }
-  if (client.status === "suspended" || client.status === "canceled") {
+  // "suspended" = bloqueio manual pelo admin via Command Center
+  if (client.status === "suspended") {
     return <Badge variant="destructive" className="border-none">Bloqueado</Badge>;
+  }
+  // "canceled" com next_billing_date no futuro = Grace Period (ainda tem acesso)
+  // "canceled" com next_billing_date no passado (ou null) = sem acesso
+  if (client.status === "canceled") {
+    if (client.next_billing_date && isFuture(new Date(client.next_billing_date))) {
+      const until = format(new Date(client.next_billing_date), "dd/MM/yy");
+      return <Badge className="bg-amber-500 text-white border-none">Grace Period até {until}</Badge>;
+    }
+    return <Badge className="bg-gray-500 text-white border-none">Cancelado</Badge>;
   }
   if (client.status === "past_due") {
     return <Badge className="bg-red-500 text-white border-none">Inadimplente</Badge>;
