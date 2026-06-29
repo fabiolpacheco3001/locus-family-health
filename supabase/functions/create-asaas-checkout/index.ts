@@ -68,8 +68,12 @@ async function findOrCreateCustomer(
   }
 
   // 2. Tentar criar novo cliente
-  // cpfCnpj vazio = sandbox sem CPF real; omitir campo para Asaas não rejeitar
-  const customerBody: Record<string, string> = { name, email, phone, postalCode, addressNumber };
+  // cpfCnpj/phone vazios = sandbox sem dado real; omitir campo para Asaas não rejeitar
+  log("info", "asaas_customer_payload", {
+    env: creds.env, hasCpf: !!cpfCnpj, hasPhone: !!phone,
+  });
+  const customerBody: Record<string, string> = { name, email, postalCode, addressNumber };
+  if (phone) customerBody.phone = phone;
   if (cpfCnpj) customerBody.cpfCnpj = cpfCnpj;
 
   try {
