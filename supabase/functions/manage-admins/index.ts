@@ -3,6 +3,83 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
 
+async function sendViaResend(params: {
+  to: string;
+  from: string;
+  subject: string;
+  html: string;
+  text: string;
+  apiKey: string;
+}): Promise<{ id?: string; error?: string }> {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${params.apiKey}`,
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { error: (body as { message?: string }).message ?? `HTTP ${res.status}` };
+  }
+  return { id: (body as { id?: string }).id };
+}
+
+function buildResetPasswordHtml(resetLink: string): string {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f2f0eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f0eb;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#1C3333;padding:32px 32px 24px;text-align:center;">
+            <div style="font-size:26px;font-weight:800;color:#78C2AD;letter-spacing:-0.5px;">Locus Vita</div>
+            <div style="font-size:12px;color:#78C2AD;opacity:0.7;margin-top:2px;letter-spacing:0.5px;">SAÚDE FAMILIAR</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 32px 24px;">
+            <h1 style="color:#1C3333;font-size:20px;font-weight:700;margin:0 0 8px;">Redefinição de senha 🔐</h1>
+            <p style="color:#4B5563;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Um administrador solicitou a redefinição da sua senha no Locus Vita. Clique no botão abaixo para criar uma nova senha.
+            </p>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${resetLink}" style="display:inline-block;background:#78C2AD;color:#1C3333;font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;text-decoration:none;">
+                Redefinir minha senha
+              </a>
+            </div>
+            <div style="background:#f8f7f4;border-radius:12px;padding:16px 20px;margin:0 0 20px;">
+              <p style="color:#4B5563;font-size:13px;margin:0;line-height:1.6;">
+                ⚠️ Este link expira em <strong>1 hora</strong>. Se você não solicitou a redefinição de senha, ignore este e-mail — sua senha permanece a mesma.
+              </p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f8f7f4;padding:20px 32px;text-align:center;border-top:1px solid #e5e3de;">
+            <p style="color:#9CA3AF;font-size:12px;margin:0;">
+              Locus Vita — Saúde Familiar Inteligente<br>
+              <a href="https://locustech.com.br" style="color:#78C2AD;text-decoration:none;">locustech.com.br</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
