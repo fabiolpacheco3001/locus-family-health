@@ -174,7 +174,13 @@ Deno.serve(async (req) => {
         return json({ error: "Não foi possível gerar o link de recuperação." }, 500);
       }
 
-      const resetLink = linkData.properties.action_link;
+      // Usar email_otp para link direto: evita PKCE verifier ausente e allowlist de redirect_to.
+      // O ResetPassword.tsx chama verifyOtp({ email, token, type: 'recovery' }) diretamente.
+      const emailOtp = (linkData.properties as Record<string, unknown>).email_otp as string | undefined;
+      const appOrigin = req.headers.get("origin") ?? Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
+      const resetLink = emailOtp
+        ? `${appOrigin}/reset-password?email=${encodeURIComponent(targetEmail)}&token=${encodeURIComponent(emailOtp)}`
+        : linkData.properties.action_link; // fallback caso email_otp não esteja disponível
 
       const { id: resendId, error: resendErr } = await sendViaResend({
         to: targetEmail,
