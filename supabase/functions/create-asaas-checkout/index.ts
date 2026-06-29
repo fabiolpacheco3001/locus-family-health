@@ -57,12 +57,32 @@ async function findOrCreateCustomer(
   if (search.data && search.data.length > 0) {
     const existing = search.data[0];
     log("info", "asaas_customer_found", { customerId: existing.id, env: creds.env });
-    if (!existing.cpfCnpj && cpfCnpj) {
-      await asaasFetch(creds, `/customers/${existing.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ name, cpfCnpj, phone, postalCode, addressNumber }),
-      });
-      log("info", "asaas_customer_cpf_updated", { customerId: existing.id, env: creds.env });
+
+    const needsCpf = !existing.cpfCnpj && !!cpfCnpj;
+    // Telefone armazenado de tentativas anteriores (fallback inválido "11999999999")
+    // causa invalid_mobilePhone no Asaas ao criar pagamento — atualizar para valor válido.
+    const hasStalePhone =
+      existing.phone === "11999999999" || existing.mobilePhone === "11999999999";
+    const shouldUpdatePhone = !!phone && (hasStalePhone || !existing.phone);
+
+    if (needsCpf || shouldUpdatePhone) {
+      const updateBody: Record<string, string> = { name, postalCode, addressNumber };
+      if (cpfCnpj) updateBody.cpfCnpj = cpfCnpj;
+      if (phone) updateBody.phone = phone;
+      try {
+        await asaasFetch(creds, `/customers/${existing.id}`, {
+          method: "PUT",
+          body: JSON.stringify(updateBody),
+        });
+        log("info", "asaas_customer_updated", {
+          customerId: existing.id, env: creds.env, needsCpf, shouldUpdatePhone,
+        });
+      } catch (updateErr) {
+        log("warn", "asaas_customer_update_failed", {
+          customerId: existing.id, env: creds.env,
+          hint: updateErr instanceof Error ? updateErr.message : String(updateErr),
+        });
+      }
     }
     return existing.id;
   }
@@ -225,9 +245,14 @@ Deno.serve(async (req) => {
     // Em sandbox, não enviar CPF placeholder "00000000191" (inválido) — Asaas sandbox aceita cliente sem CPF.
     // Em produção, CPF real já foi validado pelo guard acima.
     const effectiveCpfCnpj = (testMode && cpfCnpj === "00000000191") ? "" : cpfCnpj;
-    // Em sandbox, "11999999999" é o fallback quando não há telefone no perfil — omitir do payload.
-    // Em produção, se o usuário não tem telefone, Asaas aceita sem o campo.
-    const effectivePhone = billingPhone !== "11999999999" ? billingPhone : "";
+    // Sandbox: usar número de teste em formato brasileiro válido quando não há telefone real.
+    // Asaas sandbox valida o formato do telefone mas aceita qualquer número no padrão correto.
+    // Produção: omitir campo quando não há telefone (CPF é suficiente para antifraude Asaas).
+    const effectivePhone = (() => {
+      if (billingPhone !== "11999999999") return billingPhone; // telefone real do usuário
+      if (testMode) return "11912345678";                       // número de teste sandbox (DDD+9+8 dígitos)
+      return "";                                                // produção sem telefone — omitir do payload
+    })();
 
     // Reutilizar customer ID salvo no banco quando disponível — evita chamada Asaas e possível conflito de CPF.
     let customerId: string;
@@ -335,7 +360,7 @@ Deno.serve(async (req) => {
           ...(effectiveCpfCnpj ? { cpfCnpj: effectiveCpfCnpj } : {}),
           postalCode,
           addressNumber,
-          ...(billingPhone !== "11999999999" ? { phone: billingPhone } : {}),
+          ...(effectivePhone ? { phone: effectivePhone } : {}),
         },
       }),
     });
