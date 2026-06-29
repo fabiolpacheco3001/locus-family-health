@@ -134,6 +134,14 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
         onOpenChange(false);
         toast.success("Assinatura confirmada! Bem-vindo ao Locus Vita Premium.");
       } else {
+        // Sync cache com o estado real do banco — pode estar desatualizado se
+        // localStorage tinha subscription ativa de sessão anterior (initialData stale).
+        // setQueryData(null) dispara clearLocalCache() no useEffect de useSubscription,
+        // prevenindo false "canUsePremium=true" que causava toast "Assinatura confirmada"
+        // logo após o clique em "Verificar".
+        await queryClient.cancelQueries({ queryKey: ["subscription"], type: "all" });
+        queryClient.setQueryData(["subscription", refreshed.session.user.id], sub ?? null);
+        await queryClient.invalidateQueries({ queryKey: ["subscription"], type: "all" });
         toast.info("Assinatura ainda não confirmada. Aguarde alguns instantes e tente novamente.");
       }
     } finally {

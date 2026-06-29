@@ -202,8 +202,10 @@ export function useSubscription() {
   useEffect(() => {
     if (subscription?.status === "active" || subscription?.status === "trialing") {
       writeLocalCache(subscription);
-    } else if (subscription === null) {
-      // Explicitly null means server confirmed no subscription — clear cache
+    } else if (subscription !== undefined) {
+      // Qualquer status não-ativo (null, pending_payment, suspended, canceled, etc.)
+      // indica que a subscription ativa em cache pode estar stale — limpar.
+      // Condição `!== undefined` evita limpar durante o loading inicial (data ainda indefinida).
       clearLocalCache();
     }
   }, [subscription]);
