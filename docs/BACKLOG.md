@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 1.6 | **Atualizado em:** 2026-06-29 (sessão 44)
+> **Versão:** 1.7 | **Atualizado em:** 2026-06-29 (sessão 45)
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -84,6 +84,8 @@
 | BK-01 | Push notifications multi-dispositivo — implementação (VAPID + pg_cron + SW) | Sprint 35 | 2026-06-21 |
 | BK-01-E2E | Push notifications — E2E validado no iPhone (fix par VAPID + contagem APNs) | Sprint 36 | 2026-06-21 |
 | BUG-∞ | Bug ∞ Dipirona (Fase 401) — alias `"interval"` normalizado em `calculateNextDose` | Sprint 37 | 2026-06-21 |
+| CC-01 | Fix reset de senha CC: `resetPasswordForEmail` (SMTP Supabase) → Edge Function `manage-admins` action `reset` com `generateLink` + Resend API | Sprint 45 | 2026-06-29 |
+| CC-02 | CC Clientes: ação "Alterar Plano Grátis" + paginação 20/página + `staleTime: 5min` nos 3 tabs do Command Center | Sprint 44 | 2026-06-29 |
 | SEC-LGPD | Diagnóstico LGPD: 3 achados críticos — PHI em console.log (7 logs), error.message em HTTP, IDs Asaas em localStorage | Sprint 38 | 2026-06-28 |
 | SEC-ID003 | [ID-003] staleTime: 0 nos 7 hooks PHI clínicos (LGPD art. 11) — dados de saúde nunca servidos de cache de sessão anterior | Sprint 39 | 2026-06-28 |
 | PROD-01 | CPF real em `creditCardHolderInfo` (busca de `family_members`) | Sprint 33 | 2026-06-20 |
