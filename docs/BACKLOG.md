@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 1.4 | **Atualizado em:** 2026-06-29 (sessão 42)
+> **Versão:** 1.6 | **Atualizado em:** 2026-06-29 (sessão 44)
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -26,6 +26,8 @@
 | PROD-01 | ~~CPF real do usuário em `creditCardHolderInfo`~~ | ✅ | Resolvido (sessão 33): `create-asaas-checkout` agora busca `cpf` real de `family_members`. Se ausente, usa fallback `"00000000191"` + log `warn "checkout_cpf_fallback"`. Migration adicionou campo `cpf` à tabela; tela MeusDados permite preenchimento. |
 | PROD-02 | ~~Endereço/telefone real em `creditCardHolderInfo`~~ | ✅ | Resolvido (sessão 33): edge function busca `phone`, `postal_code`, `address_number` reais do perfil familiar. Campos CEP e número adicionados à tela MeusDados. Migration `postal_code + address_number` aplicada. |
 | PROD-03 | ~~Validar tokenização + Root cause "Erro do servidor financeiro"~~ | ✅ | **Resolvido (sessões 41+42).** Root cause: contas de teste com `subscriptions.test_mode = false` (Asaas Produção) + `cpf: null` → fallback `"00000000191"` rejeitado pela Receita Federal. Fix sessão 41 (3 camadas): (1) DB `test_mode = true` para contas de teste; (2) edge function `create-asaas-checkout`: guard 422 com `code: "missing_cpf"` se produção sem CPF; (3) `asaasService.ts`: tratamento limpo de `missing_cpf` sem Sentry. Fix sessão 42 (UX hard-block): guard advisory-only substituído por hard-block em 3 handlers (`handleRegularize`, `handleReactivate`, `handleSubscribe`) — `navigate("/meus-dados") + return` antes de qualquer `window.open`. |
+| PROD-04 | ~~CPF pré-preenchido no checkout Asaas~~ | ✅ | **Resolvido (sessão 43).** Root cause: `findOrCreateCustomer` criava o customer no Asaas com `{ name, email }` apenas — CPF ia só no `creditCardHolderInfo` do payment (cobrança API). Asaas usa dados do *customer* para pré-preencher o checkout. Fix: `findOrCreateCustomer` agora passa `cpfCnpj + phone + postalCode + addressNumber` no `POST /customers`. Customers existentes sem CPF são atualizados via `PUT /customers/{id}` (guard: só atualiza se `cpfCnpj !== "00000000191"`). |
+| PROD-05 | ~~Pagamentos duplicados / pendentes no Asaas~~ | ✅ | **Resolvido (sessão 43) + Regressão corrigida (sessão 44).** Problema original: cada clique em "Assinar" criava novo payment no Asaas. Fix sessão 43: check idempotente via `GET /payments/{asaas_payment_id}` antes de criar novo. **Regressão sessão 43:** o `select` em `create-asaas-checkout` foi deixado incompleto (`"test_mode, asaas_customer_id, id"` — faltavam `status`, `plan_type`, `asaas_payment_id`), tornando os blocos de idempotência e cancelamento em dead code (`subRow.asaas_payment_id` sempre `undefined`). Corrigido em sessão 44: select agora inclui todos os campos necessários. |
 
 ---
 
