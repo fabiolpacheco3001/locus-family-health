@@ -158,6 +158,19 @@ Deno.serve(async (req) => {
     const creds = resolveAsaasEnv(testMode);
     log("info", "asaas_env_selected", { env: creds.env, userId, testMode });
 
+    // Guard: em produção, "00000000191" é recusado pela Receita Federal.
+    // O usuário deve cadastrar CPF em Ajustes → Meus Dados antes de assinar.
+    if (!testMode && cpfCnpj === "00000000191") {
+      log("warn", "checkout_blocked_missing_cpf_prod", { userId, env: creds.env });
+      return new Response(
+        JSON.stringify({
+          error: "Por favor, cadastre seu CPF em Ajustes → Meus Dados antes de assinar.",
+          code: "missing_cpf",
+        }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // 1. Always resolve customer in the current env (sandbox vs prod).
     const customerId = await findOrCreateCustomer(creds, userEmail, userName);
 
