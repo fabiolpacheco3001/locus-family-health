@@ -43,16 +43,32 @@ async function asaasFetch(creds: AsaasCredentials, path: string, options: Reques
   }
 }
 
-async function findOrCreateCustomer(creds: AsaasCredentials, email: string, name: string): Promise<string> {
+async function findOrCreateCustomer(
+  creds: AsaasCredentials,
+  email: string,
+  name: string,
+  cpfCnpj: string,
+  phone: string,
+  postalCode: string,
+  addressNumber: string
+): Promise<string> {
   const search = await asaasFetch(creds, `/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
   if (search.data && search.data.length > 0) {
-    log("info", "asaas_customer_found", { customerId: search.data[0].id, env: creds.env });
-    return search.data[0].id;
+    const existing = search.data[0];
+    log("info", "asaas_customer_found", { customerId: existing.id, env: creds.env });
+    // Update CPF if customer doesn't have it yet (created before this fix)
+    if (!existing.cpfCnpj && cpfCnpj !== "00000000191") {
+      await asaasFetch(creds, `/customers/${existing.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ name, cpfCnpj, phone, postalCode, addressNumber }),
+      });
+      log("info", "asaas_customer_cpf_updated", { customerId: existing.id, env: creds.env });
+    }
+    return existing.id;
   }
-
   const created = await asaasFetch(creds, "/customers", {
     method: "POST",
-    body: JSON.stringify({ name, email }),
+    body: JSON.stringify({ name, email, cpfCnpj, phone, postalCode, addressNumber }),
   });
   log("info", "asaas_customer_created", { customerId: created.id, env: creds.env });
   return created.id;
