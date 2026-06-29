@@ -268,7 +268,9 @@ Deno.serve(async (req) => {
     // Sem este sync, usuários que definiram CPF após o primeiro checkout veem o campo em branco.
     if (subRow?.asaas_customer_id && (effectiveCpfCnpj || effectivePhone)) {
       try {
-        const syncPayload: Record<string, string> = { name: userName };
+        // Incluir postalCode e addressNumber para evitar que o PUT do Asaas limpe
+        // esses campos no customer. O Asaas usa esses dados para pré-preencher o checkout.
+        const syncPayload: Record<string, string> = { name: userName, postalCode, addressNumber };
         if (effectiveCpfCnpj) syncPayload.cpfCnpj = effectiveCpfCnpj;
         if (effectivePhone) syncPayload.phone = effectivePhone;
         await asaasFetch(creds, `/customers/${customerId}`, {
@@ -342,22 +344,24 @@ Deno.serve(async (req) => {
       }
     }
 
-    // If plan changed, cancel old pending payment before creating new one
-    if (
-      subRow?.asaas_payment_id &&
-      subRow?.status === "pending_payment" &&
-      subRow?.plan_type !== planType
-    ) {
+    // If plan changed, cancel old pending payment before creating new one.
+    // IMPORTANT: Do NOT use subRow?.status here — it reflects the DB state,
+    // which may be 'active', 'canceled', etc. after the webhook fires.
+    // Always check the actual Asaas payment status via GET.
+    if (subRow?.asaas_payment_id && subRow?.plan_type !== planType) {
       try {
-        await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}/cancel`, { method: "POST" });
-        log("info", "asaas_payment_cancelled_plan_change", {
-          paymentId: subRow.asaas_payment_id,
-          oldPlan: subRow.plan_type,
-          newPlan: planType,
-          env: creds.env,
-        });
+        const oldPayment = await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}`, { method: "GET" });
+        if (["PENDING", "AWAITING_PAYMENT"].includes(oldPayment.status)) {
+          await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}/cancel`, { method: "POST" });
+          log("info", "asaas_payment_cancelled_plan_change", {
+            paymentId: subRow.asaas_payment_id,
+            oldPlan: subRow.plan_type,
+            newPlan: planType,
+            env: creds.env,
+          });
+        }
       } catch {
-        // Non-critical
+        // Non-critical — proceed to create new payment
       }
     }
 
