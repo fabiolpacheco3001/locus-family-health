@@ -305,7 +305,7 @@ Deno.serve(async (req) => {
 
     // 2b. Idempotent checkout: reuse existing pending payment if possible
     // Avoids orphaned PENDING payments when user closes checkout and opens again.
-    if (subRow?.asaas_payment_id && subRow?.status === "pending_payment" && subRow?.plan_type === planType) {
+    if (subRow?.asaas_payment_id && subRow?.plan_type === planType) {
       try {
         const existingPayment = await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}`, { method: "GET" });
         const reusableStatuses = ["PENDING", "AWAITING_PAYMENT"];
