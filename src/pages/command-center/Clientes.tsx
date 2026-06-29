@@ -56,7 +56,7 @@ const planStatusBadge = (client: ClientRow) => {
   if (client.status === "canceled") {
     if (client.next_billing_date && isFuture(new Date(client.next_billing_date))) {
       const until = format(new Date(client.next_billing_date), "dd/MM/yy");
-      return <Badge className="bg-amber-500 text-white border-none">Grace Period até {until}</Badge>;
+      return <Badge className="bg-amber-500 text-white border-none">Período de Carência até {until}</Badge>;
     }
     return <Badge className="bg-gray-500 text-white border-none">Cancelado</Badge>;
   }
