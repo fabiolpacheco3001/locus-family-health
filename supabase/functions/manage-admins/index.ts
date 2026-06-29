@@ -113,17 +113,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
-    // ── ROLE CHECK: all actions require super_admin (#3) ──
-    const { data: callerRole } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("id", caller.id)
-      .maybeSingle();
-
-    if (callerRole?.role !== "super_admin") {
-      return json({ error: "Apenas Super Admins podem acessar este recurso." }, 403);
-    }
-
     // M8: helper de audit log — non-blocking (falha não impede a resposta)
     const audit = async (
       auditAction: string,
@@ -146,6 +135,77 @@ Deno.serve(async (req) => {
         });
       }
     };
+
+    // ── RESET PASSWORD (admin ou super_admin podem usar) ──
+    if (action === "reset") {
+      const { data: resetCallerRole } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("id", caller.id)
+        .maybeSingle();
+
+      if (!["admin", "super_admin"].includes(resetCallerRole?.role ?? "")) {
+        return json({ error: "Acesso negado." }, 403);
+      }
+
+      const { email: targetEmail } = body as { email?: string };
+      if (!targetEmail) return json({ error: "E-mail obrigatório." }, 400);
+
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (!resendApiKey) {
+        log("error", "admin_reset_missing_resend_key", {});
+        return json({ error: "Configuração de e-mail ausente." }, 500);
+      }
+
+      const origin = req.headers.get("origin") ?? Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
+      const redirectTo = `${origin}/reset-password`;
+
+      const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
+        type: "recovery",
+        email: targetEmail,
+        options: { redirectTo },
+      });
+
+      if (linkErr || !linkData?.properties?.action_link) {
+        log("error", "admin_reset_generate_link_failed", {
+          email: targetEmail,
+          error: linkErr?.message ?? "no action_link",
+        });
+        return json({ error: "Não foi possível gerar o link de recuperação." }, 500);
+      }
+
+      const resetLink = linkData.properties.action_link;
+
+      const { id: resendId, error: resendErr } = await sendViaResend({
+        to: targetEmail,
+        from: "Locus Vita <noreply@locustech.com.br>",
+        subject: "Redefinição de senha — Locus Vita",
+        html: buildResetPasswordHtml(resetLink),
+        text: `Você recebeu uma solicitação de redefinição de senha no Locus Vita.\n\nClique no link abaixo para redefinir sua senha:\n${resetLink}\n\nEste link expira em 1 hora. Se você não solicitou isso, ignore este e-mail.\n\n---\nLocus Vita — locustech.com.br`,
+        apiKey: resendApiKey,
+      });
+
+      if (resendErr) {
+        log("error", "admin_reset_resend_failed", { email: targetEmail, error: resendErr });
+        return json({ error: "Falha ao enviar e-mail de recuperação." }, 500);
+      }
+
+      await audit("reset-password", null, targetEmail, { resend_id: resendId });
+      log("info", "admin_reset_password_sent", { performedBy: caller.id, targetEmail });
+      return json({ ok: true });
+    }
+
+    // ── ROLE CHECK: all actions require super_admin (#3) ──
+    const { data: callerRole } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("id", caller.id)
+      .maybeSingle();
+
+    if (callerRole?.role !== "super_admin") {
+      return json({ error: "Apenas Super Admins podem acessar este recurso." }, 403);
+    }
+
 
     // ── LIST EMAILS (batch) ──
     if (action === "list-emails") {
