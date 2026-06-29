@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { captureException } from "@/lib/sentry";
 
 /** Registra o consentimento LGPD na tabela consent_log após o cadastro. */
 async function logConsent(userId: string) {
@@ -19,8 +20,9 @@ async function logConsent(userId: string) {
   ];
   const { error } = await supabase.from("consent_log").insert(records);
   if (error) {
-    // Non-blocking — log but don't prevent the user from continuing
-    console.error("consent_log insert error:", error.message);
+    // [ID-015] Non-blocking — falha de consent_log não impede o cadastro.
+    // captureException encaminha para Sentry sem expor erro no browser console.
+    captureException(error, { context: "logConsent" });
   }
 }
 

@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 5.6 | **Atualizado em:** 2026-06-28 (sessão 39 — ID-003 staleTime: 0 em 7 hooks PHI)  
+> **Versão:** 5.7 | **Atualizado em:** 2026-06-28 (sessão 40 — Sprint Quick Wins: ID-013, ID-014, ID-015, ID-017, ID-019, ID-010)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -35,6 +35,7 @@
 | Sessão 37 | Bug ∞ Dipirona ✅ (Fase 401 — causa raiz real identificada e corrigida): `frequency_type = "interval"` (valor legado no banco de medicamentos criados antes da Fase 398) não era reconhecido por `calculateNextDose` nem por `advancePastTakenDoses` — `"interval"` é truthy, impedia o fallback para `"fixed_interval"`. Dois sintomas: (a) med com `frequency_hours>0` sumia silenciosamente do widget Home; (b) med com `frequency_hours=null` exibia ∞ indevidamente. Fix: normalização `rawType === "interval" ? "fixed_interval" : rawType` em `calculateNextDose.ts`, `advancePastTakenDoses.ts` e `useHomeData.ts`. Testes de regressão: 2 novos `describe` / 7 novos `it` em `calculateNextDose.test.ts`. CI #184 ✅ VERDE (commit 88cbefd). | Sprint 37 ✅ CONCLUÍDO |
 | Sessão 38 | Diagnóstico completo do codebase (`docs/DIAGNOSTICO_CODEBASE_2026-06-27.md`) — 20 achados em 5 domínios; 3 críticos corrigidos nesta sessão: **[ID-004/005]** 7 `console.log` com PHI removidos de `parseSusVaccinePdf.ts` (CPF completo, texto PDF inteiro, colunas detectadas, vacinas extraídas) e `useVaccineImport.ts` (CPF em texto plano); comparação CPF preservada — ocorre apenas em memória. **[ID-001]** `error.message` exposto em resposta HTTP de `send-medication-reminders` → substituído por mensagem genérica; `log()` interno preservado com detalhe. **[ID-011]** `asaas_customer_id`, `asaas_subscription_id`, `asaas_payment_id` removidos de `writeLocalCache` em `useSubscription.ts`; `MeuPlano.tsx` atualizado para chamar `refetchSubscription()` no handler de cancelamento (prevenção de regressão — IDs não mais disponíveis em cold-start do localStorage). Commits: `95bf1d74` (Lovable MCP — edge fn) + `a8f6e2c` (local — 5 arquivos). | Sprint 38 ✅ CONCLUÍDO |
 | Sessão 39 | **[ID-003]** `staleTime: 5 * 60 * 1000` → `staleTime: 0 + gcTime: 5 * 60_000` nos 7 hooks PHI clínicos: `useHealthMeasurements`, `useProntuarioData` (2 queries: alergias + doenças), `useClinicalTimeline`, `useConsultations`, `useExams`, `useMedications`, `useSurgeries`. LGPD art. 11: dados de saúde não podem ser servidos de cache de sessão anterior. Análise de regressão: `isFetching` só consumido por `useSubscription` (não-PHI); todos hooks PHI consomem `isLoading` nos componentes — sem risco de spinner infinito. Commit: `62e5589` (7 arquivos, canal LOCAL). | Sprint 39 ✅ CONCLUÍDO |
+| Sessão 40 | **Sprint Quick Wins** — 6 IDs corrigidos via canal LOCAL (9 arquivos, sem migrations/edge functions): **[ID-013]** `deleteMember.onSuccess` agora invalida 5 queryKeys (`family_members`, `upcoming-appointments`, `pending-counts`, `today-pet-routines`, `agenda`) — membro deletado não aparece mais por até 5 min na Home. **[ID-014]** `addMedication/updateMedication.onSuccess` passam a invalidar `["agenda"]` — posologia nova/editada reflete imediatamente na Agenda. **[ID-019]** `MedWithNextDose.med: any` → `med: Medication` em `useHomeData.ts` — segurança de tipo em `TodayMedicationsSection`. **[ID-017]** Comentário preventivo `// iOS Safari popup blocker: must open window synchronously BEFORE any await.` adicionado nos 5 locais de `window.open("about:blank")` (MeuPlano.tsx×2, Ajustes.tsx, PaywallModal.tsx, Landing.tsx). **[ID-010]** `select("*")` → colunas explícitas em `useHealthMeasurements.ts` e `useFamilyMembers.tsx`. **[ID-015]** `console.log`/`console.error` não-PHI substituídos por `captureException` em 6 locais: `InviteAcceptInterceptor.tsx` (3×), `useMedicationAlarms.ts`, `Cadastro.tsx`, `NotFound.tsx`. | Sprint 40 ✅ CONCLUÍDO |
 
 ---
 
@@ -380,12 +381,11 @@
 
 ---
 
-### ID-010 · `select("*")` em tabelas com PHI
-- **Risco:** Busca todas as colunas incluindo futuras colunas adicionadas por migrations. Se uma migration adicionar uma coluna sensível, ela será retornada automaticamente sem revisão. Também transfere dados desnecessários pela rede.
+### ID-010 · `select("*")` em tabelas com PHI ✅
+- **Risco resolvido:** Colunas explícitas previnem vazamento automático de dados em migrations futuras.
 - **Arquivos:** `src/hooks/useHealthMeasurements.ts:27` (health_measurements), `src/hooks/useFamilyMembers.tsx:53` (family_members)
-- **Fix:** Listar colunas explicitamente no `.select()` de cada hook afetado.
-- **Severidade × Esforço:** 🟠 Importante × Baixo (1h)
-- **Status:** ⬜ Pendente
+- **Resolução:** `.select("id, user_id, family_member_id, weight, height, bmi, recorded_at, created_at")` em `useHealthMeasurements.ts`; lista completa de 19 colunas do tipo `FamilyMember` em `useFamilyMembers.tsx`. Comentário `[ID-010]` explica o motivo.
+- **Status:** ✅ Resolvido (sessão 40)
 
 ---
 
@@ -398,21 +398,17 @@
 
 ---
 
-### ID-013 · `onSuccess` em `useFamilyMembers` invalida queryKeys insuficientes
-- **Risco:** Após soft-delete de um membro, `["upcoming-appointments"]`, `["pending-counts"]` e `["today-pet-routines"]` não são invalidados. O membro deletado pode aparecer no carrossel da Home por até 5 minutos.
-- **Arquivos:** `src/hooks/useFamilyMembers.tsx:76,92,105`
-- **Fix:** Adicionar invalidações de `["upcoming-appointments"]`, `["pending-counts"]`, `["today-pet-routines"]` e `["agenda"]` no `deleteMember.onSuccess`.
-- **Severidade × Esforço:** 🟠 Importante × Baixo (30 min)
-- **Status:** ⬜ Pendente
+### ID-013 · `onSuccess` em `useFamilyMembers` invalida queryKeys insuficientes ✅
+- **Risco resolvido:** `deleteMember.onSuccess` agora invalida todos os 5 queryKeys dependentes: `family_members`, `upcoming-appointments`, `pending-counts`, `today-pet-routines`, `agenda`.
+- **Arquivos:** `src/hooks/useFamilyMembers.tsx`
+- **Status:** ✅ Resolvido (sessão 40)
 
 ---
 
-### ID-014 · `addMedication` / `updateMedication` não invalidam `["agenda"]`
-- **Risco:** Após adicionar ou editar um medicamento, a Agenda não é invalidada. Inconsistência com `useConsultations` que invalida `["agenda"]` corretamente — usuário vê agenda desatualizada até próximo mount.
-- **Arquivos:** `src/hooks/useMedications.tsx:128,146`
-- **Fix:** Adicionar `queryClient.invalidateQueries({ queryKey: ["agenda"] })` nos `onSuccess` de `addMedication` e `updateMedication`.
-- **Severidade × Esforço:** 🟠 Importante × Baixo (15 min)
-- **Status:** ⬜ Pendente
+### ID-014 · `addMedication` / `updateMedication` não invalidam `["agenda"]` ✅
+- **Risco resolvido:** `addMedication.onSuccess` e `updateMedication.onSuccess` agora invalidam `["agenda"]` — medicamento novo/editado reflete imediatamente na Agenda.
+- **Arquivos:** `src/hooks/useMedications.tsx`
+- **Status:** ✅ Resolvido (sessão 40)
 
 ---
 
@@ -590,20 +586,16 @@
 
 ---
 
-### ID-015 · `console.log`/`console.error` não-PHI em produção
-- **Risco:** 15+ ocorrências em `InviteAcceptInterceptor.tsx:83,132,246`, `useMedicationAlarms.ts:39`, `Cadastro.tsx:23`, `NotFound.tsx:8` e outros. Expõe mensagens de erro internas, pathnames e estados de autenticação via DevTools. Menor que ID-004/005 pois não envolve PHI direto.
-- **Fix:** Substituir por `captureException(err, { context: "..." })` via `@/lib/sentry` nos pontos de erro; remover logs de debug.
-- **Severidade × Esforço:** 🟡 Melhoria × Baixo (2h)
-- **Status:** ⬜ Pendente
+### ID-015 · `console.log`/`console.error` não-PHI em produção ✅
+- **Risco resolvido:** 6 ocorrências substituídas por `captureException` via `@/lib/sentry` em `InviteAcceptInterceptor.tsx` (3×: provisionNewGroup, checkInvite_retry, handleAccept), `useMedicationAlarms.ts` (1×: decrement_stock — `console.error` redundante removido, Sentry já presente), `Cadastro.tsx` (1×: logConsent), `NotFound.tsx` (1×: 404 + pathname).
+- **Status:** ✅ Resolvido (sessão 40)
 
 ---
 
-### ID-019 · `MedWithNextDose.med` tipado como `any` em tipo exportado
-- **Risco:** `MedWithNextDose` é consumido por `TodayMedicationsSection.tsx`. O campo `med: any` remove toda a segurança de tipo na renderização dos cards de medicamento na Home — erros de acesso a propriedades inexistentes não são detectados pelo TypeScript.
-- **Arquivos:** `src/hooks/useHomeData.ts:37`
-- **Fix:** `import type { Medication } from "@/hooks/useMedications"` → `med: Medication` no tipo exportado.
-- **Severidade × Esforço:** 🟡 Melhoria × Baixo (30 min)
-- **Status:** ⬜ Pendente
+### ID-019 · `MedWithNextDose.med` tipado como `any` em tipo exportado ✅
+- **Risco resolvido:** `import type { Medication } from "./useMedications"` adicionado; `med: any` → `med: Medication` em `MedWithNextDose`. Segurança de tipo completa em `TodayMedicationsSection.tsx`.
+- **Arquivos:** `src/hooks/useHomeData.ts`
+- **Status:** ✅ Resolvido (sessão 40)
 
 ---
 
@@ -693,12 +685,9 @@
 
 ---
 
-### ID-017 · Comentário preventivo ausente no padrão `window.open("about:blank")`
-- **Observação:** O padrão está CORRETO — `window.open("about:blank")` é chamado antes de qualquer `await` em todos os 5 locais de checkout, satisfazendo o gate do Safari/iOS popup blocker. O risco é regressão futura por desenvolvedor que não conhece o motivo e move o `window.open` para depois de um `await`.
-- **Arquivos:** `src/pages/MeuPlano.tsx:97,167`, `src/pages/Ajustes.tsx:64`, `src/components/PaywallModal.tsx:151`, `src/pages/Landing.tsx:128`
-- **Fix:** Adicionar comentário `// iOS Safari popup blocker: must open window synchronously BEFORE any await.` antes de cada `window.open("about:blank")`.
-- **Severidade × Esforço:** 🟡 Melhoria × Baixo (30 min)
-- **Status:** ⬜ Pendente
+### ID-017 · Comentário preventivo ausente no padrão `window.open("about:blank")` ✅
+- **Risco resolvido:** Comentário `// iOS Safari popup blocker: must open window synchronously BEFORE any await.` adicionado nos 5 locais: `MeuPlano.tsx:97,167`, `Ajustes.tsx:64`, `PaywallModal.tsx:151`, `Landing.tsx:128`.
+- **Status:** ✅ Resolvido (sessão 40)
 
 ---
 
@@ -810,6 +799,14 @@ Sprint 38 — Diagnóstico LGPD + 3 Achados Críticos ✅ CONCLUÍDO (sessão 20
 
 Sprint 39 — [ID-003] staleTime PHI ✅ CONCLUÍDO (sessão 2026-06-28)
 └── ✅ ID-003                               → staleTime: 0 + gcTime: 5min nos 7 hooks PHI clínicos (LGPD art. 11)
+
+Sprint 40 — Quick Wins LOCAL ✅ CONCLUÍDO (sessão 2026-06-28)
+├── ✅ ID-013                               → deleteMember.onSuccess: 5 queryKeys invalidados (family_members, upcoming-appointments, pending-counts, today-pet-routines, agenda)
+├── ✅ ID-014                               → addMedication/updateMedication.onSuccess: ["agenda"] invalidada
+├── ✅ ID-019                               → MedWithNextDose.med: any → Medication (segurança de tipo em TodayMedicationsSection)
+├── ✅ ID-017                               → Comentário preventivo iOS Safari popup blocker em 5 locais de window.open
+├── ✅ ID-010                               → select("*") → colunas explícitas em useHealthMeasurements + useFamilyMembers
+└── ✅ ID-015                               → console.log/error não-PHI → captureException em 6 locais (InviteAcceptInterceptor×3, useMedicationAlarms, Cadastro, NotFound)
 
 Sprint 35+36 — Web Push VAPID ✅ CONCLUÍDO E2E (sessão 2026-06-21)
 ├── ✅ BK-01 (código)                    → Infraestrutura Web Push VAPID implementada no repo local

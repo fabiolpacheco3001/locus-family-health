@@ -131,6 +131,8 @@ export const useMedications = (familyMemberId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["medications"] });
       queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
+      // [ID-014] Agenda exibe medicamentos no widget do dia — deve refletir adição imediata.
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
     },
   });
 
@@ -149,6 +151,8 @@ export const useMedications = (familyMemberId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["medications"] });
       queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
       queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
+      // [ID-014] Posologia editada deve aparecer imediatamente na Agenda.
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
     },
   });
 

@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { captureException } from "@/lib/sentry";
 
 type PendingInvite = {
   id: string;
@@ -80,7 +81,8 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
       queryClient.invalidateQueries({ queryKey: ["family_members"] });
       setState({ step: "ready" });
     } catch (err: any) {
-      console.error("[InviteInterceptor] provisionNewGroup error:", err);
+      // [ID-015] console.error banido em produção — captureException encaminha para Sentry.
+      captureException(err, { context: "provisionNewGroup" });
       // If it's a duplicate key / already exists, try to recover
       const isDuplicate = err?.code === "23505";
       if (isDuplicate) {
@@ -129,7 +131,8 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
 
         if (error) {
           retryCount++;
-          console.warn(`[InviteInterceptor] Invite query attempt ${retryCount} failed:`, error.message);
+          // [ID-015] Não usar console.warn em produção: substituído por captureException com contexto de retry.
+          captureException(error, { context: "checkInvite_retry", attempt: retryCount });
           if (retryCount < MAX_RETRIES) {
             await new Promise(r => setTimeout(r, RETRY_DELAY));
             continue;
@@ -243,7 +246,8 @@ const InviteAcceptInterceptor = ({ children }: { children: React.ReactNode }) =>
       queryClient.invalidateQueries({ queryKey: ["family_members"] });
       setState({ step: "ready" });
     } catch (err: any) {
-      console.error("Erro detalhado do Aceite:", err);
+      // [ID-015] console.error banido em produção — captureException encaminha para Sentry.
+      captureException(err, { context: "handleAccept" });
       const isDuplicate = err?.code === "23505";
       toast.error(
         isDuplicate

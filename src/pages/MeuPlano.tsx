@@ -95,6 +95,7 @@ const MeuPlano = () => {
       );
     }
     setLoadingSubscription(true);
+    // iOS Safari popup blocker: must open window synchronously BEFORE any await.
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";
@@ -171,6 +172,7 @@ const MeuPlano = () => {
       );
     }
     setLoadingSubscription(true);
+    // iOS Safari popup blocker: must open window synchronously BEFORE any await.
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const planType = subscription?.plan_type === "annual" ? "annual" : "monthly";

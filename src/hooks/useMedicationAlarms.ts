@@ -35,12 +35,7 @@ export function useMedicationAlarms(medications: Medication[]) {
     try {
       await supabase.rpc("decrement_stock", { med_id: medId, amount });
     } catch (err) {
-      // Observabilidade: não retry, apenas log estruturado + Sentry
-      console.error("[useMedicationAlarms] decrement_stock failed", {
-        medId,
-        amount,
-        error: err instanceof Error ? err.message : String(err),
-      });
+      // [ID-015] console.error banido em produção. Sentry já captura o stack e o contexto.
       captureException(err, { context: "decrement_stock", medId, amount });
     }
   }, []);

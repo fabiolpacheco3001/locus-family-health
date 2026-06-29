@@ -24,7 +24,8 @@ export function useHealthMeasurements(familyMemberId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("health_measurements")
-        .select("*")
+        // [ID-010] Colunas explícitas: evita vazar colunas futuras não mapeadas no tipo.
+        .select("id, user_id, family_member_id, weight, height, bmi, recorded_at, created_at")
         .eq("family_member_id", familyMemberId!)
         .order("recorded_at", { ascending: true });
       if (error) throw error;

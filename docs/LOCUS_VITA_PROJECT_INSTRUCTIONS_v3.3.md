@@ -1,4 +1,4 @@
-# LOCUS VITA — Instrução de Projeto para Cowork (Claude)
+  # LOCUS VITA — Instrução de Projeto para Cowork (Claude)
 
 > **Versão:** 3.4 | **Atualizado em:** 2026-06-28
 >

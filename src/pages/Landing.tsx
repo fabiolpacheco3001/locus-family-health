@@ -125,6 +125,7 @@ const Landing = () => {
         return;
       }
       setLoadingPlan(planType);
+      // iOS Safari popup blocker: must open window synchronously BEFORE any await.
       const checkoutWindow = window.open("about:blank", "_blank");
       try {
         const url = await createSubscription(planType);

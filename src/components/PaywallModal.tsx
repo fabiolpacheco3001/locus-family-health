@@ -148,6 +148,7 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
       );
     }
     setLoadingPlan(planType);
+    // iOS Safari popup blocker: must open window synchronously BEFORE any await.
     const checkoutWindow = window.open("about:blank", "_blank");
     try {
       const url = await withTimeout(

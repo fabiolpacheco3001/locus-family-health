@@ -50,7 +50,9 @@ export const useFamilyMembers = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("family_members")
-        .select("*")
+        // [ID-010] Colunas explícitas: family_members não é PHI clínico,
+        // mas select("*") pode vazar colunas adicionadas futuramente.
+        .select("id, user_id, name, relationship, birth_date, gender, blood_type, phone, cpf, avatar_url, created_at, member_type, species, breed, tracks_menstrual_cycle, weight, height, physical_activity, deleted_at, group_id")
         .is("deleted_at", null)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -103,6 +105,13 @@ export const useFamilyMembers = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["family_members", user?.id] });
+      // [ID-013] Sem estas invalidações, membro deletado aparece na Home por até 5 min:
+      // o carrossel de perfis, o widget de compromissos e os contadores
+      // continuariam servindo dados do membro até o próximo mount.
+      queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["today-pet-routines"] });
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
     },
   });
 

@@ -1,11 +1,13 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { captureException } from "@/lib/sentry";
 
 const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    // [ID-015] console.error banido em produção. Sentry registra o 404 com path completo.
+    captureException(new Error(`404: ${location.pathname}`), { context: "NotFound" });
   }, [location.pathname]);
 
   return (

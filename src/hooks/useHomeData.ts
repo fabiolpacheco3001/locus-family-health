@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useFamilyGroup } from "./useFamilyGroup";
 import { useMedications } from "./useMedications";
+import type { Medication } from "./useMedications";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { advancePastTakenDoses } from "@/lib/advancePastTakenDoses";
 
@@ -34,7 +35,10 @@ export type UpcomingItem = {
 };
 
 export type MedWithNextDose = {
-  med: any;
+  // [ID-019] Tipado como Medication (não any) para garantir segurança de tipo
+  // na renderização de TodayMedicationsSection — erros de acesso a propriedades
+  // inexistentes são detectados em compile-time, não em runtime.
+  med: Medication;
   effectiveScheduledFor: string | null;
   doseLabel: string;
   isOverdue: boolean;
