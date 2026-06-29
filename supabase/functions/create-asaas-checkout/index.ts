@@ -52,12 +52,12 @@ async function findOrCreateCustomer(
   postalCode: string,
   addressNumber: string
 ): Promise<string> {
+  // 1. Buscar por email
   const search = await asaasFetch(creds, `/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
   if (search.data && search.data.length > 0) {
     const existing = search.data[0];
     log("info", "asaas_customer_found", { customerId: existing.id, env: creds.env });
-    // Update CPF if customer doesn't have it yet (created before this fix)
-    if (!existing.cpfCnpj && cpfCnpj !== "00000000191") {
+    if (!existing.cpfCnpj && cpfCnpj) {
       await asaasFetch(creds, `/customers/${existing.id}`, {
         method: "PUT",
         body: JSON.stringify({ name, cpfCnpj, phone, postalCode, addressNumber }),
@@ -66,12 +66,42 @@ async function findOrCreateCustomer(
     }
     return existing.id;
   }
-  const created = await asaasFetch(creds, "/customers", {
-    method: "POST",
-    body: JSON.stringify({ name, email, cpfCnpj, phone, postalCode, addressNumber }),
-  });
-  log("info", "asaas_customer_created", { customerId: created.id, env: creds.env });
-  return created.id;
+
+  // 2. Tentar criar novo cliente
+  // cpfCnpj vazio = sandbox sem CPF real; omitir campo para Asaas não rejeitar
+  const customerBody: Record<string, string> = { name, email, phone, postalCode, addressNumber };
+  if (cpfCnpj) customerBody.cpfCnpj = cpfCnpj;
+
+  try {
+    const created = await asaasFetch(creds, "/customers", {
+      method: "POST",
+      body: JSON.stringify(customerBody),
+    });
+    log("info", "asaas_customer_created", { customerId: created.id, env: creds.env });
+    return created.id;
+  } catch (createErr) {
+    // 3. Fallback: criação falhou (provável conflito de CPF) → buscar cliente por CPF
+    if (cpfCnpj) {
+      try {
+        const cpfSearch = await asaasFetch(creds, `/customers?cpfCnpj=${encodeURIComponent(cpfCnpj)}`, { method: "GET" });
+        if (cpfSearch.data && cpfSearch.data.length > 0) {
+          const existingByCpf = cpfSearch.data[0];
+          log("warn", "asaas_customer_found_by_cpf_fallback", {
+            customerId: existingByCpf.id,
+            env: creds.env,
+            hint: "customer creation failed; found existing by CPF",
+          });
+          return existingByCpf.id;
+        }
+      } catch (cpfSearchErr) {
+        log("warn", "asaas_customer_cpf_search_failed", {
+          env: creds.env,
+          hint: cpfSearchErr instanceof Error ? cpfSearchErr.message : String(cpfSearchErr),
+        });
+      }
+    }
+    throw createErr;
+  }
 }
 
 Deno.serve(async (req) => {
