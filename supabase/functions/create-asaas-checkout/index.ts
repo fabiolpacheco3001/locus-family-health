@@ -43,16 +43,32 @@ async function asaasFetch(creds: AsaasCredentials, path: string, options: Reques
   }
 }
 
-async function findOrCreateCustomer(creds: AsaasCredentials, email: string, name: string): Promise<string> {
+async function findOrCreateCustomer(
+  creds: AsaasCredentials,
+  email: string,
+  name: string,
+  cpfCnpj: string,
+  phone: string,
+  postalCode: string,
+  addressNumber: string
+): Promise<string> {
   const search = await asaasFetch(creds, `/customers?email=${encodeURIComponent(email)}`, { method: "GET" });
   if (search.data && search.data.length > 0) {
-    log("info", "asaas_customer_found", { customerId: search.data[0].id, env: creds.env });
-    return search.data[0].id;
+    const existing = search.data[0];
+    log("info", "asaas_customer_found", { customerId: existing.id, env: creds.env });
+    // Update CPF if customer doesn't have it yet (created before this fix)
+    if (!existing.cpfCnpj && cpfCnpj !== "00000000191") {
+      await asaasFetch(creds, `/customers/${existing.id}`, {
+        method: "PUT",
+        body: JSON.stringify({ name, cpfCnpj, phone, postalCode, addressNumber }),
+      });
+      log("info", "asaas_customer_cpf_updated", { customerId: existing.id, env: creds.env });
+    }
+    return existing.id;
   }
-
   const created = await asaasFetch(creds, "/customers", {
     method: "POST",
-    body: JSON.stringify({ name, email }),
+    body: JSON.stringify({ name, email, cpfCnpj, phone, postalCode, addressNumber }),
   });
   log("info", "asaas_customer_created", { customerId: created.id, env: creds.env });
   return created.id;
@@ -172,7 +188,7 @@ Deno.serve(async (req) => {
     }
 
     // 1. Always resolve customer in the current env (sandbox vs prod).
-    const customerId = await findOrCreateCustomer(creds, userEmail, userName);
+    const customerId = await findOrCreateCustomer(creds, userEmail, userName, cpfCnpj, billingPhone, postalCode, addressNumber);
 
     // 2. Persist customer ID — INSERT if first purchase, UPDATE otherwise.
     if (!subRow) {
@@ -189,6 +205,64 @@ Deno.serve(async (req) => {
         .from("subscriptions")
         .update({ asaas_customer_id: customerId, plan_type: planType, updated_at: new Date().toISOString() })
         .eq("user_id", userId);
+    }
+
+    // 2b. Idempotent checkout: reuse existing pending payment if possible
+    // Avoids orphaned PENDING payments when user closes checkout and opens again.
+    if (subRow?.asaas_payment_id && subRow?.status === "pending_payment" && subRow?.plan_type === planType) {
+      try {
+        const existingPayment = await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}`, { method: "GET" });
+        const reusableStatuses = ["PENDING", "AWAITING_PAYMENT"];
+        if (reusableStatuses.includes(existingPayment.status) && existingPayment.invoiceUrl) {
+          log("info", "asaas_payment_reused", {
+            paymentId: existingPayment.id,
+            status: existingPayment.status,
+            env: creds.env,
+            userId,
+          });
+          return new Response(
+            JSON.stringify({ url: existingPayment.invoiceUrl, checkoutUrl: existingPayment.invoiceUrl }),
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        // Payment no longer payable — cancel it to avoid clutter before creating new
+        if (["PENDING", "AWAITING_PAYMENT"].includes(existingPayment.status)) {
+          // already handled above; this branch handles non-payable statuses — nothing to cancel
+        } else {
+          try {
+            await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}/cancel`, { method: "POST" });
+            log("info", "asaas_payment_cancelled_stale", { paymentId: subRow.asaas_payment_id, env: creds.env });
+          } catch {
+            // Non-critical: old payment might already be cancelled or confirmed
+          }
+        }
+      } catch (lookupErr) {
+        // Payment not found or fetch failed — proceed to create new
+        log("warn", "asaas_payment_lookup_failed", {
+          paymentId: subRow.asaas_payment_id,
+          env: creds.env,
+          hint: lookupErr instanceof Error ? lookupErr.message : String(lookupErr),
+        });
+      }
+    }
+
+    // If plan changed, cancel old pending payment before creating new one
+    if (
+      subRow?.asaas_payment_id &&
+      subRow?.status === "pending_payment" &&
+      subRow?.plan_type !== planType
+    ) {
+      try {
+        await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}/cancel`, { method: "POST" });
+        log("info", "asaas_payment_cancelled_plan_change", {
+          paymentId: subRow.asaas_payment_id,
+          oldPlan: subRow.plan_type,
+          newPlan: planType,
+          env: creds.env,
+        });
+      } catch {
+        // Non-critical
+      }
     }
 
     // 3. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
