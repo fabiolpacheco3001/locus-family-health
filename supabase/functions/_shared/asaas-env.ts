@@ -25,7 +25,10 @@ export function resolveAsaasEnv(testMode: boolean): AsaasCredentials {
   const apiUrl = suffixed.url || legacyUrl;
 
   if (!apiKey || !apiUrl) {
-    throw new Error("Credenciais de pagamento não configuradas.");
+    const missing: string[] = [];
+    if (!apiKey) missing.push(testMode ? "ASAAS_API_KEY_SANDBOX (ou ASAAS_API_KEY)" : "ASAAS_API_KEY_PROD (ou ASAAS_API_KEY)");
+    if (!apiUrl) missing.push(testMode ? "ASAAS_API_URL_SANDBOX (ou ASAAS_API_URL)" : "ASAAS_API_URL_PROD (ou ASAAS_API_URL)");
+    throw new Error(`Credenciais de pagamento não configuradas: ${missing.join(", ")}`);
   }
 
   return { apiKey, apiUrl, env };
