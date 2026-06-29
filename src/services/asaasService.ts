@@ -53,6 +53,16 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
         const ctx = await (responseError as any).context.json().catch(() => null);
         detail    = ctx?.error || ctx?.message || "";
         errorCode = ctx?.code  || errorCode;
+        // Fix: Supabase functions-js retorna data=null em respostas 400; ler debug do context.json
+        if (!debugInfo && ctx?.debug) {
+          const rawDebugCtx = ctx.debug as string;
+          if (rawDebugCtx.startsWith("asaas_error:")) {
+            const thirdColon = rawDebugCtx.indexOf(":", rawDebugCtx.indexOf(":") + 1);
+            debugInfo = rawDebugCtx.slice(thirdColon + 1);
+          } else {
+            debugInfo = rawDebugCtx;
+          }
+        }
       }
     } catch (_) { /* ignore */ }
 
