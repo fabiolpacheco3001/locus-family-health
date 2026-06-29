@@ -68,8 +68,12 @@ async function findOrCreateCustomer(
   }
 
   // 2. Tentar criar novo cliente
-  // cpfCnpj vazio = sandbox sem CPF real; omitir campo para Asaas não rejeitar
-  const customerBody: Record<string, string> = { name, email, phone, postalCode, addressNumber };
+  // cpfCnpj/phone vazios = sandbox sem dado real; omitir campo para Asaas não rejeitar
+  log("info", "asaas_customer_payload", {
+    env: creds.env, hasCpf: !!cpfCnpj, hasPhone: !!phone,
+  });
+  const customerBody: Record<string, string> = { name, email, postalCode, addressNumber };
+  if (phone) customerBody.phone = phone;
   if (cpfCnpj) customerBody.cpfCnpj = cpfCnpj;
 
   try {
@@ -221,6 +225,9 @@ Deno.serve(async (req) => {
     // Em sandbox, não enviar CPF placeholder "00000000191" (inválido) — Asaas sandbox aceita cliente sem CPF.
     // Em produção, CPF real já foi validado pelo guard acima.
     const effectiveCpfCnpj = (testMode && cpfCnpj === "00000000191") ? "" : cpfCnpj;
+    // Em sandbox, "11999999999" é o fallback quando não há telefone no perfil — omitir do payload.
+    // Em produção, se o usuário não tem telefone, Asaas aceita sem o campo.
+    const effectivePhone = billingPhone !== "11999999999" ? billingPhone : "";
 
     // Reutilizar customer ID salvo no banco quando disponível — evita chamada Asaas e possível conflito de CPF.
     let customerId: string;
@@ -228,7 +235,7 @@ Deno.serve(async (req) => {
       customerId = subRow.asaas_customer_id;
       log("info", "asaas_customer_reused_from_db", { customerId, env: creds.env, userId });
     } else {
-      customerId = await findOrCreateCustomer(creds, userEmail, userName, effectiveCpfCnpj, billingPhone, postalCode, addressNumber);
+      customerId = await findOrCreateCustomer(creds, userEmail, userName, effectiveCpfCnpj, effectivePhone, postalCode, addressNumber);
     }
 
     // 2. Persist customer ID — INSERT if first purchase, UPDATE otherwise.
