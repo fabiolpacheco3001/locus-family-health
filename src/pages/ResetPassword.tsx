@@ -17,9 +17,13 @@ const ResetPassword = () => {
   const [status, setStatus] = useState<"pending" | "recovery" | "invalid">("pending");
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY" && !cancelled) {
         setStatus("recovery");
+        if (timeoutId) clearTimeout(timeoutId);
       }
     });
 
@@ -29,22 +33,42 @@ const ResetPassword = () => {
     const hasRecoveryHash = hash.includes("type=recovery");
     const hasPkceCode = params.has("code");
 
-    if (hasRecoveryHash || hasPkceCode) {
-      // If PKCE code present, Supabase client will exchange it automatically
-      // and fire PASSWORD_RECOVERY event. Set a timeout as fallback.
-      const timeout = setTimeout(() => {
-        setStatus((prev) => (prev === "pending" ? "invalid" : prev));
-      }, 8000);
-      return () => {
-        subscription.unsubscribe();
-        clearTimeout(timeout);
-      };
-    } else {
+    if (!hasRecoveryHash && !hasPkceCode) {
       // No recovery params at all — invalid link
       setStatus("invalid");
+      return () => {
+        cancelled = true;
+        subscription.unsubscribe();
+      };
     }
 
-    return () => subscription.unsubscribe();
+    // Recovery params present. The Supabase JS client auto-detects ?code= or
+    // #access_token on initialization (detectSessionInUrl=true by default) and
+    // exchanges the code immediately — BEFORE this component mounts. The
+    // PASSWORD_RECOVERY event fires during that init, so our onAuthStateChange
+    // listener misses it (classic race condition in SPAs).
+    // Fix: check the current session proactively. If it already exists, the
+    // client already exchanged the code and we can proceed to the password form.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (cancelled) return;
+      if (session) {
+        setStatus("recovery");
+      } else {
+        // Session not yet established (e.g. implicit flow where onAuthStateChange
+        // hasn't fired yet). Wait with a generous timeout as final fallback.
+        timeoutId = setTimeout(() => {
+          if (!cancelled) {
+            setStatus((prev) => (prev === "pending" ? "invalid" : prev));
+          }
+        }, 8000);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
