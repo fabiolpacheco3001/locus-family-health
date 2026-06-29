@@ -1562,6 +1562,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_user_trial: {
+        Args: { days_remaining: number; target_user_id: string }
+        Returns: boolean
+      }
       check_group_access: { Args: { _group_id: string }; Returns: boolean }
       decrement_stock: {
         Args: { amount?: number; med_id: string }
