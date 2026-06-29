@@ -360,7 +360,7 @@ Deno.serve(async (req) => {
           ...(effectiveCpfCnpj ? { cpfCnpj: effectiveCpfCnpj } : {}),
           postalCode,
           addressNumber,
-          ...(billingPhone !== "11999999999" ? { phone: billingPhone } : {}),
+          ...(effectivePhone ? { phone: effectivePhone } : {}),
         },
       }),
     });
