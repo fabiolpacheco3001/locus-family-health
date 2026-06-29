@@ -308,6 +308,11 @@ Deno.serve(async (req) => {
 
     // 3. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
     const todayStr = new Date().toISOString().split("T")[0];
+    log("info", "asaas_payment_payload", {
+      customerId, env: creds.env, userId,
+      hasCpf: !!effectiveCpfCnpj,
+      hasPhone: billingPhone !== "11999999999",
+    });
     const payment = await asaasFetch(creds, "/payments", {
       method: "POST",
       body: JSON.stringify({
@@ -320,10 +325,10 @@ Deno.serve(async (req) => {
         creditCardHolderInfo: {
           name: userName,
           email: userEmail,
-          cpfCnpj,
+          ...(effectiveCpfCnpj ? { cpfCnpj: effectiveCpfCnpj } : {}),
           postalCode,
           addressNumber,
-          phone: billingPhone,
+          ...(billingPhone !== "11999999999" ? { phone: billingPhone } : {}),
         },
       }),
     });
