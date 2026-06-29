@@ -18,6 +18,7 @@ import { useAuth } from "./useAuth";
 import { useFamilyGroup } from "./useFamilyGroup";
 import { useMedications } from "./useMedications";
 import type { Medication } from "./useMedications";
+import { useFamilyMembers } from "./useFamilyMembers";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { advancePastTakenDoses } from "@/lib/advancePastTakenDoses";
 
@@ -52,6 +53,15 @@ export function useHomeData() {
   const { user } = useAuth();
   const { groupId, isAdmin, linkedMemberId, managedProfiles } = useFamilyGroup();
   const { medications, isLoading: medsLoading } = useMedications();
+  const { members } = useFamilyMembers();
+
+  // [ID-013] Set de IDs de membros ativos para filtro client-side imediato.
+  // Quando um membro é deletado, a query ["family_members"] refaz e o Set
+  // é recalculado antes mesmo do refetch de ["upcoming-appointments"] completar.
+  const activeMemberIdSet = React.useMemo(
+    () => new Set(members.map((m) => m.id)),
+    [members]
+  );
 
   const activeMeds = medications.filter((m) => m.status === "Ativo");
   const activeMedIds = React.useMemo(() => activeMeds.map((m) => m.id), [activeMeds]);
@@ -226,8 +236,21 @@ export function useHomeData() {
       return items.slice(0, 5);
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000,
+    // [ID-013] PHI: compromissos contêm dados de saúde — staleTime: 0 garante
+    // que o widget reflete exclusão de membro imediatamente ao montar.
+    // LGPD art. 11: dado de saúde não deve ser servido de cache de sessão anterior.
+    staleTime: 0,
+    gcTime: 5 * 60_000,
   });
+
+  // [ID-013] Filtro client-side imediato: exclui compromissos de membros deletados
+  // antes mesmo do refetch server-side completar. Quando deleteMember.onSuccess
+  // invalida ["family_members"], o Set é recalculado neste mesmo ciclo React.
+  const filteredUpcoming = React.useMemo(() => {
+    // Guarda de loading: sem membros carregados, retorna bruto para não piscar vazio
+    if (!members.length) return upcoming;
+    return upcoming.filter((item) => activeMemberIdSet.has(item.familyMemberId));
+  }, [upcoming, activeMemberIdSet, members.length]);
 
   // ── Rotinas pet para hoje (Ações de Hoje) ──
   const { data: todayPetRoutines = [] } = useQuery({
@@ -376,7 +399,9 @@ export function useHomeData() {
     pendingConsultations,
     pendingExams,
     totalOpenAppointments,
-    upcoming,
+    // [ID-013] Retorna filteredUpcoming (filtrado por membros ativos) mantendo
+    // a interface { upcoming } que os consumers esperam — zero breaking changes.
+    upcoming: filteredUpcoming,
     upcomingLoading,
     todayPetRoutines,
     homeDoseStatuses,

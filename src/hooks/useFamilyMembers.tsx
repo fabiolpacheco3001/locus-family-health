@@ -105,11 +105,15 @@ export const useFamilyMembers = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["family_members", user?.id] });
-      // [ID-013] Sem estas invalidações, membro deletado aparece na Home por até 5 min:
-      // o carrossel de perfis, o widget de compromissos e os contadores
-      // continuariam servindo dados do membro até o próximo mount.
+      // [ID-013] Duas operações complementares:
+      // - invalidateQueries: marca stale para todos (ativos e inativos)
+      // - refetchQueries: força refetch imediato nos ativos (Home montada)
+      // Sem o refetchQueries, se a Home estiver montada, a invalidação sozinha
+      // pode não disparar refetch imediato — dependendo do gcTime residual.
       queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
+      queryClient.refetchQueries({ queryKey: ["upcoming-appointments"] });
       queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
+      queryClient.refetchQueries({ queryKey: ["pending-counts"] });
       queryClient.invalidateQueries({ queryKey: ["today-pet-routines"] });
       queryClient.invalidateQueries({ queryKey: ["agenda"] });
     },
