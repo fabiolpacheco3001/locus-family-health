@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
     // Read test_mode + existing customer ID
     const { data: subRow } = await adminClient
       .from("subscriptions")
-      .select("test_mode, asaas_customer_id, id")
+      .select("test_mode, asaas_customer_id, id, status, plan_type, asaas_payment_id")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -315,11 +315,10 @@ Deno.serve(async (req) => {
     const msg = error instanceof Error ? error.message : String(error);
     log("error", "create_checkout_unexpected_error", { error: msg });
     // Retornar a mensagem real do Asaas no campo debug para diagnóstico
-    const isAsaasError = msg.startsWith("asaas_error:");
     return new Response(
       JSON.stringify({
         error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte.",
-        debug: isAsaasError ? msg : undefined,
+        debug: msg,
       }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

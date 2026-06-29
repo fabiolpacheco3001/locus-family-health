@@ -38,10 +38,15 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
         errorCode = (responseData as any).code    || "";
         // Campo debug contém o erro bruto do Asaas (ex: "asaas_error:400:{...}")
         const rawDebug = (responseData as any).debug as string | undefined;
-        if (rawDebug?.startsWith("asaas_error:")) {
-          // Extrair só o body JSON após "asaas_error:STATUS:"
-          const thirdColon = rawDebug.indexOf(":", rawDebug.indexOf(":") + 1);
-          debugInfo = rawDebug.slice(thirdColon + 1);
+        if (rawDebug) {
+          if (rawDebug.startsWith("asaas_error:")) {
+            // Extrair só o body JSON após "asaas_error:STATUS:"
+            const thirdColon = rawDebug.indexOf(":", rawDebug.indexOf(":") + 1);
+            debugInfo = rawDebug.slice(thirdColon + 1);
+          } else {
+            // Erro pré-Asaas (ex: credenciais faltando, erro de rede) — usar mensagem direta
+            debugInfo = rawDebug;
+          }
         }
       }
       if (!detail && (responseError as any).context) {
