@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 5.7 | **Atualizado em:** 2026-06-28 (sessão 40 — Sprint Quick Wins: ID-013, ID-014, ID-015, ID-017, ID-019, ID-010)  
+> **Versão:** 5.8 | **Atualizado em:** 2026-06-28 (sessão 41 — Fix ID-013 v2 (removeQueries) + Root cause Asaas pagamentos PROD-03)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -36,6 +36,7 @@
 | Sessão 38 | Diagnóstico completo do codebase (`docs/DIAGNOSTICO_CODEBASE_2026-06-27.md`) — 20 achados em 5 domínios; 3 críticos corrigidos nesta sessão: **[ID-004/005]** 7 `console.log` com PHI removidos de `parseSusVaccinePdf.ts` (CPF completo, texto PDF inteiro, colunas detectadas, vacinas extraídas) e `useVaccineImport.ts` (CPF em texto plano); comparação CPF preservada — ocorre apenas em memória. **[ID-001]** `error.message` exposto em resposta HTTP de `send-medication-reminders` → substituído por mensagem genérica; `log()` interno preservado com detalhe. **[ID-011]** `asaas_customer_id`, `asaas_subscription_id`, `asaas_payment_id` removidos de `writeLocalCache` em `useSubscription.ts`; `MeuPlano.tsx` atualizado para chamar `refetchSubscription()` no handler de cancelamento (prevenção de regressão — IDs não mais disponíveis em cold-start do localStorage). Commits: `95bf1d74` (Lovable MCP — edge fn) + `a8f6e2c` (local — 5 arquivos). | Sprint 38 ✅ CONCLUÍDO |
 | Sessão 39 | **[ID-003]** `staleTime: 5 * 60 * 1000` → `staleTime: 0 + gcTime: 5 * 60_000` nos 7 hooks PHI clínicos: `useHealthMeasurements`, `useProntuarioData` (2 queries: alergias + doenças), `useClinicalTimeline`, `useConsultations`, `useExams`, `useMedications`, `useSurgeries`. LGPD art. 11: dados de saúde não podem ser servidos de cache de sessão anterior. Análise de regressão: `isFetching` só consumido por `useSubscription` (não-PHI); todos hooks PHI consomem `isLoading` nos componentes — sem risco de spinner infinito. Commit: `62e5589` (7 arquivos, canal LOCAL). | Sprint 39 ✅ CONCLUÍDO |
 | Sessão 40 | **Sprint Quick Wins** — 6 IDs corrigidos via canal LOCAL (9 arquivos, sem migrations/edge functions): **[ID-013]** `deleteMember.onSuccess` agora invalida 5 queryKeys (`family_members`, `upcoming-appointments`, `pending-counts`, `today-pet-routines`, `agenda`) — membro deletado não aparece mais por até 5 min na Home. **[ID-014]** `addMedication/updateMedication.onSuccess` passam a invalidar `["agenda"]` — posologia nova/editada reflete imediatamente na Agenda. **[ID-019]** `MedWithNextDose.med: any` → `med: Medication` em `useHomeData.ts` — segurança de tipo em `TodayMedicationsSection`. **[ID-017]** Comentário preventivo `// iOS Safari popup blocker: must open window synchronously BEFORE any await.` adicionado nos 5 locais de `window.open("about:blank")` (MeuPlano.tsx×2, Ajustes.tsx, PaywallModal.tsx, Landing.tsx). **[ID-010]** `select("*")` → colunas explícitas em `useHealthMeasurements.ts` e `useFamilyMembers.tsx`. **[ID-015]** `console.log`/`console.error` não-PHI substituídos por `captureException` em 6 locais: `InviteAcceptInterceptor.tsx` (3×), `useMedicationAlarms.ts`, `Cadastro.tsx`, `NotFound.tsx`. | Sprint 40 ✅ CONCLUÍDO |
+| Sessão 41 | **ID-013 v2 + PROD-03 Asaas Root Cause**: **[ID-013 v2]** Causa raiz identificada: `refetchQueries` é no-op para queries inativas em TQ v5 — quando exclusão ocorre em FamiliarProfile (Home não montada), `["upcoming-appointments"]` exibia dados stale ao montar a Home. Fix: `removeQueries` (evicta cache completamente) em vez de `invalidate+refetch` para `["upcoming-appointments"]` e `["pending-counts"]`. Commit `e3c3184`. **[PROD-03]** Root cause do "Erro do servidor financeiro: Erro ao processar pagamento": contas de teste tinham `subscriptions.test_mode = false` (produção) + `cpf: null` → fallback `"00000000191"` rejeitado pela Receita Federal no Asaas Produção. Fix em 3 camadas: (1) DB — `test_mode = true` para teste15/teste16; (2) Edge function `create-asaas-checkout`: guard 422 se `!testMode && cpfCnpj === "00000000191"` (commit `ed7eb33` Lovable MCP); (3) `asaasService.ts`: extração de `errorCode`, tratamento limpo sem Sentry para `missing_cpf`, `asaasError`+`asaasDebug` no Sentry para demais erros (commit `49d600d`). Sistema de pagamento validado em produção por Fábio ✅. | Sprint 41 ✅ CONCLUÍDO |
 
 ---
 
@@ -398,10 +399,11 @@
 
 ---
 
-### ID-013 · `onSuccess` em `useFamilyMembers` invalida queryKeys insuficientes ✅
-- **Risco resolvido:** `deleteMember.onSuccess` agora invalida todos os 5 queryKeys dependentes: `family_members`, `upcoming-appointments`, `pending-counts`, `today-pet-routines`, `agenda`.
+### ID-013 · Widget "5 Próximos Compromissos" exibe compromissos de membros deletados ✅
+- **Risco resolvido (v2 — sessão 41):** Causa raiz corrigida: `refetchQueries` em TQ v5 é no-op para queries inativas. Quando a exclusão ocorre em FamiliarProfile (Home não montada), a Home voltava a exibir dados stale do membro deletado enquanto o background refetch ainda não havia completado. Fix: `removeQueries({ queryKey: ["upcoming-appointments"] })` e `removeQueries({ queryKey: ["pending-counts"] })` evictam o cache completamente — ao montar a Home, as queries iniciam do zero sem dados residuais. Server query já filtra por `family_members.deleted_at IS NULL` (defense in depth).
+- **Histórico:** sessão 40 adicionou `invalidateQueries + refetchQueries` para 5 queryKeys — fix parcial (funciona apenas quando Home está montada durante a exclusão).
 - **Arquivos:** `src/hooks/useFamilyMembers.tsx`
-- **Status:** ✅ Resolvido (sessão 40)
+- **Status:** ✅ Resolvido v2 (sessão 41, commit `e3c3184`)
 
 ---
 

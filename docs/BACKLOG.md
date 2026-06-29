@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 1.2 | **Atualizado em:** 2026-06-28
+> **Versão:** 1.3 | **Atualizado em:** 2026-06-28 (sessão 41)
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -25,7 +25,7 @@
 |----|------|-----------|---------|
 | PROD-01 | ~~CPF real do usuário em `creditCardHolderInfo`~~ | ✅ | Resolvido (sessão 33): `create-asaas-checkout` agora busca `cpf` real de `family_members`. Se ausente, usa fallback `"00000000191"` + log `warn "checkout_cpf_fallback"`. Migration adicionou campo `cpf` à tabela; tela MeusDados permite preenchimento. |
 | PROD-02 | ~~Endereço/telefone real em `creditCardHolderInfo`~~ | ✅ | Resolvido (sessão 33): edge function busca `phone`, `postal_code`, `address_number` reais do perfil familiar. Campos CEP e número adicionados à tela MeusDados. Migration `postal_code + address_number` aplicada. |
-| PROD-03 | Validar tokenização em conta Asaas de produção | 🔴 | Tokenização testada apenas em sandbox. Confirmar que `credit_card_token` vem corretamente em prod com cobrança real. Logging melhorado (sessão 33) para diagnóstico. |
+| PROD-03 | ~~Validar tokenização + Root cause "Erro do servidor financeiro"~~ | ✅ | **Resolvido (sessão 41).** Root cause: contas de teste com `subscriptions.test_mode = false` (Asaas Produção) + `cpf: null` → fallback `"00000000191"` rejeitado pela Receita Federal. Fix 3 camadas: (1) DB `test_mode = true` para contas de teste; (2) edge function `create-asaas-checkout`: guard 422 com `code: "missing_cpf"` se produção sem CPF; (3) `asaasService.ts`: tratamento limpo de `missing_cpf` sem Sentry + `asaasError`/`asaasDebug` no Sentry para demais erros. Validado em produção por Fábio ✅. |
 
 ---
 
