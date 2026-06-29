@@ -105,15 +105,15 @@ export const useFamilyMembers = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["family_members", user?.id] });
-      // [ID-013] Duas operações complementares:
-      // - invalidateQueries: marca stale para todos (ativos e inativos)
-      // - refetchQueries: força refetch imediato nos ativos (Home montada)
-      // Sem o refetchQueries, se a Home estiver montada, a invalidação sozinha
-      // pode não disparar refetch imediato — dependendo do gcTime residual.
-      queryClient.invalidateQueries({ queryKey: ["upcoming-appointments"] });
-      queryClient.refetchQueries({ queryKey: ["upcoming-appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["pending-counts"] });
-      queryClient.refetchQueries({ queryKey: ["pending-counts"] });
+      // [ID-013 v2] removeQueries evicta o cache completamente (não apenas marca stale).
+      // Motivo: quando a exclusão ocorre em FamiliarProfile (Home não montada),
+      // refetchQueries é no-op para queries inativas — a Home voltava a exibir
+      // dados stale do membro deletado enquanto o background refetch ainda não
+      // havia completado. removeQueries garante que ao montar a Home, as queries
+      // começam do zero sem cache residual.
+      // A query do servidor já filtra por family_members.deleted_at IS NULL (defense in depth).
+      queryClient.removeQueries({ queryKey: ["upcoming-appointments"] });
+      queryClient.removeQueries({ queryKey: ["pending-counts"] });
       queryClient.invalidateQueries({ queryKey: ["today-pet-routines"] });
       queryClient.invalidateQueries({ queryKey: ["agenda"] });
     },
