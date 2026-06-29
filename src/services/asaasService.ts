@@ -29,12 +29,13 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
   }
 
   if (responseError) {
-    captureException(responseError, { context: "asaasService.createSubscription.response", planType });
     let detail = "";
     let debugInfo = "";
+    let errorCode = "";
     try {
       if (responseData && typeof responseData === "object") {
-        detail = (responseData as any).error || (responseData as any).message || "";
+        detail    = (responseData as any).error   || (responseData as any).message || "";
+        errorCode = (responseData as any).code    || "";
         // Campo debug contém o erro bruto do Asaas (ex: "asaas_error:400:{...}")
         const rawDebug = (responseData as any).debug as string | undefined;
         if (rawDebug?.startsWith("asaas_error:")) {
@@ -45,9 +46,24 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
       }
       if (!detail && (responseError as any).context) {
         const ctx = await (responseError as any).context.json().catch(() => null);
-        detail = ctx?.error || ctx?.message || "";
+        detail    = ctx?.error || ctx?.message || "";
+        errorCode = ctx?.code  || errorCode;
       }
     } catch (_) { /* ignore */ }
+
+    // 422 "missing_cpf": erro de dados do usuário, não falha de servidor.
+    // Não reportar ao Sentry — mostrar mensagem orientativa.
+    if (errorCode === "missing_cpf") {
+      throw new Error(detail || "Por favor, cadastre seu CPF em Ajustes → Meus Dados antes de assinar.");
+    }
+
+    // Demais erros: capturar no Sentry com contexto completo (inclui body bruto do Asaas)
+    captureException(responseError, {
+      context: "asaasService.createSubscription.response",
+      planType,
+      asaasError: detail   || undefined,
+      asaasDebug: debugInfo || undefined,
+    });
     const reason = detail || responseError.message || "Desconhecido";
     throw new Error(`Erro do servidor financeiro: ${reason}${debugInfo ? ` | Asaas: ${debugInfo}` : ""}`);
   }
