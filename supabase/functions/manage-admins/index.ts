@@ -3,6 +3,83 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
 
+async function sendViaResend(params: {
+  to: string;
+  from: string;
+  subject: string;
+  html: string;
+  text: string;
+  apiKey: string;
+}): Promise<{ id?: string; error?: string }> {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${params.apiKey}`,
+    },
+    body: JSON.stringify({
+      from: params.from,
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+    }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { error: (body as { message?: string }).message ?? `HTTP ${res.status}` };
+  }
+  return { id: (body as { id?: string }).id };
+}
+
+function buildResetPasswordHtml(resetLink: string): string {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f2f0eb;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f2f0eb;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#1C3333;padding:32px 32px 24px;text-align:center;">
+            <div style="font-size:26px;font-weight:800;color:#78C2AD;letter-spacing:-0.5px;">Locus Vita</div>
+            <div style="font-size:12px;color:#78C2AD;opacity:0.7;margin-top:2px;letter-spacing:0.5px;">SAÚDE FAMILIAR</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 32px 24px;">
+            <h1 style="color:#1C3333;font-size:20px;font-weight:700;margin:0 0 8px;">Redefinição de senha 🔐</h1>
+            <p style="color:#4B5563;font-size:15px;line-height:1.6;margin:0 0 20px;">
+              Um administrador solicitou a redefinição da sua senha no Locus Vita. Clique no botão abaixo para criar uma nova senha.
+            </p>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${resetLink}" style="display:inline-block;background:#78C2AD;color:#1C3333;font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;text-decoration:none;">
+                Redefinir minha senha
+              </a>
+            </div>
+            <div style="background:#f8f7f4;border-radius:12px;padding:16px 20px;margin:0 0 20px;">
+              <p style="color:#4B5563;font-size:13px;margin:0;line-height:1.6;">
+                ⚠️ Este link expira em <strong>1 hora</strong>. Se você não solicitou a redefinição de senha, ignore este e-mail — sua senha permanece a mesma.
+              </p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f8f7f4;padding:20px 32px;text-align:center;border-top:1px solid #e5e3de;">
+            <p style="color:#9CA3AF;font-size:12px;margin:0;">
+              Locus Vita — Saúde Familiar Inteligente<br>
+              <a href="https://locustech.com.br" style="color:#78C2AD;text-decoration:none;">locustech.com.br</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -36,17 +113,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
-    // ── ROLE CHECK: all actions require super_admin (#3) ──
-    const { data: callerRole } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("id", caller.id)
-      .maybeSingle();
-
-    if (callerRole?.role !== "super_admin") {
-      return json({ error: "Apenas Super Admins podem acessar este recurso." }, 403);
-    }
-
     // M8: helper de audit log — non-blocking (falha não impede a resposta)
     const audit = async (
       auditAction: string,
@@ -69,6 +135,77 @@ Deno.serve(async (req) => {
         });
       }
     };
+
+    // ── RESET PASSWORD (admin ou super_admin podem usar) ──
+    if (action === "reset") {
+      const { data: resetCallerRole } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("id", caller.id)
+        .maybeSingle();
+
+      if (!["admin", "super_admin"].includes(resetCallerRole?.role ?? "")) {
+        return json({ error: "Acesso negado." }, 403);
+      }
+
+      const { email: targetEmail } = body as { email?: string };
+      if (!targetEmail) return json({ error: "E-mail obrigatório." }, 400);
+
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      if (!resendApiKey) {
+        log("error", "admin_reset_missing_resend_key", {});
+        return json({ error: "Configuração de e-mail ausente." }, 500);
+      }
+
+      const origin = req.headers.get("origin") ?? Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
+      const redirectTo = `${origin}/reset-password`;
+
+      const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
+        type: "recovery",
+        email: targetEmail,
+        options: { redirectTo },
+      });
+
+      if (linkErr || !linkData?.properties?.action_link) {
+        log("error", "admin_reset_generate_link_failed", {
+          email: targetEmail,
+          error: linkErr?.message ?? "no action_link",
+        });
+        return json({ error: "Não foi possível gerar o link de recuperação." }, 500);
+      }
+
+      const resetLink = linkData.properties.action_link;
+
+      const { id: resendId, error: resendErr } = await sendViaResend({
+        to: targetEmail,
+        from: "Locus Vita <noreply@locustech.com.br>",
+        subject: "Redefinição de senha — Locus Vita",
+        html: buildResetPasswordHtml(resetLink),
+        text: `Você recebeu uma solicitação de redefinição de senha no Locus Vita.\n\nClique no link abaixo para redefinir sua senha:\n${resetLink}\n\nEste link expira em 1 hora. Se você não solicitou isso, ignore este e-mail.\n\n---\nLocus Vita — locustech.com.br`,
+        apiKey: resendApiKey,
+      });
+
+      if (resendErr) {
+        log("error", "admin_reset_resend_failed", { email: targetEmail, error: resendErr });
+        return json({ error: "Falha ao enviar e-mail de recuperação." }, 500);
+      }
+
+      await audit("reset-password", null, targetEmail, { resend_id: resendId });
+      log("info", "admin_reset_password_sent", { performedBy: caller.id, targetEmail });
+      return json({ ok: true });
+    }
+
+    // ── ROLE CHECK: all actions require super_admin (#3) ──
+    const { data: callerRole } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("id", caller.id)
+      .maybeSingle();
+
+    if (callerRole?.role !== "super_admin") {
+      return json({ error: "Apenas Super Admins podem acessar este recurso." }, 403);
+    }
+
 
     // ── LIST EMAILS (batch) ──
     if (action === "list-emails") {

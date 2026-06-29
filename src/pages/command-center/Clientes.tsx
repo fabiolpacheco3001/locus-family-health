@@ -124,13 +124,14 @@ const Clientes = () => {
       return;
     }
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(client.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      const { data, error } = await supabase.functions.invoke("manage-admins", {
+        body: { action: "reset", email: client.email },
       });
       if (error) throw error;
-      toast.success(`E-mail de recuperação enviado para ${client.email}.`);
-    } catch {
-      toast.error("Erro ao enviar e-mail de recuperação.");
+      if ((data as { error?: string })?.error) throw new Error((data as { error?: string }).error);
+      toast.success(`E-mail de redefinição enviado para ${client.email}.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao enviar e-mail de recuperação.");
     }
   };
 
