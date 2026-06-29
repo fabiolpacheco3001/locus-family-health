@@ -217,8 +217,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 1. Always resolve customer in the current env (sandbox vs prod).
-    const customerId = await findOrCreateCustomer(creds, userEmail, userName, cpfCnpj, billingPhone, postalCode, addressNumber);
+    // 1. Resolve customer ID.
+    // Em sandbox, não enviar CPF placeholder "00000000191" (inválido) — Asaas sandbox aceita cliente sem CPF.
+    // Em produção, CPF real já foi validado pelo guard acima.
+    const effectiveCpfCnpj = (testMode && cpfCnpj === "00000000191") ? "" : cpfCnpj;
+
+    // Reutilizar customer ID salvo no banco quando disponível — evita chamada Asaas e possível conflito de CPF.
+    let customerId: string;
+    if (subRow?.asaas_customer_id) {
+      customerId = subRow.asaas_customer_id;
+      log("info", "asaas_customer_reused_from_db", { customerId, env: creds.env, userId });
+    } else {
+      customerId = await findOrCreateCustomer(creds, userEmail, userName, effectiveCpfCnpj, billingPhone, postalCode, addressNumber);
+    }
 
     // 2. Persist customer ID — INSERT if first purchase, UPDATE otherwise.
     if (!subRow) {
