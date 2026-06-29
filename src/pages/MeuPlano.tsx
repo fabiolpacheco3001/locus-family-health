@@ -88,11 +88,13 @@ const MeuPlano = () => {
       : "bg-gradient-to-r from-slate-700 to-slate-600";
 
   const handleRegularize = async () => {
+    // Hard-block: CPF é obrigatório pelo Asaas (validação Receita Federal) em produção.
+    // Guard advisory anterior (toast-only) não bloqueava: causava tab em branco + erro do servidor.
+    // Navegar para Meus Dados garante que o usuário preenche o CPF antes de tentar pagar.
     if (!hasCpf) {
-      toast.warning(
-        "Preencha seu CPF em Ajustes → Meus Dados para garantir aprovação do pagamento.",
-        { duration: 6000 }
-      );
+      toast.info("Cadastre seu CPF em Meus Dados antes de regularizar o pagamento.", { duration: 4000 });
+      navigate("/meus-dados");
+      return;
     }
     setLoadingSubscription(true);
     // iOS Safari popup blocker: must open window synchronously BEFORE any await.
@@ -165,11 +167,11 @@ const MeuPlano = () => {
   };
 
   const handleReactivate = async () => {
+    // Hard-block: mesma regra de handleRegularize — CPF obrigatório antes de abrir checkout.
     if (!hasCpf) {
-      toast.warning(
-        "Preencha seu CPF em Ajustes → Meus Dados para garantir aprovação do pagamento.",
-        { duration: 6000 }
-      );
+      toast.info("Cadastre seu CPF em Meus Dados antes de reativar o plano.", { duration: 4000 });
+      navigate("/meus-dados");
+      return;
     }
     setLoadingSubscription(true);
     // iOS Safari popup blocker: must open window synchronously BEFORE any await.

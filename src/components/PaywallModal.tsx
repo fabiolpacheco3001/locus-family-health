@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { PLAN_MONTHLY_DISPLAY, PLAN_ANNUAL_DISPLAY } from "@/lib/planConfig";
 import { TRIAL_DAYS } from "@/lib/constants";
 import { Rocket, Loader2, LogOut, CheckCircle2, RefreshCw } from "lucide-react";
@@ -32,6 +33,7 @@ interface PaywallModalProps {
 }
 
 const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpired }: PaywallModalProps) => {
+  const navigate = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<"monthly" | "annual" | null>(null);
   const [awaitingPayment, setAwaitingPayment] = useState(false);
   const [checkCount, setCheckCount] = useState(0);
@@ -140,12 +142,14 @@ const PaywallModal = ({ open, onOpenChange, locked, onLogout, implicitTrialExpir
   };
 
   const handleSubscribe = async (planType: "monthly" | "annual") => {
-    // PROD-01 guard: warn if CPF not filled — Asaas may reject in production
+    // Hard-block: CPF é obrigatório pelo Asaas (validação Receita Federal) em produção.
+    // Guard advisory anterior (toast-only) causava: toast + tab em branco + erro do servidor.
+    // Fechar modal e navegar para Meus Dados para o usuário cadastrar CPF antes de assinar.
     if (!hasCpf) {
-      toast.warning(
-        "Preencha seu CPF em Ajustes → Meus Dados para garantir aprovação do pagamento.",
-        { duration: 6000 }
-      );
+      toast.info("Cadastre seu CPF em Meus Dados antes de assinar.", { duration: 4000 });
+      onOpenChange(false);
+      navigate("/meus-dados");
+      return;
     }
     setLoadingPlan(planType);
     // iOS Safari popup blocker: must open window synchronously BEFORE any await.
