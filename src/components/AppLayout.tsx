@@ -80,6 +80,11 @@ const AppLayout = () => {
     };
   }, []);
 
+  // Rotas onde o paywall é suprimido para que o usuário possa preencher dados obrigatórios
+  // (ex: CPF exigido pelo Asaas). Qualquer outra rota mostra o paywall normalmente.
+  // Ao sair de uma bypass route, o effect re-executa e retoma a lógica normal de paywall.
+  const PAYWALL_BYPASS_PATHS = ["/meus-dados"];
+
   // Stable paywall gate: only update when subscription is confirmed (session + query complete).
   // Prevents cycling caused by session briefly going null during JWT refresh.
   const paywallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -106,6 +111,14 @@ const AppLayout = () => {
         // Fecha o paywall IMEDIATAMENTE quando subscription confirmada ativa
         setShowPaywall(false);
       } else if (!subFetching) {
+        // Bypass: usuário foi redirecionado para preencher dados obrigatórios antes de assinar.
+        // Fecha o paywall (se aberto) e NÃO agenda reabertura enquanto estiver nessa rota.
+        // Quando o usuário navegar para outra rota, pathname muda → effect re-executa →
+        // retoma lógica normal → paywall volta a aparecer se ainda não tiver assinado.
+        if (PAYWALL_BYPASS_PATHS.includes(pathname)) {
+          setShowPaywall(false);
+          return;
+        }
         // Debounce 1 s antes de abrir o paywall.
         // Se o refetch de subscription completar dentro desse janela e canUsePremium voltar
         // a true, o timer é cancelado e o paywall NUNCA aparece para assinantes ativos.
@@ -122,7 +135,10 @@ const AppLayout = () => {
         paywallTimerRef.current = null;
       }
     };
-  }, [canUsePremium, subLoading, subFetching, session]);
+  // pathname adicionado: re-avalia bypass a cada navegação.
+  // Quando usuário sai de /meus-dados (sem CPF) → retoma lógica normal do paywall.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canUsePremium, subLoading, subFetching, session, pathname]);
 
   // ── App Lock: show logo while passkeys load (avoids content flash) ──────────
   // Only blocks render if session was restored from localStorage (not fresh login).
