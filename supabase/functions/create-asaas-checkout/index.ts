@@ -263,6 +263,29 @@ Deno.serve(async (req) => {
       customerId = await findOrCreateCustomer(creds, userEmail, userName, effectiveCpfCnpj, effectivePhone, postalCode, addressNumber);
     }
 
+    // Sync CPF/phone no customer do Asaas quando reutilizando customer do banco.
+    // O formulário de checkout Asaas lê CPF do registro do customer, não do creditCardHolderInfo.
+    // Sem este sync, usuários que definiram CPF após o primeiro checkout veem o campo em branco.
+    if (subRow?.asaas_customer_id && (effectiveCpfCnpj || effectivePhone)) {
+      try {
+        const syncPayload: Record<string, string> = { name: userName };
+        if (effectiveCpfCnpj) syncPayload.cpfCnpj = effectiveCpfCnpj;
+        if (effectivePhone) syncPayload.phone = effectivePhone;
+        await asaasFetch(creds, `/customers/${customerId}`, {
+          method: "PUT",
+          body: JSON.stringify(syncPayload),
+        });
+        log("info", "asaas_customer_cpf_synced", { customerId, env: creds.env, userId });
+      } catch (syncErr) {
+        // Non-critical: checkout continua mesmo se sync falhar
+        log("warn", "asaas_customer_cpf_sync_failed", {
+          customerId,
+          env: creds.env,
+          hint: syncErr instanceof Error ? syncErr.message : String(syncErr),
+        });
+      }
+    }
+
     // 2. Persist customer ID — INSERT if first purchase, UPDATE otherwise.
     if (!subRow) {
       await adminClient.from("subscriptions").insert({
