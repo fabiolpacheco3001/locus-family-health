@@ -57,12 +57,32 @@ async function findOrCreateCustomer(
   if (search.data && search.data.length > 0) {
     const existing = search.data[0];
     log("info", "asaas_customer_found", { customerId: existing.id, env: creds.env });
-    if (!existing.cpfCnpj && cpfCnpj) {
-      await asaasFetch(creds, `/customers/${existing.id}`, {
-        method: "PUT",
-        body: JSON.stringify({ name, cpfCnpj, phone, postalCode, addressNumber }),
-      });
-      log("info", "asaas_customer_cpf_updated", { customerId: existing.id, env: creds.env });
+
+    const needsCpf = !existing.cpfCnpj && !!cpfCnpj;
+    // Telefone armazenado de tentativas anteriores (fallback inválido "11999999999")
+    // causa invalid_mobilePhone no Asaas ao criar pagamento — atualizar para valor válido.
+    const hasStalePhone =
+      existing.phone === "11999999999" || existing.mobilePhone === "11999999999";
+    const shouldUpdatePhone = !!phone && (hasStalePhone || !existing.phone);
+
+    if (needsCpf || shouldUpdatePhone) {
+      const updateBody: Record<string, string> = { name, postalCode, addressNumber };
+      if (cpfCnpj) updateBody.cpfCnpj = cpfCnpj;
+      if (phone) updateBody.phone = phone;
+      try {
+        await asaasFetch(creds, `/customers/${existing.id}`, {
+          method: "PUT",
+          body: JSON.stringify(updateBody),
+        });
+        log("info", "asaas_customer_updated", {
+          customerId: existing.id, env: creds.env, needsCpf, shouldUpdatePhone,
+        });
+      } catch (updateErr) {
+        log("warn", "asaas_customer_update_failed", {
+          customerId: existing.id, env: creds.env,
+          hint: updateErr instanceof Error ? updateErr.message : String(updateErr),
+        });
+      }
     }
     return existing.id;
   }
