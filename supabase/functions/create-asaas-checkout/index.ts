@@ -245,9 +245,14 @@ Deno.serve(async (req) => {
     // Em sandbox, não enviar CPF placeholder "00000000191" (inválido) — Asaas sandbox aceita cliente sem CPF.
     // Em produção, CPF real já foi validado pelo guard acima.
     const effectiveCpfCnpj = (testMode && cpfCnpj === "00000000191") ? "" : cpfCnpj;
-    // Em sandbox, "11999999999" é o fallback quando não há telefone no perfil — omitir do payload.
-    // Em produção, se o usuário não tem telefone, Asaas aceita sem o campo.
-    const effectivePhone = billingPhone !== "11999999999" ? billingPhone : "";
+    // Sandbox: usar número de teste em formato brasileiro válido quando não há telefone real.
+    // Asaas sandbox valida o formato do telefone mas aceita qualquer número no padrão correto.
+    // Produção: omitir campo quando não há telefone (CPF é suficiente para antifraude Asaas).
+    const effectivePhone = (() => {
+      if (billingPhone !== "11999999999") return billingPhone; // telefone real do usuário
+      if (testMode) return "11912345678";                       // número de teste sandbox (DDD+9+8 dígitos)
+      return "";                                                // produção sem telefone — omitir do payload
+    })();
 
     // Reutilizar customer ID salvo no banco quando disponível — evita chamada Asaas e possível conflito de CPF.
     let customerId: string;
