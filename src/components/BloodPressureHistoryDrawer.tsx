@@ -208,7 +208,7 @@ const BloodPressureHistoryDrawer = ({ open, onOpenChange, familyMemberId }: Prop
                   const isConsultation = r.source === "consultation" && consultation;
 
                   return (
-                    <SwipeableCard key={r.id} onSwipeDelete={() => setDeleteTarget(r.id)}>
+                    <SwipeableCard key={r.id} onSwipeDelete={() => setDeleteTarget(r.id)} ariaLabel={`Pressão arterial: ${r.systolic}/${r.diastolic} mmHg`}>
                       <div className="bg-card rounded-xl border border-border/50 p-4 space-y-2">
                         {/* Consultation origin header */}
                         {isConsultation && (

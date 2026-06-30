@@ -7,9 +7,11 @@ const SWIPE_THRESHOLD = -80;
 interface SwipeableCardProps {
   children: ReactNode;
   onSwipeDelete: () => void;
+  /** Accessible label for the card container (WCAG 2.1 AA) — e.g. "Pressão arterial: 120/80 mmHg" */
+  ariaLabel?: string;
 }
 
-const SwipeableCard = ({ children, onSwipeDelete }: SwipeableCardProps) => {
+const SwipeableCard = ({ children, onSwipeDelete, ariaLabel }: SwipeableCardProps) => {
   const x = useMotionValue(0);
   const trashOpacity = useTransform(x, [-100, -40, 0], [1, 0.5, 0]);
 
@@ -26,12 +28,14 @@ const SwipeableCard = ({ children, onSwipeDelete }: SwipeableCardProps) => {
       exit={{ x: -400, opacity: 0, height: 0, marginBottom: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="relative overflow-hidden rounded-xl"
+      role="listitem"
+      aria-label={ariaLabel}
     >
       <motion.div
         className="absolute inset-0 bg-destructive flex items-center justify-end px-6 rounded-xl"
         style={{ opacity: trashOpacity }}
       >
-        <Trash2 className="w-6 h-6 text-white" />
+        <Trash2 className="w-6 h-6 text-white" aria-hidden="true" />
       </motion.div>
 
       <motion.div

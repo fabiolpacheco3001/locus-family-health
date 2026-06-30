@@ -317,7 +317,7 @@ const MenstrualCycleDrawer = ({ open, onOpenChange, familyMemberId }: Props) => 
             ) : (
               <AnimatePresence mode="popLayout">
                 {records.map((r) => (
-                  <SwipeableCard key={r.id} onSwipeDelete={() => setDeleteTarget(r.id)}>
+                  <SwipeableCard key={r.id} onSwipeDelete={() => setDeleteTarget(r.id)} ariaLabel={`Ciclo menstrual: ${formatDateRange(r.start_date, r.end_date)}`}>
                     <button
                       type="button"
                       onClick={() => openEditForm(r)}
