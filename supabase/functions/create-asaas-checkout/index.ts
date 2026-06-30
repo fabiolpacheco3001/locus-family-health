@@ -435,14 +435,9 @@ Deno.serve(async (req) => {
         dueDate: todayStr,
         description: plan.description,
         externalReference: userId,
-        creditCardHolderInfo: {
-          name: userName,
-          email: userEmail,
-          ...(effectiveCpfCnpj ? { cpfCnpj: effectiveCpfCnpj } : {}),
-          postalCode,
-          addressNumber,
-          ...(effectivePhone ? { phone: effectivePhone } : {}),
-        },
+        // creditCardHolderInfo é campo da API v2 para tokenização direta de cartão.
+        // No fluxo de hosted checkout (invoiceUrl) que usamos, o pré-preenchimento
+        // vem do customer profile (sincronizado via PUT /customers acima).
       }),
     });
 
