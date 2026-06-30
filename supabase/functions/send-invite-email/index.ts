@@ -190,7 +190,9 @@ Deno.serve(async (req) => {
     const playStoreUrl = Deno.env.get("GOOGLE_PLAY_URL") ?? "#"; // publicar nas lojas — roadmap
 
     const safeEmail = invite.email;
-    const subject = `${inviterName} convidou você para o Locus Vita 💚`;
+    // SEC-HTML: sanitizar inviterName para evitar CRLF injection no header de email
+    const safeInviterName = inviterName.replace(/[\r\n\t]/g, " ").slice(0, 100);
+    const subject = `${safeInviterName} convidou você para o Locus Vita 💚`;
 
     const html = buildInviteEmailHtml({
       inviterName,
