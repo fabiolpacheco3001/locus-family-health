@@ -27,11 +27,21 @@ const AuthCallback = () => {
     // O Supabase detecta o código OAuth na URL (detectSessionInUrl=true por padrão),
     // faz o exchange automaticamente e emite SIGNED_IN sub-100ms após a troca.
     // O polling anterior aguardava até 5s verificando getSession() a cada 200ms.
+
+    // Declarado antes do handler para que o closure possa cancelar o timeout
+    // logo ao receber SIGNED_IN — antes do async work — evitando race condition
+    // onde o timeout dispara durante operações lentas de rede (ex: consent insert).
+    let timeout: ReturnType<typeof setTimeout>;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         // Ignorar INITIAL_SESSION, TOKEN_REFRESHED, SIGNED_OUT — aguardar só SIGNED_IN
         if (_event !== "SIGNED_IN" || !session) return;
 
+        // Cancelar o timeout IMEDIATAMENTE ao confirmar o login — antes de qualquer
+        // await — para evitar que dispare durante operações de rede lentas
+        // (ex: revogar + re-autorizar o app Google gera exchange mais lento).
+        clearTimeout(timeout);
         subscription.unsubscribe();
         const user = session.user;
 
@@ -92,7 +102,7 @@ const AuthCallback = () => {
     );
 
     // Fallback: se SIGNED_IN nunca disparar (código inválido/expirado), falhar após 8s
-    const timeout = setTimeout(() => {
+    timeout = setTimeout(() => {
       subscription.unsubscribe();
       toast.error("Autenticação falhou. Tente novamente.");
       navigate("/login");
