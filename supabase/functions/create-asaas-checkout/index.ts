@@ -66,9 +66,11 @@ async function findOrCreateCustomer(
     const shouldUpdatePhone = !!phone && (hasStalePhone || !existing.phone);
 
     if (needsCpf || shouldUpdatePhone) {
-      const updateBody: Record<string, string> = { name, postalCode, addressNumber };
+      const updateBody: Record<string, string> = { name };
       if (cpfCnpj) updateBody.cpfCnpj = cpfCnpj;
       if (phone) updateBody.phone = phone;
+      if (postalCode && postalCode !== "01310100") updateBody.postalCode = postalCode;
+      if (addressNumber && addressNumber !== "1") updateBody.addressNumber = addressNumber;
       try {
         await asaasFetch(creds, `/customers/${existing.id}`, {
           method: "PUT",
@@ -92,9 +94,11 @@ async function findOrCreateCustomer(
   log("info", "asaas_customer_payload", {
     env: creds.env, hasCpf: !!cpfCnpj, hasPhone: !!phone,
   });
-  const customerBody: Record<string, string> = { name, email, postalCode, addressNumber };
-  if (phone) customerBody.phone = phone;
+  const customerBody: Record<string, string> = { name, email };
   if (cpfCnpj) customerBody.cpfCnpj = cpfCnpj;
+  if (phone) customerBody.phone = phone;
+  if (postalCode && postalCode !== "01310100") customerBody.postalCode = postalCode;
+  if (addressNumber && addressNumber !== "1") customerBody.addressNumber = addressNumber;
 
   try {
     const created = await asaasFetch(creds, "/customers", {
@@ -326,14 +330,10 @@ Deno.serve(async (req) => {
     // Em sandbox, não enviar CPF placeholder "00000000191" (inválido) — Asaas sandbox aceita cliente sem CPF.
     // Em produção, CPF real já foi validado pelo guard acima.
     const effectiveCpfCnpj = (testMode && cpfCnpj === "00000000191") ? "" : cpfCnpj;
-    // Sandbox: usar número de teste em formato brasileiro válido quando não há telefone real.
-    // Asaas sandbox valida o formato do telefone mas aceita qualquer número no padrão correto.
-    // Produção: omitir campo quando não há telefone (CPF é suficiente para antifraude Asaas).
-    const effectivePhone = (() => {
-      if (billingPhone !== "11999999999") return billingPhone; // telefone real do usuário
-      if (testMode) return "11912345678";                       // número de teste sandbox (DDD+9+8 dígitos)
-      return "";                                                // produção sem telefone — omitir do payload
-    })();
+    // Só enviar telefone se o usuário preencheu um número real.
+    // Nunca inventar números fictícios — o campo é opcional no Asaas e
+    // inventar um número aparece para o usuário no checkout como "seu telefone".
+    const effectivePhone = billingPhone !== "11999999999" ? billingPhone : "";
 
     // Reutilizar customer ID salvo no banco quando disponível — evita chamada Asaas e possível conflito de CPF.
     let customerId: string;
@@ -351,9 +351,11 @@ Deno.serve(async (req) => {
     // the old conditional (subRow?.asaas_customer_id) would skip this sync — causing blank CPF.
     if (effectiveCpfCnpj || effectivePhone) {
       try {
-        const syncPayload: Record<string, string> = { name: userName, postalCode, addressNumber };
+        const syncPayload: Record<string, string> = { name: userName };
         if (effectiveCpfCnpj) syncPayload.cpfCnpj = effectiveCpfCnpj;
         if (effectivePhone) syncPayload.phone = effectivePhone;
+        if (postalCode !== "01310100") syncPayload.postalCode = postalCode;
+        if (addressNumber !== "1") syncPayload.addressNumber = addressNumber;
         await asaasFetch(creds, `/customers/${customerId}`, {
           method: "PUT",
           body: JSON.stringify(syncPayload),
@@ -433,14 +435,9 @@ Deno.serve(async (req) => {
         dueDate: todayStr,
         description: plan.description,
         externalReference: userId,
-        creditCardHolderInfo: {
-          name: userName,
-          email: userEmail,
-          ...(effectiveCpfCnpj ? { cpfCnpj: effectiveCpfCnpj } : {}),
-          postalCode,
-          addressNumber,
-          ...(effectivePhone ? { phone: effectivePhone } : {}),
-        },
+        // creditCardHolderInfo é campo da API v2 para tokenização direta de cartão.
+        // No fluxo de hosted checkout (invoiceUrl) que usamos, o pré-preenchimento
+        // vem do customer profile (sincronizado via PUT /customers acima).
       }),
     });
 
