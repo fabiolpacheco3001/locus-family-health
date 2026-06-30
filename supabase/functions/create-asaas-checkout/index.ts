@@ -263,13 +263,13 @@ Deno.serve(async (req) => {
       customerId = await findOrCreateCustomer(creds, userEmail, userName, effectiveCpfCnpj, effectivePhone, postalCode, addressNumber);
     }
 
-    // Sync CPF/phone no customer do Asaas quando reutilizando customer do banco.
-    // O formulário de checkout Asaas lê CPF do registro do customer, não do creditCardHolderInfo.
-    // Sem este sync, usuários que definiram CPF após o primeiro checkout veem o campo em branco.
-    if (subRow?.asaas_customer_id && (effectiveCpfCnpj || effectivePhone)) {
+    // ALWAYS sync CPF/phone/address with Asaas customer after obtaining customerId.
+    // This ensures checkout pre-fill regardless of whether customerId came from DB or
+    // findOrCreateCustomer (which may reuse an existing Asaas customer found by email).
+    // When DB was cleared (asaas_customer_id = null) but customer still exists in Asaas,
+    // the old conditional (subRow?.asaas_customer_id) would skip this sync — causing blank CPF.
+    if (effectiveCpfCnpj || effectivePhone) {
       try {
-        // Incluir postalCode e addressNumber para evitar que o PUT do Asaas limpe
-        // esses campos no customer. O Asaas usa esses dados para pré-preencher o checkout.
         const syncPayload: Record<string, string> = { name: userName, postalCode, addressNumber };
         if (effectiveCpfCnpj) syncPayload.cpfCnpj = effectiveCpfCnpj;
         if (effectivePhone) syncPayload.phone = effectivePhone;
@@ -277,10 +277,10 @@ Deno.serve(async (req) => {
           method: "PUT",
           body: JSON.stringify(syncPayload),
         });
-        log("info", "asaas_customer_cpf_synced", { customerId, env: creds.env, userId });
+        log("info", "asaas_customer_synced", { customerId, env: creds.env, userId });
       } catch (syncErr) {
-        // Non-critical: checkout continua mesmo se sync falhar
-        log("warn", "asaas_customer_cpf_sync_failed", {
+        // Non-critical: checkout continues even if sync fails
+        log("warn", "asaas_customer_sync_failed", {
           customerId,
           env: creds.env,
           hint: syncErr instanceof Error ? syncErr.message : String(syncErr),
