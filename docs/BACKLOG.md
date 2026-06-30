@@ -46,7 +46,7 @@
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
 | BK-02 | Ciclos posológicos complexos | 🟡 | Anticoncepcional 21+7, pausa programada, reinício automático |
-| BK-03 | OAuth Google / Apple | 🟡 | Login social para reduzir fricção no cadastro |
+| BK-03 | ~~OAuth Google / Apple~~ | ✅ | Google OAuth implementado. Sessão 60 (2026-06-30): velocidade melhorada (polling→onAuthStateChange, sub-100ms) + deep link restaurado após re-login via notificação. Apple: pendente (requer Apple Developer Account pago). |
 | BK-11 | Zod schemas para formulários com PHI | 🟡 | Criar `src/lib/schemas/` (auth, medication, consultation, surgery). Usar `zodResolver` com React Hook Form. Cadastro, Login, AddMedicationDrawer, AddConsultationDrawer, AddSurgeryDrawer. Estimativa: 8h+. (ver ID-016 em TECH_DEBT.md) |
 | BK-05 | ~~Dashboard de Adesão Medicamentosa~~ | ✅ | Implementado. Bug "Parcial" corrigido (2026-06-19): virtual doses agora cobrindo specific_times e specific_days. "Melhor sequência" (recorde) também adicionado. |
 | BK-07 | ~~Importação de receitas via foto (câmera)~~ | ✅ | Implementado (2026-06-19, sessão 27): card "Ler Receita com IA" na Home → FamilySelectDrawer → AiMedicationUpload → AddMedicationDrawer |
