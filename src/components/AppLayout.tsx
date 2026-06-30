@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, Suspense } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Navigate } from "react-router-dom";
 import MobileShell from "./MobileShell";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNav from "./BottomNav";
@@ -28,7 +28,7 @@ const InlineRouteLoader = () => (
 );
 
 const AppLayout = () => {
-  const { user, session, signOut } = useAuth();
+  const { user, session, loading, signOut } = useAuth();
   const queryClient = useQueryClient();
   const { isLocked, isReady, hadInitialSession, unlock } = useAppLock();
   const { canUsePremium, isLoading: subLoading, isFetching: subFetching, subscription, implicitTrialExpired } = useSubscription();
@@ -139,6 +139,20 @@ const AppLayout = () => {
   // Quando usuário sai de /meus-dados (sem CPF) → retoma lógica normal do paywall.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canUsePremium, subLoading, subFetching, session, pathname]);
+
+  // ── Auth guard: redirecionar para login se sessão expirou ou nunca autenticou ─
+  // Cenário principal: notificação push abre app em rota protegida (/familiar/xxx/medicamentos)
+  // mas a sessão Google expirou. O guard salva o pathname para restaurar após re-login.
+  // Não dispara quando loading=true (auth ainda inicializando) nem quando user existe.
+  // Paths já capturados pelo layout: qualquer rota dentro de <AppLayout /> — nunca /, /login, etc.
+  if (!loading && !user) {
+    const SKIP_PATHS = ["/", "/login", "/cadastro", "/auth/callback", "/reset-password",
+      "/politica-de-privacidade", "/termos-de-uso", "/seguranca"];
+    if (!SKIP_PATHS.includes(pathname)) {
+      try { localStorage.setItem("lv_redirect_after_login", pathname); } catch { /* ignore */ }
+    }
+    return <Navigate to="/login" replace />;
+  }
 
   // ── App Lock: show logo while passkeys load (avoids content flash) ──────────
   // Only blocks render if session was restored from localStorage (not fresh login).

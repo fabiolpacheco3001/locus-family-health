@@ -27,10 +27,17 @@ const Login = () => {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Auto-redirect if already logged in
+  // Auto-redirect if already logged in — restaura deep link se existir
   useEffect(() => {
     if (!authLoading && user && !planFromUrl) {
-      navigate("/home", { replace: true });
+      const raw = localStorage.getItem("lv_redirect_after_login");
+      const redirectTo = raw?.startsWith("/") && !raw.startsWith("//") && !raw.includes("://") ? raw : null;
+      if (redirectTo) {
+        localStorage.removeItem("lv_redirect_after_login");
+        navigate(redirectTo, { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
     }
   }, [authLoading, user, planFromUrl, navigate]);
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -117,7 +124,15 @@ const Login = () => {
           staleTime: 5 * 60 * 1000,
         });
       }
-      navigate("/home");
+      // BK-03 — Restaurar deep link após email/password login
+      const raw = localStorage.getItem("lv_redirect_after_login");
+      const redirectTo = raw?.startsWith("/") && !raw.startsWith("//") && !raw.includes("://") ? raw : null;
+      if (redirectTo) {
+        localStorage.removeItem("lv_redirect_after_login");
+        navigate(redirectTo, { replace: true });
+      } else {
+        navigate("/home");
+      }
     }
   };
 
