@@ -96,7 +96,7 @@ export function useSurgeries(familyMemberId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as Surgery[];
+      return (data ?? []) as unknown as Surgery[];
     },
     enabled: !!user,
     // LGPD art. 11: cirurgias são dados de saúde sensíveis — staleTime: 0
