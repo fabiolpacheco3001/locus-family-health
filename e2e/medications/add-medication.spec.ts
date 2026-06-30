@@ -92,16 +92,27 @@ test.describe("Cadastro de Medicamento", () => {
         .catch(() => {});
     }
 
-    // Fecha qualquer dropdown ainda aberto + aguarda re-renders do formulário estabilizarem.
-    // O force:true no combobox pode ter acionado o dropdown sem fechar depois;
-    // o Escape garante que o foco volta ao formulário e os re-renders cessam.
-    await page.keyboard.press("Escape");
-    await page.waitForTimeout(800);
+    // NÃO pressionar Escape aqui — o Vaul drawer fecha com Escape, removendo o formulário do DOM.
+    // Aguarda re-renders estabilizarem sem fechar o drawer.
+    await page.waitForTimeout(600);
 
     // ── 6. Salva o medicamento ──────────────────────────────────────────────
-    // Usa force:true pelo mesmo motivo do combobox — o drawer re-renderiza continuamente
-    // fazendo o botão oscilar entre "not stable" e "detached from DOM".
-    await page.getByRole("button", { name: "Salvar Medicamento" }).click({ force: true });
+    // O drawer re-renderiza continuamente (react-hook-form + Vaul animations), fazendo o
+    // botão oscilar entre "not stable" e "detached from DOM" para o Playwright.
+    // Usamos waitForFunction + dispatchEvent para clicar diretamente no nó DOM atual,
+    // bypassando todas as verificações de estabilidade/actionability do Playwright.
+    await page.waitForFunction(
+      () => {
+        const btns = Array.from(document.querySelectorAll("button"));
+        return btns.some((b) => b.textContent?.trim().startsWith("Salvar Medicamento"));
+      },
+      { timeout: 10_000 }
+    );
+    await page.evaluate(() => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const btn = btns.find((b) => b.textContent?.trim().startsWith("Salvar Medicamento"));
+      btn?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    });
 
     // Toast de sucesso ou fechamento do drawer confirma salvamento
     await expect(
