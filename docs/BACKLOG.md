@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 2.2 | **Atualizado em:** 2026-06-30 (sessão 53 — A7-E2E Playwright implementado)
+> **Versão:** 2.3 | **Atualizado em:** 2026-06-30 (sessão 53 — A7-E2E Playwright: 8/8 testes passando ✅)
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -37,7 +37,7 @@
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
 | BK-01 | ~~Push notifications multi-dispositivo~~ | ✅ | **E2E validado em produção (sessão 36, 2026-06-21).** Implementação completa: SW, PushManager, `send-push-notification`, `send-medication-reminders` (±3 min), `send-appointment-reminders` (D-0/D-1 às 8h BRT), migration com pg_cron. Incidente de segurança (sessão 35): VAPID_PRIVATE_KEY exposta em JSDoc → chaves rotacionadas. E2E fix (sessão 36): par VAPID inconsistente pós-rotação → par regenerado via Node.js WebCrypto; contagem `sent` corrigida para ler APNs response body, não HTTP 200. Notificação "💊 Hora do Remédio!" chegando no iPhone com PWA fechado ✅. |
-| A7-E2E | ~~Testes E2E Playwright~~ | ✅ | **Implementado (sessão 53).** `playwright.config.ts` standalone (sem lovable-agent dep), `e2e/global.setup.ts` para autenticação com storageState, 4 specs: `auth/login.spec.ts`, `medications/add-medication.spec.ts`, `medications/mark-dose.spec.ts`, `payment/checkout.spec.ts`. Requires `.env.e2e` com `TEST_USER_EMAIL`/`TEST_USER_PASSWORD`. Script: `bun run test:e2e`. |
+| A7-E2E | ~~Testes E2E Playwright~~ | ✅ | **8/8 passando (sessão 53, 2026-06-30).** `playwright.config.ts` standalone (sem lovable-agent dep), `e2e/global.setup.ts` para autenticação com storageState, 4 specs: `auth/login.spec.ts`, `medications/add-medication.spec.ts`, `medications/mark-dose.spec.ts`, `payment/checkout.spec.ts`. **Fix crítico:** `add-medication.spec.ts` — substituído `dispatchEvent(bubbles:true)` por `saveBtn.click({ force: true })` (dispatchEvent fechava o Vaul drawer via bubbling) + handling condicional do AlertDialog "Continuar" (gate `checkDateAndProceed` exige click em "Continuar" quando `startDateTime` vazio). Toast: `"Medicamento adicionado!"` (não "salvo"). **Importante:** usar `bun run test:e2e` (não `npx playwright test`) — `.env.e2e` só é carregado via flag `--env-file` do Bun. |
 
 ---
 
@@ -84,6 +84,7 @@
 | BK-Asaas | Refactor motor financeiro → Cobrança Avulsa + tokenização | Sprint 13 | 2026-06-19 |
 | BK-01 | Push notifications multi-dispositivo — implementação (VAPID + pg_cron + SW) | Sprint 35 | 2026-06-21 |
 | BK-01-E2E | Push notifications — E2E validado no iPhone (fix par VAPID + contagem APNs) | Sprint 36 | 2026-06-21 |
+| A7-E2E | Testes E2E Playwright — 8/8 passando (fix dispatchEvent/Vaul + AlertDialog gate) | Sprint 53 | 2026-06-30 |
 | BUG-∞ | Bug ∞ Dipirona (Fase 401) — alias `"interval"` normalizado em `calculateNextDose` | Sprint 37 | 2026-06-21 |
 | CC-01 | Fix reset de senha CC: `resetPasswordForEmail` (SMTP Supabase) → Edge Function `manage-admins` action `reset` com `generateLink` + Resend API | Sprint 45 | 2026-06-29 |
 | CC-02 | CC Clientes: ação "Alterar Plano Grátis" + paginação 20/página + `staleTime: 5min` nos 3 tabs do Command Center | Sprint 44 | 2026-06-29 |
