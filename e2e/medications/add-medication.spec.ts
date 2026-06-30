@@ -67,11 +67,13 @@ test.describe("Cadastro de Medicamento", () => {
     const nameInput = page.getByPlaceholder("Ex: Amoxicilina, Dipirona");
     await expect(nameInput).toBeVisible();
     await nameInput.fill(TEST_MED_NAME);
-    // Fecha sugestões do autocomplete pressionando Escape
-    await nameInput.press("Escape");
+    // NÃO pressionar Escape — o Vaul drawer fecha com Escape (event bubbles).
+    // Mover foco para o campo de dosagem fecha o autocomplete naturalmente.
 
-    // Dosagem
-    await page.getByPlaceholder("Ex: 5ml").fill(TEST_DOSAGE);
+    // Dosagem — click move o foco e fecha qualquer dropdown do autocomplete
+    const dosageInput = page.getByPlaceholder("Ex: 5ml");
+    await dosageInput.click();
+    await dosageInput.fill(TEST_DOSAGE);
 
     // Frequência: tenta selecionar "1x dia" com force para contornar instabilidade de DOM.
     // O combobox fica sendo re-renderizado pelo react-hook-form após preencher dosagem,
