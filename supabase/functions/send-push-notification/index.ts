@@ -42,6 +42,17 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Guard: verificar que as secrets VAPID estão configuradas
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    log("error", "push_vapid_secrets_missing", {});
+    return new Response(
+      JSON.stringify({ error: "Configuração de push incompleta" }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+
   // ── Authentication: accept JWT (authenticated users) OR CRON_SECRET ──────
   const authHeader = req.headers.get("Authorization") ?? "";
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
