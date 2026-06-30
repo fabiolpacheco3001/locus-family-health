@@ -96,7 +96,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       if (!subJson.endpoint || !subJson.keys) return;
 
       try {
-        await (supabase.from('push_subscriptions' as any) as any).upsert(
+        await supabase.from('push_subscriptions').upsert(
           {
             user_id: user.id,
             endpoint: subJson.endpoint,
@@ -119,7 +119,7 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     async (endpoint: string) => {
       if (!user) return;
       try {
-        await (supabase.from('push_subscriptions' as any) as any)
+        await supabase.from('push_subscriptions')
           .delete()
           .eq('user_id', user.id)
           .eq('endpoint', endpoint);

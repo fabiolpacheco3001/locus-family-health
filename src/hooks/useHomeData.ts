@@ -131,7 +131,7 @@ export function useHomeData() {
         .order("date_performed", { ascending: true })
         .limit(5);
 
-      let sq = (supabase.from("surgeries" as any) as any)
+      let sq = supabase.from("surgeries")
         .select("id, family_member_id, surgery_type, custom_type, scheduled_date, hospital_clinic, status, deleted_at, family_members!inner(name, member_type, deleted_at)")
         .is("deleted_at", null)
         .is("family_members.deleted_at", null)

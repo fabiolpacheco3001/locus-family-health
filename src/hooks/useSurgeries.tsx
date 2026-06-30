@@ -75,8 +75,7 @@ export function useSurgeries(familyMemberId?: string) {
   const { data: surgeries = [], isLoading } = useQuery({
     queryKey: ["surgeries", familyMemberId, groupId, isAdmin, linkedMemberId, managedProfiles],
     queryFn: async () => {
-      // Cast `from` to any: tabelas recém-criadas podem não estar nos tipos gerados ainda
-      let query = (supabase.from("surgeries" as any) as any)
+      let query = supabase.from("surgeries")
         .select(
           "id, user_id, group_id, family_member_id, surgery_type, custom_type, " +
           "scheduled_date, hospital_clinic, surgeon_name, status, notes, " +
@@ -116,8 +115,8 @@ export function useSurgeries(familyMemberId?: string) {
     mutationFn: async (payload: CreateSurgeryPayload) => {
       if (!user || !groupId) throw new Error("Usuário não autenticado");
 
-      const { data: surgery, error: surgeryError } = await (supabase
-        .from("surgeries" as any) as any)
+      const { data: surgery, error: surgeryError } = await supabase
+        .from("surgeries")
         .insert({
           user_id: user.id,
           group_id: groupId,
@@ -177,7 +176,7 @@ export function useSurgeries(familyMemberId?: string) {
   const updateMutation = useMutation({
     mutationFn: async (payload: UpdateSurgeryPayload) => {
       const { id, ...updates } = payload;
-      const { error } = await (supabase.from("surgeries" as any) as any)
+      const { error } = await supabase.from("surgeries")
         .update(updates)
         .eq("id", id);
       if (error) throw error;
@@ -203,8 +202,8 @@ export function useSurgeries(familyMemberId?: string) {
       items: InstructionItem[];
       rawOcrText?: string;
     }) => {
-      const { error } = await (supabase
-        .from("surgery_instructions" as any) as any)
+      const { error } = await supabase
+        .from("surgery_instructions")
         .upsert(
           {
             surgery_id: surgeryId,
@@ -226,7 +225,7 @@ export function useSurgeries(familyMemberId?: string) {
 
   const softDeleteMutation = useMutation({
     mutationFn: async (surgeryId: string) => {
-      const { error } = await (supabase.from("surgeries" as any) as any)
+      const { error } = await supabase.from("surgeries")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", surgeryId);
       if (error) throw error;
