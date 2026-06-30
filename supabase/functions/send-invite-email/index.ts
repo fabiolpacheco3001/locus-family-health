@@ -42,6 +42,18 @@ async function sendViaResend(params: {
   return { id: (body as { id?: string }).id };
 }
 
+// SEC-HTML: Escapar entidades HTML em valores controlados pelo usuário antes de interpolar
+// no template de email. Previne injeção de tags/atributos HTML por atacantes que controlam
+// nome de perfil ou nome do grupo.
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 /**
  * send-invite-email
  *
@@ -178,7 +190,9 @@ Deno.serve(async (req) => {
     const playStoreUrl = Deno.env.get("GOOGLE_PLAY_URL") ?? "#"; // publicar nas lojas — roadmap
 
     const safeEmail = invite.email;
-    const subject = `${inviterName} convidou você para o Locus Vita 💚`;
+    // SEC-HTML: sanitizar inviterName para evitar CRLF injection no header de email
+    const safeInviterName = inviterName.replace(/[\r\n\t]/g, " ").slice(0, 100);
+    const subject = `${safeInviterName} convidou você para o Locus Vita 💚`;
 
     const html = buildInviteEmailHtml({
       inviterName,
@@ -242,6 +256,13 @@ interface EmailVars {
 }
 
 function buildInviteEmailHtml(v: EmailVars): string {
+  // Escapar valores controlados pelo usuário (nome, grupo, email)
+  // appUrl/appStoreUrl/playStoreUrl vêm de env vars — confiáveis, sem escaping
+  const safe = {
+    inviterName: escapeHtml(v.inviterName),
+    groupName:   escapeHtml(v.groupName),
+    email:       escapeHtml(v.email),
+  };
   const storesSection = (v.appStoreUrl && v.appStoreUrl !== "#") || (v.playStoreUrl && v.playStoreUrl !== "#")
     ? `
       <p style="color:#4B5563;font-size:14px;margin:0 0 12px;">Ou baixe o aplicativo:</p>
@@ -282,7 +303,7 @@ function buildInviteEmailHtml(v: EmailVars): string {
           <td style="padding:32px 32px 24px;">
             <h1 style="color:#1C3333;font-size:20px;font-weight:700;margin:0 0 8px;">Você foi convidado! 🎉</h1>
             <p style="color:#4B5563;font-size:15px;line-height:1.6;margin:0 0 20px;">
-              <strong>${v.inviterName}</strong> convidou você para acompanhar a saúde de <strong>${v.groupName}</strong> no Locus Vita.
+              <strong>${safe.inviterName}</strong> convidou você para acompanhar a saúde de <strong>${safe.groupName}</strong> no Locus Vita.
             </p>
 
             <!-- CTA -->
@@ -307,7 +328,7 @@ function buildInviteEmailHtml(v: EmailVars): string {
             <!-- Email highlight -->
             <div style="background:#1C3333;border-radius:10px;padding:14px 20px;text-align:center;margin:0 0 20px;">
               <p style="color:#78C2AD;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Use este e-mail</p>
-              <p style="color:#ffffff;font-size:16px;font-weight:700;margin:0;word-break:break-all;">${v.email}</p>
+              <p style="color:#ffffff;font-size:16px;font-weight:700;margin:0;word-break:break-all;">${safe.email}</p>
             </div>
 
             <p style="color:#9CA3AF;font-size:12px;line-height:1.5;margin:0;">
