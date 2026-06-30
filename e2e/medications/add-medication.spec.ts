@@ -94,31 +94,32 @@ test.describe("Cadastro de Medicamento", () => {
         .catch(() => {});
     }
 
-    // NÃO pressionar Escape aqui — o Vaul drawer fecha com Escape, removendo o formulário do DOM.
-    // Aguarda re-renders estabilizarem sem fechar o drawer.
+    // Aguarda re-renders residuais estabilizarem (Select + autocomplete).
     await page.waitForTimeout(600);
 
-    // ── 6. Salva o medicamento ──────────────────────────────────────────────
-    // O drawer re-renderiza continuamente (react-hook-form + Vaul animations), fazendo o
-    // botão oscilar entre "not stable" e "detached from DOM" para o Playwright.
-    // Usamos waitForFunction + dispatchEvent para clicar diretamente no nó DOM atual,
-    // bypassando todas as verificações de estabilidade/actionability do Playwright.
-    await page.waitForFunction(
-      () => {
-        const btns = Array.from(document.querySelectorAll("button"));
-        return btns.some((b) => b.textContent?.trim().startsWith("Salvar Medicamento"));
-      },
-      { timeout: 10_000 }
-    );
-    await page.evaluate(() => {
-      const btns = Array.from(document.querySelectorAll("button"));
-      const btn = btns.find((b) => b.textContent?.trim().startsWith("Salvar Medicamento"));
-      btn?.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    });
+    // ── 6. Clica "Salvar Medicamento" ──────────────────────────────────────
+    // Usamos click() nativo do Playwright (não dispatchEvent) porque:
+    //   - dispatchEvent com bubbles:true acionava o close do Vaul drawer
+    //   - click() do Playwright faz pointer events no centro do elemento,
+    //     sem borbulhar até o overlay do Vaul.
+    // force:true ignora verificação de estabilidade residual de animação.
+    const saveBtn = page.getByRole("button", { name: "Salvar Medicamento" });
+    await saveBtn.click({ force: true, timeout: 10_000 });
 
-    // Toast de sucesso ou fechamento do drawer confirma salvamento
+    // ── 6b. Confirma AlertDialog "Alerta de Preenchimento" (se aparecer) ───
+    // checkDateAndProceed("save") abre este AlertDialog quando startDateTime
+    // está vazio (não preenchemos o campo de data no teste).
+    // O botão "Continuar" chama handleDateAlertConfirm → handleSave().
+    const continuarBtn = page.getByRole("button", { name: "Continuar" });
+    const alertDialogOpened = await continuarBtn.isVisible({ timeout: 3_000 }).catch(() => false);
+    if (alertDialogOpened) {
+      await continuarBtn.click();
+    }
+
+    // Toast "Medicamento adicionado!" OU nome na lista confirmam o salvamento.
+    // (O componente usa toast.success("Medicamento adicionado!"), não "salvo".)
     await expect(
-      page.getByText("Medicamento salvo", { exact: false }).or(
+      page.getByText("adicionado", { exact: false }).or(
         page.getByText(TEST_MED_NAME)
       )
     ).toBeVisible({ timeout: 15_000 });
