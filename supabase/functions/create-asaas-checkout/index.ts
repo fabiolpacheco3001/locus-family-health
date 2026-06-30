@@ -94,9 +94,11 @@ async function findOrCreateCustomer(
   log("info", "asaas_customer_payload", {
     env: creds.env, hasCpf: !!cpfCnpj, hasPhone: !!phone,
   });
-  const customerBody: Record<string, string> = { name, email, postalCode, addressNumber };
-  if (phone) customerBody.phone = phone;
+  const customerBody: Record<string, string> = { name, email };
   if (cpfCnpj) customerBody.cpfCnpj = cpfCnpj;
+  if (phone) customerBody.phone = phone;
+  if (postalCode && postalCode !== "01310100") customerBody.postalCode = postalCode;
+  if (addressNumber && addressNumber !== "1") customerBody.addressNumber = addressNumber;
 
   try {
     const created = await asaasFetch(creds, "/customers", {
