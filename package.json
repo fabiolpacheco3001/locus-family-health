@@ -11,8 +11,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
+    "test:e2e": "bun --env-file=.env.e2e run playwright test",
+    "test:e2e:ui": "bun --env-file=.env.e2e run playwright test --ui",
     "test:e2e:report": "playwright show-report e2e/report",
     "typecheck": "tsc --noEmit"
   },

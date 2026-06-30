@@ -1,16 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
-import * as dotenv from "dotenv";
-import * as path from "path";
-
-// Carrega variáveis de ambiente do .env.e2e (nunca sobrescreve o .env principal)
-dotenv.config({ path: path.resolve(process.cwd(), ".env.e2e"), override: false });
 
 /**
  * Config standalone — não depende de lovable-agent-playwright-config.
+ * Variáveis de ambiente carregadas via flag `--env-file=.env.e2e` no bun
+ * (ver scripts test:e2e em package.json). Sem dependência de `dotenv`.
+ *
  * Pré-requisitos:
  *  1. `bun run dev` rodando em paralelo (localhost:8080)
  *  2. .env.e2e preenchido com TEST_USER_EMAIL e TEST_USER_PASSWORD
- *  3. bun x playwright install chromium  (uma vez, instala browsers)
+ *  3. bunx playwright install chromium  (uma vez, instala browsers)
  */
 export default defineConfig({
   testDir: "./e2e",
