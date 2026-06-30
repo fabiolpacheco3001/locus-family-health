@@ -256,6 +256,13 @@ interface EmailVars {
 }
 
 function buildInviteEmailHtml(v: EmailVars): string {
+  // Escapar valores controlados pelo usuário (nome, grupo, email)
+  // appUrl/appStoreUrl/playStoreUrl vêm de env vars — confiáveis, sem escaping
+  const safe = {
+    inviterName: escapeHtml(v.inviterName),
+    groupName:   escapeHtml(v.groupName),
+    email:       escapeHtml(v.email),
+  };
   const storesSection = (v.appStoreUrl && v.appStoreUrl !== "#") || (v.playStoreUrl && v.playStoreUrl !== "#")
     ? `
       <p style="color:#4B5563;font-size:14px;margin:0 0 12px;">Ou baixe o aplicativo:</p>
