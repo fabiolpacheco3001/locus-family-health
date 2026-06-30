@@ -81,10 +81,9 @@ test.describe("Meu Plano — Smoke Test", () => {
   test("window.open é chamado ao clicar em Regularizar/Reativar (interceptação)", async ({
     page,
   }) => {
-    await page.goto("/meu-plano");
-    await page.waitForTimeout(2_000);
-
-    // Intercepta window.open para evitar abrir o Asaas real
+    // Intercepta window.open ANTES de navegar — addInitScript só tem efeito em scripts
+    // que rodam durante o carregamento da página; chamá-lo após page.goto não intercepta
+    // a página já carregada.
     // A função é serializada e executada no contexto do browser — propriedades customizadas
     // são tipadas via cast para Record<string, unknown> para evitar @ts-ignore.
     let windowOpenCalled = false;
@@ -104,6 +103,9 @@ test.describe("Meu Plano — Smoke Test", () => {
         return null;
       };
     });
+
+    await page.goto("/meu-plano");
+    await page.waitForTimeout(2_000);
 
     const paymentButtons = page.getByRole("button").filter({
       hasText: /Regularizar|Reativar/,

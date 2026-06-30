@@ -40,10 +40,12 @@ test.describe("Login", () => {
     await expect(page.getByText("Acesso Rápido")).toBeVisible({ timeout: 15_000 });
 
     // Os 4 atalhos do quick access devem estar visíveis
-    await expect(page.getByText("Consultas")).toBeVisible();
-    await expect(page.getByText("Exames")).toBeVisible();
-    await expect(page.getByText("Medicamentos")).toBeVisible();
-    await expect(page.getByText("Ler Receita")).toBeVisible();
+    // Usa getByRole para evitar strict mode violation — a página tem "Consultas Pendentes"
+    // e "Medicamentos Ativos" como textos adicionais que também contêm esses termos.
+    await expect(page.getByRole("button", { name: "Consultas", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Exames", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Medicamentos", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Ler Receita", exact: true })).toBeVisible();
   });
 
   test("login com credenciais inválidas exibe mensagem de erro", async ({ page }) => {

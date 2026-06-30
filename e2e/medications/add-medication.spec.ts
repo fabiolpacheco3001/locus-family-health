@@ -23,7 +23,9 @@ test.describe("Cadastro de Medicamento", () => {
     await expect(page.getByText("Acesso Rápido")).toBeVisible({ timeout: 15_000 });
 
     // ── 2. Clica em "Medicamentos" no quick access ──────────────────────────
-    await page.getByText("Medicamentos").click();
+    // Usa getByRole para evitar strict mode violation — a página tem "Medicamentos Ativos"
+    // e "Ações Medicamentosas" como outros elementos que também contêm "Medicamentos".
+    await page.getByRole("button", { name: "Medicamentos", exact: true }).click();
 
     // Aguarda navegação para /familiar/{uuid}/medicamentos
     await expect(page).toHaveURL(/\/familiar\/.+\/medicamentos/, { timeout: 10_000 });
@@ -79,7 +81,7 @@ test.describe("Cadastro de Medicamento", () => {
 
     try {
       await page.goto("/home");
-      await page.getByText("Medicamentos").click();
+      await page.getByRole("button", { name: "Medicamentos", exact: true }).click();
       await expect(page).toHaveURL(/\/familiar\/.+\/medicamentos/, { timeout: 10_000 });
 
       // Localiza o medicamento de teste (pode não existir se o spec anterior falhou)
