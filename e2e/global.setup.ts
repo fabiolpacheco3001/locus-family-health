@@ -9,10 +9,11 @@
  *  - Conta de teste existente no Supabase Cloud com pelo menos 1 familiar cadastrado
  */
 import { test as setup, expect } from "@playwright/test";
-import * as path from "path";
-import * as fs from "fs";
 
-const AUTH_FILE = path.join(__dirname, ".auth/user.json");
+// Caminho relativo ao cwd do processo (raiz do projeto) — evita __dirname
+// que não está disponível em ES modules ("type": "module" no package.json).
+// O diretório e2e/.auth já existe via .gitkeep commitado no repositório.
+const AUTH_FILE = "e2e/.auth/user.json";
 
 setup("autenticar usuário de teste", async ({ page }) => {
   const email = process.env.TEST_USER_EMAIL;
@@ -23,12 +24,6 @@ setup("autenticar usuário de teste", async ({ page }) => {
       "Variáveis TEST_USER_EMAIL e TEST_USER_PASSWORD não encontradas.\n" +
         "Copie .env.e2e.example para .env.e2e e preencha com credenciais de teste."
     );
-  }
-
-  // Garante que o diretório .auth existe
-  const authDir = path.dirname(AUTH_FILE);
-  if (!fs.existsSync(authDir)) {
-    fs.mkdirSync(authDir, { recursive: true });
   }
 
   await page.goto("/login");
