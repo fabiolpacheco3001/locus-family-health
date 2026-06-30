@@ -199,7 +199,8 @@ Deno.serve(async (req) => {
         // Resolve destinatários via RBAC:
         // admin do grupo recebe tudo; usuário regular recebe apenas se member
         // está em seus managed_profiles.
-        const targetUserIds = await getNotificationTargets(adminClient, member.id, member.group_id);
+        // Lookup síncrono O(1) no map — sem query adicional
+        const targetUserIds = resolveNotificationTargets(fgmMap, member.id, member.group_id);
         for (const userId of targetUserIds) {
           toNotify.push({
             userId,
