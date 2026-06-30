@@ -42,6 +42,18 @@ async function sendViaResend(params: {
   return { id: (body as { id?: string }).id };
 }
 
+// SEC-HTML: Escapar entidades HTML em valores controlados pelo usuário antes de interpolar
+// no template de email. Previne injeção de tags/atributos HTML por atacantes que controlam
+// nome de perfil ou nome do grupo.
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
+
 /**
  * send-invite-email
  *
