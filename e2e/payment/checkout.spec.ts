@@ -84,23 +84,44 @@ test.describe("Meu Plano — Smoke Test", () => {
     // Intercepta window.open ANTES de navegar — addInitScript só tem efeito em scripts
     // que rodam durante o carregamento da página; chamá-lo após page.goto não intercepta
     // a página já carregada.
-    // A função é serializada e executada no contexto do browser — propriedades customizadas
-    // são tipadas via cast para Record<string, unknown> para evitar @ts-ignore.
+    //
+    // Padrão anti-popup iOS usado pelo app:
+    //   1. window.open("about:blank", "_blank")  ← sincrono, antes do await
+    //   2. checkoutWindow.location.href = url    ← atribuído após a edge fn retornar
+    //
+    // Retornar null quebraria o padrão (cairia no else: window.location.href = url).
+    // Retornamos um mock que intercepta a atribuição de .href e captura a URL do Asaas.
     let windowOpenCalled = false;
     let windowOpenUrl = "";
     await page.addInitScript(() => {
       const w = window as unknown as Record<string, unknown>;
-      // Sobrescreve window.open antes de qualquer script da página
+
+      // Mock de janela que captura atribuições de location.href
+      const mockWin = {
+        location: {
+          get href() { return (w.__e2eWindowOpenUrl as string) ?? ""; },
+          set href(val: string) {
+            w.__e2eWindowOpenUrl = val;
+            w.__e2eWindowOpenCalled = true;
+          },
+        },
+        close: () => { /* noop */ },
+      };
+
       w.__e2eOriginalOpen = window.open;
       window.open = (
         url?: string | URL,
         _target?: string,
         _features?: string
-      ): null => {
-        w.__e2eWindowOpenCalled = true;
-        w.__e2eWindowOpenUrl = String(url ?? "");
-        // Retorna null (tipo válido para WindowProxy | null) para não lançar erro no app
-        return null;
+      ): WindowProxy | null => {
+        const urlStr = String(url ?? "");
+        // Captura URL real se passada diretamente (sem o padrão about:blank)
+        if (urlStr && urlStr !== "about:blank") {
+          w.__e2eWindowOpenCalled = true;
+          w.__e2eWindowOpenUrl = urlStr;
+        }
+        // Retorna mock para que `checkoutWindow.location.href = url` seja interceptado
+        return mockWin as unknown as WindowProxy;
       };
     });
 
@@ -125,8 +146,8 @@ test.describe("Meu Plano — Smoke Test", () => {
     await expect(targetBtn).toBeEnabled();
     await targetBtn.click();
 
-    // Aguarda a edge function create-asaas-checkout ser chamada e window.open ser invocado
-    await page.waitForTimeout(5_000);
+    // Aguarda a edge function create-asaas-checkout ser chamada e location.href ser atribuído
+    await page.waitForTimeout(10_000);
 
     windowOpenCalled = await page.evaluate(
       () => !!(window as unknown as Record<string, unknown>).__e2eWindowOpenCalled

@@ -27,7 +27,19 @@ test.describe("Cadastro de Medicamento", () => {
     // e "Ações Medicamentosas" como outros elementos que também contêm "Medicamentos".
     await page.getByRole("button", { name: "Medicamentos", exact: true }).click();
 
-    // Aguarda navegação para /familiar/{uuid}/medicamentos
+    // Aguarda navegação direta (1 membro) OU abertura do FamilySelectDrawer (múltiplos membros).
+    // O drawer tem título "Para quem é o medicamento?" e exibe um botão por familiar.
+    try {
+      await page.waitForURL(/\/familiar\/.+\/medicamentos/, { timeout: 3_000 });
+    } catch {
+      // Drawer de seleção aberto — clica no primeiro membro disponível
+      await expect(page.getByText("Para quem é o medicamento?")).toBeVisible({ timeout: 5_000 });
+      const firstMemberBtn = page.getByRole("dialog").getByRole("button").first();
+      await expect(firstMemberBtn).toBeVisible({ timeout: 5_000 });
+      await firstMemberBtn.click();
+    }
+
+    // Confirma navegação para /familiar/{uuid}/medicamentos (direto ou via drawer)
     await expect(page).toHaveURL(/\/familiar\/.+\/medicamentos/, { timeout: 10_000 });
 
     // ── 3. Clica no FAB (+) para abrir o AddMedicationDrawer ────────────────
@@ -82,6 +94,14 @@ test.describe("Cadastro de Medicamento", () => {
     try {
       await page.goto("/home");
       await page.getByRole("button", { name: "Medicamentos", exact: true }).click();
+      try {
+        await page.waitForURL(/\/familiar\/.+\/medicamentos/, { timeout: 3_000 });
+      } catch {
+        const firstMemberBtn = page.getByRole("dialog").getByRole("button").first();
+        if (await firstMemberBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
+          await firstMemberBtn.click();
+        }
+      }
       await expect(page).toHaveURL(/\/familiar\/.+\/medicamentos/, { timeout: 10_000 });
 
       // Localiza o medicamento de teste (pode não existir se o spec anterior falhou)
