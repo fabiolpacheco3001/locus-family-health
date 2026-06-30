@@ -128,6 +128,56 @@ async function findOrCreateCustomer(
   }
 }
 
+async function cancelAllPendingPayments(
+  creds: AsaasCredentials,
+  customerId: string,
+  userId: string
+): Promise<void> {
+  // Cancel ALL pending/overdue payments for this customer before creating a new one.
+  // This is more robust than relying on the single asaas_payment_id stored in the DB:
+  // - DB may be stale (cleaned, or payment_id not yet updated)
+  // - Asaas may have multiple orphaned payments from plan switches
+  // - We query by customer so we catch payments regardless of DB state
+  const cancelableStatuses = ["PENDING", "AWAITING_PAYMENT", "OVERDUE"];
+  for (const status of cancelableStatuses) {
+    try {
+      const list = await asaasFetch(
+        creds,
+        `/payments?customer=${customerId}&status=${status}&limit=20`,
+        { method: "GET" }
+      );
+      const payments: Array<{ id: string }> = list?.data ?? [];
+      for (const p of payments) {
+        try {
+          await asaasFetch(creds, `/payments/${p.id}/cancel`, { method: "POST" });
+          log("info", "asaas_payment_cancelled_pre_create", {
+            paymentId: p.id,
+            status,
+            env: creds.env,
+            userId,
+          });
+        } catch (cancelErr) {
+          // Log full error so we can diagnose Asaas rejection reasons
+          log("warn", "asaas_payment_cancel_failed_pre_create", {
+            paymentId: p.id,
+            status,
+            env: creds.env,
+            userId,
+            hint: cancelErr instanceof Error ? cancelErr.message : String(cancelErr),
+          });
+        }
+      }
+    } catch (listErr) {
+      log("warn", "asaas_list_payments_failed_pre_create", {
+        status,
+        env: creds.env,
+        userId,
+        hint: listErr instanceof Error ? listErr.message : String(listErr),
+      });
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
