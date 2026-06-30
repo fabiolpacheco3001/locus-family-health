@@ -72,15 +72,18 @@ export async function createSubscription(planType: "monthly" | "annual"): Promis
       throw new Error(detail || "Por favor, cadastre seu CPF em Ajustes → Meus Dados antes de assinar.");
     }
 
-    // Demais erros: capturar no Sentry com contexto completo (inclui body bruto do Asaas)
+    // debug não é mais retornado ao cliente (removido por segurança — ver SEC-003)
+    // requestId fica no Sentry context para correlação com logs da edge function
+    const requestId = (responseData as Record<string, unknown>)?.requestId as string | undefined;
     captureException(responseError, {
       context: "asaasService.createSubscription.response",
       planType,
       asaasError: detail   || undefined,
       asaasDebug: debugInfo || undefined,
+      requestId: requestId || undefined,
     });
     const reason = detail || responseError.message || "Desconhecido";
-    throw new Error(`Erro do servidor financeiro: ${reason}${debugInfo ? ` | Asaas: ${debugInfo}` : ""}`);
+    throw new Error(`Erro do servidor financeiro: ${reason}`);
   }
 
   if (responseData?.error) {
