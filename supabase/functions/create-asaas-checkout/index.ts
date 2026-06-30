@@ -467,12 +467,12 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    log("error", "create_checkout_unexpected_error", { error: msg });
-    // Retornar a mensagem real do Asaas no campo debug para diagnóstico
+    const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
+    log("error", "create_checkout_unexpected_error", { error: msg, requestId });
     return new Response(
       JSON.stringify({
         error: "Erro ao processar pagamento. Tente novamente ou entre em contato com o suporte.",
-        debug: msg,
+        requestId,
       }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
