@@ -16,7 +16,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
-import { getNotificationTargets } from "../_shared/notification-targets.ts";
+import { getNotificationTargets, prefetchGroupFamilyMembers, resolveNotificationTargets } from "../_shared/notification-targets.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -111,6 +111,17 @@ Deno.serve(async (req) => {
 
     const toNotify: { userId: string; medName: string; dosage: string | null; memberName: string; medId: string }[] = [];
 
+    // Pré-carrega todos os family_group_members em 1 query batch.
+    // Elimina N+1: sem isso, getNotificationTargets() faria 1 SELECT por medicamento.
+    const allGroupIds = medications
+      .map((med) => {
+        const m = Array.isArray(med.family_members) ? med.family_members[0] : med.family_members;
+        return m?.group_id as string | undefined;
+      })
+      .filter((id): id is string => !!id);
+
+    const fgmMap = await prefetchGroupFamilyMembers(adminClient, allGroupIds);
+
     for (const med of medications) {
       const member = Array.isArray(med.family_members) ? med.family_members[0] : med.family_members;
       if (!member?.id || !member?.group_id) continue;
@@ -188,7 +199,8 @@ Deno.serve(async (req) => {
         // Resolve destinatários via RBAC:
         // admin do grupo recebe tudo; usuário regular recebe apenas se member
         // está em seus managed_profiles.
-        const targetUserIds = await getNotificationTargets(adminClient, member.id, member.group_id);
+        // Lookup síncrono O(1) no map — sem query adicional
+        const targetUserIds = resolveNotificationTargets(fgmMap, member.id, member.group_id);
         for (const userId of targetUserIds) {
           toNotify.push({
             userId,

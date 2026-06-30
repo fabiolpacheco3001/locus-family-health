@@ -47,3 +47,64 @@ export async function getNotificationTargets(
     })
     .map((fgm) => fgm.auth_user_id as string);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Batch helpers — eliminam N+1 em crons de notificação
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface FgmRow {
+  auth_user_id: string;
+  role: string;
+  managed_profiles: string[] | null;
+  group_id: string;
+}
+
+/**
+ * Prefetches all family_group_members for a set of group_ids in ONE query.
+ * Eliminates N+1: instead of 1 SELECT per item in a loop, 1 SELECT total.
+ */
+export async function prefetchGroupFamilyMembers(
+  adminClient: SupabaseClient,
+  groupIds: string[]
+): Promise<Map<string, FgmRow[]>> {
+  const uniqueGroupIds = [...new Set(groupIds.filter(Boolean))];
+  if (uniqueGroupIds.length === 0) return new Map();
+
+  const { data, error } = await adminClient
+    .from("family_group_members")
+    .select("auth_user_id, role, managed_profiles, group_id")
+    .in("group_id", uniqueGroupIds);
+
+  if (error || !data) return new Map();
+
+  const map = new Map<string, FgmRow[]>();
+  for (const row of data as FgmRow[]) {
+    if (!row.group_id) continue;
+    const list = map.get(row.group_id) ?? [];
+    list.push(row);
+    map.set(row.group_id, list);
+  }
+  return map;
+}
+
+/**
+ * Resolves notification targets from a prefetched FGM map — no DB call.
+ */
+export function resolveNotificationTargets(
+  fgmMap: Map<string, FgmRow[]>,
+  familyMemberId: string,
+  groupId: string
+): string[] {
+  if (!familyMemberId || !groupId) return [];
+  const members = fgmMap.get(groupId) ?? [];
+  return members
+    .filter((fgm) => {
+      if (!fgm.auth_user_id) return false;
+      if (fgm.role === "admin") return true;
+      return (
+        Array.isArray(fgm.managed_profiles) &&
+        fgm.managed_profiles.includes(familyMemberId)
+      );
+    })
+    .map((fgm) => fgm.auth_user_id);
+}
