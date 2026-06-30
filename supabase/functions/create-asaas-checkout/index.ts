@@ -353,17 +353,33 @@ Deno.serve(async (req) => {
     if (subRow?.asaas_payment_id && subRow?.plan_type !== planType) {
       try {
         const oldPayment = await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}`, { method: "GET" });
-        if (["PENDING", "AWAITING_PAYMENT"].includes(oldPayment.status)) {
+        // Include OVERDUE: when dueDate passes, Asaas marks as OVERDUE but payment can still be cancelled.
+        // Without OVERDUE, plan-switch after dueDate creates orphaned payments that never get cleaned up.
+        if (["PENDING", "AWAITING_PAYMENT", "OVERDUE"].includes(oldPayment.status)) {
           await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}/cancel`, { method: "POST" });
           log("info", "asaas_payment_cancelled_plan_change", {
             paymentId: subRow.asaas_payment_id,
             oldPlan: subRow.plan_type,
             newPlan: planType,
+            oldStatus: oldPayment.status,
+            env: creds.env,
+          });
+        } else {
+          // Payment already confirmed or cancelled — no action needed
+          log("info", "asaas_payment_skip_cancel_plan_change", {
+            paymentId: subRow.asaas_payment_id,
+            status: oldPayment.status,
             env: creds.env,
           });
         }
-      } catch {
-        // Non-critical — proceed to create new payment
+      } catch (cancelErr) {
+        // Log the error — helps diagnose if Asaas rejects the cancel for an unexpected reason
+        log("warn", "asaas_payment_cancel_failed_plan_change", {
+          paymentId: subRow.asaas_payment_id,
+          env: creds.env,
+          hint: cancelErr instanceof Error ? cancelErr.message : String(cancelErr),
+        });
+        // Non-critical — proceed to create new payment anyway
       }
     }
 
