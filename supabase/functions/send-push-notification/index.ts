@@ -32,19 +32,26 @@ import { log } from "../_shared/logger.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ??
-  "BBvOiZ0bhzoRuuByv7Gae5NyZzWii_RB8VL-B3TBkaoinuyh-rDnAjyHStZMQOfoPeWuCAiv0HmX7T6pvk_JEMs";
-const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY")!;
+const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY");
+const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY");
 const VAPID_SUBJECT = Deno.env.get("VAPID_SUBJECT") ?? "mailto:suporte@locustech.com.br";
 const CRON_SECRET = Deno.env.get("CRON_SECRET");
-
-// Configure web-push VAPID credentials once
-webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  // Guard: verificar que as secrets VAPID estão configuradas
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    log("error", "push_vapid_secrets_missing", {});
+    return new Response(
+      JSON.stringify({ error: "Configuração de push incompleta" }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
   // ── Authentication: accept JWT (authenticated users) OR CRON_SECRET ──────
   const authHeader = req.headers.get("Authorization") ?? "";
