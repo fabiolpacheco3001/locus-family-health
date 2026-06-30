@@ -24,6 +24,38 @@ import { usePasskeys } from "@/hooks/usePasskeys";
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000; // 5 min background → re-lock
 
 /**
+ * localStorage key that records when the user last completed biometric unlock.
+ * Used to skip the lock screen when iOS kills and restarts the PWA process
+ * within the timeout window — mimicking native app behavior where Face ID
+ * is not re-requested on brief app switches (< 5 min).
+ *
+ * Security rationale: the iPhone's own passcode/Face ID already protects the
+ * device. Adding a redundant app-level Face ID within the same 5-min window
+ * harms UX without meaningfully improving security — an attacker would first
+ * need to bypass iOS's own lock screen.
+ *
+ * Key is cleared on signOut (useAuth.tsx) so a different user on the same
+ * device always starts from a clean state.
+ */
+const UNLOCK_TS_KEY = "lv_app_unlock_at";
+
+function wasRecentlyUnlocked(): boolean {
+  try {
+    const ts = localStorage.getItem(UNLOCK_TS_KEY);
+    if (!ts) return false;
+    return Date.now() - parseInt(ts, 10) < LOCK_TIMEOUT_MS;
+  } catch {
+    return false;
+  }
+}
+
+export function markUnlocked(): void {
+  try {
+    localStorage.setItem(UNLOCK_TS_KEY, String(Date.now()));
+  } catch { /* storage quota exceeded — non-fatal */ }
+}
+
+/**
  * Flag de módulo JS — persiste na memória entre remontagens do AppLayout
  * dentro da mesma sessão de página (não sobrevive a page reload).
  *
@@ -69,8 +101,11 @@ export function useAppLock() {
       return;
     }
 
-    if (session && hasPasskeys && !wasFreshLogin) {
-      // Session was restored from localStorage and user has passkeys → lock
+    if (session && hasPasskeys && !wasFreshLogin && !wasRecentlyUnlocked()) {
+      // Session was restored from localStorage and user has passkeys → lock.
+      // wasRecentlyUnlocked() returns true if Face ID was used within the last
+      // 5 min — skips the lock when iOS killed and restarted the PWA process
+      // during a brief app switch, matching native-app UX.
       setIsLocked(true);
     }
     setIsReady(true);
@@ -113,6 +148,7 @@ export function useAppLock() {
   const unlock = useCallback(() => {
     setIsLocked(false);
     wasCheckedThisSession = true; // Usuário desbloqueou — não re-trava em remontagens
+    markUnlocked(); // Persiste timestamp: iOS pode matar e reiniciar o processo dentro de 5 min
   }, []);
 
   // hadInitialSession: true when it's a PWA resume (not a fresh login).

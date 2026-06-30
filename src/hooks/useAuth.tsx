@@ -77,9 +77,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, [queryClient]);
 
+  // Must stay in sync with the UNLOCK_TS_KEY constant in useAppLock.ts
+  const UNLOCK_TS_KEY = "lv_app_unlock_at";
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (!error) setFreshlyLoggedIn(true);
+    if (!error) {
+      setFreshlyLoggedIn(true);
+      // Persist unlock timestamp so the app lock skips when iOS kills and
+      // restarts the PWA process within the 5-min window after email login.
+      try { localStorage.setItem(UNLOCK_TS_KEY, String(Date.now())); } catch { /* ignore */ }
+    }
     return { error: error as Error | null };
   };
 
@@ -89,13 +97,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       password,
       options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
     });
-    if (!error) setFreshlyLoggedIn(true);
+    if (!error) {
+      setFreshlyLoggedIn(true);
+      try { localStorage.setItem(UNLOCK_TS_KEY, String(Date.now())); } catch { /* ignore */ }
+    }
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
-    // Clear subscription cache so the next user doesn't inherit it
+    // Remove this device's push subscription from the DB before signing out
+    // so the old user stops receiving push notifications on this device.
+    // The next user to log in will register their own subscription.
+    try {
+      if (user && "serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.getRegistration("/");
+        const sub = await reg?.pushManager?.getSubscription();
+        if (sub) {
+          await supabase
+            .from("push_subscriptions")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("endpoint", sub.endpoint);
+        }
+      }
+    } catch { /* non-critical — don't block logout if SW or DB call fails */ }
+
+    // Clear caches and unlock timestamp so the next user starts clean
     try { localStorage.removeItem("lv_sub_cache"); } catch { /* ignore */ }
+    try { localStorage.removeItem(UNLOCK_TS_KEY); } catch { /* ignore */ }
     await supabase.auth.signOut();
   };
 

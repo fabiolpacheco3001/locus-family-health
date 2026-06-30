@@ -12,6 +12,13 @@ import { createSubscription } from "@/services/asaasService";
  */
 const REDIRECT_KEY = "lv_redirect_after_login";
 
+/**
+ * Deve estar em sync com UNLOCK_TS_KEY em useAppLock.ts e useAuth.tsx.
+ * Escrita após OAuth bem-sucedido (Google/Apple) para que o app lock
+ * não re-trave se o iOS matar e reiniciar o processo dentro de 5 min.
+ */
+const UNLOCK_TS_KEY = "lv_app_unlock_at";
+
 const AuthCallback = () => {
   const navigate = useNavigate();
 
@@ -59,6 +66,10 @@ const AuthCallback = () => {
             return;
           }
         }
+
+        // Marca unlock para o app lock: se o iOS matar e reiniciar o PWA
+        // dentro de 5 min após este login Google/Apple, não re-trava o usuário.
+        try { localStorage.setItem(UNLOCK_TS_KEY, String(Date.now())); } catch { /* ignore */ }
 
         // BK-03 — Restaurar deep link salvo pelo auth guard do AppLayout.
         // Cenário: sessão expirou enquanto usuário estava em rota protegida

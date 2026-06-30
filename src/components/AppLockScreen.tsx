@@ -8,10 +8,10 @@
  * - "Usar outra conta" → signOut() (falls back to login page)
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Fingerprint, Loader2, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { authenticatePasskey } from "@/lib/webauthn";
+import { authenticatePasskey, fetchWebAuthnChallenge } from "@/lib/webauthn";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -23,12 +23,27 @@ export function AppLockScreen({ onUnlock }: AppLockScreenProps) {
   const { user, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Pre-fetch the WebAuthn challenge as soon as the lock screen mounts.
+  // The edge function cold-start (2-5 s) runs in the background while the
+  // user reads the screen. When they tap "Entrar", the challenge is already
+  // resolved → OS Face ID dialog appears immediately instead of after ~7 s.
+  //
+  // Challenge TTL is typically 60 s server-side — plenty of time.
+  // On error, challengeRef stays null and authenticatePasskey fetches on demand.
+  const challengeRef = useRef<Promise<unknown> | null>(null);
+  useEffect(() => {
+    challengeRef.current = fetchWebAuthnChallenge().catch(() => null);
+  }, []);
+
   const handleBiometric = async () => {
     setIsLoading(true);
     try {
-      await authenticatePasskey();
+      const prefetched = await challengeRef.current;
+      await authenticatePasskey(prefetched ?? undefined);
       onUnlock();
     } catch (err) {
+      // Reset so the next tap triggers a fresh challenge fetch
+      challengeRef.current = null;
       toast.error(
         err instanceof Error ? err.message : "Erro na verificação biométrica. Tente novamente."
       );

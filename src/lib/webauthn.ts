@@ -171,32 +171,54 @@ export async function registerPasskey(deviceName?: string): Promise<void> {
 // ── AUTHENTICATION ────────────────────────────────────────────────────────────
 
 /**
- * Verifies the user's identity using a previously registered passkey.
- * Returns silently on success; throws on failure or cancellation.
+ * Fetches a WebAuthn authentication challenge from the server.
+ * Exported so callers (e.g. AppLockScreen) can pre-fetch on mount to avoid
+ * edge function cold-start latency when the user taps the biometric button.
+ *
+ * The challenge is typically valid for 60 s server-side, so pre-fetching
+ * right when the lock screen appears gives plenty of time before the tap.
  */
-export async function authenticatePasskey(): Promise<void> {
-  if (!browserSupportsWebAuthn()) {
-    throw new Error("Biometria não é suportada neste navegador ou dispositivo.");
-  }
-
-  // Garante sessão válida antes de chamar a Edge Function
-  // (necessário após navegação de timeout ou retorno ao app)
-  const { error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) {
-    throw new Error("Sessão expirada. Faça login com e-mail e senha para continuar.");
-  }
-
-  // 1. Fetch authentication options from edge function
+export async function fetchWebAuthnChallenge(): Promise<unknown> {
   const { data: options, error: optErr } = await supabase.functions.invoke(
     "webauthn-challenge",
     { body: { type: "authentication" }, headers: { "x-request-id": crypto.randomUUID() } },
   );
-  if (optErr || options?.error) {
-    throw new Error(optErr?.message ?? options?.error ?? "Erro ao iniciar verificação.");
+  if (optErr || (options as { error?: string } | null)?.error) {
+    throw new Error(
+      optErr?.message ?? (options as { error?: string })?.error ?? "Erro ao iniciar verificação.",
+    );
+  }
+  return options;
+}
+
+/**
+ * Verifies the user's identity using a previously registered passkey.
+ * Returns silently on success; throws on failure or cancellation.
+ *
+ * @param prefetchedOptions  Challenge previously fetched via fetchWebAuthnChallenge().
+ *   When provided, skips the network round-trip and goes straight to the OS
+ *   biometric prompt — eliminating the 2-5 s edge function cold-start delay.
+ *   If null/undefined, fetches the challenge on demand.
+ */
+export async function authenticatePasskey(prefetchedOptions?: unknown): Promise<void> {
+  if (!browserSupportsWebAuthn()) {
+    throw new Error("Biometria não é suportada neste navegador ou dispositivo.");
   }
 
+  // NOTE: getSession() was removed — it was a redundant network round-trip.
+  // The Supabase session lives in localStorage (useAuth reads it synchronously
+  // at startup) and the session header is injected by supabase.functions.invoke.
+  // webauthn-verify validates the JWT server-side, making a client-side pre-check
+  // unnecessary and adding ~500 ms of latency for nothing.
+
+  // 1. Use pre-fetched challenge (from mount pre-fetch) or fetch on demand
+  const rawOptions = (prefetchedOptions ?? await fetchWebAuthnChallenge()) as {
+    challenge: unknown;
+    timeout?: number;
+  };
+
   // 2. Build a MINIMAL, clean authentication request.
-  //    Do NOT spread ...options — extra fields from @simplewebauthn/server
+  //    Do NOT spread ...rawOptions — extra fields from @simplewebauthn/server
   //    serialization can confuse the iOS WebAuthn implementation.
   //
   //    Discoverable credentials: no allowCredentials, no explicit rpId.
@@ -204,10 +226,10 @@ export async function authenticatePasskey(): Promise<void> {
   //    Specific credential IDs caused iOS to open the cross-device QR picker.
   const publicKey: PublicKeyCredentialRequestOptions = {
     challenge: base64UrlToArrayBuffer(
-      toBase64UrlString(options.challenge, "challenge"),
+      toBase64UrlString(rawOptions.challenge, "challenge"),
     ),
     userVerification: "required",
-    timeout: typeof options.timeout === "number" ? options.timeout : 60000,
+    timeout: typeof rawOptions.timeout === "number" ? rawOptions.timeout : 60000,
   };
 
   // 3. Prompt biometric
