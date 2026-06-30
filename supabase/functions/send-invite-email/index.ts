@@ -328,7 +328,7 @@ function buildInviteEmailHtml(v: EmailVars): string {
             <!-- Email highlight -->
             <div style="background:#1C3333;border-radius:10px;padding:14px 20px;text-align:center;margin:0 0 20px;">
               <p style="color:#78C2AD;font-size:12px;font-weight:600;margin:0 0 4px;text-transform:uppercase;letter-spacing:0.5px;">Use este e-mail</p>
-              <p style="color:#ffffff;font-size:16px;font-weight:700;margin:0;word-break:break-all;">${v.email}</p>
+              <p style="color:#ffffff;font-size:16px;font-weight:700;margin:0;word-break:break-all;">${safe.email}</p>
             </div>
 
             <p style="color:#9CA3AF;font-size:12px;line-height:1.5;margin:0;">
