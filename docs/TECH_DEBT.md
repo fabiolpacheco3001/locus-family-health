@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 6.5 | **Atualizado em:** 2026-06-29 (sessão 48 — PROD-04 Regressão 4: sync CPF sempre)  
+> **Versão:** 6.7 | **Atualizado em:** 2026-06-29 (sessão 52 — ID-012 + ID-006 + ID-007: índice consent_log + RLS TO authenticated + (select auth.uid()))  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -38,6 +38,8 @@
 | Sessão 40 | **Sprint Quick Wins** — 6 IDs corrigidos via canal LOCAL (9 arquivos, sem migrations/edge functions): **[ID-013]** `deleteMember.onSuccess` agora invalida 5 queryKeys (`family_members`, `upcoming-appointments`, `pending-counts`, `today-pet-routines`, `agenda`) — membro deletado não aparece mais por até 5 min na Home. **[ID-014]** `addMedication/updateMedication.onSuccess` passam a invalidar `["agenda"]` — posologia nova/editada reflete imediatamente na Agenda. **[ID-019]** `MedWithNextDose.med: any` → `med: Medication` em `useHomeData.ts` — segurança de tipo em `TodayMedicationsSection`. **[ID-017]** Comentário preventivo `// iOS Safari popup blocker: must open window synchronously BEFORE any await.` adicionado nos 5 locais de `window.open("about:blank")` (MeuPlano.tsx×2, Ajustes.tsx, PaywallModal.tsx, Landing.tsx). **[ID-010]** `select("*")` → colunas explícitas em `useHealthMeasurements.ts` e `useFamilyMembers.tsx`. **[ID-015]** `console.log`/`console.error` não-PHI substituídos por `captureException` em 6 locais: `InviteAcceptInterceptor.tsx` (3×), `useMedicationAlarms.ts`, `Cadastro.tsx`, `NotFound.tsx`. | Sprint 40 ✅ CONCLUÍDO |
 | Sessão 41 | **ID-013 v2 + PROD-03 Asaas Root Cause**: **[ID-013 v2]** Causa raiz identificada: `refetchQueries` é no-op para queries inativas em TQ v5 — quando exclusão ocorre em FamiliarProfile (Home não montada), `["upcoming-appointments"]` exibia dados stale ao montar a Home. Fix: `removeQueries` (evicta cache completamente) em vez de `invalidate+refetch` para `["upcoming-appointments"]` e `["pending-counts"]`. Commit `e3c3184`. **[PROD-03]** Root cause do "Erro do servidor financeiro: Erro ao processar pagamento": contas de teste tinham `subscriptions.test_mode = false` (produção) + `cpf: null` → fallback `"00000000191"` rejeitado pela Receita Federal no Asaas Produção. Fix em 3 camadas: (1) DB — `test_mode = true` para teste15/teste16; (2) Edge function `create-asaas-checkout`: guard 422 se `!testMode && cpfCnpj === "00000000191"` (commit `ed7eb33` Lovable MCP); (3) `asaasService.ts`: extração de `errorCode`, tratamento limpo sem Sentry para `missing_cpf`, `asaasError`+`asaasDebug` no Sentry para demais erros (commit `49d600d`). Sistema de pagamento validado em produção por Fábio ✅. | Sprint 41 ✅ CONCLUÍDO |
 | Sessão 45 | **CC — Reset de senha via Resend**: `supabase.auth.resetPasswordForEmail()` (browser/anon key, SMTP Supabase limitado a 3/hora) → Edge Function `manage-admins` action `reset` usando `adminClient.auth.admin.generateLink({ type: "recovery" })` + Resend API. `Clientes.tsx` atualizado para invocar a edge function. Audit log registrado. | Sprint 45 ✅ CONCLUÍDO |
+| Sessão 52 | **ID-012 + ID-006 + ID-007 — RLS performance hardening**: Migration `20260629000001_perf_index_consent_log_user_id.sql`: `CREATE INDEX IF NOT EXISTS idx_consent_log_user_id ON consent_log(user_id)` — elimina seq scan na tabela de auditoria LGPD. Migration `20260629000002_perf_rls_select_auth_uid.sql`: (1) **ID-006** — `passkeys` policies `passkeys_select_own`/`passkeys_delete_own` receberam `TO authenticated` (únicas policies clínicas sem essa restrição). (2) **ID-007** — 19 tabelas (family_members, consultations, exams, medications, medication_doses, allergies, diseases, vaccines, health_measurements, blood_pressure_history, menstrual_cycles, push_subscriptions, family_groups, family_group_members, group_invites, notifications, surgeries, surgery_instructions) tiveram `auth.uid()` substituído por `(select auth.uid())` via `ALTER POLICY` — previne re-avaliação por linha (171ms → ~9ms em 100K rows). Lovable MCP edit `edt-d5a35823-8c17-43c3-9955-df9f5eb2ec51`. | Sprint 52 ✅ CONCLUÍDO |
+| Sessão 51 | **PROD-05 Regressão 5 + cleanup payload Asaas**: (1) **PROD-05 v6 — Pagamentos infinitos (regressão 5):** `cancelAllPendingPayments` buscava por `customer=customerId` — falhou pois Asaas pode rejeitar `/cancel` para CREDIT_CARD e `AWAITING_PAYMENT` não é status válido da API v3. Além disso, não havia idempotência real: clicar no mesmo plano duas vezes criava um novo payment. Fix definitivo: função substituída por `handleExistingPayments(creds, userId, planDescription)` que busca por `externalReference=userId` (mais robusto — independe do customer ID no banco), aplica idempotência real (PENDING + mesmo plano → reutiliza `invoiceUrl`), e cancela orphans de planos diferentes. Commits `990e109` + `d055ce1`. (2) **Cleanup payload Asaas:** `creditCardHolderInfo` removido do `POST /payments` — é campo da API v2 para tokenização direta; no hosted checkout (invoiceUrl), o pré-preenchimento vem do customer profile. Telefone fictício `11912345678` removido — `effectivePhone` agora é `""` quando usuário não tem telefone real. Placeholders de endereço (`01310100`, `1`) removidos do customer profile — só envia campos com dados reais do usuário. | Sprint 51 ✅ CONCLUÍDO |
 | Sessão 48 | **PROD-04 Regressão 4 — sync CPF sempre:** bloco de sync `PUT /customers/{id}` condicional em `subRow?.asaas_customer_id` — quando banco limpo (null) mas customer ainda existe no Asaas, `findOrCreateCustomer` reutilizava o customer pelo email mas o sync não disparava → customer sem CPF atualizado → checkout em branco. Fix: condição `subRow?.asaas_customer_id &&` removida; sync agora sempre roda logo após obter `customerId`, independente da origem (banco ou Asaas). Commit `2e42fdd` (Lovable MCP — edge function `create-asaas-checkout` deployada). | Sprint 48 ✅ CONCLUÍDO |
 | Sessão 47 | **PROD-05 Regressão 3 + PROD-04 Regressão 3 + CC PT-BR**: (1) **PROD-05 v4 — Pagamentos infinitos ao alternar plano:** condição `subRow?.status === "pending_payment"` no bloco de cancelamento de plano (análogo ao bug da sessão 46 na idempotência) impedia que payments antigos fossem cancelados quando o status no banco não era `pending_payment` (ex: `active` após webhook). Fix: bloco de cancelamento passou a verificar o status real do payment no Asaas via `GET /payments/{id}` — apenas cancela se `PENDING` ou `AWAITING_PAYMENT`; status do banco não é mais consultado para essa decisão. (2) **PROD-04 v3 — CPF/dados não pré-preenchidos no Plano Mensal:** `syncPayload` do `PUT /customers/{id}` omitia `postalCode` e `addressNumber` — Asaas pode limpar esses campos no update parcial, causando checkout sem dados de endereço. Fix: `postalCode` e `addressNumber` adicionados ao `syncPayload`. Commit `8e3b212` (Lovable MCP). (3) **CC — Badge PT-BR:** "Grace Period até" → "Período de Carência até". Commits `6de8a10` + `59abc6e` (LOCAL). | Sprint 47 ✅ CONCLUÍDO |
 | Sessão 46 | **PROD-04/05 Regressões 2 — CPF sync + idempotência checkout**: (1) **PROD-04 v2 — CPF não pré-preenchido (regressão):** quando `asaas_customer_id` já salvo no banco era reutilizado diretamente (bypass de `findOrCreateCustomer`), o customer Asaas nunca recebia `PUT /customers/{id}` com CPF/phone. Asaas pré-preenche o checkout a partir do registro do customer, não do `creditCardHolderInfo` do payment. Fix: `PUT /customers/{id}` sync adicionado logo após o bloco de reutilização de `customerId`. (2) **PROD-05 v3 — Pagamento duplicado (regressão 2):** condição `subRow?.status === "pending_payment"` na idempotência excluía todos os usuários retornantes (`status: "trialing"`, `"canceled"`, `"active"`) — a cada abertura do checkout, novo payment era criado. Fix: condição `status` removida; Asaas é SSOT via `GET /payments/{id}` (status `PENDING`/`AWAITING_PAYMENT` → reutiliza). Commit `13384422` (Lovable MCP, edge function only). | Sprint 46 ✅ CONCLUÍDO |
@@ -363,20 +365,17 @@
 
 ---
 
-### ID-006 · Políticas RLS sem `TO authenticated` em migrations antigas
-- **Risco:** Sem `TO authenticated`, a política se aplica a `PUBLIC` (inclui `anon`). Um usuário anônimo pode ter acesso a dados de `family_group_members` e `exams` se a cláusula `USING` for satisfeita com uid NULL — depende da lógica da política.
-- **Arquivos:** `supabase/migrations/20260326172842_0ea886ad.sql:4,13,24,33`, `supabase/migrations/20260321145854_2e5d89ab.sql:16,20,24,28`, `supabase/migrations/20260402155636_8aea726c.sql:18,40,62`
-- **Fix:** Migration de correção com `ALTER POLICY "..." ON public.[tabela] TO authenticated;` para todas as políticas afetadas.
-- **Severidade × Esforço:** 🟠 Importante × Baixo (2h)
-- **Status:** ⬜ Pendente
+### ID-006 · Políticas RLS sem `TO authenticated` em migrations antigas ✅
+- **Risco resolvido:** Sem `TO authenticated`, a política se aplica a `PUBLIC` (inclui `anon`). Após análise completa, apenas `passkeys` (`passkeys_select_own` e `passkeys_delete_own`, migration `20260617000001`) estava afetada no escopo clínico — as demais policies das migrations identificadas já tinham `TO authenticated`.
+- **Resolução:** Migration `20260629000002_perf_rls_select_auth_uid.sql` adicionou `TO authenticated` às duas policies da tabela `passkeys` via `ALTER POLICY ... TO authenticated USING (...)`.
+- **Status:** ✅ Resolvido (sessão 52, Lovable edit `edt-d5a35823`)
 
 ---
 
-### ID-007 · `auth.uid()` direto em RLS sem `(select auth.uid())`
-- **Risco:** `auth.uid()` chamado diretamente em `USING/WITH CHECK` é re-avaliado para cada linha. `(select auth.uid())` usa `initPlan` — avaliado 1× por query. Em tabelas com > 10K linhas: diferença medida de 9ms vs 171ms (sem índice). Afeta múltiplas migrations (`20260321145854`, `20260402155636`, `20260621120000`, `20260622172313`, `20260622000000`).
-- **Fix:** Migration de `ALTER POLICY` para tabelas de alto volume (medications, consultations, exams, medication_doses) substituindo `auth.uid()` por `(select auth.uid())`.
-- **Severidade × Esforço:** 🟠 Importante × Médio (4h)
-- **Status:** ⬜ Pendente
+### ID-007 · `auth.uid()` direto em RLS sem `(select auth.uid())` ✅
+- **Risco resolvido:** `auth.uid()` chamado diretamente em `USING/WITH CHECK` era re-avaliado para cada linha. `(select auth.uid())` usa `initPlan` — avaliado 1× por query. Em tabelas com > 10K linhas: diferença medida de 171ms → ~9ms (sem índice).
+- **Resolução:** Migration `20260629000002_perf_rls_select_auth_uid.sql` aplicou `ALTER POLICY` em 19 tabelas: `family_members`, `consultations`, `exams`, `medications`, `medication_doses`, `allergies`, `diseases`, `vaccines`, `health_measurements`, `blood_pressure_history`, `menstrual_cycles`, `push_subscriptions`, `family_groups`, `family_group_members`, `group_invites`, `notifications`, `surgeries`, `surgery_instructions`, `passkeys`. Inclui otimização de chamadas a `is_group_member(auth.uid(), ...)` → `is_group_member((select auth.uid()), ...)`.
+- **Status:** ✅ Resolvido (sessão 52, Lovable edit `edt-d5a35823`)
 
 ---
 
@@ -397,12 +396,10 @@
 
 ---
 
-### ID-012 · Índice btree ausente em `consent_log.user_id`
-- **Risco:** A política RLS `USING (user_id = auth.uid())` em `consent_log` executa seq scan — tabela de auditoria que cresce constantemente (1 linha por aceite/revogação de consentimento).
-- **Arquivos:** `supabase/migrations/20260616000009_lgpd_consent_log.sql`
-- **Fix:** Nova migration com `CREATE INDEX IF NOT EXISTS idx_consent_log_user_id ON public.consent_log (user_id);`
-- **Severidade × Esforço:** 🟠 Importante × Baixo (30 min)
-- **Status:** ⬜ Pendente
+### ID-012 · Índice btree ausente em `consent_log.user_id` ✅
+- **Risco resolvido:** A política RLS `USING (user_id = auth.uid())` em `consent_log` executava seq scan — tabela de auditoria que cresce constantemente (1 linha por aceite/revogação de consentimento).
+- **Resolução:** Migration `20260629000001_perf_index_consent_log_user_id.sql`: `CREATE INDEX IF NOT EXISTS idx_consent_log_user_id ON public.consent_log (user_id);`
+- **Status:** ✅ Resolvido (sessão 52, Lovable edit `edt-d5a35823`)
 
 ---
 
