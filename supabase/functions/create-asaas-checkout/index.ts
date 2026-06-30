@@ -388,12 +388,34 @@ Deno.serve(async (req) => {
         .eq("user_id", userId);
     }
 
-    // Cancel all pending/overdue payments for this customer before creating a new one.
-    // This replaces the previous per-payment cancel logic that relied on asaas_payment_id
-    // from DB, which was unreliable when DB was stale or cancel was rejected by Asaas.
-    await cancelAllPendingPayments(creds, customerId, userId);
+    // Cancel orphaned payments or reuse existing PENDING for same plan.
+    // Uses externalReference=userId for robust lookup (survives stale customer IDs).
+    const { reusedPayment } = await handleExistingPayments(creds, userId, plan.description);
 
+    if (reusedPayment) {
+      // Idempotent path: existing PENDING payment for same plan — return its invoiceUrl.
+      // This prevents zombie payments when user clicks "Assinar" multiple times
+      // or when API retries occur.
+      await adminClient
+        .from("subscriptions")
+        .update({
+          asaas_payment_id: reusedPayment.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId);
 
+      log("info", "asaas_checkout_reused", {
+        paymentId: reusedPayment.id,
+        env: creds.env,
+        userId,
+        planType,
+      });
+
+      return new Response(
+        JSON.stringify({ url: reusedPayment.invoiceUrl, checkoutUrl: reusedPayment.invoiceUrl }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // 3. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
     const todayStr = new Date().toISOString().split("T")[0];
