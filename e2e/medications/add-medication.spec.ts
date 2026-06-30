@@ -92,8 +92,16 @@ test.describe("Cadastro de Medicamento", () => {
         .catch(() => {});
     }
 
+    // Fecha qualquer dropdown ainda aberto + aguarda re-renders do formulário estabilizarem.
+    // O force:true no combobox pode ter acionado o dropdown sem fechar depois;
+    // o Escape garante que o foco volta ao formulário e os re-renders cessam.
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(800);
+
     // ── 6. Salva o medicamento ──────────────────────────────────────────────
-    await page.getByRole("button", { name: "Salvar Medicamento" }).click();
+    // Usa force:true pelo mesmo motivo do combobox — o drawer re-renderiza continuamente
+    // fazendo o botão oscilar entre "not stable" e "detached from DOM".
+    await page.getByRole("button", { name: "Salvar Medicamento" }).click({ force: true });
 
     // Toast de sucesso ou fechamento do drawer confirma salvamento
     await expect(
