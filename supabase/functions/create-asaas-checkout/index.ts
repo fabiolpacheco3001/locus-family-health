@@ -128,39 +128,68 @@ async function findOrCreateCustomer(
   }
 }
 
-async function cancelAllPendingPayments(
+/**
+ * Finds all PENDING/OVERDUE payments for this user via externalReference,
+ * and either reuses them (if same plan) or cancels them (if different plan).
+ *
+ * Using externalReference is more robust than customer ID:
+ * - externalReference = userId is set on every payment we create
+ * - avoids stale customer ID issues
+ * - finds payments even if customer was recreated
+ *
+ * Returns { reusedPayment } if an existing PENDING payment for the same plan was found.
+ * The caller should return its invoiceUrl immediately (true idempotency).
+ */
+async function handleExistingPayments(
   creds: AsaasCredentials,
-  customerId: string,
-  userId: string
-): Promise<void> {
-  // Cancel ALL pending/overdue payments for this customer before creating a new one.
-  // This is more robust than relying on the single asaas_payment_id stored in the DB:
-  // - DB may be stale (cleaned, or payment_id not yet updated)
-  // - Asaas may have multiple orphaned payments from plan switches
-  // - We query by customer so we catch payments regardless of DB state
-  const cancelableStatuses = ["PENDING", "AWAITING_PAYMENT", "OVERDUE"];
-  for (const status of cancelableStatuses) {
+  userId: string,
+  planDescription: string
+): Promise<{ reusedPayment: { id: string; invoiceUrl: string } | null }> {
+  // Only statuses that are actionable (cancelable or reusable)
+  // AWAITING_PAYMENT is NOT a valid Asaas v3 API status — use PENDING + OVERDUE only
+  const actionableStatuses = ["PENDING", "OVERDUE"];
+
+  for (const status of actionableStatuses) {
     try {
+      // Search by externalReference=userId — catches ALL payments for this user
+      // regardless of customer ID state in our DB
       const list = await asaasFetch(
         creds,
-        `/payments?customer=${customerId}&status=${status}&limit=20`,
+        `/payments?externalReference=${encodeURIComponent(userId)}&status=${status}&limit=20`,
         { method: "GET" }
       );
-      const payments: Array<{ id: string }> = list?.data ?? [];
+      const payments: Array<{ id: string; description: string; invoiceUrl: string }> =
+        list?.data ?? [];
+
       for (const p of payments) {
+        // Same plan + PENDING → reuse existing checkout URL (true idempotency)
+        // Avoids creating zombie payments when user clicks "Assinar" multiple times
+        if (p.description === planDescription && status === "PENDING") {
+          log("info", "asaas_payment_reused_idempotent", {
+            paymentId: p.id,
+            description: p.description,
+            env: creds.env,
+            userId,
+          });
+          return { reusedPayment: { id: p.id, invoiceUrl: p.invoiceUrl } };
+        }
+
+        // Different plan (or OVERDUE same plan) → cancel before creating new
         try {
           await asaasFetch(creds, `/payments/${p.id}/cancel`, { method: "POST" });
           log("info", "asaas_payment_cancelled_pre_create", {
             paymentId: p.id,
             status,
+            description: p.description,
             env: creds.env,
             userId,
           });
         } catch (cancelErr) {
-          // Log full error so we can diagnose Asaas rejection reasons
+          // Log full Asaas error for diagnosis — includes HTTP status + body
           log("warn", "asaas_payment_cancel_failed_pre_create", {
             paymentId: p.id,
             status,
+            description: p.description,
             env: creds.env,
             userId,
             hint: cancelErr instanceof Error ? cancelErr.message : String(cancelErr),
@@ -176,6 +205,8 @@ async function cancelAllPendingPayments(
       });
     }
   }
+
+  return { reusedPayment: null };
 }
 
 Deno.serve(async (req) => {
