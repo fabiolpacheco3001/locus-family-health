@@ -157,8 +157,10 @@ Deno.serve(async (req) => {
         return json({ error: "Configuração de e-mail ausente." }, 500);
       }
 
-      const origin = req.headers.get("origin") ?? Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
-      const redirectTo = `${origin}/reset-password`;
+      // SEC-P1: NUNCA usar req.headers.get("origin") — Origin é controlado pelo caller e
+      // refletir em URLs de email entrega o token OTP para um atacante que manipule o header.
+      const appOrigin = Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
+      const redirectTo = `${appOrigin}/reset-password`;
 
       const { data: linkData, error: linkErr } = await adminClient.auth.admin.generateLink({
         type: "recovery",
@@ -176,8 +178,8 @@ Deno.serve(async (req) => {
 
       // Usar email_otp para link direto: evita PKCE verifier ausente e allowlist de redirect_to.
       // O ResetPassword.tsx chama verifyOtp({ email, token, type: 'recovery' }) diretamente.
+      // appOrigin já declarado acima — não redeclarar com req.headers.get("origin").
       const emailOtp = (linkData.properties as Record<string, unknown>).email_otp as string | undefined;
-      const appOrigin = req.headers.get("origin") ?? Deno.env.get("APP_URL") ?? "https://vita.locustech.com.br";
       const resetLink = emailOtp
         ? `${appOrigin}/reset-password?email=${encodeURIComponent(targetEmail)}&token=${encodeURIComponent(emailOtp)}`
         : linkData.properties.action_link; // fallback caso email_otp não esteja disponível
