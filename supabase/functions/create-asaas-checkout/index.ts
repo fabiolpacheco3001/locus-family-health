@@ -128,6 +128,56 @@ async function findOrCreateCustomer(
   }
 }
 
+async function cancelAllPendingPayments(
+  creds: AsaasCredentials,
+  customerId: string,
+  userId: string
+): Promise<void> {
+  // Cancel ALL pending/overdue payments for this customer before creating a new one.
+  // This is more robust than relying on the single asaas_payment_id stored in the DB:
+  // - DB may be stale (cleaned, or payment_id not yet updated)
+  // - Asaas may have multiple orphaned payments from plan switches
+  // - We query by customer so we catch payments regardless of DB state
+  const cancelableStatuses = ["PENDING", "AWAITING_PAYMENT", "OVERDUE"];
+  for (const status of cancelableStatuses) {
+    try {
+      const list = await asaasFetch(
+        creds,
+        `/payments?customer=${customerId}&status=${status}&limit=20`,
+        { method: "GET" }
+      );
+      const payments: Array<{ id: string }> = list?.data ?? [];
+      for (const p of payments) {
+        try {
+          await asaasFetch(creds, `/payments/${p.id}/cancel`, { method: "POST" });
+          log("info", "asaas_payment_cancelled_pre_create", {
+            paymentId: p.id,
+            status,
+            env: creds.env,
+            userId,
+          });
+        } catch (cancelErr) {
+          // Log full error so we can diagnose Asaas rejection reasons
+          log("warn", "asaas_payment_cancel_failed_pre_create", {
+            paymentId: p.id,
+            status,
+            env: creds.env,
+            userId,
+            hint: cancelErr instanceof Error ? cancelErr.message : String(cancelErr),
+          });
+        }
+      }
+    } catch (listErr) {
+      log("warn", "asaas_list_payments_failed_pre_create", {
+        status,
+        env: creds.env,
+        userId,
+        hint: listErr instanceof Error ? listErr.message : String(listErr),
+      });
+    }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -307,81 +357,12 @@ Deno.serve(async (req) => {
         .eq("user_id", userId);
     }
 
-    // 2b. Idempotent checkout: reuse existing pending payment if possible
-    // Avoids orphaned PENDING payments when user closes checkout and opens again.
-    if (subRow?.asaas_payment_id && subRow?.plan_type === planType) {
-      try {
-        const existingPayment = await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}`, { method: "GET" });
-        const reusableStatuses = ["PENDING", "AWAITING_PAYMENT"];
-        if (reusableStatuses.includes(existingPayment.status) && existingPayment.invoiceUrl) {
-          log("info", "asaas_payment_reused", {
-            paymentId: existingPayment.id,
-            status: existingPayment.status,
-            env: creds.env,
-            userId,
-          });
-          return new Response(
-            JSON.stringify({ url: existingPayment.invoiceUrl, checkoutUrl: existingPayment.invoiceUrl }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        // Payment no longer payable — cancel it to avoid clutter before creating new
-        if (["PENDING", "AWAITING_PAYMENT"].includes(existingPayment.status)) {
-          // already handled above; this branch handles non-payable statuses — nothing to cancel
-        } else {
-          try {
-            await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}/cancel`, { method: "POST" });
-            log("info", "asaas_payment_cancelled_stale", { paymentId: subRow.asaas_payment_id, env: creds.env });
-          } catch {
-            // Non-critical: old payment might already be cancelled or confirmed
-          }
-        }
-      } catch (lookupErr) {
-        // Payment not found or fetch failed — proceed to create new
-        log("warn", "asaas_payment_lookup_failed", {
-          paymentId: subRow.asaas_payment_id,
-          env: creds.env,
-          hint: lookupErr instanceof Error ? lookupErr.message : String(lookupErr),
-        });
-      }
-    }
+    // Cancel all pending/overdue payments for this customer before creating a new one.
+    // This replaces the previous per-payment cancel logic that relied on asaas_payment_id
+    // from DB, which was unreliable when DB was stale or cancel was rejected by Asaas.
+    await cancelAllPendingPayments(creds, customerId, userId);
 
-    // If plan changed, cancel old pending payment before creating new one.
-    // IMPORTANT: Do NOT use subRow?.status here — it reflects the DB state,
-    // which may be 'active', 'canceled', etc. after the webhook fires.
-    // Always check the actual Asaas payment status via GET.
-    if (subRow?.asaas_payment_id && subRow?.plan_type !== planType) {
-      try {
-        const oldPayment = await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}`, { method: "GET" });
-        // Include OVERDUE: when dueDate passes, Asaas marks as OVERDUE but payment can still be cancelled.
-        // Without OVERDUE, plan-switch after dueDate creates orphaned payments that never get cleaned up.
-        if (["PENDING", "AWAITING_PAYMENT", "OVERDUE"].includes(oldPayment.status)) {
-          await asaasFetch(creds, `/payments/${subRow.asaas_payment_id}/cancel`, { method: "POST" });
-          log("info", "asaas_payment_cancelled_plan_change", {
-            paymentId: subRow.asaas_payment_id,
-            oldPlan: subRow.plan_type,
-            newPlan: planType,
-            oldStatus: oldPayment.status,
-            env: creds.env,
-          });
-        } else {
-          // Payment already confirmed or cancelled — no action needed
-          log("info", "asaas_payment_skip_cancel_plan_change", {
-            paymentId: subRow.asaas_payment_id,
-            status: oldPayment.status,
-            env: creds.env,
-          });
-        }
-      } catch (cancelErr) {
-        // Log the error — helps diagnose if Asaas rejects the cancel for an unexpected reason
-        log("warn", "asaas_payment_cancel_failed_plan_change", {
-          paymentId: subRow.asaas_payment_id,
-          env: creds.env,
-          hint: cancelErr instanceof Error ? cancelErr.message : String(cancelErr),
-        });
-        // Non-critical — proceed to create new payment anyway
-      }
-    }
+
 
     // 3. Create a one-shot payment (Spotify/Netflix model — no subscription object on Asaas)
     const todayStr = new Date().toISOString().split("T")[0];
