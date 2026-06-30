@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ChevronLeft, ChevronRight, FileText, Download, ShieldOff, Trash2, Loader2,
@@ -62,9 +62,24 @@ export const conformidadeItems: ConformidadeItem[] = [
 
 const AjustesConformidade = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getUserIdentities } = useAuth();
   const { passkeys } = usePasskeys();
   const hasPasskey = passkeys.length > 0;
+
+  // GAP-4 — detecta se o usuário tem provedor e-mail/senha para reautenticação.
+  // Usuários OAuth-only (Google/Apple sem senha) não podem fazer reauth por senha.
+  // Mitigação v2.2: exibir mensagem de bloqueio. Solução v3.0: supabase.auth.reauthenticate().
+  const [hasEmailProvider, setHasEmailProvider] = useState<boolean | null>(null);
+  const identitiesFetched = useRef(false);
+  useEffect(() => {
+    if (identitiesFetched.current) return;
+    identitiesFetched.current = true;
+    getUserIdentities().then(({ data }) => {
+      if (data?.identities) {
+        setHasEmailProvider(data.identities.some((i: { provider: string }) => i.provider === "email"));
+      }
+    });
+  }, [getUserIdentities]);
 
   // ── A15 — Exportar dados ───────────────────────────────────────────────────
   const [exportingData, setExportingData] = useState(false);
@@ -327,7 +342,8 @@ const AjustesConformidade = () => {
               </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          {!hasPasskey && (
+          {/* Reautenticação: passkey > senha > bloqueio OAuth-only */}
+          {!hasPasskey && hasEmailProvider === true && (
             <div className="space-y-2 py-1">
               <Label htmlFor="reauth-password" className="text-sm">Sua senha atual</Label>
               <Input
@@ -342,12 +358,26 @@ const AjustesConformidade = () => {
               />
             </div>
           )}
+          {/* GAP-4 — OAuth-only: sem passkey e sem senha. Mitigação v2.2. */}
+          {!hasPasskey && hasEmailProvider === false && (
+            <div className="py-1 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-sm text-amber-800 leading-relaxed">
+                Você acessa o Locus Vita via Google ou Apple e não possui senha cadastrada. Por ora,
+                a exclusão de conta requer suporte. Entre em contato:{" "}
+                <strong>suporte@locustech.com.br</strong>
+              </p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel disabled={reauthLoading || deleting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => { e.preventDefault(); handleReauthAndDelete(); }}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={reauthLoading || deleting || (!hasPasskey && !reauthPassword)}
+              disabled={
+                reauthLoading || deleting ||
+                (!hasPasskey && hasEmailProvider === true && !reauthPassword) ||
+                (!hasPasskey && hasEmailProvider === false)
+              }
             >
               {reauthLoading || deleting
                 ? <Loader2 className="animate-spin" size={16} />

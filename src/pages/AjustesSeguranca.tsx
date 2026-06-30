@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Lock, UserCog } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, LogIn, UserCog } from "lucide-react";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 
 // ── Itens exportados para teste unitário ──────────────────────────────────────
@@ -12,6 +12,7 @@ export interface SegurancaItem {
 
 export const segurancaItems: SegurancaItem[] = [
   { icon: Lock,    label: "Senha e Biometria", path: "/seguranca-conta" },
+  { icon: LogIn,   label: "Login Social",      path: "/login-social" },
   { icon: UserCog, label: "Gestão de Acessos", path: "/gestao-acessos", adminOnly: true },
 ];
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { DatePickerField } from "@/components/ui/date-picker-field";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Camera, X, CreditCard } from "lucide-react";
@@ -18,9 +18,23 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
+/** Mapeamento de provider OAuth para label legível. */
+const PROVIDER_LABELS: Record<string, string> = {
+  email:  "E-mail e senha",
+  google: "Google",
+  apple:  "Apple",
+};
+
+/** Classes de badge por provider. */
+const PROVIDER_CLASSES: Record<string, string> = {
+  email:  "bg-blue-50 text-blue-700 border-blue-200",
+  google: "bg-red-50 text-red-700 border-red-200",
+  apple:  "bg-slate-100 text-slate-700 border-slate-200",
+};
+
 const MeusDados = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getUserIdentities } = useAuth();
   const { members, updateMember } = useFamilyMembers();
   const { role, linkedMemberId, groupId } = useFamilyGroup();
   const queryClient = useQueryClient();
@@ -51,6 +65,18 @@ const MeusDados = () => {
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [providerBadges, setProviderBadges] = useState<string[]>([]);
+  const identitiesFetched = useRef(false);
+
+  useEffect(() => {
+    if (identitiesFetched.current) return;
+    identitiesFetched.current = true;
+    getUserIdentities().then(({ data }) => {
+      if (data?.identities) {
+        setProviderBadges(data.identities.map((i: { provider: string }) => i.provider));
+      }
+    });
+  }, [getUserIdentities]);
 
   useEffect(() => {
     if (myProfile) {
@@ -239,6 +265,18 @@ const MeusDados = () => {
           <Label htmlFor="md-email">E-mail</Label>
           <Input id="md-email" value={user?.email || ""} readOnly disabled className="w-full max-w-full box-border min-w-0 text-[16px] bg-muted cursor-not-allowed" />
           <p className="text-xs text-muted-foreground">Este é seu e-mail de login e não pode ser alterado aqui.</p>
+          {providerBadges.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-1.5">
+              {providerBadges.map((provider) => (
+                <span
+                  key={provider}
+                  className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full border ${PROVIDER_CLASSES[provider] ?? "bg-muted text-muted-foreground border-border"}`}
+                >
+                  {PROVIDER_LABELS[provider] ?? provider}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">

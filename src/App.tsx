@@ -70,6 +70,7 @@ const importMeuPlano = () => import("./pages/MeuPlano");
 const importPoliticaPrivacidade = () => import("./pages/PoliticaPrivacidade");
 const importTermosUso = () => import("./pages/TermosUso");
 const importSegurancaInfo = () => import("./pages/SegurancaInfo");
+const importLoginSocial = () => import("./pages/LoginSocial");
 
 const Agenda = lazy(importAgenda);
 const Familia = lazy(importFamilia);
@@ -105,6 +106,7 @@ const MeuPlano = lazy(importMeuPlano);
 const PoliticaPrivacidade = lazy(importPoliticaPrivacidade);
 const TermosUso = lazy(importTermosUso);
 const SegurancaInfo = lazy(importSegurancaInfo);
+const LoginSocial = lazy(importLoginSocial);
 
 // Prefetch functions exported for use by AppLayout and BottomNav
 export const prefetchCriticalChunks = () => {
@@ -194,6 +196,7 @@ const App = () => (
               <Route path="/ajustes/seguranca" element={<AjustesSeguranca />} />
               <Route path="/ajustes/conformidade" element={<AjustesConformidade />} />
               <Route path="/ajustes/suporte" element={<AjustesSuporte />} />
+              <Route path="/login-social" element={<Suspense fallback={<RouteLoader />}><LoginSocial /></Suspense>} />
             </Route>
             <Route path="/command_center/login" element={<Suspense fallback={<RouteLoader />}><AdminLogin /></Suspense>} />
             <Route path="/command_center" element={<AdminRoute><Suspense fallback={<RouteLoader />}><CommandCenterLayout /></Suspense></AdminRoute>}>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Fingerprint, Eye, EyeOff, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { usePasskeys } from "@/hooks/usePasskeys";
+import { useAuth } from "@/hooks/useAuth";
 import { browserSupportsWebAuthn } from "@/lib/webauthn";
 import { format, parseISO, isValid } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -37,6 +38,23 @@ function getDeviceName(): string {
  */
 const Seguranca = () => {
   const navigate = useNavigate();
+  const { getUserIdentities } = useAuth();
+
+  // ── Identidade OAuth — determina se usuário tem senha ─────────────────────
+  // social-only = sem provider 'email' → bloco "Alterar Senha" não se aplica
+  const [hasEmailProvider, setHasEmailProvider] = useState<boolean | null>(null);
+  const identitiesFetched = useRef(false);
+  useEffect(() => {
+    if (identitiesFetched.current) return;
+    identitiesFetched.current = true;
+    getUserIdentities().then(({ data }) => {
+      if (data?.identities) {
+        setHasEmailProvider(data.identities.some((i: { provider: string }) => i.provider === "email"));
+      } else {
+        setHasEmailProvider(null);
+      }
+    });
+  }, [getUserIdentities]);
 
   // ── Biometria ──────────────────────────────────────────────────────────────
   const { passkeys, isLoading: passkeyLoading, register, remove } = usePasskeys();
@@ -198,88 +216,110 @@ const Seguranca = () => {
           </div>
         </div>
 
-        {/* Alterar Senha */}
-        <div className="bg-card rounded-xl p-4 shadow-xs border border-border/40 space-y-4">
-          <div className="flex items-center gap-2">
-            <Lock size={16} className="text-[#78C2AD]" />
-            <h2 className="text-sm font-semibold text-foreground">Alterar Senha</h2>
-          </div>
-
-          {/* A2 — Campo "Senha Atual" agora é validado no backend */}
-          <div className="space-y-1.5">
-            <Label>Senha Atual</Label>
-            <div className="relative">
-              <input
-                type={showAtual ? "text" : "password"}
-                value={senhaAtual}
-                onChange={(e) => setSenhaAtual(e.target.value)}
-                placeholder="••••••••"
-                className={inputClass}
-              />
-              <button
-                type="button"
-                aria-label={showAtual ? "Ocultar senha" : "Mostrar senha"}
-                onClick={() => setShowAtual(!showAtual)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                {showAtual ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+        {/* Alterar Senha — renderiza conforme tipo de identidade do usuário */}
+        {hasEmailProvider === true && (
+          <div className="bg-card rounded-xl p-4 shadow-xs border border-border/40 space-y-4">
+            <div className="flex items-center gap-2">
+              <Lock size={16} className="text-[#78C2AD]" />
+              <h2 className="text-sm font-semibold text-foreground">Alterar Senha</h2>
             </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label>Nova Senha</Label>
-            <div className="relative">
-              <input
-                type={showNova ? "text" : "password"}
-                value={novaSenha}
-                onChange={(e) => setNovaSenha(e.target.value)}
-                placeholder="Ex: MinhaS3nh@Forte!"
-                className={inputClass}
-              />
-              <button
-                type="button"
-                aria-label={showNova ? "Ocultar nova senha" : "Mostrar nova senha"}
-                onClick={() => setShowNova(!showNova)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                {showNova ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+            {/* A2 — Campo "Senha Atual" agora é validado no backend */}
+            <div className="space-y-1.5">
+              <Label>Senha Atual</Label>
+              <div className="relative">
+                <input
+                  type={showAtual ? "text" : "password"}
+                  value={senhaAtual}
+                  onChange={(e) => setSenhaAtual(e.target.value)}
+                  placeholder="••••••••"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  aria-label={showAtual ? "Ocultar senha" : "Mostrar senha"}
+                  onClick={() => setShowAtual(!showAtual)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showAtual ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">
-              Mínimo 8 caracteres · letra maiúscula · número · caractere especial (@$!%*?&)
+
+            <div className="space-y-1.5">
+              <Label>Nova Senha</Label>
+              <div className="relative">
+                <input
+                  type={showNova ? "text" : "password"}
+                  value={novaSenha}
+                  onChange={(e) => setNovaSenha(e.target.value)}
+                  placeholder="Ex: MinhaS3nh@Forte!"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  aria-label={showNova ? "Ocultar nova senha" : "Mostrar nova senha"}
+                  onClick={() => setShowNova(!showNova)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showNova ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5 leading-tight">
+                Mínimo 8 caracteres · letra maiúscula · número · caractere especial (@$!%*?&)
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Confirmar Nova Senha</Label>
+              <div className="relative">
+                <input
+                  type={showConfirmar ? "text" : "password"}
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                  placeholder="Repita a nova senha"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  aria-label={showConfirmar ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
+                  onClick={() => setShowConfirmar(!showConfirmar)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showConfirmar ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleUpdatePassword}
+              disabled={loading}
+              className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none"
+            >
+              {loading ? "Verificando..." : "Atualizar Senha"}
+            </Button>
+          </div>
+        )}
+
+        {/* Social-only: sem provedor de e-mail — bloco de senha não se aplica */}
+        {hasEmailProvider === false && (
+          <div className="bg-card rounded-xl p-4 shadow-xs border border-border/40">
+            <div className="flex items-center gap-2 mb-2">
+              <Lock size={16} className="text-[#78C2AD]" />
+              <h2 className="text-sm font-semibold text-foreground">Alterar Senha</h2>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Você acessa o Locus Vita via Google ou Apple. Não há senha para alterar.
             </p>
+            <button
+              type="button"
+              onClick={() => navigate("/login-social")}
+              className="mt-3 text-sm text-[#78C2AD] font-medium underline underline-offset-2"
+            >
+              Gerenciar Login Social →
+            </button>
           </div>
-
-          <div className="space-y-1.5">
-            <Label>Confirmar Nova Senha</Label>
-            <div className="relative">
-              <input
-                type={showConfirmar ? "text" : "password"}
-                value={confirmarSenha}
-                onChange={(e) => setConfirmarSenha(e.target.value)}
-                placeholder="Repita a nova senha"
-                className={inputClass}
-              />
-              <button
-                type="button"
-                aria-label={showConfirmar ? "Ocultar confirmação de senha" : "Mostrar confirmação de senha"}
-                onClick={() => setShowConfirmar(!showConfirmar)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                {showConfirmar ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleUpdatePassword}
-            disabled={loading}
-            className="w-full bg-[#A7D3CB] hover:bg-[#A7D3CB]/90 text-black font-semibold border-none"
-          >
-            {loading ? "Verificando..." : "Atualizar Senha"}
-          </Button>
-        </div>
+        )}
 
         {/* Spacer para não cortar atrás do BottomNav */}
         <div className="h-4" />

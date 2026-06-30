@@ -13,6 +13,13 @@ import { createSubscription } from "@/services/asaasService";
 const REDIRECT_KEY = "lv_redirect_after_login";
 
 /**
+ * Chave localStorage usada por LoginSocial.tsx antes de chamar linkIdentity().
+ * Indica para onde redirecionar após o fluxo de vinculação de provedor (USER_UPDATED).
+ * Validação: deve começar com "/" mas não com "//" (open redirect protection).
+ */
+const OAUTH_REDIRECT_KEY = "lv_oauth_redirect";
+
+/**
  * Deve estar em sync com UNLOCK_TS_KEY em useAppLock.ts e useAuth.tsx.
  * Escrita após OAuth bem-sucedido (Google/Apple) para que o app lock
  * não re-trave se o iOS matar e reiniciar o processo dentro de 5 min.
@@ -35,6 +42,23 @@ const AuthCallback = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        // RN-06 — Vinculação de provedor via LoginSocial.tsx.
+        // linkIdentity() dispara USER_UPDATED (não SIGNED_IN); lv_oauth_redirect indica
+        // o destino configurado antes do redirect para o provedor OAuth.
+        if (_event === "USER_UPDATED" && session) {
+          const oauthRedirect = localStorage.getItem(OAUTH_REDIRECT_KEY);
+          if (oauthRedirect) {
+            clearTimeout(timeout);
+            subscription.unsubscribe();
+            localStorage.removeItem(OAUTH_REDIRECT_KEY);
+            const validPath = oauthRedirect.startsWith("/") && !oauthRedirect.startsWith("//")
+              ? oauthRedirect
+              : "/home";
+            navigate(validPath, { replace: true });
+            return;
+          }
+        }
+
         // Ignorar INITIAL_SESSION, TOKEN_REFRESHED, SIGNED_OUT — aguardar só SIGNED_IN
         if (_event !== "SIGNED_IN" || !session) return;
 
