@@ -49,7 +49,18 @@ test.describe("Cadastro de Medicamento", () => {
     await fab.click();
 
     // ── 4. Aguarda o drawer abrir ───────────────────────────────────────────
-    await expect(page.getByText("Novo Medicamento")).toBeVisible({ timeout: 8_000 });
+    // Usa getByRole('heading') para evitar strict mode violation — o drawer mostra
+    // a tela de entrada com a opção "Preencher Manualmente" cujo subtítulo contém
+    // "novo medicamento", fazendo getByText('Novo Medicamento') resolver 2 elementos.
+    await expect(page.getByRole("heading", { name: "Novo Medicamento" })).toBeVisible({ timeout: 8_000 });
+
+    // ── 4b. Clica em "Preencher Manualmente" para acessar o formulário ──────
+    // O AddMedicationDrawer tem uma tela de entrada com 2 opções: scan de receita
+    // ou preenchimento manual. Selecionamos a opção manual para o teste.
+    const manualBtn = page.getByRole("button", { name: /Preencher Manualmente/i });
+    if (await manualBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await manualBtn.click();
+    }
 
     // ── 5. Preenche campos obrigatórios ─────────────────────────────────────
     // Nome do medicamento (MedicationAutocomplete renderiza <input>)
@@ -81,7 +92,7 @@ test.describe("Cadastro de Medicamento", () => {
 
     // ── 7. Verifica que o medicamento aparece na lista ──────────────────────
     // Aguarda drawer fechar e lista recarregar
-    await expect(page.getByText("Novo Medicamento")).not.toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("heading", { name: "Novo Medicamento" })).not.toBeVisible({ timeout: 5_000 });
     await expect(page.getByText(TEST_MED_NAME)).toBeVisible({ timeout: 10_000 });
   });
 

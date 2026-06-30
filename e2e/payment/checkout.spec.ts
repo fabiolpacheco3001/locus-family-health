@@ -146,6 +146,22 @@ test.describe("Meu Plano — Smoke Test", () => {
     await expect(targetBtn).toBeEnabled();
     await targetBtn.click();
 
+    // Detecta CPF guard: se a conta de teste não tem CPF cadastrado, o app navega para
+    // /meus-dados em vez de chamar window.open — pulamos o teste graciosamente nesse caso.
+    const redirectedToCpfPage = await page
+      .waitForURL(/\/meus-dados/, { timeout: 2_000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (redirectedToCpfPage) {
+      test.skip(
+        true,
+        "Conta de teste sem CPF cadastrado — o app redirecionou para /meus-dados. " +
+          "Cadastre o CPF na conta de teste (Ajustes → Meus Dados) para executar este fluxo."
+      );
+      return;
+    }
+
     // Aguarda a edge function create-asaas-checkout ser chamada e location.href ser atribuído
     await page.waitForTimeout(10_000);
 
