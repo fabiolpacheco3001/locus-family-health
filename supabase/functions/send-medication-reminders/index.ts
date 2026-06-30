@@ -111,6 +111,17 @@ Deno.serve(async (req) => {
 
     const toNotify: { userId: string; medName: string; dosage: string | null; memberName: string; medId: string }[] = [];
 
+    // Pré-carrega todos os family_group_members em 1 query batch.
+    // Elimina N+1: sem isso, getNotificationTargets() faria 1 SELECT por medicamento.
+    const allGroupIds = medications
+      .map((med) => {
+        const m = Array.isArray(med.family_members) ? med.family_members[0] : med.family_members;
+        return m?.group_id as string | undefined;
+      })
+      .filter((id): id is string => !!id);
+
+    const fgmMap = await prefetchGroupFamilyMembers(adminClient, allGroupIds);
+
     for (const med of medications) {
       const member = Array.isArray(med.family_members) ? med.family_members[0] : med.family_members;
       if (!member?.id || !member?.group_id) continue;
