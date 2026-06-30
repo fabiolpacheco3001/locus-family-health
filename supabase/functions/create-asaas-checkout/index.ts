@@ -351,9 +351,11 @@ Deno.serve(async (req) => {
     // the old conditional (subRow?.asaas_customer_id) would skip this sync — causing blank CPF.
     if (effectiveCpfCnpj || effectivePhone) {
       try {
-        const syncPayload: Record<string, string> = { name: userName, postalCode, addressNumber };
+        const syncPayload: Record<string, string> = { name: userName };
         if (effectiveCpfCnpj) syncPayload.cpfCnpj = effectiveCpfCnpj;
         if (effectivePhone) syncPayload.phone = effectivePhone;
+        if (postalCode !== "01310100") syncPayload.postalCode = postalCode;
+        if (addressNumber !== "1") syncPayload.addressNumber = addressNumber;
         await asaasFetch(creds, `/customers/${customerId}`, {
           method: "PUT",
           body: JSON.stringify(syncPayload),
