@@ -1,0 +1,28 @@
+Observabilidade e operabilidade em produção
+1) Logging
+	•	As Edge Functions inspecionadas usam o logger estruturado log() de supabase/functions/_shared/logger.ts, e o backlog registra que os 66 console.* não estruturados foram convertidos e que não restaram console.* fora do logger, então a base de logs do backend está consistente em JSON. logger.ts:1-25 TECH_DEBT.md:362-365
+	•	O frontend está instrumentado com Sentry via src/main.tsx, src/lib/sentry.ts, src/App.tsx e QueryCache/MutationCache no QueryClient, então exceções que chegam à árvore React ou às queries/mutações podem ser capturadas em produção. main.tsx:4-8 sentry.ts:22-49 App.tsx:128-147
+	•	Há erros no frontend que são tratados localmente e podem não chegar ao Sentry, como src/hooks/useLogAiUsage.ts e src/hooks/useAiStatus.ts, que fazem catch/console.error e seguem com fallback em vez de relançar a exceção. useLogAiUsage.ts:3-15 useAiStatus.ts:8-29
+	•	Também há console.error residuais no frontend em src/services/asaasService.ts, que loga erro bruto antes de lançar exceção genérica, então parte do diagnóstico fica no console e não necessariamente no Sentry. asaasService.ts:15-43
+	•	Sobre PII, eu não vi logs diretos de CPF ou nome nos trechos inspecionados, mas supabase/functions/asaas-webhook/index.ts registra o body bruto quando event está ausente, o que pode carregar identificadores do payload e não é ideal para produção. index.ts:103-108
+	•	O que encontrei de proteção de dado sensível é o oposto: supabase/functions/process-email-queue/index.ts faz hash do e-mail com EMAIL_HASH_SALT, e grava recipient_email_hash junto com o e-mail para pseudonimização gradual. index.ts:38-49 index.ts:77-96
+2) Monitoramento
+	•	Eu não encontrei integração de Sentry para Edge Functions; a configuração documentada e implementada é de frontend React (@sentry/react), e o backlog trata a observabilidade backend via logger estruturado, não via Sentry no runtime Deno. sentry.ts:14-49 TECH_DEBT.md:300-303
+	•	O runbook de incidente cita Sentry, Supabase Logs/Auth Logs, Secret Scanning e monitoramento manual como fontes de detecção, mas não descreve alertas automáticos já configurados para pagamento, WebAuthn ou OCR. runbook-lgpd-art48.md:52-60
+	•	Há métricas operacionais parciais, como ai_usage_logs via supabase/functions/_shared/rate-limit.ts e admin_audit_log via supabase/functions/manage-admins/index.ts, mas não vi instrumentação explícita para conversão de trial, ativação de passkey ou funil de OCR. rate-limit.ts:23-49 index.ts:47-68 TECH_DEBT.md:355-358
+3) Health checks
+	•	Não há um endpoint dedicado de health check no conjunto atual de Edge Functions listadas em supabase/functions, então eu não vi uma rota pronta para monitoramento sintético de disponibilidade.
+	•	supabase/functions/asaas-webhook/index.ts devolve 200 em vários caminhos de warning ou degradação, como event ausente, credenciais indisponíveis ou falha ao buscar a assinatura, o que pode esconder regressões se ninguém estiver lendo logs. index.ts:103-108 index.ts:135-148 index.ts:184-189
+	•	Os jobs pg_cron existem para TTL de medication_doses, notifications, ai_usage_logs e email_send_log, mas eu não encontrei mecanismo automático de alerta se um job falhar silenciosamente; o material atual fala em confirmação manual no Dashboard. 20260616000019_ttl_pg_cron_jobs.sql:1-16 20260616000019_ttl_pg_cron_jobs.sql:23-50 TECH_DEBT.md:246-250
+4) Recuperação de falhas
+	•	Se o Supabase ficar indisponível, a app não tende a virar tela branca por erro de render porque há ErrorBoundary global, e alguns hooks já têm fallback explícito como useAiStatus fail-closed e useIbgeLocations que limpa o estado para arrays vazios. App.tsx:140-147 useAiStatus.ts:17-25 useIbgeLocations.ts:19-37
+	•	Mesmo assim, a degradação é parcial: telas dependentes de query podem ficar vazias, desabilitadas ou em estado de erro, mas o app central captura exceções globais e evita colapso total da árvore React. App.tsx:128-147 useNotifications.tsx:24-48
+	•	Se a função de cobrança recorrente falhar, supabase/functions/generate-renewal-charge/index.ts registra o erro por usuário e continua o lote, mas não há retry automático dentro da própria função; o retorno final também é 200 com um resumo de resultados. index.ts:58-67 index.ts:91-127
+	•	Não encontrei política explícita de backup/RPO/RTO no material aberto; o que existe é o runbook de incidente e a rotina de TTL/limpeza, mas não uma estratégia documentada de backup e restauração. runbook-lgpd-art48.md:1-16 20260616000019_ttl_pg_cron_jobs.sql:1-16
+5) Rastreabilidade
+	•	admin_audit_log está integrado para ações administrativas em supabase/functions/manage-admins/index.ts, e o backlog documenta que ele cobre promote, revoke, create e list-emails, mas não vi o mesmo padrão aplicado aos fluxos críticos de pagamento, deleção de conta ou OCR. index.ts:47-68 TECH_DEBT.md:355-358
+	•	Não encontrei propagação de correlation_id ou request_id entre frontend → Edge Function → banco; o logger estruturado atual só emite { level, event, ts, ...data }, então a trilha ponta-a-ponta não está pronta para tracing completo. logger.ts:12-25
+Resumo prático
+	•	O ponto mais forte hoje é logging estruturado no backend e captura global de erros no frontend, então o diagnóstico básico existe. logger.ts:12-25 App.tsx:128-147
+	•	O principal gap operacional é a falta de alertas automáticos e tracing end-to-end, porque parte dos erros é engolida por fallback local e as Edge Functions retornam 200 em cenários degradados. useAiStatus.ts:17-25 index.ts:103-108 index.ts:91-127
+	•	Se você quiser, eu posso transformar isso em uma matriz curta de risco operacional por severidade e área (logging, alerta, recovery, tracing).
