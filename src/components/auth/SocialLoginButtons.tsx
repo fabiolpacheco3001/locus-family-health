@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -37,6 +37,20 @@ export const SocialLoginButtons = ({ context, planFromUrl }: SocialLoginButtonsP
   const { signInWithGoogle } = useAuth();
   const [isPendingGoogle, setIsPendingGoogle] = useState(false);
   const [isPendingApple] = useState(false);
+
+  // iOS PWA: OAuth opens in SFSafariViewController overlay. When user cancels,
+  // the overlay closes and the PWA comes back to foreground WITHOUT page reload,
+  // so isPendingGoogle stays true forever. visibilitychange resets it reliably.
+  useEffect(() => {
+    if (!isPendingGoogle) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        setIsPendingGoogle(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [isPendingGoogle]);
 
   const handleGoogle = async () => {
     if (planFromUrl) {
