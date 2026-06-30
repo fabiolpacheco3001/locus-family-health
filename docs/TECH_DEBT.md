@@ -432,7 +432,7 @@
 - **Arquivos:** `src/components/SwipeableCard.tsx`, `src/components/ExamSwipeableCard.tsx`, `src/components/SurgeryCard.tsx`, `src/components/medications/MedicationListItem.tsx`
 - **Fix:** Adicionar `role="listitem"`, `aria-label` descritivo e `onKeyDown` handlers nos containers de swipe. Ver padrão em seção Acessibilidade do SKILL.md.
 - **Severidade × Esforço:** 🟠 Importante × Médio (4h)
-- **Status:** ⬜ Pendente
+- **Status:** ✅ Resolvido (sessão 57) — Adicionado `role="listitem"` + prop `ariaLabel` em `SwipeableActionCard` e `ExamSwipeableCard`. Botões de ação (Excluir, Concluído, Realizado, Pronto) receberam `aria-label` explícito. Ícones Lucide decorativos receberam `aria-hidden="true"` em todos os 6 arquivos afetados (`SwipeableActionCard`, `ExamSwipeableCard`, `SurgeryCard`, `MedicationListItem`, `Exames.tsx`, `Vacinas.tsx`). Botões de edição em `SurgeryCard` e `MedicationListItem` receberam `aria-label` contextual (ex: `"Ver e editar Dipirona"`). TypeScript limpo, sem erros.
 
 ---
 
@@ -610,7 +610,7 @@
 - **Arquivos:** `supabase/migrations/20260622000000_add_surgeries_module.sql`, `supabase/migrations/20260622172313_d78937ea.sql`
 - **Fix:** Adicionar comentário no topo de `20260622000000` indicando que foi supersedida. Documentar historicamente — não remover (imutabilidade das migrations).
 - **Severidade × Esforço:** 🟡 Melhoria × Alto (documentação + auditoria)
-- **Status:** ⬜ Pendente
+- **Status:** ✅ Resolvido (sessão 57) — Comentário de supersedência adicionado ao topo de `20260622000000_add_surgeries_module.sql` explicando o bug `fgm.user_id` e indicando a migration corretora `20260622172313`.
 
 ---
 

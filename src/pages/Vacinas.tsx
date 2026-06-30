@@ -518,13 +518,15 @@ const Vacinas = () => {
                   quickActionMode="none"
                   isOpen={openCardId === v.id}
                   onOpenChange={(isOpen) => setOpenCardId(isOpen ? v.id : null)}
+                  ariaLabel={`Vacina: ${v.name}`}
                 >
                   <button
                     onClick={() => openEdit(v)}
+                    aria-label={`Ver e editar ${v.name}`}
                     className="w-full bg-card rounded-xl border border-border/50 p-4 flex items-start gap-3 text-left active:bg-muted/50 transition-colors"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
-                      <Syringe className="text-black" size={20} />
+                    <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+                      <Syringe className="text-black" size={20} aria-hidden="true" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-foreground text-sm">{v.name}</p>
@@ -542,7 +544,7 @@ const Vacinas = () => {
                         </p>
                       )}
                     </div>
-                    <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" />
+                    <ChevronRight size={16} className="text-muted-foreground shrink-0 mt-2" aria-hidden="true" />
                   </button>
                 </ExamSwipeableCard>
               ))}

@@ -319,13 +319,15 @@ const Exames = () => {
                     quickActionMode={quickActionMode}
                     isOpen={openCardId === e.id}
                     onOpenChange={(isOpen) => setOpenCardId(isOpen ? e.id : null)}
+                    ariaLabel={`Exame: ${e.name}`}
                   >
                     <button
                       onClick={() => handleOpenEdit(e)}
+                      aria-label={`Ver e editar ${e.name}`}
                       className="flex items-start gap-4 p-4 bg-card rounded-xl border border-border/50 shadow-xs text-left active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full"
                     >
-                      <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
-                        <FileText className="text-black" size={20} />
+                      <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+                        <FileText className="text-black" size={20} aria-hidden="true" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -347,13 +349,13 @@ const Exames = () => {
                         )}
                         {e.consultations?.professional_name && (
                           <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
-                            <Stethoscope size={12} />
+                            <Stethoscope size={12} aria-hidden="true" />
                             <span>Solicitado por {e.consultations.professional_name}</span>
                           </div>
                         )}
                         {e.exam_date && (
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                            <Calendar size={12} />
+                            <Calendar size={12} aria-hidden="true" />
                             <span>
                               {(() => {
                                 const hasTime = e.exam_date!.length > 10;
@@ -369,7 +371,7 @@ const Exames = () => {
                           </div>
                         )}
                       </div>
-                      <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
+                      <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" aria-hidden="true" />
                     </button>
                   </ExamSwipeableCard>
                 );

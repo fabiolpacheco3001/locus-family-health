@@ -1,6 +1,17 @@
 -- ============================================================
 -- Migration: 20260622000000_add_surgeries_module
 -- Módulo de Cirurgias — Locus Vita SPEC v1.2
+--
+-- ⚠️  SUPERSEDIDA por: 20260622172313_d78937ea.sql
+--
+-- Esta migration contém um bug nas políticas RLS de surgeries e
+-- surgery_instructions: usa `fgm.user_id` (campo inexistente em
+-- family_group_members) no lugar de `fgm.auth_user_id`.
+-- As políticas incorretas podem ter ficado ativas temporariamente
+-- entre os dois deploys em staging.
+--
+-- NÃO remover esta migration (imutabilidade das migrations).
+-- A migration 20260622172313 recria as políticas com o campo correto.
 -- ============================================================
 
 -- Tabela principal de cirurgias

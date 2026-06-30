@@ -40,8 +40,9 @@ export function MedicationListItem({
     <SwipeableActionCard
       onDelete={onDelete}
       disableDelete={disableDelete}
+      ariaLabel={`Medicamento: ${m.name}`}
       leadingAction={isAtivo ? {
-        icon: <CheckCircle className="w-6 h-6" />,
+        icon: <CheckCircle className="w-6 h-6" aria-hidden="true" />,
         label: "Concluído",
         bgColor: "#1C3333",
         textColor: "#ffffff",
@@ -53,10 +54,11 @@ export function MedicationListItem({
       <div className="flex flex-col p-4 bg-card rounded-xl border border-border/50 shadow-xs text-left w-full">
         <button
           onClick={onEdit}
+          aria-label={`Ver e editar ${m.name}`}
           className="flex items-start gap-4 active:bg-accent/50 sm:hover:bg-accent/50 transition-colors w-full rounded-lg"
         >
-          <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5">
-            <Pill className="text-black" size={20} />
+          <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0 mt-0.5" aria-hidden="true">
+            <Pill className="text-black" size={20} aria-hidden="true" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
@@ -72,26 +74,26 @@ export function MedicationListItem({
             {m.dosage && <p className="text-xs text-muted-foreground truncate">{m.dosage}</p>}
             {m.consultations?.professional_name && (
               <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
-                <Stethoscope size={12} />
+                <Stethoscope size={12} aria-hidden="true" />
                 <span>Solicitado por {m.consultations.professional_name}</span>
               </div>
             )}
             <div className="flex flex-col gap-1.5 mt-2">
               {m.frequency_hours != null && m.frequency_hours > 0 && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock size={14} className="shrink-0" />
+                  <Clock size={14} className="shrink-0" aria-hidden="true" />
                   <span>{m.frequency_hours === 24 ? "1x ao dia" : `A cada ${m.frequency_hours}h`}</span>
                 </div>
               )}
               {m.frequency_hours === 0 && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock size={14} className="shrink-0" />
+                  <Clock size={14} className="shrink-0" aria-hidden="true" />
                   <span>Uso contínuo</span>
                 </div>
               )}
               {m.start_date && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CalendarPlus size={14} className="shrink-0" />
+                  <CalendarPlus size={14} className="shrink-0" aria-hidden="true" />
                   <span>
                     Início: {format(toSPTime(parseDateInSP(m.start_date.slice(0, 10)) ?? new Date()), "dd/MM/yyyy")}
                     {m.start_time ? ` às ${m.start_time.slice(0, 5)}` : ""}
@@ -100,7 +102,7 @@ export function MedicationListItem({
               )}
               {m.end_date && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <CalendarCheck size={14} className="shrink-0" />
+                  <CalendarCheck size={14} className="shrink-0" aria-hidden="true" />
                   <span>
                     Término: {format(toSPTime(parseDateInSP(m.end_date.slice(0, 10)) ?? new Date()), "dd/MM/yyyy")}
                     {m.start_time ? ` às ${m.start_time.slice(0, 5)}` : ""}
@@ -109,20 +111,20 @@ export function MedicationListItem({
               )}
               {isAtivo && nextDoseDate && (
                 <div className="flex items-center gap-2 text-sm text-primary">
-                  <CalendarClock size={14} className="shrink-0" />
+                  <CalendarClock size={14} className="shrink-0" aria-hidden="true" />
                   <span>Próxima dose: {format(toSPTime(nextDoseDate), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
                 </div>
               )}
             </div>
           </div>
-          <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" />
+          <ChevronRight size={18} className="text-muted-foreground shrink-0 mt-3" aria-hidden="true" />
         </button>
         {isAtivo && scheduledFor && (
           <div className="flex w-full items-center justify-between mt-4 pt-3 border-t border-border/30">
             <div className="flex items-center">
               {!doseStatus && isOverdue && (
                 <Badge className="bg-destructive text-destructive-foreground border-destructive text-[10px] font-bold px-2.5 h-7 m-0 inline-flex items-center justify-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> Atrasado
+                  <AlertCircle className="w-3 h-3" aria-hidden="true" /> Atrasado
                 </Badge>
               )}
             </div>

@@ -72,11 +72,12 @@ export function SurgeryCard({
     <button
       className="w-full text-left bg-card rounded-xl border border-border/50 p-4 shadow-xs active:bg-muted/50 transition-colors"
       onClick={onEdit}
+      aria-label={`Ver e editar cirurgia: ${displayName}`}
     >
       <div className="flex items-start gap-3">
         {/* Ícone */}
-        <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0">
-          <Scissors size={20} className="text-black" />
+        <div className="w-10 h-10 rounded-xl bg-[#A7D3CB] flex items-center justify-center shrink-0" aria-hidden="true">
+          <Scissors size={20} className="text-black" aria-hidden="true" />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -87,7 +88,7 @@ export function SurgeryCard({
             </p>
             {isOverdue ? (
               <Badge className="bg-yellow-100 text-yellow-800 border-none text-[11px] shrink-0">
-                <AlertCircle size={10} className="mr-0.5" />
+                <AlertCircle size={10} className="mr-0.5" aria-hidden="true" />
                 Atualizar
               </Badge>
             ) : (
@@ -100,7 +101,7 @@ export function SurgeryCard({
           {/* 1. Médico */}
           {surgery.surgeon_name && (
             <div className="flex items-center gap-1 mt-0.5">
-              <User size={12} className="text-muted-foreground shrink-0" />
+              <User size={12} className="text-muted-foreground shrink-0" aria-hidden="true" />
               <p className="text-xs text-muted-foreground truncate">{surgery.surgeon_name}</p>
             </div>
           )}
@@ -108,7 +109,7 @@ export function SurgeryCard({
           {/* 2. Data e Hora */}
           {formattedDate && (
             <div className="flex items-center gap-1 mt-0.5">
-              <Calendar size={12} className="text-muted-foreground shrink-0" />
+              <Calendar size={12} className="text-muted-foreground shrink-0" aria-hidden="true" />
               <p className="text-xs text-muted-foreground">{formattedDate}</p>
             </div>
           )}
@@ -116,7 +117,7 @@ export function SurgeryCard({
           {/* 3. Local */}
           {surgery.hospital_clinic && (
             <div className="flex items-center gap-1 mt-0.5">
-              <Building2 size={12} className="text-muted-foreground shrink-0" />
+              <Building2 size={12} className="text-muted-foreground shrink-0" aria-hidden="true" />
               <p className="text-xs text-muted-foreground truncate">{surgery.hospital_clinic}</p>
             </div>
           )}
@@ -142,10 +143,11 @@ export function SurgeryCard({
     <SwipeableActionCard
       onDelete={onDelete}
       disableDelete={!isAdmin}
+      ariaLabel={`Cirurgia: ${displayName}`}
       leadingAction={
         surgery.status === "scheduled" && onComplete
           ? {
-              icon: <CheckCircle size={20} />,
+              icon: <CheckCircle size={20} aria-hidden="true" />,
               label: "Concluir",
               bgColor: "#AEE2D4",
               textColor: "#1e293b",

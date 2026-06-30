@@ -21,6 +21,8 @@ interface SwipeableActionCardProps {
   onOpenChange?: (isOpen: boolean) => void;
   /** When true, swipe-left delete is disabled (non-admin users) */
   disableDelete?: boolean;
+  /** Accessible label for the card container (WCAG 2.1 AA) — e.g. "Medicamento Dipirona" */
+  ariaLabel?: string;
 }
 
 const SwipeableActionCard = ({
@@ -30,6 +32,7 @@ const SwipeableActionCard = ({
   isOpen,
   onOpenChange,
   disableDelete = false,
+  ariaLabel,
 }: SwipeableActionCardProps) => {
   const x = useMotionValue(0);
   const sideRef = useRef<"left" | "right" | "center">("center");
@@ -95,6 +98,8 @@ const SwipeableActionCard = ({
       exit={{ x: -400, opacity: 0, height: 0, marginBottom: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="relative overflow-hidden rounded-xl"
+      role="listitem"
+      aria-label={ariaLabel}
     >
       {/* Delete (trailing - swipe left) */}
       <motion.div
@@ -106,10 +111,11 @@ const SwipeableActionCard = ({
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); resetPosition(); onDelete(); }}
           className={`flex flex-col items-center justify-center w-[72px] h-full text-white active:opacity-80 ${openSide === "left" ? "pointer-events-auto" : "pointer-events-none"}`}
           aria-hidden={openSide !== "left"}
+          aria-label="Excluir"
           tabIndex={openSide === "left" ? 0 : -1}
         >
-          <Trash2 className="w-6 h-6" />
-          <span className="text-[10px] mt-1 font-medium">Excluir</span>
+          <Trash2 className="w-6 h-6" aria-hidden="true" />
+          <span className="text-[10px] mt-1 font-medium" aria-hidden="true">Excluir</span>
         </button>
       </motion.div>
 
@@ -125,10 +131,11 @@ const SwipeableActionCard = ({
             className={`flex flex-col items-center justify-center w-[72px] h-full active:opacity-80 ${openSide === "right" ? "pointer-events-auto" : "pointer-events-none"}`}
             style={{ backgroundColor: leadingAction.bgColor, color: leadingAction.textColor ?? "#fff" }}
             aria-hidden={openSide !== "right"}
+            aria-label={leadingAction.label}
             tabIndex={openSide === "right" ? 0 : -1}
           >
-            {leadingAction.icon}
-            <span className="text-[10px] mt-1 font-semibold">{leadingAction.label}</span>
+            <span aria-hidden="true">{leadingAction.icon}</span>
+            <span className="text-[10px] mt-1 font-semibold" aria-hidden="true">{leadingAction.label}</span>
           </button>
         </motion.div>
       )}
