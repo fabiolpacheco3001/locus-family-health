@@ -34,6 +34,3 @@ verify_jwt = false
 
 [functions.send-appointment-reminders]
 verify_jwt = false
-
-[functions.devin-mcp]
-verify_jwt = false

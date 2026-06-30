@@ -57,11 +57,13 @@ Deno.serve(async (req) => {
   const authHeader = req.headers.get("Authorization") ?? "";
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-  // Check if this is a cron/internal call with CRON_SECRET
   const isCronCall = CRON_SECRET && authHeader === `Bearer ${CRON_SECRET}`;
 
+  // callerUserId é preenchido apenas para chamadas JWT (não-cron)
+  let callerUserId: string | null = null;
+  let callerIsAdmin = false;
+
   if (!isCronCall) {
-    // Otherwise validate as a real JWT — only admins can send arbitrary pushes
     const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -72,6 +74,16 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    callerUserId = user.id;
+
+    // Verificar se o caller é admin da plataforma
+    const { data: roleRow } = await adminClient
+      .from("user_roles")
+      .select("role")
+      .eq("id", user.id)
+      .in("role", ["admin", "super_admin"])
+      .maybeSingle();
+    callerIsAdmin = !!roleRow;
   }
 
   try {
@@ -94,6 +106,17 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Guard: usuário comum só pode enviar push para si mesmo.
+    // Admins podem enviar para qualquer usuário. Chamadas cron não têm restrição.
+    if (!isCronCall && callerUserId && user_id !== callerUserId && !callerIsAdmin) {
+      log("warn", "push_unauthorized_user_id_spoof", { callerUserId, targetUserId: user_id });
+      return new Response(
+        JSON.stringify({ error: "Não autorizado a enviar notificações para este usuário" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
 
     // Fetch all active push subscriptions for this user
     const { data: subs, error: subError } = await adminClient
