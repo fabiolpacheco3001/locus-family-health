@@ -68,36 +68,106 @@ Deno.serve(async (req) => {
       tag: string;
     }[] = [];
 
-    // Helper: resolve destinatários e enfileira notificações para um membro
-    const enqueue = async (
+    const todayRange = dayRange(today);
+    const tomorrowRange = dayRange(tomorrow);
+
+    // ── Busca todas as entidades em paralelo (5 queries simultâneas) ──────────
+    const [consultations, exams, vaccines, surgeriesToday, surgeriesTomorrow] =
+      await Promise.all([
+        adminClient
+          .from("consultations")
+          .select(`
+            id, doctor_name, specialty, scheduled_date, scheduled_time,
+            family_members!inner (id, name, group_id, deleted_at)
+          `)
+          .in("scheduled_date", [today, tomorrow])
+          .not("status", "eq", "Cancelada")
+          .is("family_members.deleted_at", null)
+          .then((r) => r.data ?? []),
+
+        adminClient
+          .from("exams")
+          .select(`
+            id, exam_name, exam_date, lab_name,
+            family_members!inner (id, name, group_id, deleted_at)
+          `)
+          .in("exam_date", [today, tomorrow])
+          .is("family_members.deleted_at", null)
+          .then((r) => r.data ?? []),
+
+        adminClient
+          .from("vaccines")
+          .select(`
+            id, vaccine_name, next_dose_date,
+            family_members!inner (id, name, group_id, deleted_at)
+          `)
+          .in("next_dose_date", [today, tomorrow])
+          .is("family_members.deleted_at", null)
+          .then((r) => r.data ?? []),
+
+        adminClient
+          .from("surgeries")
+          .select(`
+            id, surgery_type, custom_type, scheduled_date, surgeon_name, hospital_clinic,
+            family_members!inner (id, name, group_id, deleted_at)
+          `)
+          .gte("scheduled_date", todayRange.start)
+          .lte("scheduled_date", todayRange.end)
+          .eq("status", "scheduled")
+          .is("family_members.deleted_at", null)
+          .then((r) => r.data ?? []),
+
+        adminClient
+          .from("surgeries")
+          .select(`
+            id, surgery_type, custom_type, scheduled_date, surgeon_name, hospital_clinic,
+            family_members!inner (id, name, group_id, deleted_at)
+          `)
+          .gte("scheduled_date", tomorrowRange.start)
+          .lte("scheduled_date", tomorrowRange.end)
+          .eq("status", "scheduled")
+          .is("family_members.deleted_at", null)
+          .then((r) => r.data ?? []),
+      ]);
+
+    // ── Prefetch único de family_group_members ────────────────────────────────
+    type EntityWithMember = { family_members: { group_id?: string } | { group_id?: string }[] };
+    const extractGroupId = (item: EntityWithMember): string | undefined => {
+      const m = Array.isArray(item.family_members) ? item.family_members[0] : item.family_members;
+      return m?.group_id;
+    };
+
+    const allGroupIds = [
+      ...consultations,
+      ...exams,
+      ...vaccines,
+      ...surgeriesToday,
+      ...surgeriesTomorrow,
+    ]
+      .map(extractGroupId)
+      .filter((id): id is string => !!id);
+
+    const fgmMap = await prefetchGroupFamilyMembers(adminClient, allGroupIds);
+
+    const enqueue = (
       memberId: string,
       groupId: string,
       notification: Omit<(typeof notificationsToSend)[0], "userId">
     ) => {
-      const targets = await getNotificationTargets(adminClient, memberId, groupId);
+      const targets = resolveNotificationTargets(fgmMap, memberId, groupId);
       for (const userId of targets) {
         notificationsToSend.push({ userId, ...notification });
       }
     };
 
     // ── 1. Consultations ─────────────────────────────────────────────────────
-    const { data: consultations } = await adminClient
-      .from("consultations")
-      .select(`
-        id, doctor_name, specialty, scheduled_date, scheduled_time,
-        family_members!inner (id, name, group_id, deleted_at)
-      `)
-      .in("scheduled_date", [today, tomorrow])
-      .not("status", "eq", "Cancelada")
-      .is("family_members.deleted_at", null);
-
-    for (const c of consultations ?? []) {
+    for (const c of consultations) {
       const member = Array.isArray(c.family_members) ? c.family_members[0] : c.family_members;
       if (!member?.id || !member?.group_id) continue;
       const isToday = c.scheduled_date === today;
       const timeStr = c.scheduled_time ? ` às ${(c.scheduled_time as string).slice(0, 5)}` : "";
       const doctorStr = c.doctor_name ? ` com ${c.doctor_name}` : "";
-      await enqueue(member.id, member.group_id, {
+      enqueue(member.id, member.group_id, {
         title: isToday ? "🏥 Consulta Hoje!" : "🏥 Consulta Amanhã",
         body: `${member.name}: consulta${doctorStr} (${c.specialty ?? "Médica"})${timeStr}`,
         url: "/agenda",
@@ -107,21 +177,12 @@ Deno.serve(async (req) => {
     }
 
     // ── 2. Exams ──────────────────────────────────────────────────────────────
-    const { data: exams } = await adminClient
-      .from("exams")
-      .select(`
-        id, exam_name, exam_date, lab_name,
-        family_members!inner (id, name, group_id, deleted_at)
-      `)
-      .in("exam_date", [today, tomorrow])
-      .is("family_members.deleted_at", null);
-
-    for (const e of exams ?? []) {
+    for (const e of exams) {
       const member = Array.isArray(e.family_members) ? e.family_members[0] : e.family_members;
       if (!member?.id || !member?.group_id) continue;
       const isToday = e.exam_date === today;
       const labStr = e.lab_name ? ` em ${e.lab_name}` : "";
-      await enqueue(member.id, member.group_id, {
+      enqueue(member.id, member.group_id, {
         title: isToday ? "🧪 Exame Hoje!" : "🧪 Exame Amanhã",
         body: `${member.name}: ${e.exam_name}${labStr}`,
         url: "/agenda",
@@ -131,20 +192,11 @@ Deno.serve(async (req) => {
     }
 
     // ── 3. Vaccines ───────────────────────────────────────────────────────────
-    const { data: vaccines } = await adminClient
-      .from("vaccines")
-      .select(`
-        id, vaccine_name, next_dose_date,
-        family_members!inner (id, name, group_id, deleted_at)
-      `)
-      .in("next_dose_date", [today, tomorrow])
-      .is("family_members.deleted_at", null);
-
-    for (const v of vaccines ?? []) {
+    for (const v of vaccines) {
       const member = Array.isArray(v.family_members) ? v.family_members[0] : v.family_members;
       if (!member?.id || !member?.group_id) continue;
       const isToday = v.next_dose_date === today;
-      await enqueue(member.id, member.group_id, {
+      enqueue(member.id, member.group_id, {
         title: isToday ? "💉 Vacina Hoje!" : "💉 Vacina Amanhã",
         body: `${member.name}: ${v.vaccine_name}`,
         url: "/vacinas",
@@ -154,41 +206,17 @@ Deno.serve(async (req) => {
     }
 
     // ── 4. Surgeries ─────────────────────────────────────────────────────────
-    const todayRange = dayRange(today);
-    const tomorrowRange = dayRange(tomorrow);
-
-    const { data: surgeriesToday } = await adminClient
-      .from("surgeries")
-      .select(`
-        id, surgery_type, custom_type, scheduled_date, surgeon_name, hospital_clinic,
-        family_members!inner (id, name, group_id, deleted_at)
-      `)
-      .gte("scheduled_date", todayRange.start)
-      .lte("scheduled_date", todayRange.end)
-      .eq("status", "scheduled")
-      .is("family_members.deleted_at", null);
-
-    const { data: surgeriesTomorrow } = await adminClient
-      .from("surgeries")
-      .select(`
-        id, surgery_type, custom_type, scheduled_date, surgeon_name, hospital_clinic,
-        family_members!inner (id, name, group_id, deleted_at)
-      `)
-      .gte("scheduled_date", tomorrowRange.start)
-      .lte("scheduled_date", tomorrowRange.end)
-      .eq("status", "scheduled")
-      .is("family_members.deleted_at", null);
-
-    for (const [items, isToday] of [[surgeriesToday ?? [], true], [surgeriesTomorrow ?? [], false]] as const) {
+    for (const [items, isToday] of [[surgeriesToday, true], [surgeriesTomorrow, false]] as const) {
       for (const s of items) {
         const member = Array.isArray(s.family_members) ? s.family_members[0] : s.family_members;
         if (!member?.id || !member?.group_id) continue;
-        const surgeryName = s.surgery_type === "outro" && s.custom_type
-          ? s.custom_type
-          : s.surgery_type.replace(/_/g, " ");
+        const surgeryName =
+          s.surgery_type === "outro" && s.custom_type
+            ? s.custom_type
+            : (s.surgery_type as string).replace(/_/g, " ");
         const surgeonStr = s.surgeon_name ? ` com ${s.surgeon_name}` : "";
         const hospitalStr = s.hospital_clinic ? ` em ${s.hospital_clinic}` : "";
-        await enqueue(member.id, member.group_id, {
+        enqueue(member.id, member.group_id, {
           title: isToday ? "🏨 Cirurgia Hoje!" : "🏨 Cirurgia Amanhã",
           body: `${member.name}: ${surgeryName}${surgeonStr}${hospitalStr}`,
           url: `/familiar/${member.id}/cirurgias`,
@@ -207,7 +235,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Send all pushes in parallel via send-push-notification
     const results = await Promise.allSettled(
       notificationsToSend.map(async ({ userId, title, body, url, type, tag }) => {
         const res = await fetch(
