@@ -11,6 +11,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report e2e/report",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -64,6 +67,7 @@
     "react-day-picker": "^9.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.61.1",
+    "react-is": "^19.2.7",
     "react-resizable-panels": "^2.1.9",
     "react-router-dom": "^7.16.0",
     "recharts": "^3.0.0",

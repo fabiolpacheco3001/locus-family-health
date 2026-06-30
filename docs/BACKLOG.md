@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 2.1 | **Atualizado em:** 2026-06-29 (sessão 51 — PROD-05 Regressão 5 + cleanup payload Asaas)
+> **Versão:** 2.2 | **Atualizado em:** 2026-06-30 (sessão 53 — A7-E2E Playwright implementado)
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -37,7 +37,7 @@
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
 | BK-01 | ~~Push notifications multi-dispositivo~~ | ✅ | **E2E validado em produção (sessão 36, 2026-06-21).** Implementação completa: SW, PushManager, `send-push-notification`, `send-medication-reminders` (±3 min), `send-appointment-reminders` (D-0/D-1 às 8h BRT), migration com pg_cron. Incidente de segurança (sessão 35): VAPID_PRIVATE_KEY exposta em JSDoc → chaves rotacionadas. E2E fix (sessão 36): par VAPID inconsistente pós-rotação → par regenerado via Node.js WebCrypto; contagem `sent` corrigida para ler APNs response body, não HTTP 200. Notificação "💊 Hora do Remédio!" chegando no iPhone com PWA fechado ✅. |
-| A7-E2E | Testes E2E Playwright | 🔴 | Fluxos críticos: login, cadastro de medicamento, marcação de dose, pagamento |
+| A7-E2E | ~~Testes E2E Playwright~~ | ✅ | **Implementado (sessão 53).** `playwright.config.ts` standalone (sem lovable-agent dep), `e2e/global.setup.ts` para autenticação com storageState, 4 specs: `auth/login.spec.ts`, `medications/add-medication.spec.ts`, `medications/mark-dose.spec.ts`, `payment/checkout.spec.ts`. Requires `.env.e2e` com `TEST_USER_EMAIL`/`TEST_USER_PASSWORD`. Script: `bun run test:e2e`. |
 
 ---
 
