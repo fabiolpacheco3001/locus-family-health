@@ -107,6 +107,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Guard: usuário comum só pode enviar push para si mesmo.
+    // Admins podem enviar para qualquer usuário. Chamadas cron não têm restrição.
+    if (!isCronCall && callerUserId && user_id !== callerUserId && !callerIsAdmin) {
+      log("warn", "push_unauthorized_user_id_spoof", { callerUserId, targetUserId: user_id });
+      return new Response(
+        JSON.stringify({ error: "Não autorizado a enviar notificações para este usuário" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+
     // Fetch all active push subscriptions for this user
     const { data: subs, error: subError } = await adminClient
       .from("push_subscriptions")
