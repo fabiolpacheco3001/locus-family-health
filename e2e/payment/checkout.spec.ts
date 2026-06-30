@@ -85,22 +85,23 @@ test.describe("Meu Plano — Smoke Test", () => {
     await page.waitForTimeout(2_000);
 
     // Intercepta window.open para evitar abrir o Asaas real
+    // A função é serializada e executada no contexto do browser — propriedades customizadas
+    // são tipadas via cast para Record<string, unknown> para evitar @ts-ignore.
     let windowOpenCalled = false;
     let windowOpenUrl = "";
     await page.addInitScript(() => {
+      const w = window as unknown as Record<string, unknown>;
       // Sobrescreve window.open antes de qualquer script da página
-      // @ts-ignore
-      window.__e2eOriginalOpen = window.open;
-      window.open = (url?: string | URL, ...args: unknown[]) => {
-        // @ts-ignore
-        window.__e2eWindowOpenCalled = true;
-        // @ts-ignore
-        window.__e2eWindowOpenUrl = String(url ?? "");
-        // Retorna objeto simulado para não lançar erro no app
-        return {
-          location: { href: "" },
-          close: () => undefined,
-        } as unknown as Window;
+      w.__e2eOriginalOpen = window.open;
+      window.open = (
+        url?: string | URL,
+        _target?: string,
+        _features?: string
+      ): null => {
+        w.__e2eWindowOpenCalled = true;
+        w.__e2eWindowOpenUrl = String(url ?? "");
+        // Retorna null (tipo válido para WindowProxy | null) para não lançar erro no app
+        return null;
       };
     });
 
@@ -125,9 +126,11 @@ test.describe("Meu Plano — Smoke Test", () => {
     // Aguarda a edge function create-asaas-checkout ser chamada e window.open ser invocado
     await page.waitForTimeout(5_000);
 
-    windowOpenCalled = await page.evaluate(() => !!(window as any).__e2eWindowOpenCalled);
+    windowOpenCalled = await page.evaluate(
+      () => !!(window as unknown as Record<string, unknown>).__e2eWindowOpenCalled
+    );
     windowOpenUrl = await page.evaluate(
-      () => (window as any).__e2eWindowOpenUrl ?? ""
+      () => String((window as unknown as Record<string, unknown>).__e2eWindowOpenUrl ?? "")
     );
 
     expect(windowOpenCalled, "window.open deveria ter sido chamado pelo fluxo de checkout").toBe(
