@@ -66,9 +66,11 @@ async function findOrCreateCustomer(
     const shouldUpdatePhone = !!phone && (hasStalePhone || !existing.phone);
 
     if (needsCpf || shouldUpdatePhone) {
-      const updateBody: Record<string, string> = { name, postalCode, addressNumber };
+      const updateBody: Record<string, string> = { name };
       if (cpfCnpj) updateBody.cpfCnpj = cpfCnpj;
       if (phone) updateBody.phone = phone;
+      if (postalCode && postalCode !== "01310100") updateBody.postalCode = postalCode;
+      if (addressNumber && addressNumber !== "1") updateBody.addressNumber = addressNumber;
       try {
         await asaasFetch(creds, `/customers/${existing.id}`, {
           method: "PUT",
