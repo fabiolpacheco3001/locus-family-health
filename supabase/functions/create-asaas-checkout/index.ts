@@ -273,31 +273,12 @@ Deno.serve(async (req) => {
         const syncPayload: Record<string, string> = { name: userName, postalCode, addressNumber };
         if (effectiveCpfCnpj) syncPayload.cpfCnpj = effectiveCpfCnpj;
         if (effectivePhone) syncPayload.phone = effectivePhone;
-        const syncResult = await asaasFetch(creds, `/customers/${customerId}`, {
+        await asaasFetch(creds, `/customers/${customerId}`, {
           method: "PUT",
           body: JSON.stringify(syncPayload),
         });
         log("info", "asaas_customer_synced", { customerId, env: creds.env, userId });
 
-        // DIAGNOSTIC: verify CPF was persisted on Asaas customer after sync
-        try {
-          const customerCheck = await asaasFetch(creds, `/customers/${customerId}`, { method: "GET" });
-          log("info", "asaas_customer_post_sync_check", {
-            customerId,
-            hasCpf: !!customerCheck.cpfCnpj,
-            cpfMask: customerCheck.cpfCnpj ? customerCheck.cpfCnpj.slice(0, 3) + "***" : null,
-            hasPhone: !!customerCheck.phone,
-            hasPostalCode: !!customerCheck.postalCode,
-            env: creds.env,
-            userId,
-          });
-        } catch (checkErr) {
-          log("warn", "asaas_customer_post_sync_check_failed", {
-            customerId, env: creds.env,
-            hint: checkErr instanceof Error ? checkErr.message : String(checkErr),
-          });
-        }
-        log("info", "asaas_customer_sync_result", { syncResultHasCpf: !!syncResult?.cpfCnpj, env: creds.env });
       } catch (syncErr) {
         // Non-critical: checkout continues even if sync fails
         log("warn", "asaas_customer_sync_failed", {
