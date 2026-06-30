@@ -303,7 +303,7 @@ function buildInviteEmailHtml(v: EmailVars): string {
           <td style="padding:32px 32px 24px;">
             <h1 style="color:#1C3333;font-size:20px;font-weight:700;margin:0 0 8px;">Você foi convidado! 🎉</h1>
             <p style="color:#4B5563;font-size:15px;line-height:1.6;margin:0 0 20px;">
-              <strong>${v.inviterName}</strong> convidou você para acompanhar a saúde de <strong>${v.groupName}</strong> no Locus Vita.
+              <strong>${safe.inviterName}</strong> convidou você para acompanhar a saúde de <strong>${safe.groupName}</strong> no Locus Vita.
             </p>
 
             <!-- CTA -->
