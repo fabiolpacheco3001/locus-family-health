@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 6.8 | **Atualizado em:** 2026-06-30 (sessão 53 — A7 E2E Playwright 8/8: fix dispatchEvent/Vaul + AlertDialog gate)  
+> **Versão:** 6.9 | **Atualizado em:** 2026-06-30 (sessão 54 — ID-002/ID-009: N+1 eliminado em send-medication-reminders e send-appointment-reminders)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -38,6 +38,7 @@
 | Sessão 40 | **Sprint Quick Wins** — 6 IDs corrigidos via canal LOCAL (9 arquivos, sem migrations/edge functions): **[ID-013]** `deleteMember.onSuccess` agora invalida 5 queryKeys (`family_members`, `upcoming-appointments`, `pending-counts`, `today-pet-routines`, `agenda`) — membro deletado não aparece mais por até 5 min na Home. **[ID-014]** `addMedication/updateMedication.onSuccess` passam a invalidar `["agenda"]` — posologia nova/editada reflete imediatamente na Agenda. **[ID-019]** `MedWithNextDose.med: any` → `med: Medication` em `useHomeData.ts` — segurança de tipo em `TodayMedicationsSection`. **[ID-017]** Comentário preventivo `// iOS Safari popup blocker: must open window synchronously BEFORE any await.` adicionado nos 5 locais de `window.open("about:blank")` (MeuPlano.tsx×2, Ajustes.tsx, PaywallModal.tsx, Landing.tsx). **[ID-010]** `select("*")` → colunas explícitas em `useHealthMeasurements.ts` e `useFamilyMembers.tsx`. **[ID-015]** `console.log`/`console.error` não-PHI substituídos por `captureException` em 6 locais: `InviteAcceptInterceptor.tsx` (3×), `useMedicationAlarms.ts`, `Cadastro.tsx`, `NotFound.tsx`. | Sprint 40 ✅ CONCLUÍDO |
 | Sessão 41 | **ID-013 v2 + PROD-03 Asaas Root Cause**: **[ID-013 v2]** Causa raiz identificada: `refetchQueries` é no-op para queries inativas em TQ v5 — quando exclusão ocorre em FamiliarProfile (Home não montada), `["upcoming-appointments"]` exibia dados stale ao montar a Home. Fix: `removeQueries` (evicta cache completamente) em vez de `invalidate+refetch` para `["upcoming-appointments"]` e `["pending-counts"]`. Commit `e3c3184`. **[PROD-03]** Root cause do "Erro do servidor financeiro: Erro ao processar pagamento": contas de teste tinham `subscriptions.test_mode = false` (produção) + `cpf: null` → fallback `"00000000191"` rejeitado pela Receita Federal no Asaas Produção. Fix em 3 camadas: (1) DB — `test_mode = true` para teste15/teste16; (2) Edge function `create-asaas-checkout`: guard 422 se `!testMode && cpfCnpj === "00000000191"` (commit `ed7eb33` Lovable MCP); (3) `asaasService.ts`: extração de `errorCode`, tratamento limpo sem Sentry para `missing_cpf`, `asaasError`+`asaasDebug` no Sentry para demais erros (commit `49d600d`). Sistema de pagamento validado em produção por Fábio ✅. | Sprint 41 ✅ CONCLUÍDO |
 | Sessão 45 | **CC — Reset de senha via Resend**: `supabase.auth.resetPasswordForEmail()` (browser/anon key, SMTP Supabase limitado a 3/hora) → Edge Function `manage-admins` action `reset` usando `adminClient.auth.admin.generateLink({ type: "recovery" })` + Resend API. `Clientes.tsx` atualizado para invocar a edge function. Audit log registrado. | Sprint 45 ✅ CONCLUÍDO |
+| Sessão 54 | **ID-002 ✅ + ID-009 ✅ — Eliminação de N+1 nos crons de notificação**: `_shared/notification-targets.ts`: adicionados `prefetchGroupFamilyMembers(adminClient, groupIds[])` (1 SELECT `.in("group_id", uniqueGroupIds)` para N grupos) e `resolveNotificationTargets(fgmMap, memberId, groupId)` (lookup síncrono O(1)); `getNotificationTargets` original mantido intacto. `send-medication-reminders`: prefetch batch após fetch de medications, `resolveNotificationTargets` síncrono no lugar de `await getNotificationTargets` dentro do loop — de 1 SELECT/medicamento para 1 SELECT total. `send-appointment-reminders`: 5 queries de entidades paralelizadas via `Promise.all`; prefetch único de todos os group_ids; `enqueue()` virou síncrona. Commit `80a0b50` (Lovable MCP — 3 arquivos, deploy via Lovable). | Sprint 54 ✅ CONCLUÍDO |
 | Sessão 53 | **A7 ✅ E2E Playwright 8/8 — fix `add-medication.spec.ts`**: Root cause duplo: (1) `dispatchEvent(new MouseEvent("click", { bubbles: true }))` acionava o close do Vaul drawer via bubbling até o overlay — substituído por `saveBtn.click({ force: true })` (Playwright faz pointer events no centro do elemento, sem borbulhar). (2) `checkDateAndProceed("save")` abre AlertDialog quando `startDateTime` vazio — o gate exige click em "Continuar" para chamar `handleSave()`. Fix: handling condicional com `isVisible({ timeout: 3_000 })`. Toast correto: `"Medicamento adicionado!"` (não `"salvo"`). Variável de ambiente: `bun run test:e2e` (não `npx playwright test` — `.env.e2e` só carregado via `--env-file` do Bun). Commit `c06eea6`. **Resultado: 8/8 passando em 47.2s.** | Sprint 53 ✅ CONCLUÍDO |
 | Sessão 52 | **ID-012 + ID-006 + ID-007 — RLS performance hardening**: Migration `20260629000001_perf_index_consent_log_user_id.sql`: `CREATE INDEX IF NOT EXISTS idx_consent_log_user_id ON consent_log(user_id)` — elimina seq scan na tabela de auditoria LGPD. Migration `20260629000002_perf_rls_select_auth_uid.sql`: (1) **ID-006** — `passkeys` policies `passkeys_select_own`/`passkeys_delete_own` receberam `TO authenticated` (únicas policies clínicas sem essa restrição). (2) **ID-007** — 19 tabelas (family_members, consultations, exams, medications, medication_doses, allergies, diseases, vaccines, health_measurements, blood_pressure_history, menstrual_cycles, push_subscriptions, family_groups, family_group_members, group_invites, notifications, surgeries, surgery_instructions) tiveram `auth.uid()` substituído por `(select auth.uid())` via `ALTER POLICY` — previne re-avaliação por linha (171ms → ~9ms em 100K rows). Lovable MCP edit `edt-d5a35823-8c17-43c3-9955-df9f5eb2ec51`. | Sprint 52 ✅ CONCLUÍDO |
 | Sessão 51 | **PROD-05 Regressão 5 + cleanup payload Asaas**: (1) **PROD-05 v6 — Pagamentos infinitos (regressão 5):** `cancelAllPendingPayments` buscava por `customer=customerId` — falhou pois Asaas pode rejeitar `/cancel` para CREDIT_CARD e `AWAITING_PAYMENT` não é status válido da API v3. Além disso, não havia idempotência real: clicar no mesmo plano duas vezes criava um novo payment. Fix definitivo: função substituída por `handleExistingPayments(creds, userId, planDescription)` que busca por `externalReference=userId` (mais robusto — independe do customer ID no banco), aplica idempotência real (PENDING + mesmo plano → reutiliza `invoiceUrl`), e cancela orphans de planos diferentes. Commits `990e109` + `d055ce1`. (2) **Cleanup payload Asaas:** `creditCardHolderInfo` removido do `POST /payments` — é campo da API v2 para tokenização direta; no hosted checkout (invoiceUrl), o pré-preenchimento vem do customer profile. Telefone fictício `11912345678` removido — `effectivePhone` agora é `""` quando usuário não tem telefone real. Placeholders de endereço (`01310100`, `1`) removidos do customer profile — só envia campos com dados reais do usuário. | Sprint 51 ✅ CONCLUÍDO |
@@ -163,12 +164,11 @@
 
 ---
 
-### ID-002 · N+1 query em cron de lembretes de medicamento
-- **Risco:** N+1 query em `send-medication-reminders` — `getNotificationTargets` é chamado dentro do `for (const med of medications)`. Para cada medicamento com `shouldNotify = true`, executa 1 SELECT em `family_group_members`. Em 50 meds simultâneos → 50 queries extras a cada 5 minutos. Sob carga pode causar timeouts e esgotar o connection pool.
-- **Arquivos:** `supabase/functions/send-medication-reminders/index.ts:114,191`
-- **Fix:** Pré-carregar todos os `group_ids` únicos antes do loop → 1 query `.in("group_id", groupIds)` → mapa em memória para resolver targets em O(1).
-- **Severidade × Esforço:** 🔴 Crítico × Médio (4h)
-- **Status:** ⬜ Pendente
+### ID-002 · N+1 query em cron de lembretes de medicamento ✅
+- **Risco resolvido:** N+1 query em `send-medication-reminders` — `getNotificationTargets` chamado dentro do `for (const med of medications)` gerava 1 SELECT em `family_group_members` por medicamento. Em 50 meds simultâneos → 50 queries extras a cada 5 minutos.
+- **Resolução (sessão 54):** `prefetchGroupFamilyMembers(adminClient, allGroupIds)` adicionado em `_shared/notification-targets.ts` — 1 SELECT batch `.in("group_id", uniqueGroupIds)` antes do loop. Dentro do loop: `resolveNotificationTargets(fgmMap, member.id, member.group_id)` — lookup síncrono O(1). De 50 SELECTs → 1 SELECT total por execução do cron. Commit `80a0b50` (Lovable MCP).
+- **Arquivos:** `supabase/functions/_shared/notification-targets.ts`, `supabase/functions/send-medication-reminders/index.ts`
+- **Status:** ✅ Resolvido (sessão 54)
 
 ---
 
@@ -380,12 +380,11 @@
 
 ---
 
-### ID-009 · N+1 latente em cron de lembretes de consultas/exames
-- **Risco:** `send-appointment-reminders` chama `getNotificationTargets` dentro dos loops de consultas, exames e cirurgias. Em dias com muitos compromissos, escala linearmente com o número de items.
-- **Arquivos:** `supabase/functions/send-appointment-reminders/index.ts:77,94,119`
-- **Fix:** Mesma estratégia de ID-002 — pré-carregar `family_group_members` de todos os grupos relevantes antes dos loops.
-- **Severidade × Esforço:** 🟠 Importante × Médio (3h)
-- **Status:** ⬜ Pendente
+### ID-009 · N+1 latente em cron de lembretes de consultas/exames ✅
+- **Risco resolvido:** `send-appointment-reminders` chamava `getNotificationTargets` dentro dos 4 loops (consultas, exames, vacinas, cirurgias), gerando 1 SELECT por item. Em dias com muitos compromissos, escalava linearmente. Além disso, as 5 queries de entidades eram sequenciais.
+- **Resolução (sessão 54):** (1) 5 queries de entidades paralelizadas via `Promise.all` — latência de ~500ms → ~100ms. (2) Prefetch único de todos os `group_ids` de todas as entidades → 1 SELECT batch. (3) `enqueue()` refatorada para síncrona — usa `resolveNotificationTargets(fgmMap, ...)` (O(1) lookup). De N SELECTs → 1 SELECT total por execução do cron. Commit `80a0b50` (Lovable MCP).
+- **Arquivos:** `supabase/functions/_shared/notification-targets.ts`, `supabase/functions/send-appointment-reminders/index.ts`
+- **Status:** ✅ Resolvido (sessão 54)
 
 ---
 
