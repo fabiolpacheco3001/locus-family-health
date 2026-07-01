@@ -123,6 +123,12 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
   // subscription still exists in the browser but is gone from the DB, so
   // crons can't deliver notifications until the user visits Notificações.
   // This effect re-syncs on every user identity change (null → user after OAuth).
+  //
+  // Auto-resubscribe: iOS periodically revokes push subscriptions (device reboot,
+  // OS update, or natural APNs endpoint expiration). When this happens,
+  // PushManager.getSubscription() returns null even though Notification.permission
+  // is still 'granted'. We auto-resubscribe silently — no user gesture needed
+  // when permission was already granted.
   useEffect(() => {
     if (!user || !isPushSupported()) return;
 
@@ -132,6 +138,21 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       if (sub) {
         setIsSubscribed(true);
         await syncSubscriptionToDb(sub);
+      } else if (Notification.permission === 'granted') {
+        // Subscription was revoked by iOS but permission is still granted.
+        // Re-subscribe automatically without requiring a user gesture.
+        try {
+          await navigator.serviceWorker.ready;
+          const newSub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+          });
+          await syncSubscriptionToDb(newSub);
+          setIsSubscribed(true);
+        } catch (err) {
+          // Non-critical: fails silently. User can re-enable manually in Ajustes → Notificações.
+          captureException(err, { context: 'push_auto_resubscribe' });
+        }
       }
     }).catch(() => { /* non-critical */ });
   }, [user, syncSubscriptionToDb]);
