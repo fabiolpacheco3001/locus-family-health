@@ -43,6 +43,19 @@ async function asaasFetch(creds: AsaasCredentials, path: string, options: Reques
   }
 }
 
+/**
+ * Valida que o telefone está no formato brasileiro esperado pelo Asaas
+ * (somente dígitos, 10 ou 11 caracteres):
+ *   10 dígitos: DDD (2) + fixo (8)      ex: "1123456789"
+ *   11 dígitos: DDD (2) + 9 + celular   ex: "11987654321"
+ *
+ * Rejeita formatos internacionais como "5511987654321" (13 dígitos)
+ * que causam invalid_mobilePhone no Asaas.
+ */
+function isValidBrazilianPhone(digits: string): boolean {
+  return (digits.length === 10 || digits.length === 11) && /^[1-9][0-9]{9,10}$/.test(digits);
+}
+
 async function findOrCreateCustomer(
   creds: AsaasCredentials,
   email: string,
@@ -333,7 +346,15 @@ Deno.serve(async (req) => {
     // Só enviar telefone se o usuário preencheu um número real.
     // Nunca inventar números fictícios — o campo é opcional no Asaas e
     // inventar um número aparece para o usuário no checkout como "seu telefone".
-    const effectivePhone = billingPhone !== "11999999999" ? billingPhone : "";
+    const rawPhone = billingPhone !== "11999999999" ? billingPhone : "";
+    if (rawPhone && !isValidBrazilianPhone(rawPhone)) {
+      log("warn", "checkout_phone_invalid_format", {
+        userId,
+        digitCount: rawPhone.length,
+        hint: "phone stripped to non-10/11 digits — not sending to Asaas (likely international format)",
+      });
+    }
+    const effectivePhone = rawPhone && isValidBrazilianPhone(rawPhone) ? rawPhone : "";
 
     // Reutilizar customer ID salvo no banco quando disponível — evita chamada Asaas e possível conflito de CPF.
     let customerId: string;
