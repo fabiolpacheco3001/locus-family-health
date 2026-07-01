@@ -138,6 +138,7 @@ export function useSurgeries(familyMemberId?: string) {
         surgery_id: string;
         phase: "pre" | "post";
         items: InstructionItem[];
+        created_by: string;
       }> = [];
 
       if (payload.pre_instructions && payload.pre_instructions.length > 0) {
@@ -145,6 +146,7 @@ export function useSurgeries(familyMemberId?: string) {
           surgery_id: surgery.id,
           phase: "pre",
           items: payload.pre_instructions.map((item) => ({ ...item, id: item.id || genId() })),
+          created_by: user.id,
         });
       }
       if (payload.post_instructions && payload.post_instructions.length > 0) {
@@ -152,8 +154,10 @@ export function useSurgeries(familyMemberId?: string) {
           surgery_id: surgery.id,
           phase: "post",
           items: payload.post_instructions.map((item) => ({ ...item, id: item.id || genId() })),
+          created_by: user.id,
         });
       }
+
 
       if (instructionInserts.length > 0) {
         const { error: instrError } = await supabase
@@ -202,6 +206,7 @@ export function useSurgeries(familyMemberId?: string) {
       items: InstructionItem[];
       rawOcrText?: string;
     }) => {
+      if (!user) throw new Error("Usuário não autenticado");
       const { error } = await supabase
         .from("surgery_instructions")
         .upsert(
@@ -210,11 +215,13 @@ export function useSurgeries(familyMemberId?: string) {
             phase,
             items,
             raw_ocr_text: rawOcrText ?? null,
+            created_by: user.id,
           },
           { onConflict: "surgery_id,phase" }
         );
       if (error) throw error;
     },
+
     onSuccess: () => {
       invalidate();
     },
