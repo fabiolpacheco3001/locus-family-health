@@ -16,8 +16,12 @@
  *       });
  *   "
  */
+// DEVE corresponder ao VAPID_PUBLIC_KEY em Supabase Dashboard → Edge Functions → Secrets.
+// Histórico: em 21/06/2026 houve rotação de chaves (incidente VAPID_PRIVATE_KEY exposta).
+// Durante a rotação, duas chaves distintas foram geradas; a errada foi commitada no código.
+// Alinhado com o Supabase Secrets em 01/07/2026.
 export const VAPID_PUBLIC_KEY =
-  'BBvOiZ0bhzoRuuByv7Gae5NyZzWii_RB8VL-B3TBkaoinuyh-rDnAjyHStZMQOfoPeWuCAiv0HmX7T6pvk_JEMs';
+  'BNQueAzo503mMiNT_acJSV03vNbwTycwR1we08OuVIgQVV3RzMywT0ASp_0Vjq-f68gruGpFYyhWFu4EMdd7Olo';
 
 /** Contact email sent in VAPID header (required by some push services) */
 export const VAPID_SUBJECT = 'mailto:suporte@locustech.com.br';
