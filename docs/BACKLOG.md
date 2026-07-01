@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 2.4 | **Atualizado em:** 2026-07-01 (sessão 67 — Login Social, LOCUS-VITA-V, surgery_instructions RLS, push fix)
+> **Versão:** 2.5 | **Atualizado em:** 2026-07-01 (sessão 68 — diagnóstico Edge Functions, fix retry-renewal-failures, push subscription confirmada)
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -36,7 +36,7 @@
 
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
-| BK-01 | ~~Push notifications multi-dispositivo~~ | ✅ | **E2E validado em produção (sessão 36, 2026-06-21).** Implementação completa: SW, PushManager, `send-push-notification`, `send-medication-reminders` (±3 min), `send-appointment-reminders` (D-0/D-1 às 8h BRT), migration com pg_cron. Incidente de segurança (sessão 35): VAPID_PRIVATE_KEY exposta em JSDoc → chaves rotacionadas. E2E fix (sessão 36): par VAPID inconsistente pós-rotação → par regenerado via Node.js WebCrypto. **Fix sessão 67 (2026-07-01):** dois bugs em `usePushSubscription.ts` corrigidos — `is_active:true` no upsert + re-sync ao fazer login (commit `5f4b6a9`). |
+| BK-01 | ~~Push notifications multi-dispositivo~~ | ✅ | **E2E validado em produção (sessão 36, 2026-06-21).** Implementação completa: SW, PushManager, `send-push-notification`, `send-medication-reminders` (±3 min), `send-appointment-reminders` (D-0/D-1 às 8h BRT), migration com pg_cron. Incidente de segurança (sessão 35): VAPID_PRIVATE_KEY exposta em JSDoc → chaves rotacionadas. E2E fix (sessão 36): par VAPID inconsistente pós-rotação → par regenerado via Node.js WebCrypto. **Fix sessão 67 (2026-07-01):** dois bugs em `usePushSubscription.ts` corrigidos — `is_active:true` no upsert + re-sync ao fazer login (commit `5f4b6a9`, LOCAL). **Diagnóstico sessão 68 (2026-07-01):** subscription do Fábio confirmada no banco (`is_active:true`, APNs). Backend 100% funcional. `retry-renewal-failures` corrigido (auth mismatch → CRON_SECRET). Causa de não receber: provávelmente medicamentos fora da janela ±3 min ou iOS PWA não na Home Screen. Commit `5f4b6a9` ainda LOCAL — requer `git push origin main` da máquina local. |
 | A7-E2E | ~~Testes E2E Playwright~~ | ✅ | **8/8 passando (sessão 53, 2026-06-30).** `playwright.config.ts` standalone (sem lovable-agent dep), `e2e/global.setup.ts` para autenticação com storageState, 4 specs: `auth/login.spec.ts`, `medications/add-medication.spec.ts`, `medications/mark-dose.spec.ts`, `payment/checkout.spec.ts`. **Fix crítico:** `add-medication.spec.ts` — substituído `dispatchEvent(bubbles:true)` por `saveBtn.click({ force: true })` (dispatchEvent fechava o Vaul drawer via bubbling) + handling condicional do AlertDialog "Continuar" (gate `checkDateAndProceed` exige click em "Continuar" quando `startDateTime` vazio). Toast: `"Medicamento adicionado!"` (não "salvo"). **Importante:** usar `bun run test:e2e` (não `npx playwright test`) — `.env.e2e` só é carregado via flag `--env-file` do Bun. |
 
 ---
