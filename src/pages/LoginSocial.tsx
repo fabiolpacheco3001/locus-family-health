@@ -77,7 +77,8 @@ const LoginSocial = () => {
       const { error } = await unlinkIdentityAdmin(googleIdentity);
       if (error) {
         captureException(error, { action: "unlink_google" });
-        toast.error("Não foi possível desvincular o Google. Verifique se você tem outro método de login.");
+        // Mostrar mensagem real da edge function (ex: "Não é possível remover o único método de login")
+        toast.error(error.message || "Não foi possível desvincular o Google.");
       } else {
         toast.success("Google desvinculado com sucesso.");
         await fetchIdentities();

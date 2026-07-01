@@ -175,8 +175,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (result.error) {
-        const detail = (result.data as Record<string, unknown>)?.error as string | undefined;
-        return { error: new Error(detail || result.error.message || "Não foi possível desvincular.") };
+        // supabase.functions.invoke retorna FunctionsHttpError para 4xx/5xx.
+        // O corpo JSON da edge function fica em error.context (Response), não em result.data.
+        let detail: string | undefined;
+        try {
+          const context = (result.error as unknown as { context?: Response }).context;
+          if (context) {
+            const body = (await context.clone().json()) as { error?: string };
+            detail = body?.error;
+          }
+        } catch {
+          // Falha ao parsear corpo — usar fallback
+        }
+        return { error: new Error(detail || "Não foi possível desvincular.") };
       }
       return { error: null };
     } catch (err) {
