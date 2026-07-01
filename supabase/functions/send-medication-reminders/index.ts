@@ -249,6 +249,7 @@ Deno.serve(async (req) => {
         // está em seus managed_profiles.
         // Lookup síncrono O(1) no map — sem query adicional
         const targetUserIds = resolveNotificationTargets(fgmMap, member.id, member.group_id);
+        const isRestartReminder = !!(med as any)._isRestartReminder;
         for (const userId of targetUserIds) {
           toNotify.push({
             userId,
@@ -256,6 +257,7 @@ Deno.serve(async (req) => {
             dosage: med.dosage,
             memberName: member.name,
             medId: med.id,
+            isRestartReminder,
           });
         }
       }
