@@ -1366,6 +1366,7 @@ export type Database = {
       surgery_instructions: {
         Row: {
           created_at: string
+          created_by: string
           id: string
           items: Json
           phase: string
@@ -1375,6 +1376,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by: string
           id?: string
           items?: Json
           phase: string
@@ -1384,6 +1386,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string
           id?: string
           items?: Json
           phase?: string
