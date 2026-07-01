@@ -21,6 +21,7 @@ interface AuthContextType {
   getUserIdentities: () => ReturnType<typeof supabase.auth.getUserIdentities>;
   linkIdentity: (provider: "google" | "apple") => Promise<{ error: Error | null }>;
   unlinkIdentity: (identity: any) => Promise<{ error: Error | null }>;
+  unlinkIdentityAdmin: (identity: { id: string; provider: string }) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
