@@ -118,10 +118,12 @@ test.describe("Cadastro de Medicamento", () => {
 
     // Toast "Medicamento adicionado!" OU nome na lista confirmam o salvamento.
     // (O componente usa toast.success("Medicamento adicionado!"), não "salvo".)
+    // .first() evita strict mode violation quando ambos estão visíveis simultaneamente:
+    // o toast aparece enquanto o item já foi inserido na lista abaixo.
     await expect(
       page.getByText("adicionado", { exact: false }).or(
         page.getByText(TEST_MED_NAME)
-      )
+      ).first()
     ).toBeVisible({ timeout: 15_000 });
 
     // ── 7. Verifica que o medicamento aparece na lista ──────────────────────
