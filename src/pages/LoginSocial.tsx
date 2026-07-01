@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { captureException } from "@/lib/sentry";
 
 /**
  * Chave localStorage que sinaliza ao AuthCallback onde redirecionar
@@ -98,7 +99,8 @@ const LoginSocial = () => {
         }
         // Se não houver erro, o browser redireciona para Google —
         // visibilitychange cuida do cancelamento; AuthCallback cuida do sucesso.
-      } catch {
+      } catch (err) {
+        captureException(err, { action: "link_google_unexpected" });
         localStorage.removeItem(OAUTH_REDIRECT_KEY);
         setLinkingGoogle(false);
         toast.error("Erro inesperado. Tente novamente.");
@@ -115,12 +117,14 @@ const LoginSocial = () => {
     try {
       const { error } = await unlinkIdentity(googleIdentity);
       if (error) {
+        captureException(error, { action: "unlink_google" });
         toast.error("Não foi possível desvincular o Google. Verifique se você tem outro método de login.");
       } else {
         toast.success("Google desvinculado com sucesso.");
         await fetchIdentities();
       }
-    } catch {
+    } catch (err) {
+      captureException(err, { action: "unlink_google_unexpected" });
       toast.error("Erro inesperado ao desvincular. Tente novamente.");
     } finally {
       setUnlinkingGoogle(false);
