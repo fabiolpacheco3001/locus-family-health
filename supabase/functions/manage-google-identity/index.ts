@@ -71,29 +71,32 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Admin REST API bypassa manual_linking_enabled flag do GoTrue.
-    const deleteRes = await fetch(
-      `${supabaseUrl}/auth/v1/admin/users/${user.id}/identities/${identityId}`,
-      {
-        method: "DELETE",
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-      }
-    );
+    // Usa RPC com SECURITY DEFINER em vez do endpoint REST admin do GoTrue,
+    // pois DELETE /auth/v1/admin/users/{userId}/identities/{identityId}
+    // não está disponível nesta versão do GoTrue (Lovable Cloud).
+    const { error: deleteError } = await adminClient.rpc("admin_delete_identity", {
+      p_user_id: user.id,
+      p_identity_id: identityId,
+    });
 
-    if (!deleteRes.ok) {
-      const responseBody = await deleteRes.text();
+    if (deleteError) {
       log("error", "identity_unlink_failed", {
         userId: user.id,
         identityId,
-        status: deleteRes.status,
-        body: responseBody,
+        error: deleteError.message,
+        code: deleteError.code,
       });
+      const isNotFound = deleteError.message?.includes("identity_not_found");
       return new Response(
-        JSON.stringify({ error: "Não foi possível desvincular. Tente novamente." }),
-        { status: deleteRes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: isNotFound
+            ? "Identidade não encontrada ou não pertence a este usuário."
+            : "Não foi possível desvincular. Tente novamente.",
+        }),
+        {
+          status: isNotFound ? 404 : 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
       );
     }
 
