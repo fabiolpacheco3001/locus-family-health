@@ -103,6 +103,10 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
             p256dh: subJson.keys.p256dh,
             auth: subJson.keys.auth,
             user_agent: navigator.userAgent.slice(0, 500),
+            // is_active: true must be explicit — upsert does not overwrite columns
+            // omitted from payload. If a subscription was set to is_active=false
+            // (e.g. after APNs 410 cleanup), this restores it so crons can send again.
+            is_active: true,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'user_id,endpoint' }
@@ -113,6 +117,24 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
     },
     [user]
   );
+
+  // ── Re-sync subscription when user signs in ──────────────────────────────
+  // After signOut, useAuth deletes the DB row. On re-login the PushManager
+  // subscription still exists in the browser but is gone from the DB, so
+  // crons can't deliver notifications until the user visits Notificações.
+  // This effect re-syncs on every user identity change (null → user after OAuth).
+  useEffect(() => {
+    if (!user || !isPushSupported()) return;
+
+    navigator.serviceWorker.getRegistration('/').then(async (reg) => {
+      if (!reg) return;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        setIsSubscribed(true);
+        await syncSubscriptionToDb(sub);
+      }
+    }).catch(() => { /* non-critical */ });
+  }, [user, syncSubscriptionToDb]);
 
   // ── Remove subscription from DB ────────────────────────────────────────────
   const removeSubscriptionFromDb = useCallback(
