@@ -96,7 +96,10 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       if (!subJson.endpoint || !subJson.keys) return;
 
       try {
-        await supabase.from('push_subscriptions').upsert(
+        // IMPORTANTE: supabase.from().upsert() não lança exceção em erros de RLS ou constraint.
+        // É necessário verificar { error } explicitamente — o catch abaixo captura apenas
+        // exceções JavaScript (ex: rede), não erros da API Supabase.
+        const { error } = await supabase.from('push_subscriptions').upsert(
           {
             user_id: user.id,
             endpoint: subJson.endpoint,
@@ -111,12 +114,47 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
           },
           { onConflict: 'user_id,endpoint' }
         );
+        if (error) {
+          captureException(new Error(error.message), {
+            context: 'push_subscription_sync',
+            errorCode: error.code,
+          });
+        }
       } catch (err) {
         captureException(err, { context: 'push_subscription_sync' });
       }
     },
     [user]
   );
+
+  // ── Ouvir mensagem do SW quando pushsubscriptionchange é disparado ───────
+  // O SW tenta re-assinar e envia a nova subscription via postMessage.
+  // Recebemos aqui e sincronizamos ao Supabase sem precisar que o usuário abra Ajustes.
+  useEffect(() => {
+    if (!user || !isPushSupported()) return;
+
+    const handleSwMessage = async (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_SUBSCRIPTION_CHANGED' && event.data.subscription) {
+        // SW conseguiu re-assinar — sincronizar ao banco
+        try {
+          const reg = await navigator.serviceWorker.getRegistration('/');
+          const activeSub = reg ? await reg.pushManager.getSubscription() : null;
+          if (activeSub) {
+            await syncSubscriptionToDb(activeSub);
+            setIsSubscribed(true);
+          }
+        } catch (err) {
+          captureException(err, { context: 'push_subscription_change_sync' });
+        }
+      } else if (event.data?.type === 'PUSH_SUBSCRIPTION_LOST') {
+        // SW não conseguiu re-assinar — marcar como não inscrito para UX
+        setIsSubscribed(false);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleSwMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+  }, [user, syncSubscriptionToDb]);
 
   // ── Re-sync subscription when user signs in ──────────────────────────────
   // After signOut, useAuth deletes the DB row. On re-login the PushManager

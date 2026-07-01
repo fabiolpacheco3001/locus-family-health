@@ -82,10 +82,35 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // ── Push subscription change: re-subscribe automatically if invalidated ──────
+// Fired by Firefox/Chrome when the push service rotates the endpoint.
+// iOS 16.4 raramente dispara este evento — o app detecta na abertura via usePushSubscription.ts.
 self.addEventListener('pushsubscriptionchange', (event) => {
-  // This fires when the push service rotates the subscription (rare but happens)
-  // The app will detect the mismatch on next load and re-subscribe via usePushSubscription.ts
-  event.waitUntil(Promise.resolve());
+  const oldSub = event.oldSubscription;
+
+  const resubscribeAndNotify = async () => {
+    let newSub = event.newSubscription ?? null;
+
+    // Se não veio newSubscription pronto, tentar re-assinar com a mesma chave VAPID
+    if (!newSub && oldSub?.options?.applicationServerKey) {
+      try {
+        newSub = await self.registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: oldSub.options.applicationServerKey,
+        });
+      } catch {
+        // Re-subscribe falhou — app vai corrigir na próxima abertura
+      }
+    }
+
+    // Notificar janelas abertas do app para sincronizar a nova subscription ao Supabase
+    const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const message = newSub
+      ? { type: 'PUSH_SUBSCRIPTION_CHANGED', subscription: newSub.toJSON() }
+      : { type: 'PUSH_SUBSCRIPTION_LOST' };
+    clientList.forEach((client) => client.postMessage(message));
+  };
+
+  event.waitUntil(resubscribeAndNotify());
 });
 
 // ── Install & Activate: minimal — no precaching (app is SPA with Vite) ──────

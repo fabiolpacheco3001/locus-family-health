@@ -166,10 +166,25 @@ Deno.serve(async (req) => {
             // Subscription expired or unsubscribed — mark as inactive
             expiredIds.push(sub.id);
             failed++;
+          } else if (statusCode === 403) {
+            // 403 do APNs/FCM indica mismatch de chave VAPID:
+            // a subscription foi criada com uma VAPID_PUBLIC_KEY diferente da que
+            // está nas secrets. Verificar se VAPID_PUBLIC_KEY no Supabase Secrets
+            // corresponde ao valor em src/lib/pushConfig.ts.
+            log("error", "push_vapid_key_mismatch", {
+              user_id,
+              endpoint: sub.endpoint.slice(0, 40),
+              hint: "Subscription criada com VAPID key diferente — re-subscribe necessário",
+            });
+            // Marcar como inativa: o endpoint não aceita pushes com a chave atual.
+            // Usuário precisará re-abrir o app para re-assinar com a chave correta.
+            expiredIds.push(sub.id);
+            failed++;
           } else {
             log("error", "push_send_failed", {
               user_id,
               endpoint: sub.endpoint.slice(0, 40),
+              statusCode,
               error: String(err),
             });
             failed++;
