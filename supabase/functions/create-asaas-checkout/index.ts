@@ -43,6 +43,19 @@ async function asaasFetch(creds: AsaasCredentials, path: string, options: Reques
   }
 }
 
+/**
+ * Valida que o telefone está no formato brasileiro esperado pelo Asaas
+ * (somente dígitos, 10 ou 11 caracteres):
+ *   10 dígitos: DDD (2) + fixo (8)      ex: "1123456789"
+ *   11 dígitos: DDD (2) + 9 + celular   ex: "11987654321"
+ *
+ * Rejeita formatos internacionais como "5511987654321" (13 dígitos)
+ * que causam invalid_mobilePhone no Asaas.
+ */
+function isValidBrazilianPhone(digits: string): boolean {
+  return (digits.length === 10 || digits.length === 11) && /^[1-9][0-9]{9,10}$/.test(digits);
+}
+
 async function findOrCreateCustomer(
   creds: AsaasCredentials,
   email: string,
