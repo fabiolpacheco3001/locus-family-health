@@ -836,6 +836,9 @@ export type Database = {
         Row: {
           consultation_id: string | null
           created_at: string
+          cycle_active_days: number | null
+          cycle_pause_days: number | null
+          cycle_start_date: string | null
           deleted_at: string | null
           dosage: string | null
           duration: string | null
@@ -865,6 +868,9 @@ export type Database = {
         Insert: {
           consultation_id?: string | null
           created_at?: string
+          cycle_active_days?: number | null
+          cycle_pause_days?: number | null
+          cycle_start_date?: string | null
           deleted_at?: string | null
           dosage?: string | null
           duration?: string | null
@@ -894,6 +900,9 @@ export type Database = {
         Update: {
           consultation_id?: string | null
           created_at?: string
+          cycle_active_days?: number | null
+          cycle_pause_days?: number | null
+          cycle_start_date?: string | null
           deleted_at?: string | null
           dosage?: string | null
           duration?: string | null
