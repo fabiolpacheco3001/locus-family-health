@@ -38,6 +38,7 @@ const AuthCallback = () => {
     // Declarado antes do handler para que o closure possa cancelar o timeout
     // logo ao receber SIGNED_IN — antes do async work — evitando race condition
     // onde o timeout dispara durante operações lentas de rede (ex: consent insert).
+    // eslint-disable-next-line prefer-const — referência cruzada com `subscription`; não pode ser const
     let timeout: ReturnType<typeof setTimeout>;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
