@@ -87,13 +87,15 @@ describe("Ajustes — topMenuItems (6 menus de topo)", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("AjustesSeguranca — segurancaItems", () => {
-  it("tem exatamente 2 itens", () => {
-    expect(segurancaItems).toHaveLength(2);
+  it("tem exatamente 3 itens", () => {
+    // Login Social (v2.2) adicionado entre Senha e Biometria e Gestão de Acessos
+    expect(segurancaItems).toHaveLength(3);
   });
 
   it("labels corretos", () => {
     expect(segurancaItems.map((i) => i.label)).toEqual([
       "Senha e Biometria",
+      "Login Social",
       "Gestão de Acessos",
     ]);
   });
@@ -104,21 +106,30 @@ describe("AjustesSeguranca — segurancaItems", () => {
     expect(item?.adminOnly).toBeFalsy();
   });
 
+  it("'Login Social' → /login-social, não adminOnly", () => {
+    const item = segurancaItems.find((i) => i.label === "Login Social");
+    expect(item?.path).toBe("/login-social");
+    expect(item?.adminOnly).toBeFalsy();
+  });
+
   it("'Gestão de Acessos' → /gestao-acessos, adminOnly=true", () => {
     const item = segurancaItems.find((i) => i.label === "Gestão de Acessos");
     expect(item?.path).toBe("/gestao-acessos");
     expect(item?.adminOnly).toBe(true);
   });
 
-  it("itens visíveis para admin = 2", () => {
+  it("itens visíveis para admin = 3", () => {
+    // admin vê todos (adminOnly || true = sempre verdadeiro)
     const visible = segurancaItems.filter((i) => !i.adminOnly || true);
-    expect(visible).toHaveLength(2);
+    expect(visible).toHaveLength(3);
   });
 
-  it("itens visíveis para não-admin = 1 (sem Gestão de Acessos)", () => {
+  it("itens visíveis para não-admin = 2 (sem Gestão de Acessos)", () => {
+    // não-admin vê Senha e Biometria + Login Social
     const visible = segurancaItems.filter((i) => !i.adminOnly);
-    expect(visible).toHaveLength(1);
+    expect(visible).toHaveLength(2);
     expect(visible[0].label).toBe("Senha e Biometria");
+    expect(visible[1].label).toBe("Login Social");
   });
 
   it("label legado 'Segurança e Senha' está ausente", () => {
@@ -226,6 +237,7 @@ describe("Integridade de paths — todos os paths são /rotas reais", () => {
     "/ajustes/conformidade",
     "/ajustes/suporte",
     "/seguranca-conta",
+    "/login-social",      // adicionado em v2.2 (Login Social)
     "/gestao-acessos",
     "/politica-de-privacidade",
     "/ajuda",
