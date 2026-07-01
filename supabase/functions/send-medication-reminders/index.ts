@@ -84,6 +84,9 @@ Deno.serve(async (req) => {
         end_date,
         specific_times,
         specific_days,
+        cycle_active_days,
+        cycle_pause_days,
+        cycle_start_date,
         family_members!inner (
           id,
           name,
