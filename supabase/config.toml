@@ -34,3 +34,7 @@ verify_jwt = false
 
 [functions.send-appointment-reminders]
 verify_jwt = false
+
+[functions.retry-renewal-failures]
+verify_jwt = false
+
