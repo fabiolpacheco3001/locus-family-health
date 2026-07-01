@@ -274,10 +274,16 @@ Deno.serve(async (req) => {
 
     // Fire push notifications in parallel (via send-push-notification function)
     const results = await Promise.allSettled(
-      toNotify.map(async ({ userId, medName, dosage, memberName, medId }) => {
-        const body = dosage
+      toNotify.map(async ({ userId, medName, dosage, memberName, medId, isRestartReminder }) => {
+        const title = isRestartReminder ? "🔄 Reinício do Ciclo Amanhã" : "💊 Hora do Remédio!";
+        const body = isRestartReminder
+          ? `${memberName}: amanhã começa novo ciclo de ${medName}`
+          : dosage
           ? `${memberName}: tomar ${medName} (${dosage}) agora`
           : `${memberName}: hora de tomar ${medName}`;
+        const tag = isRestartReminder
+          ? `med-restart-${medId}-${hour}`
+          : `med-${medId}-${hour}${String(minute).padStart(2, "0")}`;
 
         // Call send-push-notification (same project, internal call)
         const res = await fetch(
@@ -290,11 +296,11 @@ Deno.serve(async (req) => {
             },
             body: JSON.stringify({
               user_id: userId,
-              title: "💊 Hora do Remédio!",
+              title,
               body,
               url: "/home",
               type: "medication_dose",
-              tag: `med-${medId}-${hour}${String(minute).padStart(2, "0")}`,
+              tag,
               data: { family_member_name: memberName, medication_id: medId },
             }),
           }
