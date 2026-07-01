@@ -17,11 +17,10 @@
  *   "
  */
 // DEVE corresponder ao VAPID_PUBLIC_KEY em Supabase Dashboard → Edge Functions → Secrets.
-// Histórico: em 21/06/2026 houve rotação de chaves (incidente VAPID_PRIVATE_KEY exposta).
-// Durante a rotação, duas chaves distintas foram geradas; a errada foi commitada no código.
-// Alinhado com o Supabase Secrets em 01/07/2026.
+// Histórico: em 21/06/2026 houve rotação (incidente VAPID_PRIVATE_KEY exposta).
+// Em 01/07/2026 rotação completa do par — público e privado alinhados nos Secrets.
 export const VAPID_PUBLIC_KEY =
-  'BNQueAzo503mMiNT_acJSV03vNbwTycwR1we08OuVIgQVV3RzMywT0ASp_0Vjq-f68gruGpFYyhWFu4EMdd7Olo';
+  'BPiseS4YA78Jsx4f38jdzGBzMgf_d3vyLFw8uLLzYSHSz42bZUlUr8Y5FHWwZLLN6W85CxZhkuhcktJOuPLvAds';
 
 /** Contact email sent in VAPID header (required by some push services) */
 export const VAPID_SUBJECT = 'mailto:suporte@locustech.com.br';
