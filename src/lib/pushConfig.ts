@@ -6,15 +6,12 @@
  * NEVER commit the private key.
  *
  * To regenerate keys (do this ONCE per project — rotation invalidates all subscriptions):
- *   node -e "
- *     const { webcrypto } = require('crypto');
- *     webcrypto.subtle.generateKey({name:'ECDH',namedCurve:'P-256'},true,['deriveKey','deriveBits'])
- *       .then(async kp => {
- *         const pub = await webcrypto.subtle.exportKey('raw', kp.publicKey);
- *         const jwk = await webcrypto.subtle.exportKey('jwk', kp.privateKey);
- *         console.log({ publicKey: Buffer.from(pub).toString('base64url'), privateKey: jwk.d });
- *       });
- *   "
+ *   npx web-push generate-vapid-keys
+ *
+ * ⚠️ ALWAYS update BOTH VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Supabase Secrets
+ * from the SAME generated pair. Mismatched keys cause APNs to return BadJwtToken (403)
+ * or VapidPkHashMismatch (400) — silent failure, no notifications sent.
+ * See incident 2026-06-21 (sessão 35) and 2026-07-01 (sessão 69) in TECH_DEBT.md.
  */
 // DEVE corresponder ao VAPID_PUBLIC_KEY em Supabase Dashboard → Edge Functions → Secrets.
 // Histórico: em 21/06/2026 houve rotação (incidente VAPID_PRIVATE_KEY exposta).

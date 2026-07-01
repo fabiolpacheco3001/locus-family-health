@@ -1,6 +1,6 @@
 # Locus Vita — Infraestrutura: Secrets & Edge Functions
 
-> **Versão:** 1.1 | **Atualizado em:** 2026-06-21  
+> **Versão:** 1.2 | **Atualizado em:** 2026-07-01  
 > Referência operacional para configuração do ambiente e manutenção das Edge Functions Supabase.  
 > ⚠️ **Nunca** versionar valores reais de secrets. Use o painel Lovable Cloud → Settings → Secrets.
 
@@ -97,9 +97,21 @@ Configuradas em **Lovable Cloud → Settings → Secrets** (propagadas automatic
 | `VAPID_SUBJECT` | Identificador do remetente (mailto) exigido pelo Web Push Protocol | `mailto:suporte@locustech.com.br` |
 | `CRON_SECRET` | Token de autenticação para pg_cron chamar Edge Functions sem JWT. Gerar com `openssl rand -hex 32` | Apenas no Supabase Dashboard → Secrets |
 
-> **⚠️ Consistência do par VAPID é crítica.** A `VAPID_PUBLIC_KEY` no Supabase Secret + `VAPID_PRIVATE_KEY` **devem ser geradas juntas** (mesmo par P-256). Se a private key no Supabase não corresponder à public key usada nas subscriptions, o APNs retorna 401 e `{sent:0, failed:1}` silenciosamente — nenhuma notificação chega. Incidente ocorrido em 2026-06-21 (sessão 36).
+> **⚠️ Consistência do par VAPID é crítica.** `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` no Supabase Secrets **devem ser do MESMO par P-256 gerado em uma única execução**. Se as chaves forem de pares distintos (erro silencioso comum ao fazer rotação parcial), o APNs retorna `BadJwtToken (403)` ou `VapidPkHashMismatch (400)` — nenhuma notificação chega. Incidentes: 2026-06-21 (sessão 36) e 2026-07-01 (sessão 69).
 >
-> **Rotação de chaves:** Para trocar as chaves, gerar novo par com Node.js WebCrypto (`subtle.generateKey` + JWK export), atualizar `VAPID_PUBLIC_KEY` e `VAPID_PRIVATE_KEY` no Supabase Secrets, atualizar `src/lib/pushConfig.ts` com a nova public key, e solicitar aos usuários que re-assinem as notificações (Desativar → Ativar). Guardar backup em cofre seguro (1Password, Bitwarden).
+> **Rotação de chaves — procedimento obrigatório:**
+> ```
+> 1. Gerar novo par completo: npx web-push generate-vapid-keys
+>    (⚠️ NÃO usar Node.js WebCrypto manual — gera tipo ECDH, não ECDSA VAPID-compatível)
+> 2. Atualizar VAPID_PUBLIC_KEY nos Supabase Secrets com a nova public key
+> 3. Atualizar VAPID_PRIVATE_KEY nos Supabase Secrets com a nova private key
+>    (⚠️ Ambas na MESMA operação — não atualizar uma sem a outra)
+> 4. Atualizar src/lib/pushConfig.ts com a nova public key
+> 5. Commit + push
+> 6. Limpar subscriptions inativas do banco (is_active = false)
+> 7. Aguardar usuários reabrirem o app — usePushSubscription detecta mismatch e re-subscreve automaticamente
+> ```
+> Guardar backup em cofre seguro (1Password, Bitwarden). Edge Function `send-push-notification` lê os Secrets em runtime — nenhum redeploy necessário.
 
 > **CRON_SECRET:** Após configurar o secret no Supabase Dashboard, executar no SQL Editor:
 > ```sql
