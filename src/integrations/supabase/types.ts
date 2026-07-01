@@ -1562,6 +1562,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_identity: {
+        Args: { p_identity_id: string; p_user_id: string }
+        Returns: undefined
+      }
       admin_set_user_trial: {
         Args: { days_remaining: number; target_user_id: string }
         Returns: boolean
