@@ -206,6 +206,7 @@ export function useSurgeries(familyMemberId?: string) {
       items: InstructionItem[];
       rawOcrText?: string;
     }) => {
+      if (!user) throw new Error("Usuário não autenticado");
       const { error } = await supabase
         .from("surgery_instructions")
         .upsert(
@@ -214,11 +215,13 @@ export function useSurgeries(familyMemberId?: string) {
             phase,
             items,
             raw_ocr_text: rawOcrText ?? null,
+            created_by: user.id,
           },
           { onConflict: "surgery_id,phase" }
         );
       if (error) throw error;
     },
+
     onSuccess: () => {
       invalidate();
     },
