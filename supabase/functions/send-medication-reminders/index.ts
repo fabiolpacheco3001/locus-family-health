@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const toNotify: { userId: string; medName: string; dosage: string | null; memberName: string; medId: string }[] = [];
+    const toNotify: { userId: string; medName: string; dosage: string | null; memberName: string; medId: string; isRestartReminder?: boolean }[] = [];
 
     // Pré-carrega todos os family_group_members em 1 query batch.
     // Elimina N+1: sem isso, getNotificationTargets() faria 1 SELECT por medicamento.
