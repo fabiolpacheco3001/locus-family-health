@@ -346,7 +346,15 @@ Deno.serve(async (req) => {
     // Só enviar telefone se o usuário preencheu um número real.
     // Nunca inventar números fictícios — o campo é opcional no Asaas e
     // inventar um número aparece para o usuário no checkout como "seu telefone".
-    const effectivePhone = billingPhone !== "11999999999" ? billingPhone : "";
+    const rawPhone = billingPhone !== "11999999999" ? billingPhone : "";
+    if (rawPhone && !isValidBrazilianPhone(rawPhone)) {
+      log("warn", "checkout_phone_invalid_format", {
+        userId,
+        digitCount: rawPhone.length,
+        hint: "phone stripped to non-10/11 digits — not sending to Asaas (likely international format)",
+      });
+    }
+    const effectivePhone = rawPhone && isValidBrazilianPhone(rawPhone) ? rawPhone : "";
 
     // Reutilizar customer ID salvo no banco quando disponível — evita chamada Asaas e possível conflito de CPF.
     let customerId: string;
