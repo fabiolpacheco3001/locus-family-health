@@ -173,13 +173,16 @@ Deno.serve(async (req) => {
           // APNs retorna 403 para VAPID key mismatch (InvalidAuthorization / ExpiredAuthorization).
           // FCM retorna 401 para credencial inválida.
           // Alguns push services não retornam 4xx mas incluem o motivo no body.
+          // APNs retorna 400 com body {"reason":"VapidPkHashMismatch"} em rotação de chave VAPID.
+          // FCM retorna 401/403. Alguns push services incluem o motivo apenas no body sem 4xx claro.
           const isVapidMismatch =
             statusCode === 403 ||
             statusCode === 401 ||
             responseBody.toLowerCase().includes('invalidauthorization') ||
             responseBody.toLowerCase().includes('expiredauthorization') ||
             responseBody.toLowerCase().includes('forbidden') ||
-            responseBody.toLowerCase().includes('unauthorize');
+            responseBody.toLowerCase().includes('unauthorize') ||
+            responseBody.toLowerCase().includes('vapidpkhashmismatch');
 
           if (statusCode === 410 || statusCode === 404) {
             // Subscription expirada ou cancelada pelo usuário — limpar do banco
