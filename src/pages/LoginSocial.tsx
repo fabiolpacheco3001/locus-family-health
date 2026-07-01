@@ -16,13 +16,6 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { captureException } from "@/lib/sentry";
 
-/**
- * Chave localStorage que sinaliza ao AuthCallback onde redirecionar
- * após o fluxo de linkIdentity (USER_UPDATED). Validada contra open redirect
- * em AuthCallback: path.startsWith("/") && !path.startsWith("//").
- */
-const OAUTH_REDIRECT_KEY = "lv_oauth_redirect";
-
 /** Tipo mínimo de identidade retornado por getUserIdentities(). */
 interface OAuthIdentity {
   id: string;
@@ -32,7 +25,7 @@ interface OAuthIdentity {
 
 const LoginSocial = () => {
   const navigate = useNavigate();
-  const { getUserIdentities, linkIdentity, unlinkIdentity, unlinkIdentityAdmin } = useAuth();
+  const { getUserIdentities, unlinkIdentityAdmin } = useAuth();
 
   // ── Estado de identidades ──────────────────────────────────────────────────
   const [identities, setIdentities] = useState<OAuthIdentity[]>([]);
@@ -58,55 +51,19 @@ const LoginSocial = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Detecta quando o usuário volta de um OAuth cancelado (iOS PWA)
-  // e limpa a chave de redirect para não deixar estado inconsistente.
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        const pending = localStorage.getItem(OAUTH_REDIRECT_KEY);
-        if (pending) {
-          // Usuário voltou sem completar o OAuth (cancelou) — limpa e re-fetch
-          localStorage.removeItem(OAUTH_REDIRECT_KEY);
-          setLinkingGoogle(false);
-          fetchIdentities();
-        }
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // ── Google ─────────────────────────────────────────────────────────────────
   const googleIdentity = identities.find((i) => i.provider === "google") ?? null;
   const hasGoogle = !!googleIdentity;
 
-  const [linkingGoogle, setLinkingGoogle] = useState(false);
   const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
   const [unlinkingGoogle, setUnlinkingGoogle] = useState(false);
 
-  const handleGoogleToggle = async (enabled: boolean) => {
-    if (enabled) {
-      // Vincular Google — salva redirect antes do OAuth para retornar aqui
-      try {
-        localStorage.setItem(OAUTH_REDIRECT_KEY, "/login-social");
-        setLinkingGoogle(true);
-        const { error } = await linkIdentity("google");
-        if (error) {
-          localStorage.removeItem(OAUTH_REDIRECT_KEY);
-          setLinkingGoogle(false);
-          toast.error("Não foi possível iniciar o Google. Tente novamente.");
-        }
-        // Se não houver erro, o browser redireciona para Google —
-        // visibilitychange cuida do cancelamento; AuthCallback cuida do sucesso.
-      } catch (err) {
-        captureException(err, { action: "link_google_unexpected" });
-        localStorage.removeItem(OAUTH_REDIRECT_KEY);
-        setLinkingGoogle(false);
-        toast.error("Erro inesperado. Tente novamente.");
-      }
-    } else {
-      // Desvincular — mostrar confirmação antes
+  const handleGoogleToggle = (enabled: boolean) => {
+    // Apenas desvínculo é suportado aqui.
+    // Vinculação requer o flag "Manual Linking" no Supabase Auth (não configurável
+    // no Lovable Cloud) — direcionar o usuário a usar "Entrar com Google" na
+    // tela de login com o mesmo e-mail para auto-vincular.
+    if (!enabled) {
       setShowUnlinkDialog(true);
     }
   };
@@ -208,17 +165,30 @@ const LoginSocial = () => {
 
                 {/* Toggle */}
                 <div className="shrink-0">
-                  {linkingGoogle || unlinkingGoogle ? (
+                  {unlinkingGoogle ? (
                     <Loader2 size={20} className="animate-spin text-[#78C2AD]" />
                   ) : (
                     <Switch
                       checked={hasGoogle}
                       onCheckedChange={handleGoogleToggle}
-                      aria-label={hasGoogle ? "Desvincular conta Google" : "Vincular conta Google"}
+                      // Vincular via toggle está desabilitado — o fluxo de vínculo
+                      // requer "Manual Linking" no GoTrue (indisponível no Lovable Cloud).
+                      // Usuários conectam via "Entrar com Google" na tela de login.
+                      disabled={!hasGoogle}
+                      aria-label={hasGoogle ? "Desvincular conta Google" : "Vincular conta Google — use o login com Google"}
                     />
                   )}
                 </div>
               </div>
+
+              {/* Caption quando Google não está vinculado */}
+              {!hasGoogle && (
+                <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
+                  Para conectar o Google, use{" "}
+                  <strong className="text-foreground">Entrar com Google</strong>{" "}
+                  na tela de login com o mesmo e-mail desta conta.
+                </p>
+              )}
             </div>
 
             {/* Apple — Em Breve */}
