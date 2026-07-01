@@ -1,6 +1,6 @@
 # LOCUS VITA — Backlog de Features e Melhorias
 
-> **Versão:** 2.3 | **Atualizado em:** 2026-06-30 (sessão 53 — A7-E2E Playwright: 8/8 testes passando ✅)
+> **Versão:** 2.4 | **Atualizado em:** 2026-07-01 (sessão 67 — Login Social, LOCUS-VITA-V, surgery_instructions RLS, push fix)
 > Arquivo de controle de backlog. Atualizar após cada sprint.
 > Débito técnico (bugs, código, arquitetura) → ver `TECH_DEBT.md`
 
@@ -36,7 +36,7 @@
 
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
-| BK-01 | ~~Push notifications multi-dispositivo~~ | ✅ | **E2E validado em produção (sessão 36, 2026-06-21).** Implementação completa: SW, PushManager, `send-push-notification`, `send-medication-reminders` (±3 min), `send-appointment-reminders` (D-0/D-1 às 8h BRT), migration com pg_cron. Incidente de segurança (sessão 35): VAPID_PRIVATE_KEY exposta em JSDoc → chaves rotacionadas. E2E fix (sessão 36): par VAPID inconsistente pós-rotação → par regenerado via Node.js WebCrypto; contagem `sent` corrigida para ler APNs response body, não HTTP 200. Notificação "💊 Hora do Remédio!" chegando no iPhone com PWA fechado ✅. |
+| BK-01 | ~~Push notifications multi-dispositivo~~ | ✅ | **E2E validado em produção (sessão 36, 2026-06-21).** Implementação completa: SW, PushManager, `send-push-notification`, `send-medication-reminders` (±3 min), `send-appointment-reminders` (D-0/D-1 às 8h BRT), migration com pg_cron. Incidente de segurança (sessão 35): VAPID_PRIVATE_KEY exposta em JSDoc → chaves rotacionadas. E2E fix (sessão 36): par VAPID inconsistente pós-rotação → par regenerado via Node.js WebCrypto. **Fix sessão 67 (2026-07-01):** dois bugs em `usePushSubscription.ts` corrigidos — `is_active:true` no upsert + re-sync ao fazer login (commit `5f4b6a9`). |
 | A7-E2E | ~~Testes E2E Playwright~~ | ✅ | **8/8 passando (sessão 53, 2026-06-30).** `playwright.config.ts` standalone (sem lovable-agent dep), `e2e/global.setup.ts` para autenticação com storageState, 4 specs: `auth/login.spec.ts`, `medications/add-medication.spec.ts`, `medications/mark-dose.spec.ts`, `payment/checkout.spec.ts`. **Fix crítico:** `add-medication.spec.ts` — substituído `dispatchEvent(bubbles:true)` por `saveBtn.click({ force: true })` (dispatchEvent fechava o Vaul drawer via bubbling) + handling condicional do AlertDialog "Continuar" (gate `checkDateAndProceed` exige click em "Continuar" quando `startDateTime` vazio). Toast: `"Medicamento adicionado!"` (não "salvo"). **Importante:** usar `bun run test:e2e` (não `npx playwright test`) — `.env.e2e` só é carregado via flag `--env-file` do Bun. |
 
 ---
@@ -46,7 +46,7 @@
 | ID | Item | Prioridade | Detalhe |
 |----|------|-----------|---------|
 | BK-02 | Ciclos posológicos complexos | 🟡 | Anticoncepcional 21+7, pausa programada, reinício automático |
-| BK-03 | ~~OAuth Google / Apple~~ | ✅ | Google OAuth implementado. Sessão 60 (2026-06-30): velocidade melhorada (polling→onAuthStateChange, sub-100ms) + deep link restaurado após re-login via notificação. Apple: pendente (requer Apple Developer Account pago). |
+| BK-03 | ~~OAuth Google / Apple~~ | ✅ | Google OAuth implementado. Sessão 60 (2026-06-30): velocidade melhorada (polling→onAuthStateChange, sub-100ms) + deep link restaurado após re-login via notificação. **Login Social completo (sessão 67, 2026-07-01):** tela `/login-social`, badges de provedor em MeusDados, Ajustes Segurança com item "Login Social", `unlinkIdentityAdmin` via `manage-google-identity` edge function (workaround para `manual_linking_enabled` indisponível no Lovable Cloud). Apple: pendente (requer Apple Developer Account pago). |
 | BK-11 | Zod schemas para formulários com PHI | 🟡 | Criar `src/lib/schemas/` (auth, medication, consultation, surgery). Usar `zodResolver` com React Hook Form. Cadastro, Login, AddMedicationDrawer, AddConsultationDrawer, AddSurgeryDrawer. Estimativa: 8h+. (ver ID-016 em TECH_DEBT.md) |
 | BK-05 | ~~Dashboard de Adesão Medicamentosa~~ | ✅ | Implementado. Bug "Parcial" corrigido (2026-06-19): virtual doses agora cobrindo specific_times e specific_days. "Melhor sequência" (recorde) também adicionado. |
 | BK-07 | ~~Importação de receitas via foto (câmera)~~ | ✅ | Implementado (2026-06-19, sessão 27): card "Ler Receita com IA" na Home → FamilySelectDrawer → AiMedicationUpload → AddMedicationDrawer |

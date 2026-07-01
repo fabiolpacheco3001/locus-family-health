@@ -1,6 +1,6 @@
 # Locus Vita — Backlog de Dívida Técnica
 
-> **Versão:** 8.0 | **Atualizado em:** 2026-06-30 (sessão 66c — SEC: surgeries UPDATE/DELETE restrito ao dono do registro — is_group_admin removido)  
+> **Versão:** 8.1 | **Atualizado em:** 2026-07-01 (sessão 67 — LOCUS-VITA-V Google unlink, surgery_instructions RLS, diagnóstico push notifications + fix usePushSubscription)  
 > **Fonte:** SSOT original + Análise Devin AI (8 prompts) + sessões de segurança junho/2026  
 > **Mantenedor:** Claude (Cowork)
 
@@ -10,6 +10,7 @@
 
 | Sessão | Itens resolvidos | Status Sprint |
 |--------|-----------------|---------------|
+| Sessão 67 | **LOCUS-VITA-V ✅ — Desvincular Google (commit `f96d5658`, Lovable MCP)**: `manage-google-identity` edge function com action `unlink` usando `adminClient.auth.admin` + `admin_delete_identity(UUID, TEXT)` (Deno PostgreSQL direto ao GoTrue DB). Root cause: GoTrue SDK `unlinkIdentity` requer `manual_linking_enabled=true` (indisponível no Lovable Cloud). Workaround: `SELECT auth.admin_delete_identity(identity_id::uuid, provider)` executado via `Deno.env.get("SUPABASE_DB_URL")`. `useAuth.tsx` atualizado: `unlinkIdentityAdmin({ id, provider })` → invoca a edge function + parse do error body via `context.clone().json()`. Sentry marcado como resolvido. **SEC ✅ — `surgery_instructions` created_by + RLS completo (commit `5d56aef7`, Lovable MCP)**: Migration adicionou coluna `created_by UUID REFERENCES auth.users(id)` + trigger `set_surgery_instructions_created_by()` que preenche automaticamente no INSERT. Policies UPDATE/DELETE corrigidas: de `surgery_id IN (SELECT id FROM surgeries WHERE user_id = auth.uid())` para `created_by = (select auth.uid())` — cada instrução agora só pode ser modificada por quem a criou. **BK-01 push fix ✅ — diagnóstico regressão + fix `usePushSubscription` (commit `5f4b6a9`, LOCAL)**: Diagnóstico completo: backend funcional (confirmado `{"processed":2,"sent":2}` às 20:00 BRT 2026-06-30); dois bugs latentes encontrados: (1) `syncSubscriptionToDb` não incluía `is_active:true` — subscription marcada como inativa (após 410 APNs) nunca era reativada no próximo sync; (2) `useEffect([])` só roda no mount — após `signOut` (que deleta a row do banco) + OAuth re-login, subscription só voltava ao DB se usuário visitasse `/notificacoes`. Fix: `is_active:true` explícito no upsert + novo `useEffect([user, syncSubscriptionToDb])` que re-sincroniza ao detectar mudança de identidade. | Segurança + BK-01 ✅ CONCLUÍDO |
 | Sessão 1 | C1, C2+C9, C4, C5, C6, C11, A10, A11, M15, M16, B7 (11 itens) | Sprint 1 ✅ CONCLUÍDO |
 | Sessão 2 | C8, C7+A14 — LGPD consentimento + deleção de conta | Sprint 2 ✅ CONCLUÍDO |
 | Sessão 3 | C3, A2, M14, A15 — Biometria, Senha, Revogação, Portabilidade | Sprint 2 ✅ CONCLUÍDO |
