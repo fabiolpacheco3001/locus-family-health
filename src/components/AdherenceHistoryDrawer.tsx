@@ -72,7 +72,7 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
     queryFn: async () => {
       const { data: meds, error: medsErr } = await supabase
         .from("medications")
-        .select("id, name, start_date, start_time, frequency_hours, end_date, uso_continuo, frequency_type, specific_times, specific_days")
+        .select("id, name, start_date, start_time, frequency_hours, end_date, uso_continuo, frequency_type, specific_times, specific_days, cycle_active_days, cycle_pause_days, cycle_start_date")
         .eq("family_member_id", familyMemberId);
       if (medsErr) throw medsErr;
       if (!meds || meds.length === 0) return { meds: [], doses: [] };
@@ -197,6 +197,49 @@ const AdherenceHistoryDrawer = ({ open, onOpenChange, familyMemberId, memberName
               }
             }
           }
+          dayCursor = addDays(dayCursor, 1);
+        }
+        continue;
+      }
+
+      // BK-02 cyclic: doses apenas nos dias ativos do ciclo; pausa = sem dose
+      if (freqType === "cyclic") {
+        const times: string[] = Array.isArray((med as any).specific_times) ? (med as any).specific_times : [];
+        const cycleActiveDaysN: number = (med as any).cycle_active_days ?? 0;
+        const cyclePauseDaysN: number = (med as any).cycle_pause_days ?? 0;
+        const cycleStartDateStr: string | null = (med as any).cycle_start_date ?? null;
+
+        if (times.length === 0 || cycleActiveDaysN < 1 || cyclePauseDaysN < 1 || !cycleStartDateStr) continue;
+
+        const cycleTotal = cycleActiveDaysN + cyclePauseDaysN;
+        const cycleAnchor = new Date(cycleStartDateStr);
+        if (isNaN(cycleAnchor.getTime())) continue;
+
+        const MS_PER_DAY_ADH = 24 * 60 * 60 * 1000;
+        let dayCursor = startOfDay(start);
+        while (dayCursor <= effectiveEnd) {
+          const daysSinceCycleStart = Math.floor(
+            (dayCursor.getTime() - cycleAnchor.getTime()) / MS_PER_DAY_ADH
+          );
+          const dayInCycle = ((daysSinceCycleStart % cycleTotal) + cycleTotal) % cycleTotal;
+          if (dayInCycle < cycleActiveDaysN) {
+            // Fase ativa: gerar doses virtuais
+            const dateStr = format(dayCursor, "yyyy-MM-dd");
+            for (const timeStr of times) {
+              const dt = new Date(`${dateStr}T${timeStr}`);
+              if (isNaN(dt.getTime()) || dt < start || dt > effectiveEnd) continue;
+              const key = `${med.id}-${dt.toISOString()}`;
+              if (!existingKeys.has(key)) {
+                virtualDoses.push({
+                  medication_name: medName,
+                  scheduled_for: dt.toISOString(),
+                  status: "forgotten",
+                  isVirtual: true,
+                });
+              }
+            }
+          }
+          // Fase pausa: nenhuma dose virtual gerada
           dayCursor = addDays(dayCursor, 1);
         }
         continue;

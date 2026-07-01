@@ -14,6 +14,10 @@ export type Medication = {
   frequency_type: string;
   specific_times: string[];
   specific_days: number[];
+  // BK-02: Ciclos Posológicos Complexos
+  cycle_active_days: number | null;
+  cycle_pause_days: number | null;
+  cycle_start_date: string | null;
   duration: string | null;
   duration_days: number | null;
   start_date: string | null;
@@ -42,6 +46,10 @@ export type NewMedication = {
   frequency_type?: string;
   specific_times?: string[];
   specific_days?: number[];
+  // BK-02: Ciclos Posológicos Complexos
+  cycle_active_days?: number | null;
+  cycle_pause_days?: number | null;
+  cycle_start_date?: string | null;
   duration?: string | null;
   duration_days?: number | null;
   start_date?: string | null;
@@ -66,6 +74,10 @@ export type UpdateMedication = {
   frequency_type?: string;
   specific_times?: string[];
   specific_days?: number[];
+  // BK-02: Ciclos Posológicos Complexos
+  cycle_active_days?: number | null;
+  cycle_pause_days?: number | null;
+  cycle_start_date?: string | null;
   duration?: string | null;
   duration_days?: number | null;
   start_date?: string | null;

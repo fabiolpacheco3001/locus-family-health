@@ -1,14 +1,16 @@
 /**
  * Calculates the next future dose for a recurring medication.
- * Supports three frequency types:
+ * Supports four frequency types:
  *   - fixed_interval: legacy hourly loop (start_time + frequency_hours)
  *   - specific_times: array of clock times (e.g. ["08:00","14:00","22:00"])
  *   - specific_days: array of weekday numbers (0=Sun..6=Sat) + specific_times
+ *   - cyclic: active days + pause days (e.g. anticoncepcional 21+7)
+ *             BK-02 — RISCO ALTO: nunca retornar dose durante fase de pausa
  */
 import { parseDateInSP, APP_TIMEZONE } from "./dateUtils";
 import { toZonedTime } from "date-fns-tz";
 
-export type FrequencyType = "fixed_interval" | "specific_times" | "specific_days";
+export type FrequencyType = "fixed_interval" | "specific_times" | "specific_days" | "cyclic";
 
 export function calculateNextDose(
   startDateStr: string | null | undefined,
@@ -18,6 +20,10 @@ export function calculateNextDose(
   frequencyType?: FrequencyType | string | null,
   specificTimes?: string[] | null,
   specificDays?: number[] | null,
+  // BK-02: Parâmetros de ciclo posológico (cyclic)
+  cycleActiveDays?: number | null,
+  cyclePauseDays?: number | null,
+  cycleStartDate?: string | null,
 ): Date | null {
   const ref = referenceTime ?? new Date();
   const refSP = toZonedTime(ref, APP_TIMEZONE);
@@ -27,6 +33,8 @@ export function calculateNextDose(
   const rawType = (frequencyType as string) || "fixed_interval";
   const effType: FrequencyType =
     rawType === "interval" ? "fixed_interval" : (rawType as FrequencyType);
+
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
   // Helper: parse end date with 23:59:59 ceiling
   const parseEnd = (): Date | null => {
@@ -189,6 +197,64 @@ export function calculateNextDose(
         const candidate = parseDateInSP(`${dateStr}T${times[0]}`);
         return candidate ? withinEnd(candidate) : null;
       }
+    }
+
+    return null;
+  }
+
+  // ──── CYCLIC (BK-02 — ex: anticoncepcional 21+7) ────
+  // RISCO ALTO: nunca retornar data de dose durante fase de pausa.
+  // A fase é determinada por (daysSinceStart % cycleTotal) < cycleActiveDays.
+  if (effType === "cyclic") {
+    const cActive = cycleActiveDays && cycleActiveDays > 0 ? cycleActiveDays : null;
+    const cPause = cyclePauseDays && cyclePauseDays > 0 ? cyclePauseDays : null;
+    const cStart = cycleStartDate ? parseDateInSP(cycleStartDate) : null;
+    const times = specificTimes && specificTimes.length > 0 ? [...specificTimes].sort() : null;
+
+    if (!cActive || !cPause || !cStart || !times) return null;
+
+    const cycleTotal = cActive + cPause;
+
+    // Helper: dado um Date (SP-aware), calcular fase do ciclo
+    const getCyclePhase = (d: Date): "active" | "pause" => {
+      const daysSinceStart = (d.getTime() - cStart.getTime()) / MS_PER_DAY;
+      if (daysSinceStart < 0) return "pause"; // antes do ciclo começar = pausa
+      const dayInCycle = Math.floor(daysSinceStart) % cycleTotal;
+      return dayInCycle < cActive ? "active" : "pause";
+    };
+
+    // Helper: retorna o primeiro momento do próximo ciclo ativo, a partir de d
+    const nextCycleActiveStart = (d: Date): Date => {
+      const daysSinceStart = (d.getTime() - cStart.getTime()) / MS_PER_DAY;
+      const fullCycles = Math.floor(Math.floor(daysSinceStart) / cycleTotal);
+      // Início do próximo ciclo completo
+      return new Date(cStart.getTime() + (fullCycles + 1) * cycleTotal * MS_PER_DAY);
+    };
+
+    // Percorrer dias a partir de hoje (refSP) até encontrar dose futura
+    let dayCursor = new Date(refSP);
+    dayCursor.setHours(0, 0, 0, 0);
+    const nowTimeStr = `${String(refSP.getHours()).padStart(2, "0")}:${String(refSP.getMinutes()).padStart(2, "0")}`;
+
+    for (let offset = 0; offset <= cycleTotal * 2; offset++) {
+      const phase = getCyclePhase(dayCursor);
+      if (phase === "active") {
+        const dateStr = `${dayCursor.getFullYear()}-${String(dayCursor.getMonth() + 1).padStart(2, "0")}-${String(dayCursor.getDate()).padStart(2, "0")}`;
+        for (const t of times) {
+          // No primeiro dia (offset=0), só aceitar horários futuros
+          if (offset === 0 && t <= nowTimeStr) continue;
+          const candidate = parseDateInSP(`${dateStr}T${t}`);
+          if (candidate) return withinEnd(candidate);
+        }
+      } else if (phase === "pause" && offset === 0) {
+        // Já está em pausa hoje — pular para o início do próximo ciclo ativo
+        const nextActive = nextCycleActiveStart(dayCursor);
+        const nextActiveSP = toZonedTime(nextActive, APP_TIMEZONE);
+        const nextDateStr = `${nextActiveSP.getFullYear()}-${String(nextActiveSP.getMonth() + 1).padStart(2, "0")}-${String(nextActiveSP.getDate()).padStart(2, "0")}`;
+        const candidate = parseDateInSP(`${nextDateStr}T${times[0]}`);
+        return candidate ? withinEnd(candidate) : null;
+      }
+      dayCursor.setDate(dayCursor.getDate() + 1);
     }
 
     return null;

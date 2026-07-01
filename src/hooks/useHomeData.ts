@@ -21,6 +21,7 @@ import type { Medication } from "./useMedications";
 import { useFamilyMembers } from "./useFamilyMembers";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
 import { advancePastTakenDoses } from "@/lib/advancePastTakenDoses";
+import { calculateNextDose } from "@/lib/calculateNextDose";
 
 export type UpcomingItem = {
   id: string;
@@ -47,6 +48,8 @@ export type MedWithNextDose = {
   isContinuous: boolean;
   effectiveFreqType: string;
   startDateISO: string | null;
+  // BK-02: fase do ciclo posológico (null para outros frequency_types)
+  cyclePhase: "active" | "pause" | null;
 };
 
 export function useHomeData() {
@@ -336,8 +339,65 @@ export function useHomeData() {
 
         let effectiveScheduledFor: string | null = null;
         let doseLabel = "";
+        let cyclePhase: "active" | "pause" | null = null;
 
-        if (isContinuous) {
+        // BK-02: Ciclos Posológicos — detectar fase antes de qualquer cálculo
+        if (freqType === "cyclic") {
+          const cActive = med.cycle_active_days;
+          const cPause = med.cycle_pause_days;
+          const cStartStr = med.cycle_start_date;
+
+          if (cActive && cPause && cStartStr) {
+            const cycleTotal = cActive + cPause;
+            const cycleAnchor = new Date(cStartStr);
+            const MS_PER_DAY_HOME = 24 * 60 * 60 * 1000;
+            const daysSinceStart = (now.getTime() - cycleAnchor.getTime()) / MS_PER_DAY_HOME;
+
+            if (daysSinceStart >= 0) {
+              const dayInCycle = Math.floor(daysSinceStart) % cycleTotal;
+              cyclePhase = dayInCycle < cActive ? "active" : "pause";
+            } else {
+              cyclePhase = "pause"; // antes do ciclo começar = trata como pausa
+            }
+
+            if (cyclePhase === "pause") {
+              // Na pausa: calcular e mostrar data do reinício (1ª dose do próximo ciclo ativo)
+              const nextDose = calculateNextDose(
+                startDateISO,
+                null,
+                med.end_date,
+                now,
+                "cyclic",
+                med.specific_times as string[] | null,
+                null,
+                cActive,
+                cPause,
+                cStartStr,
+              );
+              effectiveScheduledFor = nextDose ? nextDose.toISOString() : null;
+              // Rótulo de pausa — UI deve exibir badge "Pausa do Ciclo" (bg-[#AEE2D4])
+              doseLabel = "Pausa do Ciclo";
+            } else {
+              // Fase ativa: calcular próxima dose normalmente usando calculateNextDose cyclic
+              const nextDose = calculateNextDose(
+                startDateISO,
+                null,
+                med.end_date,
+                now,
+                "cyclic",
+                med.specific_times as string[] | null,
+                null,
+                cActive,
+                cPause,
+                cStartStr,
+              );
+              if (nextDose && !isNaN(nextDose.getTime())) {
+                effectiveScheduledFor = nextDose.toISOString();
+                doseLabel = `Próxima dose: ${format(toSPTime(nextDose), "dd MMM 'às' HH:mm", { locale: ptBR })}`;
+              }
+            }
+          }
+        } else if (isContinuous) {
           if (med.start_date && med.start_time) {
             let targetDose = new Date(`${todayStr}T${med.start_time}`);
             let advanceLimit = 50;
@@ -372,14 +432,17 @@ export function useHomeData() {
         }
 
         const effectiveDate = effectiveScheduledFor ? new Date(effectiveScheduledFor) : null;
-        const isOverdue = effectiveDate ? isPast(effectiveDate) : false;
+        // Durante pausa do ciclo, não marcar como atrasado
+        const isOverdue = (cyclePhase === "pause") ? false : (effectiveDate ? isPast(effectiveDate) : false);
         const doseKey = effectiveScheduledFor ? `${med.id}-${effectiveScheduledFor}` : null;
         const doseStatus: "taken" | "skipped" | null = doseKey ? (homeDoseStatuses[doseKey] ?? null) : null;
 
-        return { med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous, effectiveFreqType, startDateISO };
+        return { med, effectiveScheduledFor, doseLabel, isOverdue, doseStatus, isContinuous, effectiveFreqType, startDateISO, cyclePhase };
       })
-      .filter(({ effectiveScheduledFor, isContinuous }) => {
+      .filter(({ effectiveScheduledFor, isContinuous, cyclePhase, effectiveFreqType }) => {
         if (isContinuous) return true;
+        // BK-02: medicamento em pausa de ciclo sempre aparece (badge "Pausa do Ciclo")
+        if (effectiveFreqType === "cyclic" && cyclePhase === "pause") return true;
         if (!effectiveScheduledFor) return false;
         const d = new Date(effectiveScheduledFor);
         return isToday(d) || isYesterday(d) || d > now;

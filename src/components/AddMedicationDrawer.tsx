@@ -52,6 +52,7 @@ const FREQUENCY_OPTIONS = [
   { label: "1/1 h", value: "1" },
   { label: "Horários Específicos", value: "specific_times" },
   { label: "Dias da Semana", value: "specific_days" },
+  { label: "Ciclo (com pausa)", value: "cyclic" },
 ];
 
 const FREQ_MAP: Record<string, string> = {
@@ -115,6 +116,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   const [frequencyType, setFrequencyType] = useState<string>("fixed_interval");
   const [specificTimes, setSpecificTimes] = useState<string[]>([]);
   const [specificDays, setSpecificDays] = useState<number[]>([]);
+  // BK-02: Ciclos Posológicos
+  const [cycleActiveDays, setCycleActiveDays] = useState("21");
+  const [cyclePauseDays, setCyclePauseDays] = useState("7");
   const [newTimeInput, setNewTimeInput] = useState("");
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [receitaFile, setReceitaFile] = useState<File | null>(null);
@@ -175,14 +179,27 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
         setFrequencyHours("specific_times");
         setSpecificTimes(Array.isArray(editingMedication.specific_times) ? editingMedication.specific_times : []);
         setSpecificDays([]);
+        setCycleActiveDays("21");
+        setCyclePauseDays("7");
       } else if (editFreqType === "specific_days") {
         setFrequencyHours("specific_days");
         setSpecificTimes(Array.isArray(editingMedication.specific_times) ? editingMedication.specific_times : []);
         setSpecificDays(Array.isArray(editingMedication.specific_days) ? editingMedication.specific_days : []);
+        setCycleActiveDays("21");
+        setCyclePauseDays("7");
+      } else if (editFreqType === "cyclic") {
+        // BK-02: Ciclos Posológicos
+        setFrequencyHours("cyclic");
+        setSpecificTimes(Array.isArray(editingMedication.specific_times) ? editingMedication.specific_times : []);
+        setSpecificDays([]);
+        setCycleActiveDays(editingMedication.cycle_active_days?.toString() ?? "21");
+        setCyclePauseDays(editingMedication.cycle_pause_days?.toString() ?? "7");
       } else {
         setFrequencyHours(editingMedication.frequency_hours?.toString() ?? "");
         setSpecificTimes([]);
         setSpecificDays([]);
+        setCycleActiveDays("21");
+        setCyclePauseDays("7");
       }
       setDurationDays(editingMedication.duration_days?.toString() ?? "");
       setStatus(editingMedication.status);
@@ -239,6 +256,8 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
     setFrequencyType("fixed_interval");
     setSpecificTimes([]);
     setSpecificDays([]);
+    setCycleActiveDays("21");
+    setCyclePauseDays("7");
     setNewTimeInput("");
     setDurationDays("");
     setStatus("Ativo");
@@ -284,6 +303,10 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       setSpecificDays([]);
     } else if (value === "specific_days") {
       setFrequencyType("specific_days");
+    } else if (value === "cyclic") {
+      // BK-02: Ciclos Posológicos — padrão anticoncepcional 21+7
+      setFrequencyType("cyclic");
+      setSpecificDays([]);
     } else {
       setFrequencyType("fixed_interval");
       setSpecificTimes([]);
@@ -419,13 +442,22 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
   };
 
   const buildMedPayload = () => {
-    const isSpecific = frequencyType === "specific_times" || frequencyType === "specific_days";
+    const isCyclic = frequencyType === "cyclic";
+    const isSpecific = frequencyType === "specific_times" || frequencyType === "specific_days" || isCyclic;
     const freqNum = isSpecific ? null : (frequencyHours ? Number(frequencyHours) : null);
     const durNum = usoContinuo ? null : (durationDays ? Number(durationDays) : null);
     const finalEndDate = usoContinuo ? null : calculatedEndDate;
     const estTotalNum = estoqueTotal ? Number(estoqueTotal) : null;
     const estMinNum = estoqueMinimo ? Number(estoqueMinimo) : null;
     const freqLbl = FREQUENCY_OPTIONS.find((o) => o.value === frequencyHours)?.label ?? (frequencyHours ? `A cada ${frequencyHours}h` : null);
+
+    // BK-02: campos de ciclo (apenas quando frequency_type === 'cyclic')
+    const cycleActive = isCyclic && cycleActiveDays ? Number(cycleActiveDays) : null;
+    const cyclePause = isCyclic && cyclePauseDays ? Number(cyclePauseDays) : null;
+    // cycle_start_date usa a mesma data de início do tratamento (âncora do ciclo 1)
+    const cycleStart = isCyclic && parsedDate.date
+      ? (parsedDate.date + "T00:00:00")
+      : null;
 
     return {
       name: name.trim(),
@@ -436,6 +468,9 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
       frequency_type: frequencyType,
       specific_times: isSpecific ? specificTimes : [],
       specific_days: frequencyType === "specific_days" ? specificDays : [],
+      cycle_active_days: cycleActive,
+      cycle_pause_days: cyclePause,
+      cycle_start_date: cycleStart,
       duration_days: durNum,
       duration: durNum ? `${durNum} dias` : null,
       start_date: parsedDate.date || null,
@@ -839,6 +874,94 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
                           </span>
                         ))}
                       </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Progressive Disclosure: Ciclo Posológico (BK-02) */}
+                {frequencyType === "cyclic" && (
+                  <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+                      <p className="text-xs text-amber-800 font-medium">
+                        Ciclo com pausa programada (ex: anticoncepcional 21+7). Nenhuma dose será exibida durante a pausa.
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="cycle-active-days">Dias Ativos</Label>
+                        <Input
+                          id="cycle-active-days"
+                          type="number"
+                          inputMode="numeric"
+                          min={1}
+                          step={1}
+                          placeholder="Ex: 21"
+                          value={cycleActiveDays}
+                          onChange={(e) => setCycleActiveDays(e.target.value)}
+                          className="text-[16px]"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="cycle-pause-days">Dias de Pausa</Label>
+                        <Input
+                          id="cycle-pause-days"
+                          type="number"
+                          inputMode="numeric"
+                          min={1}
+                          step={1}
+                          placeholder="Ex: 7"
+                          value={cyclePauseDays}
+                          onChange={(e) => setCyclePauseDays(e.target.value)}
+                          className="text-[16px]"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Horário(s) da Dose nos Dias Ativos</Label>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="time"
+                          value={newTimeInput}
+                          onChange={(e) => setNewTimeInput(e.target.value)}
+                          className="text-[16px] flex-1"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleAddTime}
+                          disabled={!newTimeInput.trim()}
+                          className="h-10 px-3"
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
+                      {specificTimes.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {specificTimes.map((t) => (
+                            <span
+                              key={t}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium"
+                            >
+                              {t}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveTime(t)}
+                                className="rounded-full p-0.5 hover:bg-primary/20 transition-colors"
+                                aria-label={`Remover horário ${t}`}
+                              >
+                                <X size={12} />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {cycleActiveDays && cyclePauseDays && (
+                      <p className="text-[11px] text-amber-700">
+                        Ciclo: {cycleActiveDays} dias com dose + {cyclePauseDays} dias de pausa = {Number(cycleActiveDays) + Number(cyclePauseDays)} dias total
+                      </p>
                     )}
                   </div>
                 )}
