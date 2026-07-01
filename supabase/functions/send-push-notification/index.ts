@@ -29,6 +29,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 import webpush from "npm:web-push@3.6.7";
 import { corsHeaders } from "../_shared/cors.ts";
 import { log } from "../_shared/logger.ts";
+import { captureEdgeException } from "../_shared/sentry-edge.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -161,31 +162,73 @@ Deno.serve(async (req) => {
           });
           sent++;
         } catch (err: unknown) {
-          const statusCode = (err as { statusCode?: number }).statusCode;
+          // WebPushError (npm:web-push) tem statusCode, body, headers além de message.
+          // Acessamos via Record para compatibilidade com o runtime Deno npm compat layer,
+          // onde o cast tipado pode falhar em ler propriedades próprias da classe.
+          const webErr = err as Record<string, unknown>;
+          const statusCode = typeof webErr.statusCode === 'number' ? webErr.statusCode : undefined;
+          const responseBody = typeof webErr.body === 'string' ? webErr.body : '';
+          const errMessage = err instanceof Error ? err.message : String(err);
+
+          // APNs retorna 403 para VAPID key mismatch (InvalidAuthorization / ExpiredAuthorization).
+          // FCM retorna 401 para credencial inválida.
+          // Alguns push services não retornam 4xx mas incluem o motivo no body.
+          const isVapidMismatch =
+            statusCode === 403 ||
+            statusCode === 401 ||
+            responseBody.toLowerCase().includes('invalidauthorization') ||
+            responseBody.toLowerCase().includes('expiredauthorization') ||
+            responseBody.toLowerCase().includes('forbidden') ||
+            responseBody.toLowerCase().includes('unauthorize');
+
           if (statusCode === 410 || statusCode === 404) {
-            // Subscription expired or unsubscribed — mark as inactive
+            // Subscription expirada ou cancelada pelo usuário — limpar do banco
             expiredIds.push(sub.id);
             failed++;
-          } else if (statusCode === 403) {
-            // 403 do APNs/FCM indica mismatch de chave VAPID:
-            // a subscription foi criada com uma VAPID_PUBLIC_KEY diferente da que
-            // está nas secrets. Verificar se VAPID_PUBLIC_KEY no Supabase Secrets
-            // corresponde ao valor em src/lib/pushConfig.ts.
+          } else if (isVapidMismatch) {
+            // VAPID key mismatch: a subscription foi criada com uma VAPID_PUBLIC_KEY diferente
+            // da que está em Supabase Secrets. O push não chegará até o usuário re-abrir o app
+            // e criar uma nova subscription com a chave correta.
             log("error", "push_vapid_key_mismatch", {
               user_id,
-              endpoint: sub.endpoint.slice(0, 40),
-              hint: "Subscription criada com VAPID key diferente — re-subscribe necessário",
+              endpoint: sub.endpoint.slice(0, 60),
+              statusCode: statusCode ?? "unknown",
+              responseBody: responseBody.slice(0, 300),
+              errMessage,
+              hint: "Comparar VAPID_PUBLIC_KEY em src/lib/pushConfig.ts com o valor configurado em Supabase Dashboard → Edge Functions → Secrets",
             });
-            // Marcar como inativa: o endpoint não aceita pushes com a chave atual.
-            // Usuário precisará re-abrir o app para re-assinar com a chave correta.
+            await captureEdgeException(
+              new Error(`VAPID key mismatch ao enviar push: statusCode=${statusCode ?? 'unknown'} body=${responseBody.slice(0, 200)}`),
+              {
+                functionName: "send-push-notification",
+                event: "push_vapid_key_mismatch",
+                user_id,
+                endpoint: sub.endpoint.slice(0, 60),
+                statusCode: statusCode ?? "unknown",
+                responseBody: responseBody.slice(0, 300),
+                hint: "VAPID_PUBLIC_KEY nos Secrets não corresponde à chave usada para criar a subscription — re-subscribe necessário",
+              }
+            );
+            // Marcar como inativa: o endpoint rejeita pushes com a chave atual.
+            // Usuário precisará re-abrir o app para criar nova subscription com chave correta.
             expiredIds.push(sub.id);
             failed++;
           } else {
+            // Erro inesperado (rede, timeout, erro do push service, etc.)
             log("error", "push_send_failed", {
               user_id,
-              endpoint: sub.endpoint.slice(0, 40),
-              statusCode,
-              error: String(err),
+              endpoint: sub.endpoint.slice(0, 60),
+              statusCode: statusCode ?? "unknown",
+              responseBody: responseBody.slice(0, 300),
+              error: errMessage,
+            });
+            await captureEdgeException(err instanceof Error ? err : new Error(errMessage), {
+              functionName: "send-push-notification",
+              event: "push_send_failed",
+              user_id,
+              endpoint: sub.endpoint.slice(0, 60),
+              statusCode: statusCode ?? "unknown",
+              responseBody: responseBody.slice(0, 300),
             });
             failed++;
           }
