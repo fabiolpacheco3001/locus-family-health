@@ -620,6 +620,141 @@ CREATE INDEX CONCURRENTLY idx_push_subscriptions_active
 
 **Regra**: toda FK de tabela com acesso frequente precisa de índice. O linter do Supabase não detecta isso — verificar manualmente em code review.
 
+### RLS — Análise de Causa Raiz antes de qualquer correção
+
+> **Erro clássico de DEV Jr:** reescrever a expressão de uma política RLS sem verificar se o schema da tabela suporta o modelo de ownership correto. Resultado: a policy muda, o scanner continua falhando, e o comportamento de segurança permanece incorreto.
+
+**Protocolo obrigatório antes de corrigir qualquer finding de RLS:**
+
+```
+1. ENTENDER O QUE O SCANNER EXIGE
+   → Ler o finding completo. Qual entidade deve ser dona de qual linha?
+   → "UPDATE/DELETE restritos ao criador da instrução" ≠ "dono da cirurgia pai"
+
+2. VERIFICAR SE O SCHEMA SUPORTA O MODELO EXIGIDO
+   → A tabela tem coluna que identifica o autor de CADA linha?
+   → Se não tem → a correção começa no schema, não na policy
+
+3. SÓ ENTÃO ESCREVER A POLICY
+   → Policy referenciando coluna inexistente = policy incorreta por definição
+```
+
+**Anti-pattern que gerou o bug no caso `surgery_instructions`:**
+```sql
+-- ❌ DEV JR: trocou a policy mas a tabela não tinha created_by
+-- Resultado: policy verifica dono da cirurgia pai, não o autor da instrução
+USING (
+  surgeries.user_id = (select auth.uid())  -- ← ERRADO: ownership da entidade pai
+)
+
+-- ✅ DEV Sênior: primeiro verificou o schema, depois adicionou a coluna, depois a policy
+USING (
+  created_by = (select auth.uid())         -- ← CORRETO: ownership da linha em questão
+  OR public.is_group_admin(
+       (select auth.uid()),
+       (SELECT group_id FROM surgeries WHERE id = surgery_instructions.surgery_id)
+     )
+)
+```
+
+### RLS — Padrão de Ownership para Sub-entidades Clínicas
+
+Quando uma tabela filho armazena registros criados individualmente por usuários (instruções, anexos, anotações, valores de exame, etc.), ela precisa de ownership próprio — não herdar do pai.
+
+**Checklist para toda tabela filho com UPDATE/DELETE:**
+- [ ] A tabela tem coluna `created_by uuid REFERENCES auth.users(id)`?
+- [ ] Existe trigger `BEFORE INSERT` que força `NEW.created_by = auth.uid()` (anti-spoofing)?
+- [ ] Policy UPDATE/DELETE usa `created_by`, não `parent_table.user_id`?
+- [ ] INSERT tem `WITH CHECK (created_by = (select auth.uid()))`?
+
+**Template completo para sub-entidade clínica:**
+
+```sql
+-- 1. Coluna de autoria (se não existir)
+ALTER TABLE sub_entity ADD COLUMN created_by UUID REFERENCES auth.users(id);
+
+-- 2. Backfill histórico (melhor aproximação: assumir dono do pai)
+UPDATE sub_entity se
+SET created_by = parent.user_id
+FROM parent_table parent
+WHERE se.parent_id = parent.id
+  AND se.created_by IS NULL;
+
+ALTER TABLE sub_entity ALTER COLUMN created_by SET NOT NULL;
+
+-- 3. Índice para lookup de RLS
+CREATE INDEX CONCURRENTLY idx_sub_entity_created_by
+    ON sub_entity (created_by);
+
+-- 4. Trigger anti-spoofing (impede payload forjado pelo cliente)
+CREATE OR REPLACE FUNCTION set_created_by()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+    NEW.created_by = auth.uid();
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_sub_entity_created_by
+    BEFORE INSERT ON sub_entity
+    FOR EACH ROW EXECUTE FUNCTION set_created_by();
+
+-- 5. Policies corretas
+-- SELECT: quem pode ler (normalmente todos do grupo)
+CREATE POLICY "sub_entity_select" ON sub_entity
+    FOR SELECT TO authenticated
+    USING (
+        parent_id IN (
+            SELECT id FROM parent_table
+            WHERE group_id IN (
+                SELECT group_id FROM family_group_members
+                WHERE user_id = (select auth.uid())
+            )
+        )
+    );
+
+-- INSERT: criador + admin do grupo (WITH CHECK defende contra trigger removido)
+CREATE POLICY "sub_entity_insert" ON sub_entity
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        created_by = (select auth.uid())
+        AND parent_id IN (SELECT id FROM parent_table WHERE group_id IN (
+            SELECT group_id FROM family_group_members WHERE user_id = (select auth.uid())
+        ))
+    );
+
+-- UPDATE e DELETE: APENAS criador ou admin do grupo (nunca dono do pai)
+CREATE POLICY "sub_entity_update" ON sub_entity
+    FOR UPDATE TO authenticated
+    USING (
+        created_by = (select auth.uid())
+        OR public.is_group_admin(
+               (select auth.uid()),
+               (SELECT group_id FROM parent_table WHERE id = sub_entity.parent_id)
+           )
+    )
+    WITH CHECK (
+        created_by = (select auth.uid())
+        OR public.is_group_admin(
+               (select auth.uid()),
+               (SELECT group_id FROM parent_table WHERE id = sub_entity.parent_id)
+           )
+    );
+
+CREATE POLICY "sub_entity_delete" ON sub_entity
+    FOR DELETE TO authenticated
+    USING (
+        created_by = (select auth.uid())
+        OR public.is_group_admin(
+               (select auth.uid()),
+               (SELECT group_id FROM parent_table WHERE id = sub_entity.parent_id)
+           )
+    );
+```
+
+**Tabelas do Locus Vita que se enquadram neste padrão:**
+`surgery_instructions`, e qualquer futura tabela de anotações, valores de exame, anexos de consulta criados individualmente por usuários.
+
 ### RLS — Otimizações de Políticas (medido pelo time Supabase em 100K linhas)
 
 **Descoberta crítica:** `auth.uid()` chamado diretamente em política RLS é avaliado em CADA linha. Envolver em `(select auth.uid())` força o PostgreSQL a executar `initPlan` — o resultado é cacheado uma vez por query. Diferença medida:
@@ -949,6 +1084,8 @@ Aplicar antes do commit (LOCAL) ou sobre o diff (MCP). Em ordem de severidade:
   [ ] Nova política RLS sem `TO authenticated`? → adicionar (elimina avaliação para anon)
   [ ] Nova política RLS usa `auth.uid()` diretamente? → envolver em `(select auth.uid())`
   [ ] Nova tabela com coluna de RLS (user_id, group_id) sem índice btree? → criar índice
+  [ ] Policy UPDATE/DELETE de sub-entidade referencia coluna do pai (ex: surgeries.user_id) em vez de coluna própria (created_by)? → corrigir schema primeiro, depois a policy
+  [ ] Tabela filho com UPDATE/DELETE sem coluna `created_by` própria? → adicionar coluna + trigger anti-spoofing + backfill
   [ ] Nova função de lógica pura sem teste unitário? → escrever teste antes de entregar
   [ ] Bugfix sem teste que reproduz o bug? → escrever teste primeiro (TDD mínimo)
   [ ] Nova migration com RLS sem teste de isolamento? → escrever teste de integração
