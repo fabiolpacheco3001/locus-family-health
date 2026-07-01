@@ -31,14 +31,14 @@ Deno.serve(async (req) => {
   try {
     // Auth: aceita apenas o service_role (chamado por cron/pg_net)
     const authHeader = req.headers.get("Authorization") ?? "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const bearer = authHeader.replace("Bearer ", "");
-    if (bearer !== serviceKey) {
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const adminClient = createClient(Deno.env.get("SUPABASE_URL")!, serviceKey);
 
