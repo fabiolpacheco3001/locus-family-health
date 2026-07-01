@@ -190,6 +190,51 @@ Deno.serve(async (req) => {
             shouldNotify = true;
           }
         }
+      } else if (freqType === "cyclic") {
+        // BK-02: Ciclos Posológicos — NUNCA notificar durante fase de pausa
+        // Risco HIGH: erro pode resultar em falha anticoncepcional
+        const cycleActiveDays = (med as any).cycle_active_days as number | null;
+        const cyclePauseDays = (med as any).cycle_pause_days as number | null;
+        const cycleStartDateStr = (med as any).cycle_start_date as string | null;
+
+        if (!cycleActiveDays || !cyclePauseDays || !cycleStartDateStr) continue;
+
+        const cycleTotal = cycleActiveDays + cyclePauseDays;
+        // Calcular fase atual em horário SP (mesmo espaço que nowMs)
+        const cycleStartMs = new Date(
+          new Date(cycleStartDateStr).toLocaleString("en-US", { timeZone: TZ })
+        ).getTime();
+        const nowMs = new Date(
+          new Date().toLocaleString("en-US", { timeZone: TZ })
+        ).getTime();
+
+        if (nowMs < cycleStartMs) continue; // ciclo ainda não começou
+
+        const daysSinceStart = (nowMs - cycleStartMs) / (24 * 60 * 60 * 1000);
+        const dayInCycle = Math.floor(daysSinceStart) % cycleTotal;
+
+        if (dayInCycle < cycleActiveDays) {
+          // Fase ATIVA: verificar se algum horário de specific_times cai na janela
+          for (const t of specificTimes) {
+            const [h, m] = t.split(":").map(Number);
+            if (isInWindow(h, m, hour, minute)) {
+              shouldNotify = true;
+              break;
+            }
+          }
+        } else if (dayInCycle === cycleTotal - 1) {
+          // Último dia da PAUSA: enviar lembrete "Reinício amanhã" uma vez
+          // Usa o primeiro horário registrado em specific_times, ou 08:00 como fallback
+          const [notifyH, notifyM] = specificTimes.length > 0
+            ? specificTimes[0].split(":").map(Number)
+            : [8, 0];
+          if (isInWindow(notifyH, notifyM, hour, minute)) {
+            shouldNotify = true;
+            // Flag para usar mensagem diferente abaixo
+            (med as any)._isRestartReminder = true;
+          }
+        }
+        // Demais dias de pausa: shouldNotify permanece false — nenhuma notificação
       }
 
       // Check end_date
