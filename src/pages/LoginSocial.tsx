@@ -32,7 +32,7 @@ interface OAuthIdentity {
 
 const LoginSocial = () => {
   const navigate = useNavigate();
-  const { getUserIdentities, linkIdentity, unlinkIdentity } = useAuth();
+  const { getUserIdentities, linkIdentity, unlinkIdentity, unlinkIdentityAdmin } = useAuth();
 
   // ── Estado de identidades ──────────────────────────────────────────────────
   const [identities, setIdentities] = useState<OAuthIdentity[]>([]);
