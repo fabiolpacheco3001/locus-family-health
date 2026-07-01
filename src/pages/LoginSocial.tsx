@@ -32,7 +32,7 @@ interface OAuthIdentity {
 
 const LoginSocial = () => {
   const navigate = useNavigate();
-  const { getUserIdentities, linkIdentity, unlinkIdentity } = useAuth();
+  const { getUserIdentities, linkIdentity, unlinkIdentity, unlinkIdentityAdmin } = useAuth();
 
   // ── Estado de identidades ──────────────────────────────────────────────────
   const [identities, setIdentities] = useState<OAuthIdentity[]>([]);
@@ -115,7 +115,9 @@ const LoginSocial = () => {
     if (!googleIdentity || unlinkingGoogle) return;
     setUnlinkingGoogle(true);
     try {
-      const { error } = await unlinkIdentity(googleIdentity);
+      // unlinkIdentity() do SDK falha com "Manual linking is disabled" no Lovable Cloud.
+      // Usamos unlinkIdentityAdmin (edge function + Service Role) para contornar (LOCUS-VITA-S).
+      const { error } = await unlinkIdentityAdmin(googleIdentity);
       if (error) {
         captureException(error, { action: "unlink_google" });
         toast.error("Não foi possível desvincular o Google. Verifique se você tem outro método de login.");

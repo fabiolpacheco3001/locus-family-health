@@ -21,6 +21,7 @@ interface AuthContextType {
   getUserIdentities: () => ReturnType<typeof supabase.auth.getUserIdentities>;
   linkIdentity: (provider: "google" | "apple") => Promise<{ error: Error | null }>;
   unlinkIdentity: (identity: any) => Promise<{ error: Error | null }>;
+  unlinkIdentityAdmin: (identity: { id: string; provider: string }) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -158,6 +159,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
+  const unlinkIdentityAdmin = async (identity: { id: string; provider: string }) => {
+    try {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      if (refreshError || !refreshData?.session) {
+        return { error: new Error("Sessão inválida. Faça login novamente.") };
+      }
+
+      // Contorna manual_linking_disabled via edge function com Service Role.
+      const result = await supabase.functions.invoke("manage-google-identity", {
+        body: { action: "unlink", identityId: identity.id },
+        headers: {
+          Authorization: `Bearer ${refreshData.session.access_token}`,
+        },
+      });
+
+      if (result.error) {
+        const detail = (result.data as Record<string, unknown>)?.error as string | undefined;
+        return { error: new Error(detail || result.error.message || "Não foi possível desvincular.") };
+      }
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error("Erro inesperado ao desvincular.") };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -173,6 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         getUserIdentities,
         linkIdentity,
         unlinkIdentity,
+        unlinkIdentityAdmin,
       }}
     >
       {children}
