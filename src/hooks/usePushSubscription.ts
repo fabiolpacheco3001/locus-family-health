@@ -40,6 +40,30 @@ function isPushSupported(): boolean {
   );
 }
 
+/**
+ * Verifica se a subscription foi criada com o VAPID_PUBLIC_KEY atual.
+ *
+ * Após rotação de chaves VAPID, subscriptions antigas têm um applicationServerKey
+ * diferente e serão rejeitadas com 403 pelo APNs/FCM. Detectar aqui no cliente
+ * permite recriar silenciosamente antes de qualquer tentativa de envio.
+ *
+ * applicationServerKey é ArrayBuffer; VAPID_PUBLIC_KEY é string base64url.
+ */
+function vapidKeyMatches(sub: PushSubscription): boolean {
+  const keyBuffer = sub.options?.applicationServerKey;
+  if (!keyBuffer) return false;
+  // Normaliza ArrayBuffer ou ArrayBufferView para Uint8Array
+  const bytes =
+    keyBuffer instanceof ArrayBuffer
+      ? new Uint8Array(keyBuffer)
+      : new Uint8Array((keyBuffer as ArrayBufferView).buffer);
+  if (bytes.length === 0) return false;
+  let binary = '';
+  bytes.forEach((b) => { binary += String.fromCharCode(b); });
+  const base64url = btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return base64url === VAPID_PUBLIC_KEY;
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type PushPermission = 'default' | 'granted' | 'denied' | 'unsupported';
 
@@ -77,10 +101,21 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
         // Check if already subscribed
         const existingSub = await reg.pushManager.getSubscription();
         if (existingSub) {
-          setIsSubscribed(true);
-          setPermission('granted');
-          // Ensure the subscription is still in our DB (handles reinstalls)
-          await syncSubscriptionToDb(existingSub);
+          if (!vapidKeyMatches(existingSub)) {
+            // VAPID key rotation: esta subscription foi criada com uma chave antiga.
+            // Fazer unsubscribe aqui para que o terceiro useEffect (user login)
+            // recrie a subscription com a chave correta assim que o usuário estiver disponível.
+            try {
+              await existingSub.unsubscribe();
+            } catch (err) {
+              captureException(err, { context: 'push_unsubscribe_stale_on_mount' });
+            }
+          } else {
+            setIsSubscribed(true);
+            setPermission('granted');
+            // Ensure the subscription is still in our DB (handles reinstalls)
+            await syncSubscriptionToDb(existingSub);
+          }
         }
       })
       .catch((err) => {
@@ -174,8 +209,26 @@ export function usePushSubscription(): UsePushSubscriptionReturn {
       if (!reg) return;
       const sub = await reg.pushManager.getSubscription();
       if (sub) {
-        setIsSubscribed(true);
-        await syncSubscriptionToDb(sub);
+        if (!vapidKeyMatches(sub)) {
+          // VAPID key rotation: subscription existente usa chave antiga.
+          // Unsubscribe + re-subscribe com a chave atual silenciosamente.
+          // Sem isso, o servidor enviaria com a nova chave e o APNs/FCM retornaria 403.
+          try {
+            await sub.unsubscribe();
+            await navigator.serviceWorker.ready;
+            const newSub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+            });
+            await syncSubscriptionToDb(newSub);
+            setIsSubscribed(true);
+          } catch (err) {
+            captureException(err, { context: 'push_resubscribe_after_key_rotation' });
+          }
+        } else {
+          setIsSubscribed(true);
+          await syncSubscriptionToDb(sub);
+        }
       } else if (Notification.permission === 'granted') {
         // Subscription was revoked by iOS but permission is still granted.
         // Re-subscribe automatically without requiring a user gesture.
