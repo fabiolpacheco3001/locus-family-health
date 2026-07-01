@@ -199,6 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         getUserIdentities,
         linkIdentity,
         unlinkIdentity,
+        unlinkIdentityAdmin,
       }}
     >
       {children}
