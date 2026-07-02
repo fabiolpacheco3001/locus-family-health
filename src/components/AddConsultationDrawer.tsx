@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +24,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useFamilyGroup } from "@/hooks/useFamilyGroup";
 import { Activity } from "lucide-react";
+import {
+  consultationSchema,
+  consultationDefaultValues,
+  type ConsultationFormInput,
+} from "@/lib/schemas/consultation";
 
 interface Props {
   open: boolean;
@@ -35,39 +42,37 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
   const { user } = useAuth();
   const { groupId } = useFamilyGroup();
   const { addConsultation, updateConsultation } = useConsultations(familyMemberId);
-  const [specialty, setSpecialty] = useState("");
-  const [professionalName, setProfessionalName] = useState("");
-  const [consultationDate, setConsultationDate] = useState("");
-  const [type, setType] = useState("Rotina");
-  const [symptoms, setSymptoms] = useState("");
-  const [questions, setQuestions] = useState("");
   const [showCancelAlert, setShowCancelAlert] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-  const [statusValue, setStatusValue] = useState("Agendada");
-  const [systolic, setSystolic] = useState("");
-  const [diastolic, setDiastolic] = useState("");
-  const [location, setLocation] = useState("");
+
+  // [ID-016] Validação centralizada via Zod — src/lib/schemas/consultation.ts
+  const form = useForm<ConsultationFormInput>({
+    resolver: zodResolver(consultationSchema),
+    defaultValues: consultationDefaultValues,
+  });
 
   const isEditing = !!editingConsultation;
   const isCancelled = editingConsultation?.status === "Cancelada";
 
   useEffect(() => {
     if (editingConsultation) {
-      setSpecialty(editingConsultation.specialty);
-      setProfessionalName(editingConsultation.professional_name ?? "");
       const cd = editingConsultation.consultation_date;
+      let consultationDate = "";
       if (cd) {
         const d = new Date(cd);
-        const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-        setConsultationDate(local);
-      } else {
-        setConsultationDate("");
+        consultationDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
       }
-      setType(editingConsultation.type ?? "Rotina");
-      setSymptoms(editingConsultation.symptoms ?? "");
-      setQuestions(editingConsultation.questions ?? "");
-      setStatusValue(editingConsultation.status);
-      setLocation(editingConsultation.location ?? "");
+      form.reset({
+        specialty: editingConsultation.specialty,
+        professional_name: editingConsultation.professional_name ?? "",
+        consultation_date: consultationDate,
+        type: (editingConsultation.type as ConsultationFormInput["type"]) ?? "Rotina",
+        symptoms: editingConsultation.symptoms ?? "",
+        questions: editingConsultation.questions ?? "",
+        location: editingConsultation.location ?? "",
+        systolic: "",
+        diastolic: "",
+      });
 
       // Fetch existing BP for this consultation
       supabase
@@ -77,36 +82,24 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
         .maybeSingle()
         .then(({ data }) => {
           if (data) {
-            setSystolic(String(data.systolic));
-            setDiastolic(String(data.diastolic));
+            form.setValue("systolic", String(data.systolic));
+            form.setValue("diastolic", String(data.diastolic));
           } else {
-            setSystolic("");
-            setDiastolic("");
+            form.setValue("systolic", "");
+            form.setValue("diastolic", "");
           }
         });
     } else {
-      resetForm();
-      if (memberType === 'pet') {
-        setSpecialty("Veterinário");
-      }
+      form.reset({
+        ...consultationDefaultValues,
+        specialty: memberType === "pet" ? "Veterinário" : "",
+      });
+      setCancelReason("");
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingConsultation, open, memberType]);
 
-  const resetForm = () => {
-    setSpecialty("");
-    setProfessionalName("");
-    setConsultationDate("");
-    setType("Rotina");
-    setSymptoms("");
-    setQuestions("");
-    setStatusValue("Agendada");
-    setCancelReason("");
-    setSystolic("");
-    setDiastolic("");
-    setLocation("");
-  };
-
-  const saveBP = async (consultationId: string) => {
+  const saveBP = async (consultationId: string, systolic: string, diastolic: string) => {
     const sys = parseInt(systolic, 10);
     const dia = parseInt(diastolic, 10);
     if (!systolic || !diastolic || isNaN(sys) || isNaN(dia) || sys <= 0 || dia <= 0) return;
@@ -128,43 +121,38 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
     });
   };
 
-  const handleSave = async () => {
-    if (!specialty.trim()) {
-      toast.error("Preencha a especialidade.");
-      return;
-    }
-
+  const handleSave = async (data: ConsultationFormInput) => {
     try {
-      if (isEditing) {
+      if (isEditing && editingConsultation) {
         await updateConsultation.mutateAsync({
           id: editingConsultation.id,
-          specialty: specialty.trim(),
-          professional_name: professionalName.trim() || null,
-          consultation_date: consultationDate ? new Date(consultationDate).toISOString() : null,
-          type,
-          symptoms: symptoms.trim() || null,
-          questions: questions.trim() || null,
+          specialty: data.specialty,
+          professional_name: data.professional_name || null,
+          consultation_date: data.consultation_date ? new Date(data.consultation_date).toISOString() : null,
+          type: data.type,
+          symptoms: data.symptoms || null,
+          questions: data.questions || null,
           status: editingConsultation.status,
-          location: location.trim() || null,
+          location: data.location || null,
         });
-        await saveBP(editingConsultation.id);
+        await saveBP(editingConsultation.id, data.systolic ?? "", data.diastolic ?? "");
         toast.success("Consulta atualizada!");
       } else {
         const consultation: NewConsultation = {
           family_member_id: familyMemberId,
-          specialty: specialty.trim(),
-          professional_name: professionalName.trim() || null,
-          consultation_date: consultationDate ? new Date(consultationDate).toISOString() : null,
-          type,
-          symptoms: symptoms.trim() || null,
-          questions: questions.trim() || null,
-          location: location.trim() || null,
+          specialty: data.specialty,
+          professional_name: data.professional_name || null,
+          consultation_date: data.consultation_date ? new Date(data.consultation_date).toISOString() : null,
+          type: data.type,
+          symptoms: data.symptoms || null,
+          questions: data.questions || null,
+          location: data.location || null,
         };
         const result = await addConsultation.mutateAsync(consultation);
-        await saveBP(result.id);
+        await saveBP(result.id, data.systolic ?? "", data.diastolic ?? "");
         toast.success("Consulta agendada com sucesso!");
       }
-      resetForm();
+      form.reset(consultationDefaultValues);
       onOpenChange(false);
     } catch {
       toast.error("Erro ao salvar. Tente novamente.");
@@ -180,7 +168,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
         cancel_reason: cancelReason.trim() || null,
       });
       toast.success("Consulta cancelada.");
-      resetForm();
+      form.reset(consultationDefaultValues);
       onOpenChange(false);
     } catch {
       toast.error("Erro ao cancelar. Tente novamente.");
@@ -206,16 +194,24 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
           <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-24 space-y-4 no-scrollbar">
             <div className="space-y-1.5">
               <Label>Especialidade *</Label>
-              <SpecialtyCombobox value={specialty} onValueChange={setSpecialty} />
+              <Controller
+                control={form.control}
+                name="specialty"
+                render={({ field }) => (
+                  <SpecialtyCombobox value={field.value} onValueChange={field.onChange} />
+                )}
+              />
+              {form.formState.errors.specialty && (
+                <p className="text-sm text-destructive">{form.formState.errors.specialty.message}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
               <Label>Nome do Profissional</Label>
               <Input
                 placeholder="Ex: Dr. Carlos Silva"
-                value={professionalName}
-                onChange={(e) => setProfessionalName(e.target.value)}
                 className="text-[16px] scroll-m-20"
+                {...form.register("professional_name")}
               />
             </div>
 
@@ -223,34 +219,41 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               <Label>Local (Hospital / Clínica / Laboratório)</Label>
               <Input
                 placeholder="Ex: Hospital das Clínicas"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
                 className="text-[16px] scroll-m-20"
+                {...form.register("location")}
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Data e Hora</Label>
-                <DatePickerField
-                  value={consultationDate}
-                  onChange={setConsultationDate}
-                  mode="datetime"
+                <Controller
+                  control={form.control}
+                  name="consultation_date"
+                  render={({ field }) => (
+                    <DatePickerField value={field.value ?? ""} onChange={field.onChange} mode="datetime" />
+                  )}
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label>Classificação</Label>
-                <Select value={type} onValueChange={setType}>
-                  <SelectTrigger className="text-[16px] scroll-m-20">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Rotina">Rotina</SelectItem>
-                    <SelectItem value="Emergência">Emergência</SelectItem>
-                    <SelectItem value="Retorno">Retorno</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="text-[16px] scroll-m-20">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Rotina">Rotina</SelectItem>
+                        <SelectItem value="Emergência">Emergência</SelectItem>
+                        <SelectItem value="Retorno">Retorno</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
             </div>
 
@@ -259,9 +262,8 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               <Textarea
                 placeholder="Ex: Dores no estômago após as refeições"
                 rows={3}
-                value={symptoms}
-                onChange={(e) => setSymptoms(e.target.value)}
                 className="text-[16px] scroll-m-20 resize-none"
+                {...form.register("symptoms")}
               />
             </div>
 
@@ -270,9 +272,8 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
               <Textarea
                 placeholder="Ex: Posso tomar com outros remédios?"
                 rows={3}
-                value={questions}
-                onChange={(e) => setQuestions(e.target.value)}
                 className="text-[16px] scroll-m-20 resize-none"
+                {...form.register("questions")}
               />
             </div>
 
@@ -286,29 +287,47 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Sistólica (mmHg)</Label>
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      placeholder="Ex: 120"
-                      value={systolic}
-                      onChange={(e) => setSystolic(e.target.value.replace(/[^0-9]/g, ''))}
-                      min={1}
-                      max={300}
-                      className="text-[16px] scroll-m-20"
+                    <Controller
+                      control={form.control}
+                      name="systolic"
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          placeholder="Ex: 120"
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ''))}
+                          min={1}
+                          max={300}
+                          className="text-[16px] scroll-m-20"
+                        />
+                      )}
                     />
+                    {form.formState.errors.systolic && (
+                      <p className="text-sm text-destructive">{form.formState.errors.systolic.message}</p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">Diastólica (mmHg)</Label>
-                    <Input
-                      type="number"
-                      inputMode="numeric"
-                      placeholder="Ex: 80"
-                      value={diastolic}
-                      onChange={(e) => setDiastolic(e.target.value.replace(/[^0-9]/g, ''))}
-                      min={1}
-                      max={300}
-                      className="text-[16px] scroll-m-20"
+                    <Controller
+                      control={form.control}
+                      name="diastolic"
+                      render={({ field }) => (
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          placeholder="Ex: 80"
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value.replace(/[^0-9]/g, ''))}
+                          min={1}
+                          max={300}
+                          className="text-[16px] scroll-m-20"
+                        />
+                      )}
                     />
+                    {form.formState.errors.diastolic && (
+                      <p className="text-sm text-destructive">{form.formState.errors.diastolic.message}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -333,7 +352,7 @@ const AddConsultationDrawer = ({ open, onOpenChange, familyMemberId, editingCons
             </DrawerClose>
             {!isCancelled && (
               <Button
-                onClick={handleSave}
+                onClick={form.handleSubmit(handleSave)}
                 disabled={isPending}
                 className="flex-1"
               >

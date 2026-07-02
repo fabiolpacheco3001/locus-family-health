@@ -33,6 +33,7 @@ import { useMedications, Medication, NewMedication } from "@/hooks/useMedication
 import { useConsultations } from "@/hooks/useConsultations";
 import { addDays, format, differenceInYears, parseISO } from "date-fns";
 import { parseDateInSP, toSPTime } from "@/lib/dateUtils";
+import { medicationSchema, firstMedicationError } from "@/lib/schemas/medication";
 
 interface Props {
   open: boolean;
@@ -545,6 +546,13 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           receitaUrl = await uploadReceita(receitaFile, editingMedication.id);
         }
         const payload = buildMedPayload();
+        // [ID-016] Validação Zod centralizada — src/lib/schemas/medication.ts
+        // (safeParse, não zodResolver — ver comentário no topo do schema)
+        const validation = medicationSchema.safeParse(payload);
+        if (!validation.success) {
+          toast.error(firstMedicationError(validation));
+          return;
+        }
         await updateMedication.mutateAsync({
           id: editingMedication.id,
           ...payload,
@@ -620,6 +628,12 @@ const AddMedicationDrawer = ({ open, onOpenChange, familyMemberId, editingMedica
           receitaUrl = await uploadReceita(receitaFile, tempId);
         }
         const payload = buildMedPayload();
+        // [ID-016] Validação Zod centralizada — src/lib/schemas/medication.ts
+        const validation = medicationSchema.safeParse(payload);
+        if (!validation.success) {
+          toast.error(firstMedicationError(validation));
+          return;
+        }
         const medication: NewMedication = {
           family_member_id: familyMemberId,
           ...payload,

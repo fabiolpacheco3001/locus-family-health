@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Drawer } from "vaul";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,11 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  surgerySchema,
+  surgeryDefaultValues,
+  type SurgeryFormInput,
+} from "@/lib/schemas/surgery";
 
 interface AddSurgeryDrawerProps {
   open: boolean;
@@ -43,25 +50,28 @@ export function AddSurgeryDrawer({
   const [surgeryTypeOpen, setSurgeryTypeOpen] = useState(false);
   const [surgerySearch, setSurgerySearch] = useState("");
 
-  const [surgeryType, setSurgeryType] = useState("");
-  const [customType, setCustomType] = useState("");
-  const [scheduledDate, setScheduledDate] = useState<Date | null>(null);
-  const [hospitalClinic, setHospitalClinic] = useState("");
-  const [surgeonName, setSurgeonName] = useState("");
-  const [notes, setNotes] = useState("");
   const [preItems, setPreItems] = useState<InstructionItem[]>([]);
   const [postItems, setPostItems] = useState<InstructionItem[]>([]);
+
+  // [ID-016] Validação centralizada via Zod — src/lib/schemas/surgery.ts
+  const form = useForm<SurgeryFormInput>({
+    resolver: zodResolver(surgerySchema),
+    defaultValues: surgeryDefaultValues,
+  });
+  const surgeryType = form.watch("surgery_type");
 
   // Populando campos ao abrir em modo edição
   useEffect(() => {
     if (editingSurgery) {
-      setSurgeryType(editingSurgery.surgery_type ?? "");
-      setCustomType(editingSurgery.custom_type ?? "");
       const d = editingSurgery.scheduled_date ? parseISO(editingSurgery.scheduled_date) : null;
-      setScheduledDate(d && isValid(d) ? d : null);
-      setHospitalClinic(editingSurgery.hospital_clinic ?? "");
-      setSurgeonName(editingSurgery.surgeon_name ?? "");
-      setNotes(editingSurgery.notes ?? "");
+      form.reset({
+        surgery_type: editingSurgery.surgery_type ?? "",
+        custom_type: editingSurgery.custom_type ?? "",
+        scheduled_date: d && isValid(d) ? d : null,
+        hospital_clinic: editingSurgery.hospital_clinic ?? "",
+        surgeon_name: editingSurgery.surgeon_name ?? "",
+        notes: editingSurgery.notes ?? "",
+      });
       setPreItems(
         editingSurgery.surgery_instructions?.find((i) => i.phase === "pre")?.items ?? []
       );
@@ -76,12 +86,7 @@ export function AddSurgeryDrawer({
   }, [editingSurgery, open]);
 
   const reset = () => {
-    setSurgeryType("");
-    setCustomType("");
-    setScheduledDate(null);
-    setHospitalClinic("");
-    setSurgeonName("");
-    setNotes("");
+    form.reset(surgeryDefaultValues);
     setPreItems([]);
     setPostItems([]);
     setActiveTab("agendamento");
@@ -89,28 +94,17 @@ export function AddSurgeryDrawer({
 
   const isPending = createMutation.isPending || updateMutation.isPending || updateInstructionsMutation.isPending;
 
-  const handleSave = async () => {
-    if (!surgeryType) {
-      toast.error("Selecione o tipo de cirurgia.");
-      setActiveTab("agendamento");
-      return;
-    }
-    if (surgeryType === "outro" && customType.trim().length < 3) {
-      toast.error("Descreva o tipo de cirurgia (mínimo 3 caracteres).");
-      setActiveTab("agendamento");
-      return;
-    }
-
+  const handleSave = async (data: SurgeryFormInput) => {
     try {
       if (isEditing && editingSurgery) {
         await updateMutation.mutateAsync({
           id: editingSurgery.id,
-          surgery_type: surgeryType,
-          custom_type: surgeryType === "outro" ? customType.trim() : null,
-          scheduled_date: scheduledDate ? scheduledDate.toISOString() : null,
-          hospital_clinic: hospitalClinic.trim() || null,
-          surgeon_name: surgeonName.trim() || null,
-          notes: notes.trim() || null,
+          surgery_type: data.surgery_type,
+          custom_type: data.surgery_type === "outro" ? (data.custom_type ?? "").trim() : null,
+          scheduled_date: data.scheduled_date ? data.scheduled_date.toISOString() : null,
+          hospital_clinic: (data.hospital_clinic ?? "").trim() || null,
+          surgeon_name: (data.surgeon_name ?? "").trim() || null,
+          notes: (data.notes ?? "").trim() || null,
         });
         await updateInstructionsMutation.mutateAsync({
           surgeryId: editingSurgery.id,
@@ -125,12 +119,12 @@ export function AddSurgeryDrawer({
       } else {
         await createMutation.mutateAsync({
           family_member_id: familyMemberId,
-          surgery_type: surgeryType,
-          custom_type: surgeryType === "outro" ? customType.trim() : undefined,
-          scheduled_date: scheduledDate ? scheduledDate.toISOString() : undefined,
-          hospital_clinic: hospitalClinic.trim() || undefined,
-          surgeon_name: surgeonName.trim() || undefined,
-          notes: notes.trim() || undefined,
+          surgery_type: data.surgery_type,
+          custom_type: data.surgery_type === "outro" ? (data.custom_type ?? "").trim() : undefined,
+          scheduled_date: data.scheduled_date ? data.scheduled_date.toISOString() : undefined,
+          hospital_clinic: (data.hospital_clinic ?? "").trim() || undefined,
+          surgeon_name: (data.surgeon_name ?? "").trim() || undefined,
+          notes: (data.notes ?? "").trim() || undefined,
           pre_instructions: preItems.length > 0 ? preItems : undefined,
           post_instructions: postItems.length > 0 ? postItems : undefined,
         });
@@ -140,6 +134,12 @@ export function AddSurgeryDrawer({
     } catch {
       // toast exibido no onError do hook
     }
+  };
+
+  const onInvalid = () => {
+    // Erros de schema (tipo de cirurgia ausente, "outro" sem descrição) sempre
+    // se referem à aba Agendamento — leva o usuário até lá para ver a mensagem.
+    setActiveTab("agendamento");
   };
 
   const handleClose = () => {
@@ -201,83 +201,94 @@ export function AddSurgeryDrawer({
                     <label className="text-sm font-medium text-foreground">
                       Tipo de Cirurgia *
                     </label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={surgeryTypeOpen}
-                      onClick={() => setSurgeryTypeOpen(true)}
-                      className="flex h-10 w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-[16px] font-normal hover:bg-background"
-                    >
-                      <span className={cn("truncate", !surgeryType && "text-muted-foreground")}>
-                        {surgeryType
-                          ? getSurgeryLabel(surgeryType)
-                          : "Ex: Bypass Gástrico, Apendicectomia..."}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
+                    <Controller
+                      control={form.control}
+                      name="surgery_type"
+                      render={({ field }) => (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={surgeryTypeOpen}
+                            onClick={() => setSurgeryTypeOpen(true)}
+                            className="flex h-10 w-full justify-between rounded-md border border-input bg-background px-3 py-2 text-[16px] font-normal hover:bg-background"
+                          >
+                            <span className={cn("truncate", !field.value && "text-muted-foreground")}>
+                              {field.value
+                                ? getSurgeryLabel(field.value)
+                                : "Ex: Bypass Gástrico, Apendicectomia..."}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
 
-                    <ShadcnDrawer
-                      open={surgeryTypeOpen}
-                      onOpenChange={(o) => {
-                        setSurgeryTypeOpen(o);
-                        if (!o) setSurgerySearch("");
-                      }}
-                    >
-                      <ShadcnDrawerContent className="flex flex-col max-h-[90vh]">
-                        <div className="px-4 pt-4 pb-2">
-                          <h3 className="text-base font-semibold text-foreground mb-3">
-                            Tipo de Cirurgia
-                          </h3>
-                        </div>
-                        <Command shouldFilter={false} className="border-none">
-                          <div className="px-4">
-                            <CommandInput
-                              placeholder="Buscar tipo de cirurgia..."
-                              value={surgerySearch}
-                              onValueChange={setSurgerySearch}
-                              className="text-[16px]"
-                            />
-                          </div>
-                          <CommandList className="max-h-[55vh] overflow-y-auto px-2 pb-safe-or-4">
-                            <CommandEmpty>Tipo não encontrado.</CommandEmpty>
-                            {Object.entries(SURGERY_TYPES_BY_CATEGORY)
-                              .map(([category, types]) => ({
-                                category,
-                                types: types.filter((t) =>
-                                  t.label.toLowerCase().includes(surgerySearch.toLowerCase()) ||
-                                  t.category.toLowerCase().includes(surgerySearch.toLowerCase())
-                                ),
-                              }))
-                              .filter(({ types }) => types.length > 0)
-                              .map(({ category, types }) => (
-                                <CommandGroup key={category} heading={category}>
-                                  {types.map((type) => (
-                                    <CommandItem
-                                      key={type.value}
-                                      value={type.value}
-                                      onSelect={() => {
-                                        setSurgeryType(type.value);
-                                        setSurgerySearch("");
-                                        setSurgeryTypeOpen(false);
-                                      }}
-                                      className="rounded-lg"
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          surgeryType === type.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                      {type.label}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              ))}
-                          </CommandList>
-                        </Command>
-                      </ShadcnDrawerContent>
-                    </ShadcnDrawer>
+                          <ShadcnDrawer
+                            open={surgeryTypeOpen}
+                            onOpenChange={(o) => {
+                              setSurgeryTypeOpen(o);
+                              if (!o) setSurgerySearch("");
+                            }}
+                          >
+                            <ShadcnDrawerContent className="flex flex-col max-h-[90vh]">
+                              <div className="px-4 pt-4 pb-2">
+                                <h3 className="text-base font-semibold text-foreground mb-3">
+                                  Tipo de Cirurgia
+                                </h3>
+                              </div>
+                              <Command shouldFilter={false} className="border-none">
+                                <div className="px-4">
+                                  <CommandInput
+                                    placeholder="Buscar tipo de cirurgia..."
+                                    value={surgerySearch}
+                                    onValueChange={setSurgerySearch}
+                                    className="text-[16px]"
+                                  />
+                                </div>
+                                <CommandList className="max-h-[55vh] overflow-y-auto px-2 pb-safe-or-4">
+                                  <CommandEmpty>Tipo não encontrado.</CommandEmpty>
+                                  {Object.entries(SURGERY_TYPES_BY_CATEGORY)
+                                    .map(([category, types]) => ({
+                                      category,
+                                      types: types.filter((t) =>
+                                        t.label.toLowerCase().includes(surgerySearch.toLowerCase()) ||
+                                        t.category.toLowerCase().includes(surgerySearch.toLowerCase())
+                                      ),
+                                    }))
+                                    .filter(({ types }) => types.length > 0)
+                                    .map(({ category, types }) => (
+                                      <CommandGroup key={category} heading={category}>
+                                        {types.map((type) => (
+                                          <CommandItem
+                                            key={type.value}
+                                            value={type.value}
+                                            onSelect={() => {
+                                              field.onChange(type.value);
+                                              setSurgerySearch("");
+                                              setSurgeryTypeOpen(false);
+                                            }}
+                                            className="rounded-lg"
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                field.value === type.value ? "opacity-100" : "opacity-0"
+                                              )}
+                                            />
+                                            {type.label}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    ))}
+                                </CommandList>
+                              </Command>
+                            </ShadcnDrawerContent>
+                          </ShadcnDrawer>
+                        </>
+                      )}
+                    />
+                    {form.formState.errors.surgery_type && (
+                      <p className="text-sm text-destructive">{form.formState.errors.surgery_type.message}</p>
+                    )}
                   </div>
 
                   {surgeryType === "outro" && (
@@ -286,52 +297,57 @@ export function AddSurgeryDrawer({
                         Descreva a Cirurgia *
                       </label>
                       <Input
-                        value={customType}
-                        onChange={(e) => setCustomType(e.target.value)}
                         placeholder="Ex: Septoplastia endoscópica"
                         className="text-base"
+                        {...form.register("custom_type")}
                       />
+                      {form.formState.errors.custom_type && (
+                        <p className="text-sm text-destructive">{form.formState.errors.custom_type.message}</p>
+                      )}
                     </div>
                   )}
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">Nome do Profissional</label>
                     <Input
-                      value={surgeonName}
-                      onChange={(e) => setSurgeonName(e.target.value)}
                       placeholder="Ex: Dr. João Silva, Dra. Maria Oliveira"
                       className="text-base"
+                      {...form.register("surgeon_name")}
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">Data e Hora</label>
-                    <DateTimePicker
-                      value={scheduledDate ?? undefined}
-                      onChange={(d) => setScheduledDate(d ?? null)}
-                      placeholder="Ex: 15/07/2025 às 08:00"
-                      mode="datetime"
+                    <Controller
+                      control={form.control}
+                      name="scheduled_date"
+                      render={({ field }) => (
+                        <DateTimePicker
+                          value={field.value ?? undefined}
+                          onChange={(d) => field.onChange(d ?? null)}
+                          placeholder="Ex: 15/07/2025 às 08:00"
+                          mode="datetime"
+                        />
+                      )}
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">Local (Hospital / Clínica / Laboratório)</label>
                     <Input
-                      value={hospitalClinic}
-                      onChange={(e) => setHospitalClinic(e.target.value)}
                       placeholder="Ex: Hospital das Clínicas, Clínica Saúde Total"
                       className="text-base"
+                      {...form.register("hospital_clinic")}
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">Observações</label>
                     <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
                       placeholder="Ex: Trazer exames pré-operatórios, alergia a iodo..."
                       className="w-full text-base bg-background border border-input rounded-md px-3 py-2 resize-none min-h-[72px] outline-none focus:ring-1 focus:ring-ring"
                       rows={3}
+                      {...form.register("notes")}
                     />
                   </div>
                 </div>
@@ -377,7 +393,7 @@ export function AddSurgeryDrawer({
             </Button>
             <Button
               className="flex-1 text-base font-semibold"
-              onClick={handleSave}
+              onClick={form.handleSubmit(handleSave, onInvalid)}
               disabled={isPending}
             >
               {isPending ? (

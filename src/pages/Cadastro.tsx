@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
@@ -10,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 import { captureException } from "@/lib/sentry";
+import { signupSchema, signupDefaultValues, type SignupInput } from "@/lib/schemas/auth";
 
 /** Registra o consentimento LGPD na tabela consent_log após o cadastro. */
 async function logConsent(userId: string) {
@@ -31,17 +34,17 @@ const Cadastro = () => {
   const [searchParams] = useSearchParams();
   const planFromUrl = searchParams.get("plan") as "monthly" | "annual" | null;
   const { signUp } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [confirmError, setConfirmError] = useState("");
-  const [consentAccepted, setConsentAccepted] = useState(false);
-  const [consentError, setConsentError] = useState(false);
+
+  // [ID-016] Validação centralizada via Zod — src/lib/schemas/auth.ts
+  // (inclui LGPD Art. 11: consentAccepted deve ser exatamente `true`)
+  const form = useForm<SignupInput>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: signupDefaultValues,
+  });
 
   // Clear any stale cached session and subscription cache to prevent auth limbo
   // and cross-user localStorage contamination (lv_sub_cache must not leak between sessions).
@@ -50,29 +53,9 @@ const Cadastro = () => {
     supabase.auth.signOut();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setConfirmError("");
-    setConsentError(false);
-
-    if (password !== confirmPassword) {
-      setConfirmError("As senhas não coincidem.");
-      return;
-    }
-
-    if (password.length < 8) {
-      toast.error("A senha deve ter no mínimo 8 caracteres.");
-      return;
-    }
-
-    // LGPD Art. 11 — consentimento obrigatório para dados de saúde
-    if (!consentAccepted) {
-      setConsentError(true);
-      return;
-    }
-
+  const handleSave = async (data: SignupInput) => {
     setLoading(true);
-    const { error } = await signUp(email, password, name);
+    const { error } = await signUp(data.email, data.password, data.name);
     setLoading(false);
 
     if (error) {
@@ -137,7 +120,7 @@ const Cadastro = () => {
         </p>
         <SocialLoginButtons context="cadastro" planFromUrl={planFromUrl} />
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSave)} className="space-y-4" noValidate>
           <p className="text-xs text-muted-foreground">
             Campos marcados com <span className="text-destructive">*</span> são obrigatórios.
           </p>
@@ -146,14 +129,20 @@ const Cadastro = () => {
             <label htmlFor="signup-name" className="text-sm font-medium text-foreground">
               Nome <span className="text-destructive">*</span>
             </label>
-            <Input id="signup-name" placeholder="Ex: João da Silva" value={name} onChange={(e) => setName(e.target.value)} required />
+            <Input id="signup-name" placeholder="Ex: João da Silva" {...form.register("name")} />
+            {form.formState.errors.name && (
+              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
             <label htmlFor="signup-email" className="text-sm font-medium text-foreground">
               E-mail <span className="text-destructive">*</span>
             </label>
-            <Input id="signup-email" type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input id="signup-email" type="email" placeholder="seu@email.com" {...form.register("email")} />
+            {form.formState.errors.email && (
+              <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -165,11 +154,8 @@ const Cadastro = () => {
                 id="signup-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Mínimo 8 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className="pr-10"
-                required
-                minLength={8}
+                {...form.register("password")}
               />
               <button
                 type="button"
@@ -180,6 +166,9 @@ const Cadastro = () => {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {form.formState.errors.password && (
+              <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -191,14 +180,8 @@ const Cadastro = () => {
                 id="signup-confirm"
                 type={showConfirm ? "text" : "password"}
                 placeholder="Repita a senha"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setConfirmError("");
-                }}
-                className={`pr-10 ${confirmError ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                required
-                minLength={8}
+                className={`pr-10 ${form.formState.errors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                {...form.register("confirmPassword")}
               />
               <button
                 type="button"
@@ -209,8 +192,8 @@ const Cadastro = () => {
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {confirmError && (
-              <p className="text-sm text-red-500 font-medium">{confirmError}</p>
+            {form.formState.errors.confirmPassword && (
+              <p className="text-sm text-red-500 font-medium">{form.formState.errors.confirmPassword.message}</p>
             )}
           </div>
 
@@ -218,20 +201,16 @@ const Cadastro = () => {
           <div className="space-y-1">
             <label
               className={`flex items-start gap-3 cursor-pointer select-none p-3 rounded-xl border transition-colors ${
-                consentError
+                form.formState.errors.consentAccepted
                   ? "border-red-400 bg-red-50"
-                  : consentAccepted
+                  : form.watch("consentAccepted")
                   ? "border-[#78C2AD]/60 bg-[#78C2AD]/5"
                   : "border-border/40 bg-card"
               }`}
             >
               <input
                 type="checkbox"
-                checked={consentAccepted}
-                onChange={(e) => {
-                  setConsentAccepted(e.target.checked);
-                  setConsentError(false);
-                }}
+                {...form.register("consentAccepted")}
                 className="mt-0.5 w-4 h-4 accent-[#78C2AD] shrink-0 cursor-pointer"
               />
               <span className="text-sm text-muted-foreground leading-relaxed">
@@ -249,9 +228,9 @@ const Cadastro = () => {
                 conforme a LGPD (Art. 11).
               </span>
             </label>
-            {consentError && (
+            {form.formState.errors.consentAccepted && (
               <p className="text-xs text-red-500 font-medium pl-1">
-                Você precisa aceitar a Política de Privacidade para criar sua conta.
+                {form.formState.errors.consentAccepted.message}
               </p>
             )}
           </div>
@@ -259,7 +238,7 @@ const Cadastro = () => {
           <Button
             type="submit"
             className="w-full h-12 text-base font-semibold mt-2"
-            disabled={loading || !name.trim() || !email.trim() || password.length < 8 || !confirmPassword || !consentAccepted}
+            disabled={loading}
           >
             {loading ? <><Loader2 className="animate-spin mr-2" size={20} /> Criando conta...</> : "Criar Conta"}
           </Button>

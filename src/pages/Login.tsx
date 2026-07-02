@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Eye, EyeOff } from "lucide-react";
@@ -11,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createSubscription } from "@/services/asaasService";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
+import { loginSchema, forgotPasswordSchema, type LoginInput, type ForgotPasswordInput } from "@/lib/schemas/auth";
 
 type ViewMode = "login" | "forgot";
 
@@ -21,11 +24,19 @@ const Login = () => {
   const { signIn, user, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // [ID-016] Validação centralizada via Zod — src/lib/schemas/auth.ts
+  const loginForm = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
+  const forgotForm = useForm<ForgotPasswordInput>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: "" },
+  });
 
   // Auto-redirect if already logged in — restaura deep link se existir
   useEffect(() => {
@@ -40,14 +51,10 @@ const Login = () => {
       }
     }
   }, [authLoading, user, planFromUrl, navigate]);
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) {
-      toast.error("Digite seu e-mail.");
-      return;
-    }
+
+  const handleForgotPassword = async (data: ForgotPasswordInput) => {
     setLoading(true);
-    await supabase.auth.resetPasswordForEmail(email, {
+    await supabase.auth.resetPasswordForEmail(data.email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     setLoading(false);
@@ -55,11 +62,10 @@ const Login = () => {
     setViewMode("login");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (data: LoginInput) => {
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error } = await signIn(data.email, data.password);
 
     setLoading(false);
 
@@ -160,10 +166,13 @@ const Login = () => {
             </p>
           </div>
 
-          <form onSubmit={handleForgotPassword} className="space-y-4">
+          <form onSubmit={forgotForm.handleSubmit(handleForgotPassword)} className="space-y-4" noValidate>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">E-mail</label>
-              <Input type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input type="email" placeholder="seu@email.com" {...forgotForm.register("email")} />
+              {forgotForm.formState.errors.email && (
+                <p className="text-sm text-destructive">{forgotForm.formState.errors.email.message}</p>
+              )}
             </div>
 
             <Button type="submit" className="w-full h-12 text-base font-semibold mt-2" disabled={loading}>
@@ -190,10 +199,13 @@ const Login = () => {
           <p className="text-muted-foreground text-sm mt-1">Saúde Familiar Simplificada</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={loginForm.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">E-mail</label>
-            <Input type="email" placeholder="seu@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input type="email" placeholder="seu@email.com" {...loginForm.register("email")} />
+            {loginForm.formState.errors.email && (
+              <p className="text-sm text-destructive">{loginForm.formState.errors.email.message}</p>
+            )}
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-foreground">Senha</label>
@@ -201,23 +213,29 @@ const Login = () => {
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className="pr-10"
+                {...loginForm.register("password")}
               />
               <button
                 type="button"
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {loginForm.formState.errors.password && (
+              <p className="text-sm text-destructive">{loginForm.formState.errors.password.message}</p>
+            )}
           </div>
 
           <button
             type="button"
-            onClick={() => setViewMode("forgot")}
+            onClick={() => {
+              forgotForm.setValue("email", loginForm.getValues("email"));
+              setViewMode("forgot");
+            }}
             className="text-sm text-muted-foreground hover:text-primary transition-colors"
           >
             Esqueci minha senha
