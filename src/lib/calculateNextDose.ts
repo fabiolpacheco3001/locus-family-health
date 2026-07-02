@@ -232,7 +232,7 @@ export function calculateNextDose(
     };
 
     // Percorrer dias a partir de hoje (refSP) até encontrar dose futura
-    let dayCursor = new Date(refSP);
+    const dayCursor = new Date(refSP);
     dayCursor.setHours(0, 0, 0, 0);
     const nowTimeStr = `${String(refSP.getHours()).padStart(2, "0")}:${String(refSP.getMinutes()).padStart(2, "0")}`;
 
